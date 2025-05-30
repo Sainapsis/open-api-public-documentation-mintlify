@@ -1,0 +1,514 @@
+openapi: 3.0.3
+info:
+  title: Bridge API
+  description: |
+    Bridge API specification including webhook receiver endpoints and Contact CRUD operations.
+
+    This API includes:
+    1. Webhook Receiver API - for CRM clients to receive event notifications from Bridge
+    2. Contact CRUD API - for clients to manage contacts in Bridge
+
+    **Multi-Tenant Architecture**: All operations are scoped to a specific workspace using workspaceId.
+  version: 1.0.0
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.bridge.com
+    description: Production server
+  - url: https://sandbox.bridge.com
+    description: Sandbox server
+
+security:
+  - apiKeyAuth: []
+
+paths:
+  # Webhook Receiver API (implemented by CRM client)
+  /webhooks/bridge-events:
+    post:
+      summary: Receive Bridge event notifications
+      description: |
+        Endpoint implemented by CRM clients to receive event notifications from Bridge.
+        Bridge will send POST requests to this endpoint when events occur.
+        All events include workspaceId for multi-tenant scoping.
+      tags:
+        - Webhooks
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEvent"
+            examples:
+              user_daily_resume_generated:
+                summary: User daily resume generated event
+                value:
+                  eventId: "evt_123456789"
+                  eventType: "user.daily_resume_generated"
+                  entity: "user"
+                  workspaceId: "ws_abc123"
+                  timestamp: "2024-01-15T10:30:00Z"
+                  payload:
+                    userId: "user_abc123"
+                    summary: "Daily resume for John Doe containing 5 completed tasks and 3 new opportunities"
+              task_created:
+                summary: Task created event
+                value:
+                  eventId: "evt_987654321"
+                  eventType: "task.created"
+                  entity: "task"
+                  workspaceId: "ws_abc123"
+                  timestamp: "2024-01-15T11:45:00Z"
+                  payload:
+                    taskId: "task_xyz789"
+                    title: "Follow up with lead"
+                    assignedTo: "user_abc123"
+      responses:
+        "200":
+          description: Event received successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "received"
+        "400":
+          description: Invalid event data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Contact CRUD API (implemented by Bridge)
+  /api/workspaces/{workspaceId}/contacts:
+    post:
+      summary: Create a new contact
+      description: Creates a new contact in the specified workspace
+      tags:
+        - Contacts
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          description: Unique identifier of the workspace
+          schema:
+            type: string
+            example: "ws_abc123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactCreate"
+            examples:
+              with_email_and_cellphone:
+                summary: Contact with both email and cellphone
+                value:
+                  firstName: "John"
+                  lastName: "Doe"
+                  email: "john.doe@example.com"
+                  cellphone: "+1-555-123-4567"
+                  customAttributes:
+                    - key: "company"
+                      value: "Acme Corp"
+                    - key: "role"
+                      value: "Manager"
+              cellphone_only:
+                summary: Contact with cellphone only (email optional)
+                value:
+                  firstName: "Jane"
+                  lastName: "Smith"
+                  cellphone: "+1-555-987-6543"
+                  customAttributes:
+                    - key: "company"
+                      value: "Tech Startup Inc"
+      responses:
+        "201":
+          description: Contact created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "400":
+          description: Invalid contact data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Workspace not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/workspaces/{workspaceId}/contacts/{contactId}:
+    get:
+      summary: Retrieve a contact by ID
+      description: Gets a specific contact by its unique identifier within the workspace
+      tags:
+        - Contacts
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          description: Unique identifier of the workspace
+          schema:
+            type: string
+            example: "ws_abc123"
+        - name: contactId
+          in: path
+          required: true
+          description: Unique identifier of the contact
+          schema:
+            type: string
+            example: "contact_abc123"
+      responses:
+        "200":
+          description: Contact retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "404":
+          description: Contact or workspace not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update a contact
+      description: Updates an existing contact with new information within the workspace
+      tags:
+        - Contacts
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          description: Unique identifier of the workspace
+          schema:
+            type: string
+            example: "ws_abc123"
+        - name: contactId
+          in: path
+          required: true
+          description: Unique identifier of the contact
+          schema:
+            type: string
+            example: "contact_abc123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactUpdate"
+            examples:
+              update_contact:
+                summary: Update contact information
+                value:
+                  firstName: "John"
+                  lastName: "Doe"
+                  email: "john.doe.updated@example.com"
+                  cellphone: "+1-555-123-4567"
+                  customAttributes:
+                    - key: "company"
+                      value: "New Company Inc"
+                    - key: "department"
+                      value: "Sales"
+      responses:
+        "200":
+          description: Contact updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+        "400":
+          description: Invalid contact data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Contact or workspace not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      summary: Delete a contact
+      description: Permanently deletes a contact from the workspace
+      tags:
+        - Contacts
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          description: Unique identifier of the workspace
+          schema:
+            type: string
+            example: "ws_abc123"
+        - name: contactId
+          in: path
+          required: true
+          description: Unique identifier of the contact
+          schema:
+            type: string
+            example: "contact_abc123"
+      responses:
+        "204":
+          description: Contact deleted successfully
+        "404":
+          description: Contact or workspace not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+webhooks:
+  bridge-events:
+    post:
+      summary: Bridge event notification
+      description: |
+        Webhook endpoint that Bridge will call to notify about events.
+        This should be implemented by the CRM client.
+        All events include workspaceId for multi-tenant scoping.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEvent"
+      responses:
+        "200":
+          description: Event processed successfully
+
+components:
+  schemas:
+    WebhookEvent:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - entity
+        - workspaceId
+        - timestamp
+        - payload
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for the event (used for idempotency)
+          example: "evt_123456789"
+        eventType:
+          type: string
+          description: Type of event that occurred
+          enum:
+            - "user.daily_resume_generated"
+            - "task.created"
+            - "task.updated"
+            - "task.completed"
+            - "opportunity.created"
+            - "opportunity.updated"
+          example: "user.daily_resume_generated"
+        entity:
+          type: string
+          description: The entity type that the event relates to
+          enum:
+            - "user"
+            - "task"
+            - "opportunity"
+          example: "user"
+        workspaceId:
+          type: string
+          description: Unique identifier of the workspace where the event occurred
+          example: "ws_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the event occurred
+          example: "2024-01-15T10:30:00Z"
+        payload:
+          type: object
+          description: Event-specific data structure
+          additionalProperties: true
+          example:
+            userId: "user_abc123"
+            summary: "Daily resume containing 5 completed tasks"
+
+    ContactCreate:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - cellphone
+      properties:
+        firstName:
+          type: string
+          description: Contact's first name
+          example: "John"
+        lastName:
+          type: string
+          description: Contact's last name
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          description: Contact's email address (optional)
+          example: "john.doe@example.com"
+        cellphone:
+          type: string
+          description: Contact's cellphone number (required)
+          example: "+1-555-123-4567"
+        customAttributes:
+          type: array
+          description: Array of custom key-value attributes
+          items:
+            $ref: "#/components/schemas/CustomAttribute"
+          default: []
+
+    ContactUpdate:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - cellphone
+      properties:
+        firstName:
+          type: string
+          description: Contact's first name
+          example: "John"
+        lastName:
+          type: string
+          description: Contact's last name
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          description: Contact's email address (optional)
+          example: "john.doe@example.com"
+        cellphone:
+          type: string
+          description: Contact's cellphone number (required)
+          example: "+1-555-123-4567"
+        customAttributes:
+          type: array
+          description: Array of custom key-value attributes
+          items:
+            $ref: "#/components/schemas/CustomAttribute"
+
+    Contact:
+      type: object
+      required:
+        - id
+        - workspaceId
+        - firstName
+        - lastName
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the contact
+          example: "contact_abc123"
+        workspaceId:
+          type: string
+          description: Unique identifier of the workspace this contact belongs to
+          example: "ws_abc123"
+        firstName:
+          type: string
+          description: Contact's first name
+          example: "John"
+        lastName:
+          type: string
+          description: Contact's last name
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          description: Contact's email address
+          example: "john.doe@example.com"
+        cellphone:
+          type: string
+          description: Contact's cellphone number
+          example: "+1-555-123-4567"
+        customAttributes:
+          type: array
+          description: Array of custom key-value attributes
+          items:
+            $ref: "#/components/schemas/CustomAttribute"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the contact was created
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the contact was last updated
+          example: "2024-01-15T10:30:00Z"
+
+    CustomAttribute:
+      type: object
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+          description: Attribute key/name
+          example: "company"
+        value:
+          type: string
+          description: Attribute value
+          example: "Acme Corp"
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: integer
+          format: int32
+          description: Error code
+          example: 400
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request data"
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API Key authentication for machine-to-machine communication.
+
+        **Authentication Process:**
+        1. Generate an access key and secret key pair from your Bridge dashboard
+        2. Include the access key in the `X-API-Key` header
+        3. Sign your requests using the secret key (HMAC-SHA256)
+        4. Include the signature in the `X-API-Signature` header
+
+        **Request Signing:**
+        - Create a string to sign: `{HTTP_METHOD}\n{REQUEST_PATH}\n{REQUEST_BODY}\n{TIMESTAMP}`
+        - Generate HMAC-SHA256 signature using your secret key
+        - Include timestamp in `X-API-Timestamp` header (Unix timestamp)
+        - Include signature in `X-API-Signature` header
+
+        **Example Headers:**
+        ```
+        X-API-Key: ak_1234567890abcdef
+        X-API-Timestamp: 1642234567
+        X-API-Signature: a1b2c3d4e5f6...
+        ```
