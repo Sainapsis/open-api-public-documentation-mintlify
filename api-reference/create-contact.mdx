@@ -1,0 +1,38 @@
+---
+title: "Create Contact"
+description: "Create a new contact in your Bridge workspace with comprehensive validation and custom attributes support"
+openapi: "openapi.yaml POST /api/workspaces/{workspaceId}/contacts"
+---
+
+## Overview
+
+The Create Contact endpoint allows you to add new contacts to your Bridge workspace. This endpoint supports both email and cellphone contact methods, with cellphone being required.
+
+## Key Features
+
+- **Multi-tenant**: All contacts are scoped to a specific workspace
+- **Flexible attributes**: Support for custom key-value attributes
+- **Validation**: Comprehensive input validation with detailed error responses
+- **Optional email**: Email is optional, making this suitable for phone-only contact scenarios
+
+## Common Use Cases
+
+1. **CRM Integration**: Import contacts from external CRM systems
+2. **Lead Capture**: Create contacts from web forms or marketing campaigns
+3. **Mobile Apps**: Add contacts with phone numbers from mobile applications
+
+## Best Practices
+
+- Always include the `workspaceId` in the path to ensure proper tenant isolation
+- Use the `customAttributes` array for storing additional contact metadata
+- Handle the 404 response for invalid workspace IDs gracefully
+- Consider implementing retry logic for network failures
+
+## Error Handling
+
+The endpoint returns specific error codes:
+
+- `400`: Invalid contact data (missing required fields, invalid format)
+- `404`: Workspace not found or user doesn't have access
+
+Make sure to validate required fields (`firstName`, `lastName`, `cellphone`) before making the request.

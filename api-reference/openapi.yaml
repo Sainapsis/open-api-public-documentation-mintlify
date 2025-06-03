@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Bridge API
   description: |
@@ -26,6 +26,7 @@ paths:
   # Webhook Receiver API (implemented by CRM client)
   /webhooks/bridge-events:
     post:
+      operationId: receiveBridgeEvent
       summary: Receive Bridge event notifications
       description: |
         Endpoint implemented by CRM clients to receive event notifications from Bridge.
@@ -34,6 +35,22 @@ paths:
       tags:
         - Webhooks
       security: []
+      x-codeSamples:
+        - lang: curl
+          source: |
+            curl -X POST https://your-crm.com/webhooks/bridge-events \
+              -H "Content-Type: application/json" \
+              -d '{
+                "eventId": "evt_123456789",
+                "eventType": "user.daily_resume_generated",
+                "entity": "user",
+                "workspaceId": "ws_abc123",
+                "timestamp": "2024-01-15T10:30:00Z",
+                "payload": {
+                  "userId": "user_abc123",
+                  "summary": "Daily resume for John Doe"
+                }
+              }'
       requestBody:
         required: true
         content:
@@ -85,6 +102,7 @@ paths:
   # Contact CRUD API (implemented by Bridge)
   /api/workspaces/{workspaceId}/contacts:
     post:
+      operationId: createContact
       summary: Create a new contact
       description: Creates a new contact in the specified workspace
       tags:
@@ -147,6 +165,7 @@ paths:
 
   /api/workspaces/{workspaceId}/contacts/{contactId}:
     get:
+      operationId: getContact
       summary: Retrieve a contact by ID
       description: Gets a specific contact by its unique identifier within the workspace
       tags:
@@ -181,6 +200,7 @@ paths:
                 $ref: "#/components/schemas/Error"
 
     put:
+      operationId: updateContact
       summary: Update a contact
       description: Updates an existing contact with new information within the workspace
       tags:
@@ -240,6 +260,7 @@ paths:
                 $ref: "#/components/schemas/Error"
 
     delete:
+      operationId: deleteContact
       summary: Delete a contact
       description: Permanently deletes a contact from the workspace
       tags:
