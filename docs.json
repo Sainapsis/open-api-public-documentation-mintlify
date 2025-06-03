@@ -13,8 +13,7 @@
       {
         "tab": "Documentation",
         "pages": [
-          "index",
-          "webhooks"
+          "index"
         ]
       },
       {
@@ -32,12 +31,7 @@
           {
             "group": "🔔 Webhook Implementation",
             "pages": [
-              "api-reference/webhooks/receive-bridge-event-notifications"
-            ]
-          },
-          {
-            "group": "📋 Webhook Reference",
-            "pages": [
+              "api-reference/webhooks/receive-bridge-event-notifications",
               "api-reference/bridge-event-notification"
             ]
           }
