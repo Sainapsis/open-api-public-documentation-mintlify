@@ -138,6 +138,7 @@ paths:
                   lastName: "Doe"
                   email: "john.doe@example.com"
                   cellphone: "+1-555-123-4567"
+                  ownerId: "salesman1@your-company.com"
                   customAttributes:
                     - key: "company"
                       value: "Acme Corp"
@@ -149,6 +150,7 @@ paths:
                   firstName: "Jane"
                   lastName: "Smith"
                   cellphone: "+1-555-987-6543"
+                  ownerId: "salesperson2@your-company.com"
                   customAttributes:
                     - key: "company"
                       value: "Tech Startup Inc"
@@ -243,6 +245,7 @@ paths:
                   lastName: "Doe"
                   email: "john.doe.updated@example.com"
                   cellphone: "+1-555-123-4567"
+                  ownerId: "salesperson@your-company.com"
                   customAttributes:
                     - key: "company"
                       value: "New Company Inc"
@@ -375,6 +378,11 @@ components:
           type: string
           description: Contact's cellphone number (required)
           example: "+1-555-123-4567"
+        ownerId:
+          type: string
+          format: email
+          description: Email address of the salesperson or user who owns this contact
+          example: "salesperson@your-company.com"
         customAttributes:
           type: array
           description: Array of custom key-value attributes
@@ -411,6 +419,11 @@ components:
           description: Array of custom key-value attributes
           items:
             $ref: "#/components/schemas/CustomAttribute"
+        ownerId:
+          type: string
+          format: email
+          description: Email address of the salesperson or user who owns this contact
+          example: "salesperson@your-company.com"
 
     Contact:
       type: object
@@ -452,6 +465,11 @@ components:
           description: Array of custom key-value attributes
           items:
             $ref: "#/components/schemas/CustomAttribute"
+        ownerId:
+          type: string
+          format: email
+          description: Email address of the salesperson or user who owns this contact
+          example: "salesperson@your-company.com"
         createdAt:
           type: string
           format: date-time
