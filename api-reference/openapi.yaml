@@ -39,7 +39,7 @@ paths:
         Bridge will send POST requests to this endpoint when events occur.
         All events include workspaceId for multi-tenant scoping.
       tags:
-        - Webhooks
+        - Events Webhooks (Outbound from Bridge)
       servers:
         - url: https://your-crm.com
           description: Your CRM webhook endpoint
