@@ -14,9 +14,9 @@ info:
     name: MIT
 
 servers:
-  - url: https://api.bridge.com
+  - url: https://api.bridge.new
     description: Production server
-  - url: https://sandbox.bridge.com
+  - url: https://sandbox.bridge.new
     description: Sandbox server
 
 security:
@@ -40,6 +40,9 @@ paths:
         All events include workspaceId for multi-tenant scoping.
       tags:
         - Webhooks
+      servers:
+        - url: https://your-crm.com
+          description: Your CRM webhook endpoint
       security: []
       x-codeSamples:
         - lang: curl
@@ -106,7 +109,7 @@ paths:
                 $ref: "#/components/schemas/Error"
 
   # Contact CRUD API (implemented by Bridge)
-  /api/workspaces/{workspaceId}/contacts:
+  /v1/workspaces/{workspaceId}/contacts:
     post:
       operationId: createContact
       summary: Create a new contact
@@ -169,7 +172,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /api/workspaces/{workspaceId}/contacts/{contactId}:
+  /v1/workspaces/{workspaceId}/contacts/{contactId}:
     get:
       operationId: getContact
       summary: Retrieve a contact by ID
