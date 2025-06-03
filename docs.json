@@ -18,24 +18,7 @@
       },
       {
         "tab": "API Reference",
-        "groups": [
-          {
-            "group": "📇 CRM REST Integration API",
-            "pages": [
-              "api-reference/contacts/create-a-contact",
-              "api-reference/contacts/retrieve-a-contact-by-id",
-              "api-reference/contacts/update-a-contact",
-              "api-reference/contacts/delete-a-contact"
-            ]
-          },
-          {
-            "group": "🔔 Webhook Implementation",
-            "pages": [
-              "api-reference/webhooks/receive-bridge-event-notifications",
-              "api-reference/bridge-event-notification"
-            ]
-          }
-        ]
+        "openapi": "api-reference/openapi.yaml"
       }
     ]
   },

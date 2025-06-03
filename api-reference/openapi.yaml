@@ -22,6 +22,12 @@ servers:
 security:
   - apiKeyAuth: []
 
+tags:
+  - name: Contacts CRUD API (Inbound to Bridge)
+    description: Contact sync operations from your CRM to Bridge - create, read, update, and delete contacts
+  - name: Events Webhooks (Outbound from Bridge)
+    description: Webhook endpoints for receiving real-time event notifications from Bridge
+
 paths:
   # Webhook Receiver API (implemented by CRM client)
   /webhooks/bridge-events:
@@ -289,24 +295,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
-webhooks:
-  bridge-events:
-    post:
-      summary: Bridge event notification
-      description: |
-        Webhook endpoint that Bridge will call to notify about events.
-        This should be implemented by the CRM client.
-        All events include workspaceId for multi-tenant scoping.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/WebhookEvent"
-      responses:
-        "200":
-          description: Event processed successfully
 
 components:
   schemas:
