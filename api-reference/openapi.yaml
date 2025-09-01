@@ -112,7 +112,6 @@ paths:
                   timestamp: "2024-01-15T12:00:00Z"
                   payload:
                     conversationId: "conv_abc123"
-                    subject: "Product Inquiry"
                     externalParticipants: ["john.doe@example.com"]
                     ghostMode: true
               conversation_participant_added:
@@ -387,7 +386,6 @@ paths:
                       type: "email"
                     - identifier: "+1-555-123-4567"
                       type: "phone"
-                  subject: "Product Inquiry"
                   ghostMode: true
               with_internal_assignment:
                 summary: Conversation with explicit internal user assignment
@@ -398,7 +396,6 @@ paths:
                   internalParticipants:
                     - identifier: "salesperson@company.com"
                       type: "email"
-                  subject: "Sales Follow-up"
                   ghostMode: false
               team_round_robin:
                 summary: Conversation with team round-robin assignment
@@ -407,7 +404,6 @@ paths:
                     - identifier: "jane.smith@example.com"
                       type: "email"
                   teamId: "team_sales"
-                  subject: "Customer Support"
       responses:
         "201":
           description: Conversation created successfully
@@ -585,7 +581,6 @@ paths:
                   addInternalParticipants:
                     - identifier: "manager@company.com"
                       type: "email"
-                  subject: "Updated Subject"
               remove_participants:
                 summary: Remove participants from conversation
                 value:
@@ -596,13 +591,10 @@ paths:
                     - identifier: "former@company.com"
                       type: "email"
               update_status:
-                summary: Update conversation status and metadata
+                summary: Update conversation status and mode
                 value:
                   status: "active"
                   ghostMode: false
-                  metadata:
-                    priority: "high"
-                    tags: ["urgent", "follow-up"]
       responses:
         "200":
           description: Conversation updated successfully
@@ -699,7 +691,6 @@ paths:
                     identifier: "+1-555-123-4567"
                     type: "phone"
                   createIfNotFound: true
-                  subject: "New Inquiry"
                   ghostMode: true
       responses:
         "200":
@@ -1117,23 +1108,12 @@ components:
             $ref: "#/components/schemas/InternalUserIdentifier"
         teamId:
           type: string
-          description: Team ID for round-robin assignment (optional)
-          example: "team_sales"
-        subject:
-          type: string
-          description: Conversation subject or title
-          example: "Product Inquiry"
+          description: Team UUID for round-robin assignment (optional)
+          example: "SOME-TEAM-UUID"
         ghostMode:
           type: boolean
           description: Whether conversation starts in ghost mode (invisible until first interaction)
           default: false
-        metadata:
-          type: object
-          description: Additional conversation metadata
-          additionalProperties: true
-          example:
-            priority: "medium"
-            tags: ["inquiry", "new-customer"]
 
     ConversationUpdate:
       type: object
@@ -1158,9 +1138,6 @@ components:
           description: Internal participants to remove
           items:
             $ref: "#/components/schemas/InternalUserIdentifier"
-        subject:
-          type: string
-          description: Updated conversation subject
         status:
           type: string
           enum: [active, archived, ghost]
@@ -1168,10 +1145,6 @@ components:
         ghostMode:
           type: boolean
           description: Whether conversation is in ghost mode
-        metadata:
-          type: object
-          description: Updated conversation metadata
-          additionalProperties: true
 
     Conversation:
       type: object
@@ -1201,10 +1174,6 @@ components:
           description: Array of internal participants
           items:
             $ref: "#/components/schemas/Participant"
-        subject:
-          type: string
-          description: Conversation subject or title
-          example: "Product Inquiry"
         status:
           type: string
           enum: [active, archived, ghost]
@@ -1218,10 +1187,6 @@ components:
           type: string
           description: Team ID if assigned via round-robin
           example: "team_sales"
-        metadata:
-          type: object
-          description: Additional conversation metadata
-          additionalProperties: true
         createdAt:
           type: string
           format: date-time
@@ -1280,10 +1245,6 @@ components:
           type: boolean
           description: Whether to create a new conversation if none exists
           default: false
-        subject:
-          type: string
-          description: Subject for new conversation (required if createIfNotFound is true)
-          example: "New Inquiry"
         ghostMode:
           type: boolean
           description: Whether new conversation should start in ghost mode
