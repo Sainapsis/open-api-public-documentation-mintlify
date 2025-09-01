@@ -544,12 +544,12 @@ paths:
                 $ref: "#/components/schemas/Error"
 
     put:
-      operationId: updateConversation
-      summary: Update conversation details and participants
+      operationId: updateConversationParticipants
+      summary: Update conversation participants
       description: |
-        Updates conversation details and manages participants. Supports adding/removing both external
-        and internal participants with idempotent operations. Provides clear error signals for
-        invalid, ambiguous, or duplicate user identifiers.
+        Manages conversation participants by adding or removing both external and internal participants.
+        Supports idempotent operations and provides clear error signals for invalid, ambiguous, or
+        duplicate user identifiers.
       tags:
         - Conversations API
       parameters:
@@ -572,7 +572,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConversationUpdate"
+              $ref: "#/components/schemas/ConversationParticipantUpdate"
             examples:
               add_participants:
                 summary: Add new participants to conversation
@@ -592,20 +592,24 @@ paths:
                   removeInternalParticipants:
                     - identifier: "former@company.com"
                       type: "email"
-              update_status:
-                summary: Update conversation status and name
+              mixed_operations:
+                summary: Add and remove participants in one request
                 value:
-                  name: "Resolved - Support Request"
-                  status: "archived"
+                  addExternalParticipants:
+                    - identifier: "newuser@example.com"
+                      type: "email"
+                  removeInternalParticipants:
+                    - identifier: "former@company.com"
+                      type: "email"
       responses:
         "200":
-          description: Conversation updated successfully
+          description: Conversation participants updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Conversation"
         "400":
-          description: Invalid update data or ambiguous user identification
+          description: Invalid participant data or ambiguous user identification
           content:
             application/json:
               schema:
@@ -618,6 +622,70 @@ paths:
                 $ref: "#/components/schemas/Error"
         "409":
           description: Conflicting participant assignments or duplicate users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /v1/workspaces/{workspaceId}/conversations/{conversationId}/details:
+    put:
+      operationId: updateConversationDetails
+      summary: Update conversation status and name
+      description: |
+        Updates conversation metadata including status and name. This endpoint is separate from
+        participant management to provide clear separation of concerns.
+      tags:
+        - Conversations API
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          description: Unique identifier of the workspace
+          schema:
+            type: string
+            example: "ws_abc123"
+        - name: conversationId
+          in: path
+          required: true
+          description: Unique identifier of the conversation
+          schema:
+            type: string
+            example: "conv_abc123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationDetailsUpdate"
+            examples:
+              update_status:
+                summary: Update conversation status
+                value:
+                  status: "archived"
+              update_name:
+                summary: Update conversation name
+                value:
+                  name: "Resolved - Support Request"
+              update_both:
+                summary: Update both status and name
+                value:
+                  name: "Resolved - Support Request"
+                  status: "archived"
+      responses:
+        "200":
+          description: Conversation details updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+        "400":
+          description: Invalid conversation details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Conversation or workspace not found
           content:
             application/json:
               schema:
@@ -959,7 +1027,7 @@ components:
       not:
         required: [internalParticipants, teamId]
 
-    ConversationUpdate:
+    ConversationParticipantUpdate:
       type: object
       properties:
         addExternalParticipants:
@@ -982,6 +1050,15 @@ components:
           description: Internal participants to remove
           items:
             $ref: "#/components/schemas/InternalUserIdentifier"
+      anyOf:
+        - required: [addExternalParticipants]
+        - required: [removeExternalParticipants]
+        - required: [addInternalParticipants]
+        - required: [removeInternalParticipants]
+
+    ConversationDetailsUpdate:
+      type: object
+      properties:
         name:
           type: string
           description: Optional name/title for the conversation
@@ -990,6 +1067,9 @@ components:
           type: string
           enum: [active, archived, ghost]
           description: Conversation status - 'active' for visible conversations, 'ghost' for invisible until first interaction, 'archived' for completed conversations
+      anyOf:
+        - required: [name]
+        - required: [status]
 
     Conversation:
       type: object
