@@ -396,6 +396,7 @@ paths:
                   internalParticipants:
                     - identifier: "salesperson@company.com"
                       type: "email"
+                  name: "Sales Follow-up - Contact ABC123"
                   status: "active"
               team_round_robin:
                 summary: Conversation with team round-robin assignment
@@ -403,6 +404,7 @@ paths:
                   externalParticipants:
                     - identifier: "jane.smith@example.com"
                       type: "email"
+                  name: "Customer Inquiry - Jane Smith"
                   teamId: "team_sales"
       responses:
         "201":
@@ -591,8 +593,9 @@ paths:
                     - identifier: "former@company.com"
                       type: "email"
               update_status:
-                summary: Update conversation status
+                summary: Update conversation status and name
                 value:
+                  name: "Resolved - Support Request"
                   status: "archived"
       responses:
         "200":
@@ -615,175 +618,6 @@ paths:
                 $ref: "#/components/schemas/Error"
         "409":
           description: Conflicting participant assignments or duplicate users
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-    delete:
-      operationId: deleteConversation
-      summary: Delete a conversation
-      description: Permanently deletes a conversation and all its associated data from the workspace
-      tags:
-        - Conversations API
-      parameters:
-        - name: workspaceId
-          in: path
-          required: true
-          description: Unique identifier of the workspace
-          schema:
-            type: string
-            example: "ws_abc123"
-        - name: conversationId
-          in: path
-          required: true
-          description: Unique identifier of the conversation
-          schema:
-            type: string
-            example: "conv_abc123"
-      responses:
-        "204":
-          description: Conversation deleted successfully
-        "404":
-          description: Conversation or workspace not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /v1/workspaces/{workspaceId}/conversations/resolve:
-    post:
-      operationId: resolveConversation
-      summary: Resolve conversation by external user identifier
-      description: |
-        Resolves a conversation by external user identifier (ID, email, or phone). Useful when
-        you need to find or update a conversation but only know the external user's information.
-        Returns the conversation if found, or creates a new one if specified.
-      tags:
-        - Conversations API
-      parameters:
-        - name: workspaceId
-          in: path
-          required: true
-          description: Unique identifier of the workspace
-          schema:
-            type: string
-            example: "ws_abc123"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ConversationResolve"
-            examples:
-              find_existing:
-                summary: Find existing conversation by external user
-                value:
-                  externalUser:
-                    identifier: "john.doe@example.com"
-                    type: "email"
-                  createIfNotFound: false
-              find_or_create:
-                summary: Find existing conversation or create new one
-                value:
-                  externalUser:
-                    identifier: "+1-555-123-4567"
-                    type: "phone"
-                  createIfNotFound: true
-                  status: "ghost"
-      responses:
-        "200":
-          description: Conversation found or created successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ConversationResolveResponse"
-        "201":
-          description: New conversation created successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ConversationResolveResponse"
-        "400":
-          description: Invalid user identifier or ambiguous identification
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Conversation not found and createIfNotFound is false
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /v1/workspaces/{workspaceId}/conversations/{conversationId}/participants:
-    post:
-      operationId: manageConversationParticipants
-      summary: Manage conversation participants
-      description: |
-        Adds or removes participants from a conversation. Supports both external and internal users
-        with flexible identification. Operations are idempotent - adding an existing participant
-        or removing a non-existent one will not cause errors.
-      tags:
-        - Conversations API
-      parameters:
-        - name: workspaceId
-          in: path
-          required: true
-          description: Unique identifier of the workspace
-          schema:
-            type: string
-            example: "ws_abc123"
-        - name: conversationId
-          in: path
-          required: true
-          description: Unique identifier of the conversation
-          schema:
-            type: string
-            example: "conv_abc123"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ParticipantManagement"
-            examples:
-              add_multiple_participants:
-                summary: Add multiple participants
-                value:
-                  addExternalParticipants:
-                    - identifier: "user1@example.com"
-                      type: "email"
-                    - identifier: "+1-555-111-2222"
-                      type: "phone"
-                  addInternalParticipants:
-                    - identifier: "support@company.com"
-                      type: "email"
-              remove_participants:
-                summary: Remove participants
-                value:
-                  removeExternalParticipants:
-                    - identifier: "olduser@example.com"
-                      type: "email"
-                  removeInternalParticipants:
-                    - identifier: "former@company.com"
-                      type: "email"
-      responses:
-        "200":
-          description: Participants managed successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ParticipantManagementResponse"
-        "400":
-          description: Invalid participant data or ambiguous identification
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Conversation or workspace not found
           content:
             application/json:
               schema:
@@ -1109,6 +943,10 @@ components:
           type: string
           description: Team UUID for round-robin assignment (optional, mutually exclusive with internalParticipants)
           example: "SOME-TEAM-UUID"
+        name:
+          type: string
+          description: Optional name/title for the conversation
+          example: "Support Request - John Doe"
         status:
           type: string
           enum: [active, ghost]
@@ -1144,6 +982,10 @@ components:
           description: Internal participants to remove
           items:
             $ref: "#/components/schemas/InternalUserIdentifier"
+        name:
+          type: string
+          description: Optional name/title for the conversation
+          example: "Updated Support Request - John Doe"
         status:
           type: string
           enum: [active, archived, ghost]
@@ -1177,6 +1019,10 @@ components:
           description: Array of internal participants
           items:
             $ref: "#/components/schemas/Participant"
+        name:
+          type: string
+          description: Optional name/title for the conversation
+          example: "Support Request - John Doe"
         status:
           type: string
           enum: [active, archived, ghost]
