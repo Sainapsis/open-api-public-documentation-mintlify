@@ -30,6 +30,8 @@ tags:
     description: Webhook endpoints for receiving real-time event notifications from Bridge
   - name: Conversations API
     description: Conversation CRUD operations with flexible user identification, participant management, and ghost mode support
+  - name: Teams API
+    description: Team management operations for organizing internal users and round-robin conversation assignment
 
 paths:
   # Webhook Receiver API (implemented by CRM client)
@@ -165,7 +167,7 @@ paths:
       summary: Create a new contact
       description: Creates a new contact in the specified workspace
       tags:
-        - Contacts
+        - Contacts CRUD API (Inbound to Bridge)
       parameters:
         - name: workspaceId
           in: path
@@ -179,7 +181,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ContactCreate"
+              $ref: "#/components/schemas/ContactInput"
             examples:
               with_email_and_cellphone:
                 summary: Contact with both email and cellphone
@@ -224,13 +226,83 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+    get:
+      operationId: listContacts
+      summary: List contacts with filtering and pagination
+      description: |
+        Retrieves a paginated list of contacts within the workspace with optional filtering by owner, 
+        search terms, and custom attributes.
+      tags:
+        - Contacts CRUD API (Inbound to Bridge)
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          description: Unique identifier of the workspace
+          schema:
+            type: string
+            example: "ws_abc123"
+        - name: ownerId
+          in: query
+          required: false
+          description: Filter contacts by owner email address
+          schema:
+            type: string
+            format: email
+            example: "salesperson@your-company.com"
+        - name: search
+          in: query
+          required: false
+          description: Search contacts by name, email, or cellphone
+          schema:
+            type: string
+            example: "John Doe"
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Number of contacts per page
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+            default: 20
+            example: 20
+      responses:
+        "200":
+          description: Contacts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactList"
+        "400":
+          description: Invalid filter parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Workspace not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /v1/workspaces/{workspaceId}/contacts/{contactId}:
     get:
       operationId: getContact
       summary: Retrieve a contact by ID
       description: Gets a specific contact by its unique identifier within the workspace
       tags:
-        - Contacts
+        - Contacts CRUD API (Inbound to Bridge)
       parameters:
         - name: workspaceId
           in: path
@@ -265,7 +337,7 @@ paths:
       summary: Update a contact
       description: Updates an existing contact with new information within the workspace
       tags:
-        - Contacts
+        - Contacts CRUD API (Inbound to Bridge)
       parameters:
         - name: workspaceId
           in: path
@@ -286,7 +358,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ContactUpdate"
+              $ref: "#/components/schemas/ContactInput"
             examples:
               update_contact:
                 summary: Update contact information
@@ -326,7 +398,7 @@ paths:
       summary: Delete a contact
       description: Permanently deletes a contact from the workspace
       tags:
-        - Contacts
+        - Contacts CRUD API (Inbound to Bridge)
       parameters:
         - name: workspaceId
           in: path
@@ -453,13 +525,13 @@ paths:
           required: false
           description: External user identifier to filter conversations
           schema:
-            $ref: "#/components/schemas/ExternalUserIdentifier"
+            $ref: "#/components/schemas/UserIdentifier"
         - name: internalUser
           in: query
           required: false
           description: Internal user identifier to filter conversations
           schema:
-            $ref: "#/components/schemas/InternalUserIdentifier"
+            $ref: "#/components/schemas/UserIdentifier"
         - name: status
           in: query
           required: false
@@ -543,13 +615,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-    put:
-      operationId: updateConversationParticipants
-      summary: Update conversation participants
+    patch:
+      operationId: updateConversation
+      summary: Update conversation
       description: |
-        Manages conversation participants by adding or removing both external and internal participants.
-        Supports idempotent operations and provides clear error signals for invalid, ambiguous, or
-        duplicate user identifiers.
+        Updates conversation details including participants, status, and name.
+        Supports partial updates - only include the fields you want to change.
       tags:
         - Conversations API
       parameters:
@@ -572,44 +643,42 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConversationParticipantUpdate"
+              $ref: "#/components/schemas/ConversationUpdate"
             examples:
-              add_participants:
-                summary: Add new participants to conversation
-                value:
-                  addExternalParticipants:
-                    - identifier: "newuser@example.com"
-                      type: "email"
-                  addInternalParticipants:
-                    - identifier: "manager@company.com"
-                      type: "email"
-              remove_participants:
-                summary: Remove participants from conversation
-                value:
-                  removeExternalParticipants:
-                    - identifier: "olduser@example.com"
-                      type: "email"
-                  removeInternalParticipants:
-                    - identifier: "former@company.com"
-                      type: "email"
-              mixed_operations:
-                summary: Add and remove participants in one request
+              update_participants:
+                summary: Add and remove participants
                 value:
                   addExternalParticipants:
                     - identifier: "newuser@example.com"
                       type: "email"
                   removeInternalParticipants:
                     - identifier: "former@company.com"
+                      type: "email"
+              update_status:
+                summary: Update conversation status
+                value:
+                  status: "archived"
+              update_name:
+                summary: Update conversation name
+                value:
+                  name: "Resolved - Support Request"
+              full_update:
+                summary: Update multiple fields
+                value:
+                  name: "Updated Support Request"
+                  status: "active"
+                  addExternalParticipants:
+                    - identifier: "newuser@example.com"
                       type: "email"
       responses:
         "200":
-          description: Conversation participants updated successfully
+          description: Conversation updated successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Conversation"
         "400":
-          description: Invalid participant data or ambiguous user identification
+          description: Invalid conversation data or ambiguous user identification
           content:
             application/json:
               schema:
@@ -627,15 +696,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /v1/workspaces/{workspaceId}/conversations/{conversationId}/details:
-    put:
-      operationId: updateConversationDetails
-      summary: Update conversation status and name
+  # Teams API
+  /v1/workspaces/{workspaceId}/teams:
+    get:
+      operationId: listTeams
+      summary: List teams in workspace
       description: |
-        Updates conversation metadata including status and name. This endpoint is separate from
-        participant management to provide clear separation of concerns.
+        Retrieves a paginated list of teams within the workspace. Teams are used for 
+        round-robin assignment of conversations and organizing internal users.
       tags:
-        - Conversations API
+        - Teams API
       parameters:
         - name: workspaceId
           in: path
@@ -644,48 +714,40 @@ paths:
           schema:
             type: string
             example: "ws_abc123"
-        - name: conversationId
-          in: path
-          required: true
-          description: Unique identifier of the conversation
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination
           schema:
-            type: string
-            example: "conv_abc123"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ConversationDetailsUpdate"
-            examples:
-              update_status:
-                summary: Update conversation status
-                value:
-                  status: "archived"
-              update_name:
-                summary: Update conversation name
-                value:
-                  name: "Resolved - Support Request"
-              update_both:
-                summary: Update both status and name
-                value:
-                  name: "Resolved - Support Request"
-                  status: "archived"
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Number of teams per page
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+            default: 20
+            example: 20
       responses:
         "200":
-          description: Conversation details updated successfully
+          description: Teams retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Conversation"
+                $ref: "#/components/schemas/TeamList"
         "400":
-          description: Invalid conversation details
+          description: Invalid filter parameters
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "404":
-          description: Conversation or workspace not found
+          description: Workspace not found
           content:
             application/json:
               schema:
@@ -752,7 +814,7 @@ components:
             participantType: "external"
             participantIdentifier: "john.doe@example.com"
 
-    ContactCreate:
+    ContactInput:
       type: object
       required:
         - firstName
@@ -787,41 +849,6 @@ components:
           items:
             $ref: "#/components/schemas/CustomAttribute"
           default: []
-
-    ContactUpdate:
-      type: object
-      required:
-        - firstName
-        - lastName
-        - cellphone
-      properties:
-        firstName:
-          type: string
-          description: Contact's first name
-          example: "John"
-        lastName:
-          type: string
-          description: Contact's last name
-          example: "Doe"
-        email:
-          type: string
-          format: email
-          description: Contact's email address (optional)
-          example: "john.doe@example.com"
-        cellphone:
-          type: string
-          description: Contact's cellphone number (required)
-          example: "+1-555-123-4567"
-        customAttributes:
-          type: array
-          description: Array of custom key-value attributes
-          items:
-            $ref: "#/components/schemas/CustomAttribute"
-        ownerId:
-          type: string
-          format: email
-          description: Email address of the salesperson or user who owns this contact
-          example: "salesperson@your-company.com"
 
     Contact:
       type: object
@@ -894,6 +921,31 @@ components:
           description: Attribute value
           example: "Acme Corp"
 
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 20
+        total:
+          type: integer
+          description: Total number of items
+          example: 150
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 8
+
     Error:
       type: object
       required:
@@ -926,7 +978,7 @@ components:
             - "INVALID_OPERATION"
           example: "AMBIGUOUS_USER_IDENTIFIER"
 
-    ExternalUserIdentifier:
+    UserIdentifier:
       type: object
       required:
         - identifier
@@ -939,22 +991,6 @@ components:
         type:
           type: string
           enum: [id, email, phone]
-          description: Type of identifier
-          example: "email"
-
-    InternalUserIdentifier:
-      type: object
-      required:
-        - identifier
-        - type
-      properties:
-        identifier:
-          type: string
-          description: User identifier value (ID, email)
-          example: "salesperson@company.com"
-        type:
-          type: string
-          enum: [id, email]
           description: Type of identifier
           example: "email"
 
@@ -1000,13 +1036,13 @@ components:
           type: array
           description: Array of external user identifiers (required)
           items:
-            $ref: "#/components/schemas/ExternalUserIdentifier"
+            $ref: "#/components/schemas/UserIdentifier"
           minItems: 1
         internalParticipants:
           type: array
           description: Array of internal user identifiers (optional, mutually exclusive with teamId)
           items:
-            $ref: "#/components/schemas/InternalUserIdentifier"
+            $ref: "#/components/schemas/UserIdentifier"
         teamId:
           type: string
           description: Team UUID for round-robin assignment (optional, mutually exclusive with internalParticipants)
@@ -1027,36 +1063,7 @@ components:
       not:
         required: [internalParticipants, teamId]
 
-    ConversationParticipantUpdate:
-      type: object
-      properties:
-        addExternalParticipants:
-          type: array
-          description: External participants to add
-          items:
-            $ref: "#/components/schemas/ExternalUserIdentifier"
-        removeExternalParticipants:
-          type: array
-          description: External participants to remove
-          items:
-            $ref: "#/components/schemas/ExternalUserIdentifier"
-        addInternalParticipants:
-          type: array
-          description: Internal participants to add
-          items:
-            $ref: "#/components/schemas/InternalUserIdentifier"
-        removeInternalParticipants:
-          type: array
-          description: Internal participants to remove
-          items:
-            $ref: "#/components/schemas/InternalUserIdentifier"
-      anyOf:
-        - required: [addExternalParticipants]
-        - required: [removeExternalParticipants]
-        - required: [addInternalParticipants]
-        - required: [removeInternalParticipants]
-
-    ConversationDetailsUpdate:
+    ConversationUpdate:
       type: object
       properties:
         name:
@@ -1067,9 +1074,26 @@ components:
           type: string
           enum: [active, archived, ghost]
           description: Conversation status - 'active' for visible conversations, 'ghost' for invisible until first interaction, 'archived' for completed conversations
-      anyOf:
-        - required: [name]
-        - required: [status]
+        addExternalParticipants:
+          type: array
+          description: External participants to add
+          items:
+            $ref: "#/components/schemas/UserIdentifier"
+        removeExternalParticipants:
+          type: array
+          description: External participants to remove
+          items:
+            $ref: "#/components/schemas/UserIdentifier"
+        addInternalParticipants:
+          type: array
+          description: Internal participants to add
+          items:
+            $ref: "#/components/schemas/UserIdentifier"
+        removeInternalParticipants:
+          type: array
+          description: Internal participants to remove
+          items:
+            $ref: "#/components/schemas/UserIdentifier"
 
     Conversation:
       type: object
@@ -1135,106 +1159,79 @@ components:
           items:
             $ref: "#/components/schemas/Conversation"
         pagination:
-          type: object
-          required:
-            - page
-            - limit
-            - total
-            - totalPages
-          properties:
-            page:
-              type: integer
-              description: Current page number
-              example: 1
-            limit:
-              type: integer
-              description: Number of conversations per page
-              example: 20
-            total:
-              type: integer
-              description: Total number of conversations
-              example: 150
-            totalPages:
-              type: integer
-              description: Total number of pages
-              example: 8
+          $ref: "#/components/schemas/Pagination"
 
-    ConversationResolve:
+    ContactList:
       type: object
       required:
-        - externalUser
+        - contacts
+        - pagination
       properties:
-        externalUser:
-          $ref: "#/components/schemas/ExternalUserIdentifier"
-        createIfNotFound:
+        contacts:
+          type: array
+          description: Array of contacts
+          items:
+            $ref: "#/components/schemas/Contact"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    Team:
+      type: object
+      required:
+        - id
+        - workspaceId
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the team
+          example: "team_abc123"
+        workspaceId:
+          type: string
+          description: Unique identifier of the workspace this team belongs to
+          example: "ws_abc123"
+        name:
+          type: string
+          description: Team name
+          example: "Sales Team"
+        description:
+          type: string
+          description: Optional team description
+          example: "Primary sales team handling enterprise accounts"
+        memberCount:
+          type: integer
+          description: Number of active members in the team
+          example: 5
+        isActive:
           type: boolean
-          description: Whether to create a new conversation if none exists
-          default: false
-        status:
+          description: Whether the team is active and available for assignment
+          example: true
+        createdAt:
           type: string
-          enum: [active, ghost]
-          description: Initial conversation status for new conversations - 'active' for visible conversations, 'ghost' for invisible until first interaction
-          default: "active"
-        internalParticipants:
-          type: array
-          description: Internal participants for new conversation (mutually exclusive with teamId)
-          items:
-            $ref: "#/components/schemas/InternalUserIdentifier"
-        teamId:
+          format: date-time
+          description: Timestamp when the team was created
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
           type: string
-          description: Team ID for round-robin assignment (mutually exclusive with internalParticipants)
-          example: "team_sales"
-      oneOf:
-        - required: [externalUser]
-        - required: [externalUser, internalParticipants]
-        - required: [externalUser, teamId]
-      not:
-        required: [internalParticipants, teamId]
+          format: date-time
+          description: Timestamp when the team was last updated
+          example: "2024-01-15T10:30:00Z"
 
-    ConversationResolveResponse:
+    TeamList:
       type: object
       required:
-        - conversation
-        - action
+        - teams
+        - pagination
       properties:
-        conversation:
-          $ref: "#/components/schemas/Conversation"
-        action:
-          type: string
-          enum: [found, created]
-          description: Action taken - found existing or created new
-          example: "found"
-        warnings:
+        teams:
           type: array
-          description: Array of warning messages for ambiguous or duplicate identifiers
+          description: Array of teams
           items:
-            type: string
-          example:
-            - "Multiple users found with email 'john.doe@example.com', using most recent"
-
-    ParticipantManagement:
-      type: object
-      properties:
-        addExternalParticipants:
-          type: array
-          description: External participants to add
-          items:
-            $ref: "#/components/schemas/ExternalUserIdentifier"
-        removeExternalParticipants:
-          type: array
-          description: External participants to remove
-          items:
-            $ref: "#/components/schemas/ExternalUserIdentifier"
-        addInternalParticipants:
-          type: array
-          description: Internal participants to add
-          items:
-            $ref: "#/components/schemas/InternalUserIdentifier"
-        removeInternalParticipants:
-          type: array
-          description: Internal participants to remove
-          items:
-            $ref: "#/components/schemas/InternalUserIdentifier"
+            $ref: "#/components/schemas/Team"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
 
     ParticipantManagementResponse:
       type: object
