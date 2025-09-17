@@ -332,7 +332,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-    put:
+    patch:
       operationId: updateContact
       summary: Update a contact
       description: Updates an existing contact with new information within the workspace
