@@ -647,45 +647,24 @@ paths:
         with the same value.
 
 
-        <div style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto,
-        Helvetica, Arial; line-height:1.5;"><div style="overflow:auto;"><table style="width:100%;
-        border-collapse:collapse; border:1px solid #cbd5e1; border-radius:8px; table-layout:auto;"><colgroup><col
-        style="width:12%"><col style="width:30%"><col style="width:48%"><col style="width:10%"></colgroup><thead
-        style="background:#f8fafc;"><tr><th style="text-align:left; padding:10px 12px;
-        border:1px solid #cbd5e1; border-bottom:2px solid #94a3b8;">Type</th><th style="text-align:left;
-        padding:10px 12px; border:1px solid #cbd5e1; border-bottom:2px solid #94a3b8;
-        word-break:break-word;">Supported extensions</th><th style="text-align:left;
-        padding:10px 12px; border:1px solid #cbd5e1; border-bottom:2px solid #94a3b8;
-        word-break:break-word;">Content types</th><th style="text-align:right; padding:10px
-        12px; border:1px solid #cbd5e1; border-bottom:2px solid #94a3b8; white-space:nowrap;">Max
-        size</th></tr></thead><tbody><tr><td style="padding:10px 12px; border:1px
-        solid #cbd5e1; background:#f8fbff;">Image</td><td style="padding:10px 12px;
-        border:1px solid #cbd5e1; background:#f8fbff; word-break:break-word;">.gif,
-        .jpeg, .jpg, .png, .webp</td><td style="padding:10px 12px; border:1px solid
-        #cbd5e1; background:#f8fbff; word-break:break-word;">image/gif, image/jpeg,
-        image/png, image/webp</td><td style="padding:10px 12px; border:1px solid #cbd5e1;
-        background:#f8fbff; text-align:right; white-space:nowrap;">16 MB</td></tr><tr><td
-        style="padding:10px 12px; border:1px solid #cbd5e1; background:#ffffff;">Video</td><td
-        style="padding:10px 12px; border:1px solid #cbd5e1; background:#ffffff; word-break:break-word;">.avi,
-        .mov, .mp4</td><td style="padding:10px 12px; border:1px solid #cbd5e1; background:#ffffff;
-        word-break:break-word;">video/x-msvideo, video/quicktime, video/mp4</td><td
-        style="padding:10px 12px; border:1px solid #cbd5e1; background:#ffffff; text-align:right;
-        white-space:nowrap;">64 MB</td></tr><tr><td style="padding:10px 12px; border:1px
-        solid #cbd5e1; background:#f8fbff;">Audio</td><td style="padding:10px 12px;
-        border:1px solid #cbd5e1; background:#f8fbff; word-break:break-word;">.m4a,
-        .mp3, .ogg, .wav</td><td style="padding:10px 12px; border:1px solid #cbd5e1;
-        background:#f8fbff; word-break:break-word;">audio/mp4, audio/mpeg, audio/ogg,
-        audio/wav</td><td style="padding:10px 12px; border:1px solid #cbd5e1; background:#f8fbff;
-        text-align:right; white-space:nowrap;">16 MB</td></tr><tr><td style="padding:10px
-        12px; border:1px solid #cbd5e1; background:#ffffff;">Document</td><td style="padding:10px
-        12px; border:1px solid #cbd5e1; background:#ffffff; word-break:break-word;">.doc,
-        .docx, .pdf, .ppt, .pptx, .txt, .xls, .xlsx</td><td style="padding:10px 12px;
-        border:1px solid #cbd5e1; background:#ffffff; word-break:break-word;">application/msword,
+        | Type | Supported Extensions | Content Types | Max Size |
+
+        |------|---------------------|---------------|----------|
+
+        | Image | .gif, .jpeg, .jpg, .png, .webp | image/gif, image/jpeg, image/png,
+        image/webp | 16 MB |
+
+        | Video | .avi, .mov, .mp4 | video/x-msvideo, video/quicktime, video/mp4 |
+        64 MB |
+
+        | Audio | .m4a, .mp3, .ogg, .wav | audio/mp4, audio/mpeg, audio/ogg, audio/wav
+        | 16 MB |
+
+        | Document | .doc, .docx, .pdf, .ppt, .pptx, .txt, .xls, .xlsx | application/msword,
         application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/pdf,
         application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation,
-        text/plain, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td><td
-        style="padding:10px 12px; border:1px solid #cbd5e1; background:#ffffff; text-align:right;
-        white-space:nowrap;">100 MB</td></tr></tbody></table></div></div>'
+        text/plain, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        | 100 MB |'
       operationId: create_preloaded_files_bridge_api_v1_workspaces__workspaceId__files_post
       parameters:
       - name: workspaceId
