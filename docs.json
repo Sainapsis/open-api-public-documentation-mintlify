@@ -11,13 +11,14 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Introduction",
         "pages": [
-          "index"
+          "index",
+          "credentials"
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "REST API",
         "openapi": "api-reference/openapi.yaml"
       }
     ]
