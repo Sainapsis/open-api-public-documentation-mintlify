@@ -1,7 +1,8 @@
 openapi: 3.1.0
 info:
   title: Bridge API
-  description: "Bridge API specification including webhook receiver endpoints, Contact\
+  description:
+    "Bridge API specification including webhook receiver endpoints, Contact\
     \ CRUD operations, and comprehensive chat system.\n\n                    This\
     \ API includes:\n                    1. Contacts API - for clients to manage contacts\
     \ in Bridge\n                    2. Conversations API - for managing conversations\
@@ -14,79 +15,80 @@ info:
     name: MIT
   version: 1.0.0
 servers:
-- url: https://api.bridge.new
-  description: Production server
-- url: https://sandbox.bridge.new
-  description: Sandbox server
+  - url: https://api-connect-us.bridge.new
+    description: Production server
 paths:
   /bridge/api/health:
     get:
       tags:
-      - health
+        - health
       summary: Health check
       operationId: health_bridge_api_health_get
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema: {}
       parameters:
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
   /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}:
     get:
       tags:
-      - Conversations API
+        - Conversations API
       summary: Get conversation by id
-      description: Gets a specific conversation by its unique identifier within the
+      description:
+        Gets a specific conversation by its unique identifier within the
         workspace
       operationId: get_conversation_by_id_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__get
       parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
           description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - name: conversationId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the conversation (UUID v4).
+            title: Conversationid
           description: Unique identifier of the conversation (UUID v4).
-          title: Conversationid
-        description: Unique identifier of the conversation (UUID v4).
-        example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+          example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConversationResponse'
-        '404':
+                $ref: "#/components/schemas/ConversationResponse"
+        "404":
           description: Not Found
           content:
             application/problem+json:
@@ -106,63 +108,65 @@ paths:
                     title: Conversation is not on selected workspace
                     status: 404
                     code: BRIDGE_CONVERSATION_0002 | CONVERSATION_IS_NOT_ON_WORKSPACE
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
     patch:
       tags:
-      - Conversations API
+        - Conversations API
       summary: Update conversation
-      description: Updates conversation details including participants, status, and
+      description:
+        Updates conversation details including participants, status, and
         name. Supports partial updates - only include the fields you want to change.
       operationId: update_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__patch
       parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
           description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - name: conversationId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the conversation (UUID v4).
+            title: Conversationid
           description: Unique identifier of the conversation (UUID v4).
-          title: Conversationid
-        description: Unique identifier of the conversation (UUID v4).
-        example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+          example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateConversation'
+              $ref: "#/components/schemas/UpdateConversation"
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConversationResponse'
-        '404':
+                $ref: "#/components/schemas/ConversationResponse"
+        "404":
           description: Not Found
           content:
             application/problem+json:
@@ -172,126 +176,130 @@ paths:
                     title: Conversation was not found
                     status: 404
                     code: BRIDGE_CONVERSATION_0001 | CONVERSATION_NOT_FOUND
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
   /bridge/api/v1/workspaces/{workspaceId}/conversations:
     get:
       tags:
-      - Conversations API
+        - Conversations API
       summary: Retrieve conversations with flexible filtering options
-      description: Retrieves conversations with flexible filtering options. Can search
+      description:
+        Retrieves conversations with flexible filtering options. Can search
         by external user identifiers (ID, email, phone) or internal participants,
         with support for pagination and status filtering.
       operationId: get_conversations_bridge_api_v1_workspaces__workspaceId__conversations_get
       parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
           description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          maximum: 100
-          minimum: 1
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            minimum: 1
+            description: Number of conversations per page
+            default: 20
+            title: Limit
           description: Number of conversations per page
-          default: 20
-          title: Limit
-        description: Number of conversations per page
-      - name: cursor
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            description: Cursor provided on before request to get next page
+            title: Cursor
           description: Cursor provided on before request to get next page
-          title: Cursor
-        description: Cursor provided on before request to get next page
-      - name: status
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Status
+        - name: status
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            title: Status
+            description: Conversation status
+            enum:
+              - ACTIVE
+              - GHOST
           description: Conversation status
-          enum:
-          - ACTIVE
-          - GHOST
-        description: Conversation status
-      - name: internalUserIdentifier
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Internaluseridentifier
-          description: Identifier of internal user, if you are sending a phone number
+        - name: internalUserIdentifier
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            title: Internaluseridentifier
+            description:
+              Identifier of internal user, if you are sending a phone number
+              take care to encode the request url (including params)
+          description:
+            Identifier of internal user, if you are sending a phone number
             take care to encode the request url (including params)
-        description: Identifier of internal user, if you are sending a phone number
-          take care to encode the request url (including params)
-      - name: internalUserIdentifierType
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Internaluseridentifiertype
-          enum:
-          - ID
-          - EMAIL
-      - name: externalUserIdentifier
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Externaluseridentifier
-      - name: externalUserIdentifierType
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Externaluseridentifiertype
-          enum:
-          - ID
-          - EMAIL
-          - PHONE
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+        - name: internalUserIdentifierType
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            title: Internaluseridentifiertype
+            enum:
+              - ID
+              - EMAIL
+        - name: externalUserIdentifier
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            title: Externaluseridentifier
+        - name: externalUserIdentifierType
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            title: Externaluseridentifiertype
+            enum:
+              - ID
+              - EMAIL
+              - PHONE
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConversationListResponse'
-        '404':
+                $ref: "#/components/schemas/ConversationListResponse"
+        "404":
           description: Not Found
           content:
             application/problem+json:
@@ -301,55 +309,57 @@ paths:
                     title: Workspace was not found
                     status: 404
                     code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
     post:
       tags:
-      - Conversations API
+        - Conversations API
       summary: Creates a new conversation with flexible user identification.
-      description: Creates a new conversation with flexible user identification. External
+      description:
+        Creates a new conversation with flexible user identification. External
         users can be identified by ID, email, or phone. Internal users are only assigned
         when explicitly specified; otherwise, conversations are auto-assigned by round-robin
         through a team or left open for any available internal user.
       operationId: create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post
       parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
           description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateConversationRequest'
+              $ref: "#/components/schemas/CreateConversationRequest"
       responses:
-        '201':
+        "201":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConversationResponse'
-        '404':
+                $ref: "#/components/schemas/ConversationResponse"
+        "404":
           description: Not Found
           content:
             application/problem+json:
@@ -359,53 +369,54 @@ paths:
                     title: Conversation was not found
                     status: 404
                     code: BRIDGE_CONVERSATION_0001 | CONVERSATION_NOT_FOUND
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
   /bridge/api/v1/workspaces/{workspaceId}/messages:
     post:
       tags:
-      - Messages API
+        - Messages API
       summary: Create a new message
       description: Creates a new message within a specified conversation.
       operationId: create_message_bridge_api_v1_workspaces__workspaceId__messages_post
       parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
           description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MessageRequest'
+              $ref: "#/components/schemas/MessageRequest"
       responses:
-        '201':
+        "201":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
-        '404':
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
           description: Not Found
           content:
             application/problem+json:
@@ -422,57 +433,58 @@ paths:
                     status: 404
                     code: MESSAGE_NOT_ON_CONVERSATION
                     detail: The message is not part of the specified conversation.
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
   /bridge/api/v1/workspaces/{workspaceId}/contacts/{contactId}:
     get:
       tags:
-      - Contacts API
+        - Contacts API
       summary: Retrieve a contact by ID
       description: Gets a specific contact by its unique identifier within the workspace
       operationId: retrieve_contact_by_id_bridge_api_v1_workspaces__workspaceId__contacts__contactId__get
       parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
           description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - name: contactId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the contact (UUID v4).
+            title: Contactid
           description: Unique identifier of the contact (UUID v4).
-          title: Contactid
-        description: Unique identifier of the contact (UUID v4).
-        example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+          example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
       responses:
-        '200':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContactResponse'
-        '404':
+                $ref: "#/components/schemas/ContactResponse"
+        "404":
           description: Not Found
           content:
             application/problem+json:
@@ -482,145 +494,158 @@ paths:
                     title: External user was not found
                     status: 404
                     code: BRIDGE_EXTERNAL_0001 | EXTERNAL_USER_NOT_FOUND
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /bridge/api/v1/workspaces/{workspaceId}/contacts:
-    get:
+                $ref: "#/components/schemas/HTTPValidationError"
+    patch:
       tags:
-      - Contacts API
-      summary: List contacts with filtering and pagination
-      description: Retrieves a paginated list of contacts within the workspace with
-        optional filtering by owner, search terms, and custom attributes.
-      operationId: get_contacts_bridge_api_v1_workspaces__workspaceId__contacts_get
-      parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - name: ownerEmail
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Owneremail
-          description: Filter contacts by owner email address
-        description: Filter contacts by owner email address
-      - name: search
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Search
-          description: Search contacts by name, email, or cellphone
-          example: John Doe
-        description: Search contacts by name, email, or cellphone
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          maximum: 100
-          minimum: 1
-          description: Number of contacts per page
-          default: 20
-          title: Limit
-        description: Number of contacts per page
-      - name: cursor
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Cursor provided on before request to get next page
-          title: Cursor
-        description: Cursor provided on before request to get next page
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactsResponseList'
-        '404':
-          description: Not Found
-          content:
-            application/problem+json:
-              examples:
-                WORKSPACE_NOT_FOUND:
-                  value:
-                    title: Workspace was not found
-                    status: 404
-                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    post:
-      tags:
-      - Contacts API
-      summary: Create a new contact
+        - Contacts API
+      summary: Update contact
       description: Creates a new contact in the specified workspace
-      operationId: create_contact_bridge_api_v1_workspaces__workspaceId__contacts_post
+      operationId: update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contactId__patch
       parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
           description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the contact (UUID v4).
+            title: Contactid
+          description: Unique identifier of the contact (UUID v4).
+          example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateContactBody'
+              $ref: "#/components/schemas/UpdateContactBody"
       responses:
-        '201':
+        "200":
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContactResponse'
-        '404':
+                $ref: "#/components/schemas/ContactResponse"
+        "404":
+          description: Not Found
+          content:
+            application/problem+json:
+              examples:
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External user was not found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001 | EXTERNAL_USER_NOT_FOUND
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+  /bridge/api/v1/workspaces/{workspaceId}/contacts:
+    get:
+      tags:
+        - Contacts API
+      summary: List contacts with filtering and pagination
+      description:
+        Retrieves a paginated list of contacts within the workspace with
+        optional filtering by owner, search terms, and custom attributes.
+      operationId: get_contacts_bridge_api_v1_workspaces__workspaceId__contacts_get
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
+          description: Unique identifier of the workspace (UUID v4).
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - name: ownerEmail
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            title: Owneremail
+            description: Filter contacts by owner email address
+          description: Filter contacts by owner email address
+        - name: search
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            title: Search
+            description: Search contacts by name, email, or cellphone
+            example: John Doe
+          description: Search contacts by name, email, or cellphone
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            minimum: 1
+            description: Number of contacts per page
+            default: 20
+            title: Limit
+          description: Number of contacts per page
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            description: Cursor provided on before request to get next page
+            title: Cursor
+          description: Cursor provided on before request to get next page
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
+      responses:
+        "200":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactsResponseList"
+        "404":
           description: Not Found
           content:
             application/problem+json:
@@ -630,21 +655,90 @@ paths:
                     title: Workspace was not found
                     status: 404
                     code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
+    post:
+      tags:
+        - Contacts API
+      summary: Create a new contact
+      description: Creates a new contact in the specified workspace
+      operationId: create_contact_bridge_api_v1_workspaces__workspaceId__contacts_post
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
+          description: Unique identifier of the workspace (UUID v4).
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactBody"
+      responses:
+        "201":
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactResponse"
+        "404":
+          description: Not Found
+          content:
+            application/problem+json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace was not found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+        "422":
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
   /bridge/api/v1/workspaces/{workspaceId}/files:
     post:
       tags:
-      - Files API
+        - Files API
       summary: Create presigned uploads for files
-      description: 'Generates presigned URLs to upload files (Presigned PUT). Validates
+      description:
+        "Generates presigned URLs to upload files (Presigned PUT). Validates
         extension, contentType, and type-specific limits. Checksum required: send
         SHA-256 digest in checksumBase64 (Base64). Upload must include header x-amz-checksum-sha256
         with the same value.
+
+
+        ---
+
+        To upload your files, you MUST use the returned presigned URL with the HTTP
+        PUT method. Ensure that you upload the file exactly to the URL indicated,
+        without modifications (as required by AWS S3 Presigned URL PUT usage). Refer
+        to the official AWS S3 documentation on Presigned PUT URLs for details: https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html.
+
+        Be sure to include all required headers as specified in the response (e.g.,
+        'x-amz-checksum-sha256' with the correct SHA-256 value). If you fail to
+        use the correct HTTP method or headers, AWS will reject the upload request.
 
 
         | Type | Supported Extensions | Content Types | Max Size |
@@ -664,28 +758,29 @@ paths:
         application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/pdf,
         application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation,
         text/plain, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-        | 100 MB |'
+        | 100 MB |"
       operationId: create_preloaded_files_bridge_api_v1_workspaces__workspaceId__files_post
       parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Unique identifier of the workspace (UUID v4).
+            title: Workspaceid
           description: Unique identifier of the workspace (UUID v4).
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: This header must include your API credentials encoded in Base64
-          format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-          encode the resulting string using Base64
-        schema:
-          type: string
-          format: Base64(api-key-id:api-key-secret)
+          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+        - in: header
+          name: x-api-key
+          required: true
+          description:
+            This header must include your API credentials encoded in Base64
+            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
+            encode the resulting string using Base64
+          schema:
+            type: string
+            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
@@ -693,299 +788,304 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/PreloadedFileRequest'
+                $ref: "#/components/schemas/PreloadedFileRequest"
               title: Preloaded Files
       responses:
-        '201':
+        "201":
           description: Successful Response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PreloadedFileResponse'
-                title: Response Create Preloaded Files Bridge Api V1 Workspaces  Workspaceid  Files
+                  $ref: "#/components/schemas/PreloadedFileResponse"
+                title:
+                  Response Create Preloaded Files Bridge Api V1 Workspaces  Workspaceid  Files
                   Post
-        '422':
+        "422":
           description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: "#/components/schemas/HTTPValidationError"
 components:
   schemas:
     ContactResponse:
       properties:
         id:
           type: string
-          title: ''
+          title: ""
           description: Unique identifier for the contact (UUID v4).
           example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         workspaceId:
           type: string
-          title: ''
+          title: ""
           description: Unique identifier of the workspace this contact belongs to
         firstName:
           type: string
-          title: ''
+          title: ""
           description: Contact's first name
         lastName:
           type: string
-          title: ''
+          title: ""
           description: Contact's last name
         email:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Contact's email address
         cellphone:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Contact's cellphone address
         customAttributes:
           items:
-            $ref: '#/components/schemas/CustomAttributeResponse'
+            $ref: "#/components/schemas/CustomAttributeResponse"
           type: array
-          title: ''
+          title: ""
           description: Array of custom key-value attributes
         languageCode:
-          $ref: '#/components/schemas/LanguageCode'
-          title: ''
+          $ref: "#/components/schemas/LanguageCode"
+          title: ""
           description: Language code from external user
         ownerId:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Email address of the salesperson or user who owns this contact
         createdAt:
           type: string
           format: date-time
-          title: ''
+          title: ""
           description: Timestamp when the contact was created
-          example: '2025-09-19T18:25:43Z'
+          example: "2025-09-19T18:25:43Z"
         updatedAt:
           type: string
           format: date-time
-          title: ''
+          title: ""
           description: Timestamp when the contact was last updated
-          example: '2025-09-19T18:25:43Z'
+          example: "2025-09-19T18:25:43Z"
       type: object
       required:
-      - id
-      - workspaceId
-      - firstName
-      - lastName
-      - languageCode
-      - createdAt
-      - updatedAt
+        - id
+        - workspaceId
+        - firstName
+        - lastName
+        - languageCode
+        - createdAt
+        - updatedAt
       title: ContactResponse
     ContactsResponseList:
       properties:
         contacts:
           items:
-            $ref: '#/components/schemas/ContactResponse'
+            $ref: "#/components/schemas/ContactResponse"
           type: array
-          title: ''
+          title: ""
           description: Array of contacts
           example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         cursor:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Cursor to be send on next page
       type: object
       required:
-      - contacts
+        - contacts
       title: ContactsResponseList
     ConversationListResponse:
       properties:
         conversations:
           items:
-            $ref: '#/components/schemas/ConversationResponse'
+            $ref: "#/components/schemas/ConversationResponse"
           type: array
           title: Conversations
         cursor:
           anyOf:
-          - type: string
-          - type: 'null'
+            - type: string
+            - type: "null"
           title: Cursor
       type: object
       required:
-      - conversations
-      - cursor
+        - conversations
+        - cursor
       title: ConversationListResponse
     ConversationParticipantsResponse:
       properties:
         externals:
           items:
-            $ref: '#/components/schemas/Participant'
+            $ref: "#/components/schemas/Participant"
           type: array
           title: Participants
           description: List of external participants.
         internals:
           items:
-            $ref: '#/components/schemas/Participant'
+            $ref: "#/components/schemas/Participant"
           type: array
           title: Participants
           description: List of internal participants.
       type: object
       required:
-      - externals
-      - internals
+        - externals
+        - internals
       title: ConversationParticipantsResponse
     ConversationResponse:
       properties:
         id:
           type: string
-          title: ''
+          title: ""
           description: Unique identifier of the conversation (UUID v4).
           example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         workspaceId:
           type: string
-          title: ''
+          title: ""
           description: Unique identifier of the workspace (UUID v4).
           example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         participants:
-          $ref: '#/components/schemas/ConversationParticipantsResponse'
+          $ref: "#/components/schemas/ConversationParticipantsResponse"
           title: Participants structure
           description: Participants of the conversation.
         name:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Optional name/title for the conversation
           example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         status:
           anyOf:
-          - $ref: '#/components/schemas/ConversationStatus'
-          - type: 'null'
-          title: ''
-          description: Current conversation status - 'ACTIVE' for visible conversations,
+            - $ref: "#/components/schemas/ConversationStatus"
+            - type: "null"
+          title: ""
+          description:
+            Current conversation status - 'ACTIVE' for visible conversations,
             'GHOST' for invisible until first interaction
           example: ACTIVE
         createdAt:
           type: string
           format: date-time
-          title: ''
+          title: ""
           description: Timestamp when the conversation was created
-          example: '2025-09-19T18:25:43Z'
+          example: "2025-09-19T18:25:43Z"
         updatedAt:
           type: string
           format: date-time
-          title: ''
+          title: ""
           description: Timestamp when the conversation was last updated
-          example: '2025-09-19T18:25:43Z'
+          example: "2025-09-19T18:25:43Z"
       type: object
       required:
-      - id
-      - workspaceId
-      - participants
-      - createdAt
-      - updatedAt
+        - id
+        - workspaceId
+        - participants
+        - createdAt
+        - updatedAt
       title: ConversationResponse
     ConversationStatus:
       type: string
       enum:
-      - ACTIVE
-      - GHOST
+        - ACTIVE
+        - GHOST
       title: ConversationStatus
     CreateContactBody:
       properties:
         firstName:
           type: string
-          title: ''
+          title: ""
           description: Contact's first name
         lastName:
           type: string
-          title: ''
+          title: ""
           description: Contact's last name
         email:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Contact's email address (optional)
         languageCode:
-          $ref: '#/components/schemas/LanguageCode'
-          title: ''
+          $ref: "#/components/schemas/LanguageCode"
+          title: ""
           description: Contact's language code
           example: EN
         cellphone:
           type: string
-          title: ''
+          title: ""
           description: Contact's cellphone number
         ownerEmail:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Email address of the salesperson or user who owns this contact
         customAttributes:
           items: {}
           type: array
-          title: ''
+          title: ""
           description: Array of custom key-value attributes
       additionalProperties: false
       type: object
       required:
-      - firstName
-      - lastName
-      - languageCode
-      - cellphone
+        - firstName
+        - lastName
+        - languageCode
+        - cellphone
       title: CreateContactBody
     CreateConversationRequest:
       properties:
         participants:
-          $ref: '#/components/schemas/CreateParticipantsOnConversationRequest'
-          title: ''
+          $ref: "#/components/schemas/CreateParticipantsOnConversationRequest"
+          title: ""
           description: Participants to add to conversation
         name:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Optional name/title for the conversation
           example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         status:
-          $ref: '#/components/schemas/ConversationStatus'
-          title: ''
-          description: Initial conversation status - 'active' for visible conversations,
+          $ref: "#/components/schemas/ConversationStatus"
+          title: ""
+          description:
+            Initial conversation status - 'active' for visible conversations,
             'ghost' for invisible until first interaction
           default: ACTIVE
           example: ACTIVE
         teamId:
           anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: ''
-          description: Team UUID for round-robin assignment (optional, mutually exclusive
+            - type: string
+              format: uuid
+            - type: "null"
+          title: ""
+          description:
+            Team UUID for round-robin assignment (optional, mutually exclusive
             with internalParticipants)
       additionalProperties: false
       type: object
       required:
-      - participants
+        - participants
       title: CreateConversationRequest
     CreateParticipantsOnConversationRequest:
       properties:
         externals:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: "#/components/schemas/UserIdentifierRequest"
           type: array
-          title: ''
+          title: ""
           description: Array of external user identifiers
         internals:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: "#/components/schemas/UserIdentifierRequest"
           type: array
-          title: ''
-          description: Array of internal user identifiers (optional, mutually exclusive
+          title: ""
+          description:
+            Array of internal user identifiers (optional, mutually exclusive
             with teamId)
       type: object
       title: CreateParticipantsOnConversationRequest
@@ -993,48 +1093,48 @@ components:
       properties:
         key:
           type: string
-          title: ''
+          title: ""
           description: Attribute key/name
         values:
           items:
             type: string
           type: array
-          title: ''
+          title: ""
           description: Attribute value
       type: object
       required:
-      - key
+        - key
       title: CustomAttributeResponse
     ExternalOperationRequest:
       properties:
         add:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: "#/components/schemas/UserIdentifierRequest"
           type: array
-          title: ''
+          title: ""
           description: External participants to add
         remove:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: "#/components/schemas/UserIdentifierRequest"
           type: array
-          title: ''
+          title: ""
           description: External participants to remove
       type: object
       title: ExternalOperationRequest
     FileType:
       type: string
       enum:
-      - IMAGE
-      - VIDEO
-      - AUDIO
-      - DOCUMENT
-      - STICKER
+        - IMAGE
+        - VIDEO
+        - AUDIO
+        - DOCUMENT
+        - STICKER
       title: FileType
     HTTPValidationError:
       properties:
         detail:
           items:
-            $ref: '#/components/schemas/ValidationError'
+            $ref: "#/components/schemas/ValidationError"
           type: array
           title: Detail
       type: object
@@ -1043,130 +1143,132 @@ components:
       properties:
         add:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: "#/components/schemas/UserIdentifierRequest"
           type: array
-          title: ''
+          title: ""
           description: Internal participants to add
         remove:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: "#/components/schemas/UserIdentifierRequest"
           type: array
-          title: ''
+          title: ""
           description: Internal participants to remove
       type: object
       title: InternalOperationRequest
     LanguageCode:
       type: string
       enum:
-      - ES
-      - EN
+        - ES
+        - EN
       title: LanguageCode
     MessageRequest:
       properties:
         conversationId:
           type: string
-          title: ''
+          title: ""
           description: ID of the conversation
         messageBody:
           type: string
-          title: ''
+          title: ""
           description: Body of the message
         replyToMessageId:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: ID of the message being replied to
         enableExternalBroadcast:
           type: boolean
-          title: ''
+          title: ""
           description: Flag to enable external broadcast
         mediaIds:
           anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: ''
+            - items:
+                type: string
+              type: array
+            - type: "null"
+          title: ""
           description: List of media IDs associated with the message
       type: object
       required:
-      - conversationId
-      - messageBody
-      - enableExternalBroadcast
+        - conversationId
+        - messageBody
+        - enableExternalBroadcast
       title: MessageRequest
     MessageResponse:
       properties:
         messagingProduct:
           type: string
-          title: ''
+          title: ""
           description: Product name, e.g., bridge
           default: bridge
         messageId:
           type: string
-          title: ''
+          title: ""
           description: Unique message identifier as a UUID string
       type: object
       required:
-      - messageId
+        - messageId
       title: MessageResponse
     Participant:
       properties:
         identifier:
           type: string
-          title: ''
+          title: ""
           description: Participant identifier value
         identifierType:
-          $ref: '#/components/schemas/ParticipantIdentifierType'
-          title: ''
+          $ref: "#/components/schemas/ParticipantIdentifierType"
+          title: ""
           description: Type of identifier
         role:
-          $ref: '#/components/schemas/UserType'
-          title: ''
+          $ref: "#/components/schemas/UserType"
+          title: ""
           description: Participant role in the conversation
         joinedAt:
           type: string
           format: date-time
-          title: ''
+          title: ""
           description: Timestamp when participant joined the conversation
-          example: '2025-09-19T18:25:43Z'
+          example: "2025-09-19T18:25:43Z"
         lastSeenAt:
           anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: ''
+            - type: string
+              format: date-time
+            - type: "null"
+          title: ""
           description: Timestamp when participant was last seen
-          example: '2025-09-19T18:25:43Z'
+          example: "2025-09-19T18:25:43Z"
       type: object
       required:
-      - identifier
-      - identifierType
-      - role
-      - joinedAt
+        - identifier
+        - identifierType
+        - role
+        - joinedAt
       title: Participant
     ParticipantIdentifierType:
       type: string
       enum:
-      - ID
-      - EMAIL
-      - PHONE
+        - ID
+        - EMAIL
+        - PHONE
       title: ParticipantIdentifierType
     ParticipantOperationsRequest:
       properties:
         externals:
           anyOf:
-          - $ref: '#/components/schemas/ExternalOperationRequest'
-          - type: 'null'
-          title: ''
-          description: External user operations, this should provided with "add" and
+            - $ref: "#/components/schemas/ExternalOperationRequest"
+            - type: "null"
+          title: ""
+          description:
+            External user operations, this should provided with "add" and
             "remove" operations
         internals:
           anyOf:
-          - $ref: '#/components/schemas/InternalOperationRequest'
-          - type: 'null'
-          title: ''
-          description: Internal user operations, this should provided with "add" and
+            - $ref: "#/components/schemas/InternalOperationRequest"
+            - type: "null"
+          title: ""
+          description:
+            Internal user operations, this should provided with "add" and
             "remove" operations
       type: object
       title: ParticipantOperationsRequest
@@ -1174,64 +1276,65 @@ components:
       properties:
         name:
           type: string
-          title: ''
+          title: ""
           description: Original file name including extension
           example: prueba.jpg
         fileType:
-          $ref: '#/components/schemas/FileType'
-          title: ''
+          $ref: "#/components/schemas/FileType"
+          title: ""
           description: Logical file type category
           example: IMAGE
         contentType:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: MIME type of the file (e.g., image/jpeg)
           example: image/jpeg
         checksumBase64:
           type: string
-          title: ''
-          description: Base64-encoded SHA-256 digest of the entire file. This value
+          title: ""
+          description:
+            Base64-encoded SHA-256 digest of the entire file. This value
             will be used to sign the presigned PUT and must be sent back in the header
             x-amz-checksum-sha256 during upload.
           example: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
       additionalProperties: false
       type: object
       required:
-      - name
-      - fileType
-      - checksumBase64
+        - name
+        - fileType
+        - checksumBase64
       title: PreloadedFileRequest
       examples:
-      - checksumBase64: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
-        contentType: image/jpeg
-        fileType: IMAGE
-        name: prueba.jpg
+        - checksumBase64: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
+          contentType: image/jpeg
+          fileType: IMAGE
+          name: prueba.jpg
     PreloadedFileResponse:
       properties:
         mediaId:
           type: string
-          title: ''
+          title: ""
           description: Unique media identifier
         presignUrl:
-          $ref: '#/components/schemas/PresignPut'
-          title: ''
+          $ref: "#/components/schemas/PresignPut"
+          title: ""
           description: Presigned PUT data to upload the media (url, method and headers)
       additionalProperties: false
       type: object
       required:
-      - mediaId
-      - presignUrl
+        - mediaId
+        - presignUrl
       title: PreloadedFileResponse
       examples:
-      - mediaId: 4a2c1f7e-2f84-4a5f-bd2d-6b6b2f0c1234
-        presignUrl:
-          headers:
-            Content-Type: image/jpeg
-            x-amz-checksum-sha256: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
-          method: PUT
-          url: https://s3.amazonaws.com/bucket/path/to/object
+        - mediaId: 4a2c1f7e-2f84-4a5f-bd2d-6b6b2f0c1234
+          presignUrl:
+            headers:
+              Content-Type: image/jpeg
+              x-amz-checksum-sha256: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
+            method: PUT
+            url: https://s3.amazonaws.com/bucket/path/to/object
     PresignPut:
       properties:
         url:
@@ -1249,36 +1352,83 @@ components:
             type: string
           type: object
           title: Headers
-          description: Headers required for the presigned PUT (e.g., Content-Type,
+          description:
+            Headers required for the presigned PUT (e.g., Content-Type,
             x-amz-checksum-sha256)
       type: object
       required:
-      - url
+        - url
       title: PresignPut
+    UpdateContactBody:
+      properties:
+        firstName:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: ""
+          description: Contact's first name
+        lastName:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: ""
+          description: Contact's last name
+        email:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: ""
+          description: Contact's email address
+        languageCode:
+          anyOf:
+            - $ref: "#/components/schemas/LanguageCode"
+            - type: "null"
+          enum:
+            - ES
+            - EN
+          title: ""
+          description: Contact's language code
+          example: EN
+        cellphone:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: ""
+          description: Contact's cellphone number
+        ownerEmail:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: ""
+          description: Email address of the salesperson or user who owns this contact
+      additionalProperties: false
+      type: object
+      title: UpdateContactBody
     UpdateConversation:
       properties:
         name:
           anyOf:
-          - type: string
-          - type: 'null'
-          title: ''
+            - type: string
+            - type: "null"
+          title: ""
           description: Optional name/title for the conversation
         status:
           anyOf:
-          - $ref: '#/components/schemas/ConversationStatus'
-          - type: 'null'
+            - $ref: "#/components/schemas/ConversationStatus"
+            - type: "null"
           enum:
-          - ACTIVE
-          - GHOST
-          title: ''
-          description: Initial conversation status - 'active' for visible conversations,
+            - ACTIVE
+            - GHOST
+          title: ""
+          description:
+            Initial conversation status - 'active' for visible conversations,
             'ghost' for invisible until first interaction
           example: ACTIVE
         participants:
           anyOf:
-          - $ref: '#/components/schemas/ParticipantOperationsRequest'
-          - type: 'null'
-          title: ''
+            - $ref: "#/components/schemas/ParticipantOperationsRequest"
+            - type: "null"
+          title: ""
           description: Participants operations to add and remove from a conversation
       additionalProperties: false
       type: object
@@ -1287,30 +1437,30 @@ components:
       properties:
         identifier:
           type: string
-          title: ''
+          title: ""
           description: User identifier value (ID, email, or phone number)
         identifierType:
-          $ref: '#/components/schemas/ParticipantIdentifierType'
-          title: ''
+          $ref: "#/components/schemas/ParticipantIdentifierType"
+          title: ""
           description: Type of identifier
       type: object
       required:
-      - identifier
-      - identifierType
+        - identifier
+        - identifierType
       title: UserIdentifierRequest
     UserType:
       type: string
       enum:
-      - INTERNAL
-      - EXTERNAL
+        - INTERNAL
+        - EXTERNAL
       title: UserType
     ValidationError:
       properties:
         loc:
           items:
             anyOf:
-            - type: string
-            - type: integer
+              - type: string
+              - type: integer
           type: array
           title: Location
         msg:
@@ -1321,7 +1471,7 @@ components:
           title: Error Type
       type: object
       required:
-      - loc
-      - msg
-      - type
+        - loc
+        - msg
+        - type
       title: ValidationError
