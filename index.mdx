@@ -1,46 +1,21 @@
 ---
-title: "Bridge REST API & Webhooks"
-description: "Bridge is a unified communications platform that centralizes conversations from multiple channels — such as WhatsApp Business, email, phone calls, OTA chats, and web forms — into one single collaborative interface.  Through this website, developers can integrate Bridge with other systems such as automation platforms, CRMs, lead management tools, and custom SaaS applications, enabling seamless data exchange and synchronized workflows between Bridge and their existing technology stack."
+title: "Bridge API & Webhooks"
+description: "Bridge is a unified communications platform that centralizes conversations from multiple channels — such as WhatsApp Business, email, phone calls, OTA chats, and web forms — into one collaborative interface.
+Through this website, developers can integrate Bridge with other systems such as automation platforms, CRMs, lead management tools, and custom SaaS applications, enabling seamless data exchange and synchronized workflows between Bridge and their existing technology stack."
 ---
 
-### **Why use our API or Webhooks?**
+### **Comprehensive Guide for CRM and Platform Integration**
 
-The Bridge API and Webhooks enable seamless, bidirectional integration between Bridge and your internal systems, CRM or any other business systems. This means your platforms can both:
+The Bridge API and Webhooks enable seamless, bidirectional integration between Bridge and your CRM or other business systems. This means your platform can both:
 
-<Icon icon="code" iconType="solid" color="#2563EB" /> **Push data into Bridge / REST API** — Send structured data from your system (e.g. CRM or automation platform) directly into Bridge.
+- Push data into Bridge — for example, sending contact details, messages, create new conversations, or lead updates from your CRM so they appear instantly in Bridge or allow your Bridge users to be connected immediately with your customers.
+- Receive data from Bridge — for example, when a new conversation or contact is created / updated, Bridge can send event notifications (webhooks) back to your system in real time. This will allow you to have your CRM up to date.
 
-You can use this to:
-
-- Create or update contacts and leads
-- Post messages or trigger new conversations
-- Sync lead status or activity updates in real time
-
-This ensures that any changes or new interactions from your CRM appear instantly inside Bridge, allowing Bridge users to immediately engage with your customers.
-
-<Icon icon="webhook" iconType="solid" color="#2563EB" /> **Receive data from Bridge / Webhooks** — Bridge can send real-time event notifications (via webhooks) to your system whenever key actions occur, such as when a new contact or conversation is created or updated.
-
-By subscribing to these webhook events, your CRM or external system can stay automatically synchronized with Bridge — ensuring your contact and conversation data is always up to date.
-
-## Next steps:
-
-<Steps>
-  <Step title="Authentication" icon="shield-check" iconType="regular" stepNumber={1} titleSize="h3">
-    How to get your developer credentials. [Click here](credentials)
-
-    <Note>
-      You will need access to Bridge's admin console  in https://admin.bridge.new.
-
-      If you don't have one, please ask your Bridge Admin to create you a user.
-    </Note>
-  </Step>
-  <Step title="Code" icon="code" iconType="solid" stepNumber={2} titleSize="h3">
-    Go straight to the documentation by clicking the cards below:
-
-    <Card title="REST API" icon="code" iconType="solid" href="/api-reference">
-      Send structured data from your system (e.g. CRM or automation platform) directly into Bridge via a REST API.
-    </Card>
-    <Card title="WebHooks" icon="webhook" iconType="solid" href="/api-reference">
-      Bridge can send real-time event notifications (via webhooks) to your system whenever key actions occur, such as when a new contact or conversation is created or updated.
-    </Card>
-  </Step>
-</Steps>
+<CardGroup cols={2}>
+  <Card title="REST API" icon="code" href="/api-reference">
+    **Contact event push into bridge** - Create, read, update, and delete contacts with full CRUD operations via API REST
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api-reference/events-webhooks-outbound-from-bridge/receive-bridge-event-notifications">
+    **Real-time Events from Bridge to your CRM** - Receive instant notifications when events occur in Bridge to maintain your CRM up to date.
+  </Card>
+</CardGroup>
