@@ -35,13 +35,12 @@ By subscribing to these webhook events, your CRM or external system can stay aut
       Please note that an Administrator at the Bridge Console should give you access to the console or generate the Key for you.
     </Note>
   </Step>
+  <Step title="View the documentation" icon="code" iconType="solid" stepNumber={2}>
+    <Card title="REST API" icon="code" color="#2563EB" href="api-reference">
+      Access Bridge data programmatically using REST endpoints to create, update, and retrieve contacts, conversations, and messages.
+    </Card>
+    <Card title="Webhooks" icon="webhook">
+      Stay synced with Bridge through webhooks that send instant updates about new or changed contacts and conversations.
+    </Card>
+  </Step>
 </Steps>
-
-<CardGroup cols={2}>
-  <Card title="REST API" icon="code" href="/api-reference">
-    **Contact event push into bridge** - Create, read, update, and delete contacts with full CRUD operations via API REST
-  </Card>
-  <Card title="Webhooks" icon="webhook" href="/api-reference/events-webhooks-outbound-from-bridge/receive-bridge-event-notifications">
-    **Real-time Events from Bridge to your CRM** - Receive instant notifications when events occur in Bridge to maintain your CRM up to date.
-  </Card>
-</CardGroup>
