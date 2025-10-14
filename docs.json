@@ -18,7 +18,7 @@
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "REST API",
         "openapi": "api-reference/openapi.yaml"
       }
     ]
