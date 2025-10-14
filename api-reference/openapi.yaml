@@ -488,69 +488,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HTTPValidationError"
-    patch:
-      tags:
-        - Contacts API
-      summary: Update contact
-      description: Creates a new contact in the specified workspace
-      operationId: update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contactId__patch
-      parameters:
-        - name: workspaceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: Unique identifier of the workspace (UUID v4).
-            title: Workspaceid
-          description: Unique identifier of the workspace (UUID v4).
-          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-        - name: contactId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: Unique identifier of the contact (UUID v4).
-            title: Contactid
-          description: Unique identifier of the contact (UUID v4).
-          example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-        - in: header
-          name: x-api-key
-          required: true
-          description: Copy the API key as provided by the Bridge Console.
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateContactBody"
-      responses:
-        "200":
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ContactResponse"
-        "404":
-          description: Not Found
-          content:
-            application/problem+json:
-              examples:
-                EXTERNAL_USER_NOT_FOUND:
-                  value:
-                    title: External user was not found
-                    status: 404
-                    code: BRIDGE_EXTERNAL_0001 | EXTERNAL_USER_NOT_FOUND
-        "422":
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPValidationError"
   /bridge/api/v1/workspaces/{workspaceId}/contacts:
     get:
       tags:
