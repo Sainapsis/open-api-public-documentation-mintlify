@@ -68,13 +68,7 @@ paths:
         - in: header
           name: x-api-key
           required: true
-          description:
-            This header must include your API credentials encoded in Base64
-            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-            encode the resulting string using Base64
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
+          description: Copy the API key as provided by the Bridge Console.
       responses:
         "200":
           description: Successful Response
@@ -140,13 +134,7 @@ paths:
         - in: header
           name: x-api-key
           required: true
-          description:
-            This header must include your API credentials encoded in Base64
-            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-            encode the resulting string using Base64
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
+          description: Copy the API key as provided by the Bridge Console.
       requestBody:
         required: true
         content:
@@ -279,13 +267,7 @@ paths:
         - in: header
           name: x-api-key
           required: true
-          description:
-            This header must include your API credentials encoded in Base64
-            format.Concatenate the api-key-id and api-key-secret with a colon (:), then
-            encode the resulting string using Base64
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
+          description: Copy the API key as provided by the Bridge Console.
       responses:
         "200":
           description: Successful Response
@@ -453,9 +435,6 @@ paths:
           name: x-api-key
           required: true
           description: Copy the API key as provided by the Bridge Console.
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
       responses:
         "200":
           description: Successful Response
@@ -545,9 +524,6 @@ paths:
           name: x-api-key
           required: true
           description: Copy the API key as provided by the Bridge Console.
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
       responses:
         "200":
           description: Successful Response
