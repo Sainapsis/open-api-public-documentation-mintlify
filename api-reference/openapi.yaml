@@ -35,9 +35,6 @@ paths:
           name: x-api-key
           required: true
           description: Copy the API key as provided by the Bridge Console.
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
   /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}:
     get:
       tags:
@@ -337,9 +334,6 @@ paths:
           name: x-api-key
           required: true
           description: Copy the API key as provided by the Bridge Console.
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
@@ -391,9 +385,6 @@ paths:
           name: x-api-key
           required: true
           description: Copy the API key as provided by the Bridge Console.
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
@@ -601,9 +592,6 @@ paths:
           name: x-api-key
           required: true
           description: Copy the API key as provided by the Bridge Console.
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
@@ -692,9 +680,6 @@ paths:
           name: x-api-key
           required: true
           description: Copy the API key as provided by the Bridge Console.
-          schema:
-            type: string
-            format: Base64(api-key-id:api-key-secret)
       requestBody:
         required: true
         content:
