@@ -1273,51 +1273,6 @@ components:
       required:
         - url
       title: PresignPut
-    UpdateContactBody:
-      properties:
-        firstName:
-          anyOf:
-            - type: string
-            - type: "null"
-          title: ""
-          description: Contact's first name
-        lastName:
-          anyOf:
-            - type: string
-            - type: "null"
-          title: ""
-          description: Contact's last name
-        email:
-          anyOf:
-            - type: string
-            - type: "null"
-          title: ""
-          description: Contact's email address
-        languageCode:
-          anyOf:
-            - $ref: "#/components/schemas/LanguageCode"
-            - type: "null"
-          enum:
-            - ES
-            - EN
-          title: ""
-          description: Contact's language code
-          example: EN
-        cellphone:
-          anyOf:
-            - type: string
-            - type: "null"
-          title: ""
-          description: Contact's cellphone number
-        ownerEmail:
-          anyOf:
-            - type: string
-            - type: "null"
-          title: ""
-          description: Email address of the salesperson or user who owns this contact
-      additionalProperties: false
-      type: object
-      title: UpdateContactBody
     UpdateConversation:
       properties:
         name:
