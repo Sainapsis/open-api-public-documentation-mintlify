@@ -800,17 +800,36 @@ components:
       - conversations
       - cursor
       title: ConversationListResponse
-    ConversationParticipantsResponse:
+    ConversationParticipantsResponse-Input:
       properties:
         externals:
           items:
-            $ref: '#/components/schemas/Participant'
+            $ref: '#/components/schemas/ExternalParticipant'
           type: array
           title: Participants
           description: List of external participants.
         internals:
           items:
-            $ref: '#/components/schemas/Participant'
+            $ref: '#/components/schemas/InternalParticipant'
+          type: array
+          title: Participants
+          description: List of internal participants.
+      type: object
+      required:
+      - externals
+      - internals
+      title: ConversationParticipantsResponse
+    ConversationParticipantsResponse-Output:
+      properties:
+        externals:
+          items:
+            $ref: '#/components/schemas/ExternalParticipant'
+          type: array
+          title: Participants
+          description: List of external participants.
+        internals:
+          items:
+            $ref: '#/components/schemas/InternalParticipant'
           type: array
           title: Participants
           description: List of internal participants.
@@ -832,7 +851,7 @@ components:
           description: Unique identifier of the workspace (UUID v4).
           example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         participants:
-          $ref: '#/components/schemas/ConversationParticipantsResponse'
+          $ref: '#/components/schemas/ConversationParticipantsResponse-Output'
           title: Participants structure
           description: Participants of the conversation.
         name:
@@ -957,13 +976,13 @@ components:
       properties:
         externals:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
           title: ''
           description: Array of external user identifiers
         internals:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
           title: ''
           description: Array of internal user identifiers (optional, mutually exclusive
@@ -1002,6 +1021,65 @@ components:
           description: External participants to remove
       type: object
       title: ExternalOperationRequest
+    ExternalParticipant:
+      properties:
+        identifier:
+          type: string
+          title: ''
+          description: Participant identifier value
+        identifierType:
+          type: string
+          enum:
+          - ID
+          - EMAIL
+          - PHONE
+          title: ''
+          description: Type of identifier for external participants (ID, EMAIL, or
+            PHONE)
+        role:
+          $ref: '#/components/schemas/UserType'
+          title: ''
+          description: Participant role in the conversation
+        joinedAt:
+          type: string
+          format: date-time
+          title: ''
+          description: Timestamp when participant joined the conversation
+          example: '2025-09-19T18:25:43Z'
+        lastSeenAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: ''
+          description: Timestamp when participant was last seen
+          example: '2025-09-19T18:25:43Z'
+      type: object
+      required:
+      - identifier
+      - identifierType
+      - role
+      - joinedAt
+      title: Participant
+    ExternalUserIdentifierRequest:
+      properties:
+        identifier:
+          type: string
+          title: ''
+          description: User identifier value
+        identifierType:
+          type: string
+          enum:
+          - ID
+          - EMAIL
+          - PHONE
+          title: ''
+          description: Type of identifier for external users (ID, EMAIL or PHONE)
+      type: object
+      required:
+      - identifier
+      - identifierType
+      title: ExternalUserIdentifierRequest
     FileType:
       type: string
       enum:
@@ -1036,6 +1114,62 @@ components:
           description: Internal participants to remove
       type: object
       title: InternalOperationRequest
+    InternalParticipant:
+      properties:
+        identifier:
+          type: string
+          title: ''
+          description: Participant identifier value
+        identifierType:
+          type: string
+          enum:
+          - ID
+          - EMAIL
+          title: ''
+          description: Type of identifier for internal participants (ID or EMAIL)
+        role:
+          $ref: '#/components/schemas/UserType'
+          title: ''
+          description: Participant role in the conversation
+        joinedAt:
+          type: string
+          format: date-time
+          title: ''
+          description: Timestamp when participant joined the conversation
+          example: '2025-09-19T18:25:43Z'
+        lastSeenAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: ''
+          description: Timestamp when participant was last seen
+          example: '2025-09-19T18:25:43Z'
+      type: object
+      required:
+      - identifier
+      - identifierType
+      - role
+      - joinedAt
+      title: Participant
+    InternalUserIdentifierRequest:
+      properties:
+        identifier:
+          type: string
+          title: ''
+          description: User identifier value
+        identifierType:
+          type: string
+          enum:
+          - ID
+          - EMAIL
+          title: ''
+          description: Type of identifier for internal users (ID or EMAIL)
+      type: object
+      required:
+      - identifier
+      - identifierType
+      title: InternalUserIdentifierRequest
     LanguageCode:
       type: string
       enum:
@@ -1091,41 +1225,6 @@ components:
       required:
       - messageId
       title: MessageResponse
-    Participant:
-      properties:
-        identifier:
-          type: string
-          title: ''
-          description: Participant identifier value
-        identifierType:
-          $ref: '#/components/schemas/ParticipantIdentifierType'
-          title: ''
-          description: Type of identifier
-        role:
-          $ref: '#/components/schemas/UserType'
-          title: ''
-          description: Participant role in the conversation
-        joinedAt:
-          type: string
-          format: date-time
-          title: ''
-          description: Timestamp when participant joined the conversation
-          example: '2025-09-19T18:25:43Z'
-        lastSeenAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: ''
-          description: Timestamp when participant was last seen
-          example: '2025-09-19T18:25:43Z'
-      type: object
-      required:
-      - identifier
-      - identifierType
-      - role
-      - joinedAt
-      title: Participant
     ParticipantIdentifierType:
       type: string
       enum:
@@ -1269,7 +1368,7 @@ components:
         identifier:
           type: string
           title: ''
-          description: User identifier value (ID, email, or phone number)
+          description: User identifier value
         identifierType:
           $ref: '#/components/schemas/ParticipantIdentifierType'
           title: ''
