@@ -24,7 +24,7 @@
       {
         "tab": "Webhooks",
         "pages": [
-          "webhooks/index",
+          "webhooks",
           "webhooks/verifying-signatures",
           "webhooks/events",
           "webhooks/configuration"
