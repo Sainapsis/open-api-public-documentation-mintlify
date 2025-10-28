@@ -36,12 +36,9 @@ Triggered whenever conversation summaries are created, updated, or deleted.
   "payload": {
     "id": "briefing_123",
     "conversationId": "conv_456",
-    "briefingConfigId": "config_789",
-    "briefingInstructions": "Instructions for summarization...",
     "briefingBody": "This is the generated summary of the conversation.",
     "internalUserIds": ["user_1", "user_2"],
     "externalUserIds": ["ext_user_1"],
-    "conversationLastMessageInWindowCreatedMarker": "2025-01-15T10:00:00Z",
     "status": "COMPLETED",
     "createdAt": "2025-01-15T09:00:00Z",
     "updatedAt": "2025-01-15T10:30:00Z"
@@ -69,7 +66,7 @@ Triggered when contact records are created, updated, or deleted.
 {
   "eventId": "evt_987654321",
   "eventType": "contact.updated",
-  "entity": "contact_updates",
+  "entity": "contact",
   "workspaceId": "ws_123",
   "timestamp": "2025-01-15T10:30:00Z",
   "payload": {
@@ -79,7 +76,6 @@ Triggered when contact records are created, updated, or deleted.
     "email": "john@example.com",
     "cellphone": "+1234567890",
     "languageCode": "en",
-    "providersMetadata": "Provider-specific metadata...",
     "openAttributes": [
       {
         "customAttributeId": "attr_1",
