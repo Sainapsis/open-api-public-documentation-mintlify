@@ -20,7 +20,7 @@ paths:
   /bridge/api/health:
     get:
       tags:
-      - health
+      - Health
       summary: Health check
       operationId: health_bridge_api_health_get
       responses:
