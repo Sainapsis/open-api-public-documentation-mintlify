@@ -920,12 +920,12 @@ components:
           type: string
           title: ''
           description: Contact's cellphone number
-        ownerEmail:
+        ownerIdentifier:
           anyOf:
-          - type: string
+          - $ref: '#/components/schemas/InternalUserIdentifierRequest'
           - type: 'null'
           title: ''
-          description: Email address of the salesperson or user who owns this contact
+          description: Identifier of the salesperson or user who owns this contact
         customAttributes:
           items: {}
           type: array
@@ -1009,13 +1009,13 @@ components:
       properties:
         add:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
           title: ''
           description: External participants to add
         remove:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
           title: ''
           description: External participants to remove
@@ -1102,13 +1102,13 @@ components:
       properties:
         add:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
           title: ''
           description: Internal participants to add
         remove:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
           title: ''
           description: Internal participants to remove
@@ -1225,13 +1225,6 @@ components:
       required:
       - messageId
       title: MessageResponse
-    ParticipantIdentifierType:
-      type: string
-      enum:
-      - ID
-      - EMAIL
-      - PHONE
-      title: ParticipantIdentifierType
     ParticipantOperationsRequest:
       properties:
         externals:
@@ -1363,21 +1356,6 @@ components:
       additionalProperties: false
       type: object
       title: UpdateConversation
-    UserIdentifierRequest:
-      properties:
-        identifier:
-          type: string
-          title: ''
-          description: User identifier value
-        identifierType:
-          $ref: '#/components/schemas/ParticipantIdentifierType'
-          title: ''
-          description: Type of identifier
-      type: object
-      required:
-      - identifier
-      - identifierType
-      title: UserIdentifierRequest
     UserType:
       type: string
       enum:
