@@ -1,0 +1,94 @@
+Each webhook request sent by Bridge is signed with an HMAC-SHA256 signature to verify that the request is authentic and has not been tampered with.  
+Your server should validate this signature before processing the payload.
+
+---
+
+## Signature Overview
+
+Bridge includes three headers for authentication and validation:
+
+| Header               | Description           | Purpose                                   |
+| -------------------- | --------------------- | ----------------------------------------- |
+| `X-Bridge-API-Key`   | Your assigned API key | Identifies your workspace                 |
+| `X-Bridge-Signature` | `sha256={signature}`  | HMAC-SHA256 signature of the request body |
+| `X-Bridge-Timestamp` | Unix timestamp        | Used to prevent replay attacks            |
+
+---
+
+## Step-by-Step Verification (Python Example)
+
+Below is an example of how to verify a webhook’s signature in Python.
+
+```python
+import hmac
+import hashlib
+import json
+
+# Your Bridge client secret
+client_secret = "your_client_secret_here"
+
+# Example: raw request payload and headers
+payload = {
+    "eventId": "evt_123456789",
+    "eventType": "contact.updated",
+    "payload": {"id": "contact_123"}
+}
+
+headers = {
+    "X-Bridge-Signature": "sha256=a1b2c3d4e5f6789012345678901234567890abcdef",
+    "X-Bridge-Timestamp": "1735069432"
+}
+
+# Step 1: Get the received signature
+received_signature = headers["X-Bridge-Signature"].replace("sha256=", "")
+
+# Step 2: Serialize the payload (keys sorted for consistency)
+payload_string = json.dumps(payload, sort_keys=True)
+
+# Step 3: Compute your own HMAC-SHA256 signature
+expected_signature = hmac.new(
+    client_secret.encode("utf-8"),
+    payload_string.encode("utf-8"),
+    hashlib.sha256
+).hexdigest()
+
+# Step 4: Compare both signatures safely
+is_valid = hmac.compare_digest(expected_signature, received_signature)
+
+print("Signature valid:", is_valid)
+```
+
+---
+
+## Timestamp Validation
+
+To prevent replay attacks, Bridge includes the header `X-Bridge-Timestamp`.
+Your system should reject webhook requests older than **5 minutes**.
+
+```python
+import time
+
+timestamp = int(headers["X-Bridge-Timestamp"])
+current_time = int(time.time())
+
+if abs(current_time - timestamp) > 300:
+    raise Exception("Webhook timestamp too old")
+```
+
+---
+
+## Security Recommendations
+
+- Always verify both the **HMAC signature** and **timestamp**.
+- Enforce **HTTPS** for all webhook endpoints.
+- Implement **rate limiting** to protect against abuse.
+- Only process events that pass signature verification.
+- Never share your **client secret** publicly or store it in frontend code.
+
+---
+
+## Related Topics
+
+- [Overview](/webhooks)
+- [Event Types](/webhooks/events)
+- [Console Configuration](/webhooks/configuration)

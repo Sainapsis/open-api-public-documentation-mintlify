@@ -1,0 +1,122 @@
+Bridge webhooks deliver structured event payloads in JSON format whenever specific actions occur in your workspace.  
+Each event follows a consistent schema to make parsing and validation simple.
+
+---
+
+## Common Event Structure
+
+All webhook events share the same top-level structure:
+
+```json
+{
+  "eventId": "string", // Unique event identifier
+  "eventType": "string", // Type of event (entity.action)
+  "entity": "string", // Entity affected by the event
+  "workspaceId": "string", // Your Bridge workspace ID
+  "timestamp": "string", // ISO 8601 timestamp
+  "payload": {} // Event-specific data
+}
+```
+
+{/* ---
+
+## Conversation Summaries (`v1`)
+
+Triggered whenever conversation summaries are created, updated, or deleted.
+
+### Example Payload
+
+```json
+{
+  "eventId": "evt_123456789",
+  "eventType": "conversation_summary.created",
+  "entity": "conversation_summaries",
+  "workspaceId": "ws_123",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "payload": {
+    "id": "briefing_123",
+    "conversationId": "conv_456",
+    "briefingBody": "This is the generated summary of the conversation.",
+    "internalUserIds": ["user_1", "user_2"],
+    "externalUserIds": ["ext_user_1"],
+    "status": "PENDING",
+    "createdAt": "2025-01-15T09:00:00Z",
+    "updatedAt": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+### Event Types
+
+| Event Type                     | Description                            |
+| ------------------------------ | -------------------------------------- |
+| `conversation_summary.created` | A new conversation summary was created |
+| `conversation_summary.updated` | A conversation summary was updated     |
+| `conversation_summary.deleted` | A conversation summary was deleted     | */}
+
+---
+
+## Contact Updates (`v1`)
+
+Triggered when contact records are created, updated, or deleted.
+
+### Example Payload
+
+```json
+{
+  "eventId": "evt_987654321",
+  "eventType": "contact.updated",
+  "entity": "contact",
+  "workspaceId": "ws_123",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "payload": {
+    "id": "contact_123",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com",
+    "cellphone": "+1234567890",
+    "languageCode": "en",
+    "openAttributes": [
+      {
+        "customAttributeId": "attr_1",
+        "content": "custom value"
+      }
+    ],
+    "closedAttributes": [
+      {
+        "customAttributeId": "attr_2",
+        "closedCustomAttributeIds": ["option_1", "option_2"]
+      }
+    ],
+    "internalUserOwnerId": "user_123",
+    "crmContactId": "crm_456",
+    "crmLastSyncedAt": "2025-01-15T09:00:00Z",
+    "createdAt": "2025-01-01T00:00:00Z",
+    "updatedAt": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+### Event Types
+
+| Event Type        | Description                  |
+| ----------------- | ---------------------------- |
+| `contact.created` | A new contact was created    |
+| `contact.updated` | A contact record was updated |
+| `contact.deleted` | A contact record was deleted |
+
+---
+
+## Notes
+
+- Bridge may add new event categories in the future.
+- Always check the `eventType` field to determine which handler to execute.
+- Webhook payloads are versioned — ensure your integration supports the declared version in each event.
+
+---
+
+## Related Topics
+
+- [Overview](/webhooks)
+- [Verifying Signatures](/webhooks/verifying-signatures)
+- [Console Configuration](/webhooks/configuration)
