@@ -3,13 +3,15 @@ info:
   title: Bridge API
   description: "Bridge API specification including webhook receiver endpoints, Contact\
     \ CRUD operations, and comprehensive chat system.\n\n                    This\
-    \ API includes:\n                    1. Contacts API - for clients to manage contacts\
-    \ in Bridge\n                    2. Conversations API - for managing conversations\
-    \ with flexible user identification and participant management\n             \
-    \       3. Messages API - for sending messages and files to a conversation\n \
-    \                   4. Files API - for sending preload files to be send in messages\n\
-    \                \n                    **Multi-Tenant Architecture**: All operations\
-    \ are scoped to a specific workspace using workspaceId."
+    \ API includes:\n                    1. Webhook Receiver API - for CRM clients\
+    \ to receive event notifications from Bridge\n                    2. Contact CRUD\
+    \ API - for clients to manage contacts in Bridge\n                    3. Conversations\
+    \ API - for managing conversations with flexible user identification and participant\
+    \ management\n                    4. Messages API - for sending messages and files\
+    \ to a conversation\n                    5. Files API - for managing files in\
+    \ a message\n                    6. Custom attributes API - for consult custom\
+    \ attributes of an specific workspace\n                \n                    **Multi-Tenant\
+    \ Architecture**: All operations are scoped to a specific workspace using workspaceId."
   license:
     name: MIT
   version: 1.0.0
@@ -454,11 +456,73 @@ paths:
           content:
             application/problem+json:
               examples:
-                EXTERNAL_USER_NOT_FOUND:
+                CONTACT_USER_NOT_FOUND:
                   value:
-                    title: External user was not found
+                    title: Contact was not found
                     status: 404
-                    code: BRIDGE_EXTERNAL_0001 | EXTERNAL_USER_NOT_FOUND
+                    code: BRIDGE_CONTACT_0001 | CONTACT_USER_NOT_FOUND
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Contacts API
+      summary: Update contact
+      description: Update a contact in the specified workspace
+      operationId: update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contactId__patch
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+      - name: contactId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the contact (UUID v4).
+          title: Contactid
+        description: Unique identifier of the contact (UUID v4).
+        example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+      - in: header
+        name: x-api-key
+        required: true
+        description: Copy the API key as provided by the Bridge Console.
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContactBody'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              examples:
+                CONTACT_USER_NOT_FOUND:
+                  value:
+                    title: Contact was not found
+                    status: 404
+                    code: BRIDGE_CONTACT_0001 | CONTACT_USER_NOT_FOUND
         '422':
           description: Validation Error
           content:
@@ -693,8 +757,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/settings/attributes:
+    get:
+      tags:
+      - Custom attributes API
+      summary: Retrieve a custom attributes by workspaceId
+      description: Gets a custom attributes by workspaceId
+      operationId: get_custom_attributes_by_workspace_bridge_api_v1_workspaces__workspaceId__settings_attributes_get
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+      - in: header
+        name: x-api-key
+        required: true
+        description: Copy the API key as provided by the Bridge Console.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomAttributesResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace was not found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    ClosedAttribute:
+      properties:
+        id:
+          type: string
+          title: ''
+          description: Unique closed attribute identifier
+        value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: ''
+          description: value of closed attributes
+      type: object
+      required:
+      - id
+      title: ClosedAttribute
     ContactResponse:
       properties:
         id:
@@ -800,26 +927,7 @@ components:
       - conversations
       - cursor
       title: ConversationListResponse
-    ConversationParticipantsResponse-Input:
-      properties:
-        externals:
-          items:
-            $ref: '#/components/schemas/ExternalParticipant'
-          type: array
-          title: Participants
-          description: List of external participants.
-        internals:
-          items:
-            $ref: '#/components/schemas/InternalParticipant'
-          type: array
-          title: Participants
-          description: List of internal participants.
-      type: object
-      required:
-      - externals
-      - internals
-      title: ConversationParticipantsResponse
-    ConversationParticipantsResponse-Output:
+    ConversationParticipantsResponse:
       properties:
         externals:
           items:
@@ -851,7 +959,7 @@ components:
           description: Unique identifier of the workspace (UUID v4).
           example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         participants:
-          $ref: '#/components/schemas/ConversationParticipantsResponse-Output'
+          $ref: '#/components/schemas/ConversationParticipantsResponse'
           title: Participants structure
           description: Participants of the conversation.
         name:
@@ -920,12 +1028,12 @@ components:
           type: string
           title: ''
           description: Contact's cellphone number
-        ownerEmail:
+        ownerIdentifier:
           anyOf:
-          - type: string
+          - $ref: '#/components/schemas/InternalUserIdentifierRequest'
           - type: 'null'
           title: ''
-          description: Email address of the salesperson or user who owns this contact
+          description: Identifier of the salesperson or user who owns this contact
         customAttributes:
           items: {}
           type: array
@@ -1005,17 +1113,75 @@ components:
       required:
       - key
       title: CustomAttributeResponse
+    CustomAttributes:
+      properties:
+        id:
+          type: string
+          title: ''
+          description: Unique custom attribute identifier
+        category:
+          type: string
+          enum:
+          - OPEN
+          - CLOSED
+          title: ''
+          description: category of custom attribute
+        isRequired:
+          type: boolean
+          title: ''
+          description: define if the custom attribute is required
+        keyName:
+          type: string
+          title: ''
+          description: name of custom attribute
+        closedAttributesValues:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ClosedAttribute'
+            type: array
+          - type: 'null'
+          title: ''
+        type:
+          type: string
+          enum:
+          - TEXT
+          - NUMBER
+          - DATE
+          - SELECT
+          - MULTI_SELECT
+          title: ''
+          description: type of the values of custom attributes
+      type: object
+      required:
+      - id
+      - category
+      - isRequired
+      - keyName
+      - type
+      title: CustomAttributes
+    CustomAttributesResponse:
+      properties:
+        custom_attributes:
+          items:
+            $ref: '#/components/schemas/CustomAttributes'
+          type: array
+          title: ''
+          description: list of custom attributes
+      type: object
+      required:
+      - custom_attributes
+      title: CustomAttributesResponse
     ExternalOperationRequest:
       properties:
         add:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
           title: ''
           description: External participants to add
         remove:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
           title: ''
           description: External participants to remove
@@ -1102,13 +1268,13 @@ components:
       properties:
         add:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
           title: ''
           description: Internal participants to add
         remove:
           items:
-            $ref: '#/components/schemas/UserIdentifierRequest'
+            $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
           title: ''
           description: Internal participants to remove
@@ -1225,13 +1391,6 @@ components:
       required:
       - messageId
       title: MessageResponse
-    ParticipantIdentifierType:
-      type: string
-      enum:
-      - ID
-      - EMAIL
-      - PHONE
-      title: ParticipantIdentifierType
     ParticipantOperationsRequest:
       properties:
         externals:
@@ -1335,6 +1494,51 @@ components:
       required:
       - url
       title: PresignPut
+    UpdateContactBody:
+      properties:
+        firstName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: ''
+          description: Contact's first name
+        lastName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: ''
+          description: Contact's last name
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: ''
+          description: Contact's email address
+        languageCode:
+          anyOf:
+          - $ref: '#/components/schemas/LanguageCode'
+          - type: 'null'
+          enum:
+          - ES
+          - EN
+          title: ''
+          description: Contact's language code
+          example: EN
+        cellphone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: ''
+          description: Contact's cellphone number
+        ownerIdentifier:
+          anyOf:
+          - $ref: '#/components/schemas/InternalUserIdentifierRequest'
+          - type: 'null'
+          title: ''
+          description: Identifier of the salesperson or user who owns this contact
+      additionalProperties: false
+      type: object
+      title: UpdateContactBody
     UpdateConversation:
       properties:
         name:
@@ -1363,21 +1567,6 @@ components:
       additionalProperties: false
       type: object
       title: UpdateConversation
-    UserIdentifierRequest:
-      properties:
-        identifier:
-          type: string
-          title: ''
-          description: User identifier value
-        identifierType:
-          $ref: '#/components/schemas/ParticipantIdentifierType'
-          title: ''
-          description: Type of identifier
-      type: object
-      required:
-      - identifier
-      - identifierType
-      title: UserIdentifierRequest
     UserType:
       type: string
       enum:
