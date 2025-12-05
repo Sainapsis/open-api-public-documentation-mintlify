@@ -1458,14 +1458,6 @@ components:
       type: string
       enum:
       - WHATSAPP
-      - SMS
-      - TELEGRAM
-      - INSTAGRAM
-      - TWITTER
-      - LINE
-      - FACEBOOK
-      - IMESSAGE
-      - WHATSAPP_TEST
       - HEYGIA
       title: MessageProviderType
     MessageRequest:
