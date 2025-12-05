@@ -10,8 +10,10 @@ info:
     \ management\n                    4. Messages API - for sending messages and files\
     \ to a conversation\n                    5. Files API - for managing files in\
     \ a message\n                    6. Custom attributes API - for consult custom\
-    \ attributes of an specific workspace\n                \n                    **Multi-Tenant\
-    \ Architecture**: All operations are scoped to a specific workspace using workspaceId."
+    \ attributes of an specific workspace\n                    7. Provider channels\
+    \ API - for consult provider channels of an specific workspace\n             \
+    \   \n                    **Multi-Tenant Architecture**: All operations are scoped\
+    \ to a specific workspace using workspaceId."
   license:
     name: MIT
   version: 1.0.0
@@ -22,7 +24,7 @@ paths:
   /bridge/api/health:
     get:
       tags:
-      - Health
+      - health
       summary: Health check
       operationId: health_bridge_api_health_get
       responses:
@@ -804,6 +806,111 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/provider-channels:
+    get:
+      tags:
+      - Provider channels API
+      summary: Get provider channels by workspace id
+      description: Gets a provider channels by its unique identifier within the workspace
+      operationId: get_provider_channels_by_workspace_id_bridge_api_v1_workspaces__workspaceId__provider_channels_get
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - in: header
+        name: x-api-key
+        required: true
+        description: Copy the API key as provided by the Bridge Console.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderChannelResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace was not found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/provider-channels/{messageProviderType}:
+    get:
+      tags:
+      - Provider channels API
+      summary: Get provider channels by workspace id and provider type
+      description: Gets a provider channels by its unique identifier within the workspace
+        and provider type
+      operationId: get_provider_channels_by_workspace_id_and_provider_type_bridge_api_v1_workspaces__workspaceId__provider_channels__messageProviderType__get
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: messageProviderType
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/MessageProviderType'
+          description: Message provider type (e.g. WHATSAPP, HEYGIA).
+        description: Message provider type (e.g. WHATSAPP, HEYGIA).
+      - in: header
+        name: x-api-key
+        required: true
+        description: Copy the API key as provided by the Bridge Console.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderChannelResponse'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              examples:
+                WORKSPACE_DOES_NOT_HAVE_PROVIDER_CHANNEL_CONFIGURED:
+                  value:
+                    title: Provider channel was not found
+                    status: 404
+                    code: BRIDGE_PROVIDER_CHANNEL_0001 | WORKSPACE_DOES_NOT_HAVE_PROVIDER_CHANNEL_CONFIGURED
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace was not found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     ClosedAttribute:
@@ -1241,6 +1348,11 @@ components:
           - PHONE
           title: ''
           description: Type of identifier for external users (ID, EMAIL or PHONE)
+        messageProviderType:
+          $ref: '#/components/schemas/MessageProviderType'
+          title: ''
+          description: Message provider type of the conversation
+          default: WHATSAPP
       type: object
       required:
       - identifier
@@ -1342,6 +1454,20 @@ components:
       - ES
       - EN
       title: LanguageCode
+    MessageProviderType:
+      type: string
+      enum:
+      - WHATSAPP
+      - SMS
+      - TELEGRAM
+      - INSTAGRAM
+      - TWITTER
+      - LINE
+      - FACEBOOK
+      - IMESSAGE
+      - WHATSAPP_TEST
+      - HEYGIA
+      title: MessageProviderType
     MessageRequest:
       properties:
         conversationId:
@@ -1363,11 +1489,9 @@ components:
           title: ''
           description: Flag to enable external broadcast
         mediaIds:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
+          items:
+            type: string
+          type: array
           title: ''
           description: List of media IDs associated with the message
       type: object
@@ -1494,6 +1618,40 @@ components:
       required:
       - url
       title: PresignPut
+    ProviderChannel:
+      properties:
+        provider:
+          $ref: '#/components/schemas/MessageProviderType'
+          title: ''
+          description: Provider name of the messaging channel (e.g. WHATSAPP, HEYGIA).
+        identifier:
+          type: string
+          title: ''
+          description: Identifier associated with this provider channel, in E.164
+            format without the '+' sign.
+      type: object
+      required:
+      - provider
+      - identifier
+      title: ProviderChannel
+    ProviderChannelResponse:
+      properties:
+        workspaceId:
+          type: string
+          title: ''
+          description: Unique identifier of the workspace (UUID v4).
+        providerChannels:
+          items:
+            $ref: '#/components/schemas/ProviderChannel'
+          type: array
+          title: ''
+          description: List of provider channels (phone numbers) available for this
+            workspace.
+      type: object
+      required:
+      - workspaceId
+      - providerChannels
+      title: ProviderChannelResponse
     UpdateContactBody:
       properties:
         firstName:
