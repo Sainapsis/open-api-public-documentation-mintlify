@@ -10,10 +10,8 @@ info:
     \ management\n                    4. Messages API - for sending messages and files\
     \ to a conversation\n                    5. Files API - for managing files in\
     \ a message\n                    6. Custom attributes API - for consult custom\
-    \ attributes of an specific workspace\n                    7. Provider channels\
-    \ API - for consult provider channels of an specific workspace\n             \
-    \   \n                    **Multi-Tenant Architecture**: All operations are scoped\
-    \ to a specific workspace using workspaceId."
+    \ attributes of an specific workspace\n                \n                    **Multi-Tenant\
+    \ Architecture**: All operations are scoped to a specific workspace using workspaceId."
   license:
     name: MIT
   version: 1.0.0
@@ -1349,10 +1347,18 @@ components:
           title: ''
           description: Type of identifier for external users (ID, EMAIL or PHONE)
         messageProviderType:
-          $ref: '#/components/schemas/MessageProviderType'
+          anyOf:
+          - $ref: '#/components/schemas/MessageProviderType'
+          - type: 'null'
           title: ''
           description: Message provider type of the conversation
-          default: WHATSAPP
+        providerChannelId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Providerchannelid
+          description: Provider channel id of channel that be used by Bridge to communicate
+            with user
       type: object
       required:
       - identifier
