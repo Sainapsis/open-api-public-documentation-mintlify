@@ -1,0 +1,78 @@
+---
+title: "Error codes"
+sidebarTitle: "Error codes"
+description: "Reference of all error codes returned by the Bridge API, their meanings."
+keywords: ["error", "error codes", "troubleshooting", "404", "422", "validation"]
+---
+# Bridge Error Codes
+
+## Conversation Error Codes
+
+Error codes for conversation operations.
+
+| Code | Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_CONVERSATION_0001` | Conversation Not Found | The requested conversation was not found |
+| `BRIDGE_CONVERSATION_0002` | Conversation Not In Workspace | The conversation does not belong to the specified workspace |
+| `BRIDGE_CONVERSATION_0003` | Conversation With Same Participants Already Exists | An active conversation with the same participants already exists |
+| `BRIDGE_CONVERSATION_0004` | Conversation Not Active | The conversation is inactive; no operations can be performed on it |
+| `BRIDGE_CONVERSATION_0005` | Conversation Operation Failed | An error occurred while operating on the conversation |
+| `BRIDGE_CONVERSATION_0006` | Conversation With Inconsistent State | The conversation is in an inconsistent state; contact support to resolve |
+| `BRIDGE_CONVERSATION_0101` | Internal User Already In Conversation | The internal user is already a participant in this conversation |
+| `BRIDGE_CONVERSATION_0102` | Internal User Not In Conversation | The internal user is not a participant in this conversation |
+| `BRIDGE_CONVERSATION_0103` | External User Already In Conversation | The external user is already a participant in this conversation |
+| `BRIDGE_CONVERSATION_0104` | External User Not In Conversation | The external user is not a participant in this conversation |
+| `BRIDGE_CONVERSATION_0201` | External Participants Required | At least one external participant is required to operate in a conversation |
+| `BRIDGE_CONVERSATION_0202` | Internal Participants Required | At least one internal participant is required to operate in a conversation |
+| `BRIDGE_CONVERSATION_0203` | User Is Not Admin | The user is not an administrator of this conversation |
+| `BRIDGE_CONVERSATION_0204` | Last Admin Removal Forbidden | The conversation must have at least one administrator |
+| `BRIDGE_CONVERSATION_0205` | Min Internal Users Required | The conversation must have a minimum number of internal participants |
+| `BRIDGE_CONVERSATION_0206` | Max Internal Participants Exceeded | The maximum number of internal participants for this conversation has been exceeded |
+| `BRIDGE_CONVERSATION_0207` | Min External Participants Required | The conversation must have a minimum number of external participants |
+| `BRIDGE_CONVERSATION_0208` | Max External Participants Exceeded | The maximum number of external participants for this conversation has been exceeded |
+| `BRIDGE_CONVERSATION_0210` | Min Participants Required | The conversation must have a minimum number of participants |
+| `BRIDGE_CONVERSATION_0211` | Max Participants Exceeded | The conversation must have a maximum number of participants |
+| `BRIDGE_CONVERSATION_0212` | Max Initial Messages Exceeded | The maximum number of initial messages has been exceeded |
+| `BRIDGE_CONVERSATION_0213` | Messages Not In Conversation | The messages must belong to the same conversation |
+
+## External User Error Codes
+
+Error codes for external user (contact) operations.
+
+| Code | Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_EXTERNAL_0001` | External User Not Found | The requested external user was not found |
+| `BRIDGE_EXTERNAL_0002` | External User Already Exists | An external user with the same identification data already exists |
+| `BRIDGE_EXTERNAL_0004` | External User Not In Workspace | One or more external users do not belong to the specified workspace |
+| `BRIDGE_EXTERNAL_0005` | External User Without Configured Field | External user does not have configured field; check the workspace or external information settings |
+| `BRIDGE_EXTERNAL_0101` | External User Operation Failed | An error occurred while operating on the external user |
+
+## Internal User Error Codes
+
+Error codes for internal user operations.
+
+| Code | Readable Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_INTERNAL_0001` | Internal User Not Found | The internal user was not found |
+| `BRIDGE_INTERNAL_0002` | Internal Users Not In Workspace | The provided internal users do not belong to the specified workspace |
+| `BRIDGE_INTERNAL_0003` | Inactive Internal User | One or more internal users are inactive in the workspace; check the user status in the workspace settings |
+| `BRIDGE_INTERNAL_0004` | Internal User Without Configured Field | Internal user does not have configured field; check the workspace or internal information settings |
+| `BRIDGE_INTERNAL_0101` | Internal User Does Not Support Operation | The internal user does not support this operation |
+
+## Provider Channel Error Codes
+
+Error codes for provider channel operations.
+
+| Code | Readable Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_PROVIDER_CHANNEL_0001` | Provider Channel Not Found | The provider channel was not found; verify the workspace has channels configured |
+
+## Workspace Error Codes
+
+Error codes for workspace operations.
+
+| Code |  Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_WORKSPACE_0001` | Workspace Not Found | The requested workspace was not found |
+| `BRIDGE_WORKSPACE_0002` | Workspace Not In Organization | The workspace does not belong to the specified organization |
+| `BRIDGE_WORKSPACE_0003` | Workspace Without Available Provider Channels | The workspace has no provider channels available |
