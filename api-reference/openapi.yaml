@@ -1330,7 +1330,7 @@ components:
           - type: string
           - type: 'null'
           title: ''
-          description: value of closed attributes
+          description: Value of closed attributes
       type: object
       required:
       - id
@@ -1341,6 +1341,7 @@ components:
         customAttributeId:
           type: string
           title: Customattributeid
+          description: Unique closed custom attribute identifier.
           examples:
           - 651c97c1-b31d-466f-825c-fe77b39e7ae6
         closedCustomAttributeIds:
@@ -1348,6 +1349,7 @@ components:
             type: string
           type: array
           title: Closedcustomattributeids
+          description: List of unique closed attribute value identifiers.
           examples:
           - - 62de01f0-fd48-467c-9c35-18647c51532a
             - 6faf42bb-7d7b-44bd-9e79-5de6fd491134
@@ -1374,13 +1376,13 @@ components:
         firstName:
           type: string
           title: ''
-          description: Contact's first name
+          description: Contact's first name.
           examples:
           - John
         lastName:
           type: string
           title: ''
-          description: Contact's last name
+          description: Contact's last name.
           examples:
           - Doe
         email:
@@ -1389,7 +1391,7 @@ components:
             format: email
           - type: 'null'
           title: ''
-          description: Contact's email address
+          description: Contact's email address.
           examples:
           - john.doe@example.com
           - null
@@ -1399,7 +1401,7 @@ components:
             format: phone
           - type: 'null'
           title: ''
-          description: Contact's cellphone address
+          description: Contact's cellphone address.
           examples:
           - '+14084029292'
           - null
@@ -1409,11 +1411,11 @@ components:
             type: object
           type: array
           title: ''
-          description: Array of custom key-value attributes
+          description: Array of custom key-value attributes.
         languageCode:
           $ref: '#/components/schemas/LanguageCode'
           title: ''
-          description: Language code from external user
+          description: Language code from external user.
           examples:
           - EN
         ownerId:
@@ -1421,20 +1423,20 @@ components:
           - type: string
           - type: 'null'
           title: ''
-          description: Email address of the salesperson or user who owns this contact
+          description: Email address of the salesperson or user who owns this contact.
           examples:
           - 37673840-6259-40f9-bbe5-a7db40f8e3cf
           - null
         createdAt:
           type: string
           title: ''
-          description: Timestamp when the contact was created
+          description: Timestamp when the contact was created.
           examples:
           - '2003-04-10T08:00:00.000Z'
         updatedAt:
           type: string
           title: ''
-          description: Timestamp when the contact was last updated
+          description: Timestamp when the contact was last updated.
           examples:
           - '2003-04-10T08:00:00.000Z'
       type: object
@@ -1455,13 +1457,13 @@ components:
             $ref: '#/components/schemas/ContactResponse'
           type: array
           title: ''
-          description: Array of contacts
+          description: Array of contacts.
         cursor:
           anyOf:
           - type: string
           - type: 'null'
           title: ''
-          description: Cursor to be send on next page
+          description: Cursor to be send on next page.
       type: object
       required:
       - contacts
@@ -1473,16 +1475,21 @@ components:
           items:
             $ref: '#/components/schemas/ConversationResponse'
           type: array
-          title: Conversations
+          title: ''
+          description: List of conversations.
         cursor:
           anyOf:
           - type: string
           - type: 'null'
-          title: Cursor
+          title: ''
+          description: Cursor for fetching the next page of conversations. Null if
+            there are no more pages.
+          examples:
+          - null
+          - eyJ2IjoxLCJjIjp7InN0IjoxfX0
       type: object
       required:
       - conversations
-      - cursor
       title: ConversationListResponse
       description: Response body for listing conversations with pagination.
     ConversationParticipantsResponse:
@@ -1528,7 +1535,7 @@ components:
           - type: string
           - type: 'null'
           title: ''
-          description: Optional name/title for the conversation
+          description: Optional name/title for the conversation.
           examples:
           - Bridge Support Team
         status:
@@ -1537,21 +1544,21 @@ components:
           - type: 'null'
           title: ''
           description: Current conversation status - 'ACTIVE' for visible conversations,
-            'GHOST' for invisible until first interaction
+            'GHOST' for invisible until first interaction.
           examples:
           - ACTIVE
         createdAt:
           type: string
           format: date-time
           title: ''
-          description: Timestamp when the conversation was created
+          description: Timestamp when the conversation was created.
           examples:
           - '2003-04-10T09:00:00.000Z'
         updatedAt:
           type: string
           format: date-time
           title: ''
-          description: Timestamp when the conversation was last updated
+          description: Timestamp when the conversation was last updated.
           examples:
           - '2003-04-10T09:00:00.000Z'
       type: object
@@ -1574,14 +1581,14 @@ components:
         firstName:
           type: string
           title: ''
-          description: Contact's first name
+          description: Contact's first name.
           examples:
           - John
           - Alice
         lastName:
           type: string
           title: ''
-          description: Contact's last name
+          description: Contact's last name.
           examples:
           - Doe
         email:
@@ -1590,21 +1597,21 @@ components:
             format: email
           - type: 'null'
           title: ''
-          description: Contact's email address (optional)
+          description: Contact's email address.
           examples:
           - john.doe@example.com
           - null
         languageCode:
           $ref: '#/components/schemas/LanguageCode'
           title: ''
-          description: Contact's language code
+          description: Contact's language code.
           examples:
           - EN
         cellphone:
           type: string
           format: phone
           title: ''
-          description: Contact's cellphone number
+          description: Contact's cellphone number.
           examples:
           - '+14084029292'
         ownerIdentifier:
@@ -1612,11 +1619,11 @@ components:
           - $ref: '#/components/schemas/InternalUserIdentifierRequest'
           - type: 'null'
           title: ''
-          description: Identifier of the salesperson or user who owns this contact
+          description: Identifier of the salesperson or user who owns this contact.
         customAttributes:
           $ref: '#/components/schemas/CustomAttributesBody'
           title: ''
-          description: Array of custom key-value attributes
+          description: Array of custom key-value attributes.
       additionalProperties: false
       type: object
       required:
@@ -1631,13 +1638,13 @@ components:
         participants:
           $ref: '#/components/schemas/CreateParticipantsOnConversationRequest'
           title: ''
-          description: Participants to add to conversation
+          description: Participants to add to conversation.
         name:
           anyOf:
           - type: string
           - type: 'null'
           title: ''
-          description: Optional name/title for the conversation
+          description: Optional name/title for the conversation.
           examples:
           - Bridge Support Team
           - null
@@ -1645,7 +1652,7 @@ components:
           $ref: '#/components/schemas/ConversationStatus'
           title: ''
           description: Initial conversation status - 'active' for visible conversations,
-            'ghost' for invisible until first interaction
+            'ghost' for invisible until first interaction.
           default: ACTIVE
           examples:
           - ACTIVE
@@ -1656,7 +1663,7 @@ components:
           - type: 'null'
           title: ''
           description: Team UUID for round-robin assignment (optional, mutually exclusive
-            with internalParticipants)
+            with internalParticipants).
           examples:
           - 9fd1468d-e5ca-4ba3-98d1-13017e6f3808
       additionalProperties: false
@@ -1672,14 +1679,14 @@ components:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
           title: ''
-          description: Array of external user identifiers
+          description: Array of external user identifiers.
         internals:
           items:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
           title: ''
           description: Array of internal user identifiers (optional, mutually exclusive
-            with teamId)
+            with teamId).
       type: object
       title: CreateParticipantsOnConversationRequest
       description: Request body for participants when creating a new conversation.
@@ -1688,7 +1695,7 @@ components:
         id:
           type: string
           title: ''
-          description: Unique custom attribute identifier
+          description: Unique custom attribute identifier.
           examples:
           - 651c97c1-b31d-466f-825c-fe77b39e7ae6
         category:
@@ -1697,21 +1704,21 @@ components:
           - OPEN
           - CLOSED
           title: ''
-          description: category of custom attribute
+          description: Category of custom attribute.
           examples:
           - OPEN
           - CLOSED
         isRequired:
           type: boolean
           title: ''
-          description: define if the custom attribute is required
+          description: Define if the custom attribute is required.
           examples:
           - true
           - false
         keyName:
           type: string
           title: ''
-          description: name of custom attribute
+          description: Name of custom attribute.
         closedAttributesValues:
           anyOf:
           - items:
@@ -1719,6 +1726,7 @@ components:
             type: array
           - type: 'null'
           title: ''
+          description: List of closed attribute values.
         type:
           type: string
           enum:
@@ -1728,7 +1736,7 @@ components:
           - SELECT
           - MULTI_SELECT
           title: ''
-          description: type of the values of custom attributes
+          description: Type of the values of custom attributes.
           examples:
           - TEXT
           - NUMBER
@@ -1757,13 +1765,13 @@ components:
             $ref: '#/components/schemas/OpenAttributeRequest'
           type: array
           title: Openattributes
-          description: Array of open attributes
+          description: Array of open attributes.
         closedAttributes:
           items:
             $ref: '#/components/schemas/ClosedAttributeRequest'
           type: array
           title: Closedattributes
-          description: Array of closed attributes
+          description: Array of closed attributes.
       type: object
       title: CustomAttributesBody
       description: Request body for custom attributes operations.
@@ -1774,7 +1782,7 @@ components:
             $ref: '#/components/schemas/CustomAttributes'
           type: array
           title: ''
-          description: list of custom attributes
+          description: List of custom attributes objects with their values.
       type: object
       required:
       - custom_attributes
@@ -1787,13 +1795,13 @@ components:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
           title: ''
-          description: External participants to add
+          description: External participants to add.
         remove:
           items:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
           title: ''
-          description: External participants to remove
+          description: External participants to remove.
       type: object
       title: ExternalOperationRequest
       description: Operations for external participants in a conversation.
@@ -1802,7 +1810,7 @@ components:
         identifier:
           type: string
           title: ''
-          description: Participant identifier value
+          description: Participant identifier value.
           examples:
           - ef7ee722-5f95-415a-9a98-81eeae178b11
         identifierType:
@@ -1813,7 +1821,7 @@ components:
           - PHONE
           title: ''
           description: Type of identifier for external participants (ID, EMAIL, or
-            PHONE)
+            PHONE).
           examples:
           - EMAIL
           - PHONE
@@ -1821,7 +1829,7 @@ components:
         role:
           $ref: '#/components/schemas/UserType'
           title: ''
-          description: Participant role in the conversation
+          description: Participant role in the conversation.
           examples:
           - EXTERNAL
           - INTERNAL
@@ -1829,7 +1837,7 @@ components:
           type: string
           format: date-time
           title: ''
-          description: Timestamp when participant joined the conversation
+          description: Timestamp when participant joined the conversation.
           examples:
           - '2004-04-10T09:00:00.000Z'
         lastSeenAt:
@@ -1838,7 +1846,7 @@ components:
             format: date-time
           - type: 'null'
           title: ''
-          description: Timestamp when participant was last seen
+          description: Timestamp when participant was last seen.
           examples:
           - null
           - '2004-04-10T09:00:00.000Z'
@@ -1855,7 +1863,7 @@ components:
         identifier:
           type: string
           title: ''
-          description: User identifier value
+          description: User identifier value.
           examples:
           - john.doe@example.com
           - '+13802098869'
@@ -1867,7 +1875,7 @@ components:
           - EMAIL
           - PHONE
           title: ''
-          description: Type of identifier for external users (ID, EMAIL or PHONE)
+          description: Type of identifier for external users (ID, EMAIL or PHONE).
           examples:
           - EMAIL
           - PHONE
@@ -1877,7 +1885,7 @@ components:
           - $ref: '#/components/schemas/MessageProviderType'
           - type: 'null'
           title: ''
-          description: Message provider type of the conversation
+          description: Message provider type of the conversation.
           examples:
           - WHATSAPP
           - null
@@ -1887,7 +1895,7 @@ components:
           - type: 'null'
           title: Providerchannelid
           description: Provider channel id of channel that be used by Bridge to communicate
-            with user
+            with user.
       type: object
       required:
       - identifier
@@ -1919,7 +1927,7 @@ components:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
           title: ''
-          description: Internal participants to add
+          description: Internal participants to add.
         remove:
           items:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
@@ -1934,7 +1942,7 @@ components:
         identifier:
           type: string
           title: ''
-          description: Participant identifier value
+          description: Participant identifier value.
           examples:
           - ef7ee722-5f95-415a-9a98-81eeae178b11
         identifierType:
@@ -1943,14 +1951,14 @@ components:
           - ID
           - EMAIL
           title: ''
-          description: Type of identifier for internal participants (ID or EMAIL)
+          description: Type of identifier for internal participants (ID or EMAIL).
           examples:
           - EMAIL
           - ID
         role:
           $ref: '#/components/schemas/UserType'
           title: ''
-          description: Participant role in the conversation
+          description: Participant role in the conversation.
           examples:
           - EXTERNAL
           - INTERNAL
@@ -1958,7 +1966,7 @@ components:
           type: string
           format: date-time
           title: ''
-          description: Timestamp when participant joined the conversation
+          description: Timestamp when participant joined the conversation.
           examples:
           - '2004-04-10T09:00:00.000Z'
         lastSeenAt:
@@ -1967,7 +1975,7 @@ components:
             format: date-time
           - type: 'null'
           title: ''
-          description: Timestamp when participant was last seen
+          description: Timestamp when participant was last seen.
           examples:
           - null
           - '2004-04-10T09:00:00.000Z'
@@ -1984,7 +1992,7 @@ components:
         identifier:
           type: string
           title: ''
-          description: User identifier value
+          description: User identifier value.
           examples:
           - john.doe@example.com
           - '+13802098869'
@@ -1995,7 +2003,7 @@ components:
           - ID
           - EMAIL
           title: ''
-          description: Type of identifier for internal users (ID or EMAIL)
+          description: Type of identifier for internal users (ID or EMAIL).
           examples:
           - EMAIL
           - ID
@@ -2030,13 +2038,13 @@ components:
         conversationId:
           type: string
           title: ''
-          description: ID of the conversation
+          description: Identifier of the conversation.
           examples:
           - d290f1ee-6c54-4b01-90e6-d701748f0851
         messageBody:
           type: string
           title: ''
-          description: Body of the message
+          description: Body of the message.
           examples:
           - Hello, welcome to Bridge!
         replyToMessageId:
@@ -2044,14 +2052,14 @@ components:
           - type: string
           - type: 'null'
           title: ''
-          description: ID of the message being replied to
+          description: Identifier of the message being replied to.
           examples:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           - null
         enableExternalBroadcast:
           type: boolean
           title: ''
-          description: Flag to enable external broadcast
+          description: Flag to enable external broadcast.
           examples:
           - true
           - false
@@ -2060,7 +2068,7 @@ components:
             type: string
           type: array
           title: ''
-          description: List of media IDs associated with the message
+          description: List of media IDs associated with the message.
           examples:
           - - a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6
       type: object
@@ -2075,14 +2083,14 @@ components:
         messagingProduct:
           type: string
           title: ''
-          description: Product name
+          description: Product name.
           default: bridge
           examples:
           - bridge
         messageId:
           type: string
           title: ''
-          description: Unique message identifier as a UUID string
+          description: Unique message identifier as a UUID string.
           examples:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
       type: object
@@ -2095,11 +2103,13 @@ components:
         customAttributeId:
           type: string
           title: Customattributeid
+          description: Unique open custom attribute identifier.
           examples:
           - 651c97c1-b31d-466f-825c-fe77b39e7ae6
         content:
           type: string
           title: Content
+          description: Value of open attribute.
       type: object
       required:
       - customAttributeId
@@ -2114,7 +2124,7 @@ components:
           - type: 'null'
           title: ''
           description: External user operations, this should provided with "add" and
-            "remove" operations
+            "remove" operations.
         internals:
           anyOf:
           - $ref: '#/components/schemas/InternalOperationRequest'
@@ -2130,13 +2140,13 @@ components:
         name:
           type: string
           title: ''
-          description: Original file name including extension
+          description: Original file name including extension.
           examples:
           - prueba.jpg
         fileType:
           $ref: '#/components/schemas/FileType'
           title: ''
-          description: Logical file type category
+          description: Logical file type category.
           examples:
           - IMAGE
           - VIDEO
@@ -2147,7 +2157,7 @@ components:
           - type: string
           - type: 'null'
           title: ''
-          description: MIME type of the file
+          description: MIME type of the file.
           examples:
           - image/jpeg
           - application/pdf
@@ -2173,13 +2183,13 @@ components:
         mediaId:
           type: string
           title: ''
-          description: Unique media identifier
+          description: Unique media identifier.
           examples:
           - 4a2c1f7e-2f84-4a5f-bd2d-6b6b2f0c1234
         presignUrl:
           $ref: '#/components/schemas/PresignPut'
           title: ''
-          description: Presigned PUT data to upload the media (url, method and headers)
+          description: Presigned PUT data to upload the media (url, method and headers).
       additionalProperties: false
       type: object
       required:
@@ -2192,14 +2202,14 @@ components:
         url:
           type: string
           title: Url
-          description: Presigned PUT URL
+          description: Presigned PUT URL.
           examples:
           - https://s3.amazonaws.com/bucket/path/to/object
         method:
           type: string
           const: PUT
           title: Method
-          description: HTTP method to use for the upload
+          description: HTTP method to use for the upload.
           default: PUT
           examples:
           - PUT
@@ -2209,7 +2219,7 @@ components:
           type: object
           title: Headers
           description: Headers required for the presigned PUT (e.g., Content-Type,
-            x-amz-checksum-sha256)
+            x-amz-checksum-sha256).
           examples:
           - Content-Type: image/jpeg
             x-amz-checksum-sha256: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
@@ -2325,7 +2335,7 @@ components:
           - type: string
           - type: 'null'
           title: ''
-          description: Contact's first name
+          description: Contact's first name.
           examples:
           - John
           - null
@@ -2334,7 +2344,7 @@ components:
           - type: string
           - type: 'null'
           title: ''
-          description: Contact's last name
+          description: Contact's last name.
           examples:
           - Doe
           - null
@@ -2344,7 +2354,7 @@ components:
             format: email
           - type: 'null'
           title: ''
-          description: Contact's email address
+          description: Contact's email address.
           examples:
           - john.doe@example.com
           - null
@@ -2353,7 +2363,7 @@ components:
           - $ref: '#/components/schemas/LanguageCode'
           - type: 'null'
           title: ''
-          description: Contact's language code
+          description: Contact's language code.
           examples:
           - EN
         cellphone:
@@ -2362,7 +2372,7 @@ components:
             format: phone
           - type: 'null'
           title: ''
-          description: Contact's cellphone number
+          description: Contact's cellphone number.
           examples:
           - '+14084029292'
           - null
@@ -2371,11 +2381,11 @@ components:
           - $ref: '#/components/schemas/InternalUserIdentifierRequest'
           - type: 'null'
           title: ''
-          description: Identifier of the salesperson or user who owns this contact
+          description: Identifier of the salesperson or user who owns this contact.
         customAttributes:
           $ref: '#/components/schemas/CustomAttributesBody'
           title: ''
-          description: Array of custom key-value attributes
+          description: Array of custom key-value attributes.
       additionalProperties: false
       type: object
       title: UpdateContactBody
@@ -2387,7 +2397,7 @@ components:
           - type: string
           - type: 'null'
           title: ''
-          description: Optional name/title for the conversation
+          description: Optional name/title for the conversation.
           examples:
           - Client Support
           - null
@@ -2397,7 +2407,7 @@ components:
           - type: 'null'
           title: ''
           description: Initial conversation status - 'active' for visible conversations,
-            'ghost' for invisible until first interaction
+            'ghost' for invisible until first interaction.
           examples:
           - ACTIVE
         participants:
@@ -2405,7 +2415,7 @@ components:
           - $ref: '#/components/schemas/ParticipantOperationsRequest'
           - type: 'null'
           title: ''
-          description: Participants operations to add and remove from a conversation
+          description: Participants operations to add and remove from a conversation.
       additionalProperties: false
       type: object
       title: UpdateConversation
