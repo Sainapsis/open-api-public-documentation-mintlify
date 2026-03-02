@@ -717,6 +717,116 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Contacts API
+      summary: Update contact
+      description: Update a contact in the specified workspace.
+      operationId: update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contactId__patch
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: contactId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the contact (UUID v4).
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+          title: Contactid
+        description: Unique identifier of the contact (UUID v4).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContactBody'
+              description: Request body for updating an existing contact.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                MISSING_REQUIRED_FIELD:
+                  value:
+                    title: Missing Required Field
+                    status: 400
+                    code: BRIDGE_CORE_0102
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                EXTERNAL_USER_ALREADY_EXISTS:
+                  value:
+                    title: External User Already Exists
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0002
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              examples:
+                EXTERNAL_USER_NOT_IN_WORKSPACE:
+                  value:
+                    title: External User Not In Workspace
+                    status: 422
+                    code: BRIDGE_EXTERNAL_0004
+              schema:
+                $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/contacts:
     get:
       tags:
@@ -912,117 +1022,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /bridge/api/v1/workspaces/{workspaceId}/contacts/{contact_id}:
-    patch:
-      tags:
-      - Contacts API
-      summary: Update contact
-      description: Update a contact in the specified workspace.
-      operationId: update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contact_id__patch
-      security:
-      - x-api-key: []
-      parameters:
-      - name: workspaceId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Unique identifier of the workspace (UUID v4).
-          examples:
-          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-          title: Workspaceid
-        description: Unique identifier of the workspace (UUID v4).
-      - name: contact_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Unique identifier of the contact (UUID v4).
-          examples:
-          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-          title: Contact Id
-        description: Unique identifier of the contact (UUID v4).
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateContactBody'
-              description: Request body for updating an existing contact.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ContactResponse'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              examples:
-                MISSING_REQUIRED_FIELD:
-                  value:
-                    title: Missing Required Field
-                    status: 400
-                    code: BRIDGE_CORE_0102
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              examples:
-                FORBIDDEN:
-                  value:
-                    title: Forbidden
-                    status: 403
-                    code: BRIDGE_CORE_0301
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              examples:
-                WORKSPACE_NOT_FOUND:
-                  value:
-                    title: Workspace Not Found
-                    status: 404
-                    code: BRIDGE_WORKSPACE_0001
-                EXTERNAL_USER_NOT_FOUND:
-                  value:
-                    title: External User Not Found
-                    status: 404
-                    code: BRIDGE_EXTERNAL_0001
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '409':
-          description: Conflict
-          content:
-            application/json:
-              examples:
-                EXTERNAL_USER_ALREADY_EXISTS:
-                  value:
-                    title: External User Already Exists
-                    status: 409
-                    code: BRIDGE_EXTERNAL_0002
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '422':
-          description: Unprocessable Content
-          content:
-            application/json:
-              examples:
-                EXTERNAL_USER_NOT_IN_WORKSPACE:
-                  value:
-                    title: External User Not In Workspace
-                    status: 422
-                    code: BRIDGE_EXTERNAL_0004
-              schema:
-                $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/files:
     post:
       tags:
@@ -1406,7 +1405,8 @@ components:
           - null
         customAttributes:
           items:
-            $ref: '#/components/schemas/CustomAttributeResponse'
+            additionalProperties: true
+            type: object
           type: array
           title: ''
           description: Array of custom key-value attributes
@@ -1614,7 +1614,7 @@ components:
           title: ''
           description: Identifier of the salesperson or user who owns this contact
         customAttributes:
-          $ref: '#/components/schemas/CustomAttributesRequest'
+          $ref: '#/components/schemas/CustomAttributesBody'
           title: ''
           description: Array of custom key-value attributes
       additionalProperties: false
@@ -1683,23 +1683,6 @@ components:
       type: object
       title: CreateParticipantsOnConversationRequest
       description: Request body for participants when creating a new conversation.
-    CustomAttributeResponse:
-      properties:
-        key:
-          type: string
-          title: ''
-          description: Attribute key/name
-        values:
-          items:
-            type: string
-          type: array
-          title: ''
-          description: Attribute value
-      type: object
-      required:
-      - key
-      title: CustomAttributeResponse
-      description: Response body for custom attributes in contact-related operations.
     CustomAttributes:
       properties:
         id:
@@ -1767,22 +1750,22 @@ components:
       - type
       title: CustomAttributes
       description: Object representing the custom attribute.
-    CustomAttributesRequest:
+    CustomAttributesBody:
       properties:
-        open_attributes:
+        openAttributes:
           items:
             $ref: '#/components/schemas/OpenAttributeRequest'
           type: array
-          title: ''
+          title: Openattributes
           description: Array of open attributes
-        closed_attributes:
+        closedAttributes:
           items:
             $ref: '#/components/schemas/ClosedAttributeRequest'
           type: array
-          title: ''
+          title: Closedattributes
           description: Array of closed attributes
       type: object
-      title: CustomAttributesRequest
+      title: CustomAttributesBody
       description: Request body for custom attributes operations.
     CustomAttributesResponse:
       properties:
@@ -2390,7 +2373,7 @@ components:
           title: ''
           description: Identifier of the salesperson or user who owns this contact
         customAttributes:
-          $ref: '#/components/schemas/CustomAttributesRequest'
+          $ref: '#/components/schemas/CustomAttributesBody'
           title: ''
           description: Array of custom key-value attributes
       additionalProperties: false
