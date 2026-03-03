@@ -1,6 +1,7 @@
 openapi: 3.1.0
 info:
   title: Bridge API
+  summary: Bridge API specification for chat system management.
   description: "Bridge API specification including webhook receiver endpoints, Contact\
     \ CRUD operations, and comprehensive chat system.\n\n                    This\
     \ API includes:\n                    1. Webhook Receiver API - for CRM clients\
@@ -12,8 +13,14 @@ info:
     \ a message\n                    6. Custom attributes API - for consult custom\
     \ attributes of an specific workspace\n                \n                    **Multi-Tenant\
     \ Architecture**: All operations are scoped to a specific workspace using workspaceId."
+  termsOfService: https://www.sainapsis.com/legal/terms-of-service
+  contact:
+    name: Bridge Support
+    url: https://app.bridge.new/
+    email: support@sainapsis.com
   license:
-    name: MIT
+    name: MIT License
+    url: https://spdx.org/licenses/MIT.html
   version: 1.0.0
 servers:
 - url: https://api-connect-us.bridge.new
@@ -22,30 +29,31 @@ paths:
   /bridge/api/health:
     get:
       tags:
-      - health
+      - Health
       summary: Health check
+      description: Health check endpoint to verify that the API is up and running.
       operationId: health_bridge_api_health_get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema: {}
-      parameters:
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Health Bridge Api Health Get
+      security:
+      - x-api-key: []
   /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}:
     get:
       tags:
       - Conversations API
       summary: Get conversation by id
-      description: Gets a specific conversation by its unique identifier within the
-        workspace
+      description: Get a specific conversation by its unique identifier within the
+        workspace.
       operationId: get_conversation_by_id_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__get
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -54,9 +62,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
       - name: conversationId
         in: path
         required: true
@@ -64,15 +73,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the conversation (UUID v4).
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
           title: Conversationid
         description: Unique identifier of the conversation (UUID v4).
-        example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       responses:
         '200':
           description: Successful Response
@@ -80,26 +84,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
                 CONVERSATION_NOT_FOUND:
                   value:
-                    title: Conversation was not found
+                    title: Conversation Not Found
                     status: 404
-                    code: BRIDGE_CONVERSATION_0001 | CONVERSATION_NOT_FOUND
+                    code: BRIDGE_CONVERSATION_0001
+                CONVERSATION_NOT_IN_WORKSPACE:
+                  value:
+                    title: Conversation Not In Workspace
+                    status: 404
+                    code: BRIDGE_CONVERSATION_0002
                 WORKSPACE_NOT_FOUND:
                   value:
-                    title: Workspace was not found
+                    title: Workspace Not Found
                     status: 404
-                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
-                CONVERSATION_IS_NOT_ON_WORKSPACE:
-                  value:
-                    title: Conversation is not on selected workspace
-                    status: 404
-                    code: BRIDGE_CONVERSATION_0002 | CONVERSATION_IS_NOT_ON_WORKSPACE
+                    code: BRIDGE_WORKSPACE_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -110,9 +128,14 @@ paths:
       tags:
       - Conversations API
       summary: Update conversation
-      description: Updates conversation details including participants, status, and
-        name. Supports partial updates - only include the fields you want to change.
+      description: 'Update conversation details including participants, status, and
+        name.
+
+
+        Support partial updates - only include the fields you want to change.'
       operationId: update_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__patch
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -121,9 +144,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
       - name: conversationId
         in: path
         required: true
@@ -131,21 +155,17 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the conversation (UUID v4).
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
           title: Conversationid
         description: Unique identifier of the conversation (UUID v4).
-        example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateConversation'
+              description: Request body for updating an existing conversation.
       responses:
         '200':
           description: Successful Response
@@ -153,16 +173,97 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
                 CONVERSATION_NOT_FOUND:
                   value:
-                    title: Conversation was not found
+                    title: Conversation Not Found
                     status: 404
-                    code: BRIDGE_CONVERSATION_0001 | CONVERSATION_NOT_FOUND
+                    code: BRIDGE_CONVERSATION_0001
+                CONVERSATION_NOT_IN_WORKSPACE:
+                  value:
+                    title: Conversation Not In Workspace
+                    status: 404
+                    code: BRIDGE_CONVERSATION_0002
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                INTERNAL_USER_ALREADY_IN_CONVERSATION:
+                  value:
+                    title: Internal User Already In Conversation
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0101
+                EXTERNAL_USER_ALREADY_IN_CONVERSATION:
+                  value:
+                    title: External User Already In Conversation
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0103
+                INTERNAL_USER_NOT_IN_CONVERSATION:
+                  value:
+                    title: Internal User Not In Conversation
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0102
+                EXTERNAL_USER_NOT_IN_CONVERSATION:
+                  value:
+                    title: External User Not In Conversation
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0104
+                LAST_ADMIN_REMOVAL_FORBIDDEN:
+                  value:
+                    title: Last Admin Removal Forbidden
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0204
+                MIN_INTERNAL_USERS_REQUIRED:
+                  value:
+                    title: Min Internal Users Required
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0205
+                EXTERNAL_USER_NOT_IN_WORKSPACE:
+                  value:
+                    title: External User Not In Workspace
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0004
+                INTERNAL_USERS_NOT_IN_WORKSPACE:
+                  value:
+                    title: Internal Users Not In Workspace
+                    status: 409
+                    code: BRIDGE_INTERNAL_0002
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -174,10 +275,15 @@ paths:
       tags:
       - Conversations API
       summary: Retrieve conversations with flexible filtering options
-      description: Retrieves conversations with flexible filtering options. Can search
-        by external user identifiers (ID, email, phone) or internal participants,
-        with support for pagination and status filtering.
+      description: 'Retrieve conversations with flexible filtering options.
+
+
+        Can search by external user identifiers (ID, email, phone) or internal participants,
+
+        with support for pagination and status filtering.'
       operationId: get_conversations_bridge_api_v1_workspaces__workspaceId__conversations_get
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -186,9 +292,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
       - name: limit
         in: query
         required: false
@@ -230,9 +337,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          title: Internaluseridentifier
           description: Identifier of internal user, if you are sending a phone number
             take care to encode the request url (including params)
+          title: Internaluseridentifier
         description: Identifier of internal user, if you are sending a phone number
           take care to encode the request url (including params)
       - name: internalUserIdentifierType
@@ -242,10 +349,10 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          title: Internaluseridentifiertype
           enum:
           - ID
           - EMAIL
+          title: Internaluseridentifiertype
       - name: externalUserIdentifier
         in: query
         required: false
@@ -266,12 +373,6 @@ paths:
           - ID
           - EMAIL
           - PHONE
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       responses:
         '200':
           description: Successful Response
@@ -279,16 +380,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationListResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                BAD_REQUEST:
+                  value:
+                    title: Bad Request
+                    status: 400
+                    code: BRIDGE_CORE_0103
+                INVALID_CURSOR:
+                  value:
+                    title: Invalid Cursor
+                    status: 400
+                    code: BRIDGE_CORE_0104
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
                 WORKSPACE_NOT_FOUND:
                   value:
-                    title: Workspace was not found
+                    title: Workspace Not Found
                     status: 404
-                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+                    code: BRIDGE_WORKSPACE_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                INTERNAL_USERS_NOT_IN_WORKSPACE:
+                  value:
+                    title: Internal Users Not In Workspace
+                    status: 409
+                    code: BRIDGE_INTERNAL_0002
+                EXTERNAL_USER_NOT_IN_WORKSPACE:
+                  value:
+                    title: External User Not In Workspace
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0004
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -299,11 +458,19 @@ paths:
       tags:
       - Conversations API
       summary: Creates a new conversation with flexible user identification.
-      description: Creates a new conversation with flexible user identification. External
-        users can be identified by ID, email, or phone. Internal users are only assigned
-        when explicitly specified; otherwise, conversations are auto-assigned by round-robin
-        through a team or left open for any available internal user.
+      description: 'Create a new conversation with flexible user identification.
+
+
+        External users can be identified by ID, email, or phone.
+
+        Internal users are only assigned when explicitly specified; otherwise, conversations
+        are
+
+        auto-assigned by round-robin through a team or left open for any available
+        internal user.'
       operationId: create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -312,21 +479,17 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateConversationRequest'
+              description: Request body for creating a new conversation.
       responses:
         '201':
           description: Successful Response
@@ -334,16 +497,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                EXTERNAL_PARTICIPANTS_REQUIRED:
+                  value:
+                    title: External Participants Required
+                    status: 400
+                    code: BRIDGE_CONVERSATION_0201
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
-                CONVERSATION_NOT_FOUND:
+                WORKSPACE_NOT_FOUND:
                   value:
-                    title: Conversation was not found
+                    title: Workspace Not Found
                     status: 404
-                    code: BRIDGE_CONVERSATION_0001 | CONVERSATION_NOT_FOUND
+                    code: BRIDGE_WORKSPACE_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                CONVERSATION_WITH_SAME_PARTICIPANTS_ALREADY_EXISTS:
+                  value:
+                    title: Conversation With Same Participants Already Exists
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0003
+                EXTERNAL_USER_NOT_IN_WORKSPACE:
+                  value:
+                    title: External User Not In Workspace
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0004
+                INTERNAL_USERS_NOT_IN_WORKSPACE:
+                  value:
+                    title: Internal Users Not In Workspace
+                    status: 409
+                    code: BRIDGE_INTERNAL_0002
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -355,8 +576,10 @@ paths:
       tags:
       - Messages API
       summary: Create a new message
-      description: Creates a new message within a specified conversation.
+      description: Create a new message within a specified conversation.
       operationId: create_message_bridge_api_v1_workspaces__workspaceId__messages_post
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -365,21 +588,18 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/MessageRequest'
+              description: Request body for creating a new message within a specified
+                conversation.
       responses:
         '201':
           description: Successful Response
@@ -387,23 +607,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
-                MessageNotFound:
+                CONVERSATION_NOT_FOUND:
                   value:
-                    title: Message Not Found
+                    title: Conversation Not Found
                     status: 404
-                    code: MESSAGE_NOT_FOUND
-                    detail: The message with the specified ID was not found.
-                MessageIsNotOnConversation:
+                    code: BRIDGE_CONVERSATION_0001
+                CONVERSATION_NOT_IN_WORKSPACE:
                   value:
-                    title: Message Is Not On Conversation
+                    title: Conversation Not In Workspace
                     status: 404
-                    code: MESSAGE_NOT_ON_CONVERSATION
-                    detail: The message is not part of the specified conversation.
+                    code: BRIDGE_CONVERSATION_0002
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -415,8 +652,10 @@ paths:
       tags:
       - Contacts API
       summary: Retrieve a contact by ID
-      description: Gets a specific contact by its unique identifier within the workspace
+      description: Get a specific contact by its unique identifier within the workspace.
       operationId: retrieve_contact_by_id_bridge_api_v1_workspaces__workspaceId__contacts__contactId__get
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -425,9 +664,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
       - name: contactId
         in: path
         required: true
@@ -435,15 +675,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the contact (UUID v4).
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
           title: Contactid
         description: Unique identifier of the contact (UUID v4).
-        example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       responses:
         '200':
           description: Successful Response
@@ -451,16 +686,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
-                CONTACT_USER_NOT_FOUND:
+                WORKSPACE_NOT_FOUND:
                   value:
-                    title: Contact was not found
+                    title: Workspace Not Found
                     status: 404
-                    code: BRIDGE_CONTACT_0001 | CONTACT_USER_NOT_FOUND
+                    code: BRIDGE_WORKSPACE_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -471,8 +725,10 @@ paths:
       tags:
       - Contacts API
       summary: Update contact
-      description: Update a contact in the specified workspace
+      description: Update a contact in the specified workspace.
       operationId: update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contactId__patch
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -481,9 +737,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
       - name: contactId
         in: path
         required: true
@@ -491,21 +748,17 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the contact (UUID v4).
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
           title: Contactid
         description: Unique identifier of the contact (UUID v4).
-        example: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateContactBody'
+              description: Request body for updating an existing contact.
       responses:
         '200':
           description: Successful Response
@@ -513,16 +766,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                MISSING_REQUIRED_FIELD:
+                  value:
+                    title: Missing Required Field
+                    status: 400
+                    code: BRIDGE_CORE_0102
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
-                CONTACT_USER_NOT_FOUND:
+                WORKSPACE_NOT_FOUND:
                   value:
-                    title: Contact was not found
+                    title: Workspace Not Found
                     status: 404
-                    code: BRIDGE_CONTACT_0001 | CONTACT_USER_NOT_FOUND
+                    code: BRIDGE_WORKSPACE_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                EXTERNAL_USER_ALREADY_EXISTS:
+                  value:
+                    title: External User Already Exists
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0002
+                EXTERNAL_USER_NOT_IN_WORKSPACE:
+                  value:
+                    title: External User Not In Workspace
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0004
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -534,9 +835,13 @@ paths:
       tags:
       - Contacts API
       summary: List contacts with filtering and pagination
-      description: Retrieves a paginated list of contacts within the workspace with
-        optional filtering by owner, search terms, and custom attributes.
+      description: 'Retrieve a paginated list of contacts within the workspace.
+
+
+        Support optional filtering by owner, search terms, and custom attributes.'
       operationId: get_contacts_bridge_api_v1_workspaces__workspaceId__contacts_get
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -545,9 +850,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
       - name: ownerEmail
         in: query
         required: false
@@ -555,8 +861,8 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          title: Owneremail
           description: Filter contacts by owner email address
+          title: Owneremail
         description: Filter contacts by owner email address
       - name: search
         in: query
@@ -565,9 +871,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          title: Search
           description: Search contacts by name, email, or cellphone
           example: John Doe
+          title: Search
         description: Search contacts by name, email, or cellphone
       - name: limit
         in: query
@@ -590,12 +896,6 @@ paths:
           description: Cursor provided on before request to get next page
           title: Cursor
         description: Cursor provided on before request to get next page
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       responses:
         '200':
           description: Successful Response
@@ -603,16 +903,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactsResponseList'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
                 WORKSPACE_NOT_FOUND:
                   value:
-                    title: Workspace was not found
+                    title: Workspace Not Found
                     status: 404
-                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+                    code: BRIDGE_WORKSPACE_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                INVALID_CURSOR:
+                  value:
+                    title: Invalid Cursor
+                    status: 400
+                    code: BRIDGE_CORE_0104
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -623,8 +954,10 @@ paths:
       tags:
       - Contacts API
       summary: Create a new contact
-      description: Creates a new contact in the specified workspace
+      description: Create a new contact in the specified workspace.
       operationId: create_contact_bridge_api_v1_workspaces__workspaceId__contacts_post
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -633,21 +966,17 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateContactBody'
+              description: Request body for creating a new contact.
       responses:
         '201':
           description: Successful Response
@@ -655,16 +984,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
                 WORKSPACE_NOT_FOUND:
                   value:
-                    title: Workspace was not found
+                    title: Workspace Not Found
                     status: 404
-                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+                    code: BRIDGE_WORKSPACE_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                EXTERNAL_USER_ALREADY_EXISTS:
+                  value:
+                    title: External User Already Exists
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0002
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -714,6 +1074,8 @@ paths:
         text/plain, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
         | 100 MB |'
       operationId: create_preloaded_files_bridge_api_v1_workspaces__workspaceId__files_post
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -722,15 +1084,10 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       requestBody:
         required: true
         content:
@@ -739,6 +1096,7 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/PreloadedFileRequest'
+              description: Request for a file to be preloaded with a presigned URL.
               title: Preloaded Files
       responses:
         '201':
@@ -751,6 +1109,18 @@ paths:
                   $ref: '#/components/schemas/PreloadedFileResponse'
                 title: Response Create Preloaded Files Bridge Api V1 Workspaces  Workspaceid  Files
                   Post
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -761,9 +1131,17 @@ paths:
     get:
       tags:
       - Custom attributes API
-      summary: Retrieve a custom attributes by workspaceId
-      description: Gets a custom attributes by workspaceId
+      summary: Retrieve custom attributes by workspaceId
+      description: "Return the custom attributes for the specified workspace.\n\n\
+        By default, only **active** attributes are returned (those without a past\
+        \ `deletedAt`).\n\n**Filters:**\n- `category` — Filter by `OPEN` or `CLOSED`.\
+        \ Omit to return all categories.\n- `includeArchived` — Set to `true` to include\
+        \ archived attributes\n  (those with a past `deletedAt`). Default: `false`.\n\
+        - `isRequired` — Set to `true` to return only required attributes,\n  `false`\
+        \ for optional only. Omit to return all."
       operationId: get_custom_attributes_by_workspace_bridge_api_v1_workspaces__workspaceId__settings_attributes_get
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -772,15 +1150,48 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-        example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
+      - name: category
+        in: query
+        required: false
         schema:
-          type: string
+          anyOf:
+          - enum:
+            - OPEN
+            - CLOSED
+            type: string
+          - type: 'null'
+          description: Filter by attribute category. Omit to return all categories.
+          title: Category
+        description: Filter by attribute category. Omit to return all categories.
+      - name: includeArchived
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: When `true`, archived attributes (those with a past `deletedAt`)
+            are included in the response. Default is `false`, which returns only active
+            attributes.
+          default: false
+          title: Includearchived
+        description: When `true`, archived attributes (those with a past `deletedAt`)
+          are included in the response. Default is `false`, which returns only active
+          attributes.
+      - name: isRequired
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Filter by required flag. `true` returns only required attributes,
+            `false` only optional. Omit to return all.
+          title: Isrequired
+        description: Filter by required flag. `true` returns only required attributes,
+          `false` only optional. Omit to return all.
       responses:
         '200':
           description: Successful Response
@@ -788,16 +1199,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CustomAttributesResponse'
-        '404':
-          description: Not Found
+        '403':
+          description: Forbidden
           content:
-            application/problem+json:
+            application/json:
               examples:
-                WORKSPACE_NOT_FOUND:
+                FORBIDDEN:
                   value:
-                    title: Workspace was not found
-                    status: 404
-                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -809,8 +1222,10 @@ paths:
       tags:
       - Provider channels API
       summary: Get provider channels by workspace id
-      description: Gets a provider channels by its unique identifier within the workspace
+      description: Get provider channels by workspace identifier.
       operationId: get_provider_channels_by_workspace_id_bridge_api_v1_workspaces__workspaceId__provider_channels_get
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -821,12 +1236,6 @@ paths:
           description: Unique identifier of the workspace (UUID v4).
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       responses:
         '200':
           description: Successful Response
@@ -834,16 +1243,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProviderChannelResponse'
-        '404':
-          description: Not Found
+        '403':
+          description: Forbidden
           content:
-            application/problem+json:
+            application/json:
               examples:
-                WORKSPACE_NOT_FOUND:
+                FORBIDDEN:
                   value:
-                    title: Workspace was not found
-                    status: 404
-                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -855,9 +1266,10 @@ paths:
       tags:
       - Provider channels API
       summary: Get provider channels by workspace id and provider type
-      description: Gets a provider channels by its unique identifier within the workspace
-        and provider type
+      description: Get provider channels by workspace identifier and provider type.
       operationId: get_provider_channels_by_workspace_id_and_provider_type_bridge_api_v1_workspaces__workspaceId__provider_channels__messageProviderType__get
+      security:
+      - x-api-key: []
       parameters:
       - name: workspaceId
         in: path
@@ -875,12 +1287,6 @@ paths:
           $ref: '#/components/schemas/MessageProviderType'
           description: Message provider type (e.g. WHATSAPP, HEYGIA).
         description: Message provider type (e.g. WHATSAPP, HEYGIA).
-      - in: header
-        name: x-api-key
-        required: true
-        description: Copy the API key as provided by the Bridge Console.
-        schema:
-          type: string
       responses:
         '200':
           description: Successful Response
@@ -888,21 +1294,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProviderChannelResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Not Found
           content:
-            application/problem+json:
+            application/json:
               examples:
-                WORKSPACE_DOES_NOT_HAVE_PROVIDER_CHANNEL_CONFIGURED:
+                PROVIDER_CHANNEL_NOT_FOUND:
                   value:
-                    title: Provider channel was not found
+                    title: Provider Channel Not Found
                     status: 404
-                    code: BRIDGE_PROVIDER_CHANNEL_0001 | WORKSPACE_DOES_NOT_HAVE_PROVIDER_CHANNEL_CONFIGURED
-                WORKSPACE_NOT_FOUND:
-                  value:
-                    title: Workspace was not found
-                    status: 404
-                    code: BRIDGE_WORKSPACE_0001 | WORKSPACE_NOT_FOUND
+                    code: BRIDGE_PROVIDER_CHANNEL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -915,77 +1330,123 @@ components:
       properties:
         id:
           type: string
-          title: ''
+          title: Identifier
           description: Unique closed attribute identifier
+          examples:
+          - 62de01f0-fd48-467c-9c35-18647c51532a
         value:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: value of closed attributes
+          title: Value
+          description: Value of closed attributes
       type: object
       required:
       - id
       title: ClosedAttribute
+      description: Object representing the closed attribute values.
+    ClosedAttributeRequest:
+      properties:
+        customAttributeId:
+          type: string
+          title: Custom Attribute Identifier
+          description: Unique closed custom attribute identifier.
+          examples:
+          - 651c97c1-b31d-466f-825c-fe77b39e7ae6
+        closedCustomAttributeIds:
+          items:
+            type: string
+          type: array
+          title: Closed Custom Attribute Identifiers
+          description: List of unique closed attribute value identifiers.
+          examples:
+          - - 62de01f0-fd48-467c-9c35-18647c51532a
+            - 6faf42bb-7d7b-44bd-9e79-5de6fd491134
+      type: object
+      required:
+      - customAttributeId
+      - closedCustomAttributeIds
+      title: ClosedAttributeRequest
+      description: Request body for closed custom attributes operations.
     ContactResponse:
       properties:
         id:
           type: string
-          title: ''
+          title: Identifier
           description: Unique identifier for the contact (UUID v4).
-          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         workspaceId:
           type: string
-          title: ''
+          title: Workspace Identifier
           description: Unique identifier of the workspace this contact belongs to
+          examples:
+          - 92b2d4f3-81e1-4b61-a7ec-6f4ff3b58be5
         firstName:
           type: string
-          title: ''
-          description: Contact's first name
+          title: First Name
+          description: Contact's first name.
+          examples:
+          - John
         lastName:
           type: string
-          title: ''
-          description: Contact's last name
+          title: Last Name
+          description: Contact's last name.
+          examples:
+          - Doe
         email:
           anyOf:
           - type: string
+            format: email
           - type: 'null'
-          title: ''
-          description: Contact's email address
+          title: Email
+          description: Contact's email address.
+          examples:
+          - john.doe@example.com
+          - null
         cellphone:
           anyOf:
           - type: string
+            format: phone
           - type: 'null'
-          title: ''
-          description: Contact's cellphone address
+          title: Cellphone
+          description: Contact's cellphone address.
+          examples:
+          - '+14084029292'
+          - null
         customAttributes:
           items:
             $ref: '#/components/schemas/CustomAttributeResponse'
           type: array
-          title: ''
-          description: Array of custom key-value attributes
+          title: Custom Attributes
+          description: Array of custom key-value attributes.
         languageCode:
           $ref: '#/components/schemas/LanguageCode'
-          title: ''
-          description: Language code from external user
+          title: Language Code
+          description: Language code from external user.
+          examples:
+          - EN
         ownerId:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: Email address of the salesperson or user who owns this contact
+          title: Owner Identifier
+          description: Email address of the salesperson or user who owns this contact.
+          examples:
+          - 37673840-6259-40f9-bbe5-a7db40f8e3cf
+          - null
         createdAt:
           type: string
-          format: date-time
-          title: ''
-          description: Timestamp when the contact was created
-          example: '2025-09-19T18:25:43Z'
+          title: Created At
+          description: Timestamp when the contact was created.
+          examples:
+          - '2003-04-10T08:00:00.000Z'
         updatedAt:
           type: string
-          format: date-time
-          title: ''
-          description: Timestamp when the contact was last updated
-          example: '2025-09-19T18:25:43Z'
+          title: Updated At
+          description: Timestamp when the contact was last updated.
+          examples:
+          - '2003-04-10T08:00:00.000Z'
       type: object
       required:
       - id
@@ -996,25 +1457,26 @@ components:
       - createdAt
       - updatedAt
       title: ContactResponse
+      description: Response body for contact-related operations.
     ContactsResponseList:
       properties:
         contacts:
           items:
             $ref: '#/components/schemas/ContactResponse'
           type: array
-          title: ''
-          description: Array of contacts
-          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Contacts
+          description: Array of contacts.
         cursor:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: Cursor to be send on next page
+          title: Cursor
+          description: Cursor to be send on next page.
       type: object
       required:
       - contacts
       title: ContactsResponseList
+      description: Response body for listing contacts.
     ConversationListResponse:
       properties:
         conversations:
@@ -1022,78 +1484,91 @@ components:
             $ref: '#/components/schemas/ConversationResponse'
           type: array
           title: Conversations
+          description: List of conversations.
         cursor:
           anyOf:
           - type: string
           - type: 'null'
           title: Cursor
+          description: Cursor for fetching the next page of conversations. Null if
+            there are no more pages.
+          examples:
+          - null
+          - eyJ2IjoxLCJjIjp7InN0IjoxfX0
       type: object
       required:
       - conversations
-      - cursor
       title: ConversationListResponse
+      description: Response body for listing conversations with pagination.
     ConversationParticipantsResponse:
       properties:
         externals:
           items:
             $ref: '#/components/schemas/ExternalParticipant'
           type: array
-          title: Participants
+          title: Externals
           description: List of external participants.
         internals:
           items:
             $ref: '#/components/schemas/InternalParticipant'
           type: array
-          title: Participants
+          title: Internals
           description: List of internal participants.
       type: object
       required:
       - externals
       - internals
       title: ConversationParticipantsResponse
+      description: Response body for conversation participants.
     ConversationResponse:
       properties:
         id:
           type: string
-          title: ''
+          title: Identifier
           description: Unique identifier of the conversation (UUID v4).
-          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         workspaceId:
           type: string
-          title: ''
+          title: Workspace Identifier
           description: Unique identifier of the workspace (UUID v4).
-          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         participants:
           $ref: '#/components/schemas/ConversationParticipantsResponse'
-          title: Participants structure
+          title: Participants
           description: Participants of the conversation.
         name:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: Optional name/title for the conversation
-          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Name
+          description: Optional name/title for the conversation.
+          examples:
+          - Bridge Support Team
         status:
           anyOf:
           - $ref: '#/components/schemas/ConversationStatus'
           - type: 'null'
-          title: ''
+          title: Status
           description: Current conversation status - 'ACTIVE' for visible conversations,
-            'GHOST' for invisible until first interaction
-          example: ACTIVE
+            'GHOST' for invisible until first interaction.
+          examples:
+          - ACTIVE
         createdAt:
           type: string
           format: date-time
-          title: ''
-          description: Timestamp when the conversation was created
-          example: '2025-09-19T18:25:43Z'
+          title: Created At
+          description: Timestamp when the conversation was created.
+          examples:
+          - '2003-04-10T09:00:00.000Z'
         updatedAt:
           type: string
           format: date-time
-          title: ''
-          description: Timestamp when the conversation was last updated
-          example: '2025-09-19T18:25:43Z'
+          title: Updated At
+          description: Timestamp when the conversation was last updated.
+          examples:
+          - '2003-04-10T09:00:00.000Z'
       type: object
       required:
       - id
@@ -1102,6 +1577,7 @@ components:
       - createdAt
       - updatedAt
       title: ConversationResponse
+      description: Response body for conversation details.
     ConversationStatus:
       type: string
       enum:
@@ -1112,38 +1588,50 @@ components:
       properties:
         firstName:
           type: string
-          title: ''
-          description: Contact's first name
+          title: First Name
+          description: Contact's first name.
+          examples:
+          - John
+          - Alice
         lastName:
           type: string
-          title: ''
-          description: Contact's last name
+          title: Last Name
+          description: Contact's last name.
+          examples:
+          - Doe
         email:
           anyOf:
           - type: string
+            format: email
           - type: 'null'
-          title: ''
-          description: Contact's email address (optional)
+          title: Email
+          description: Contact's email address.
+          examples:
+          - john.doe@example.com
+          - null
         languageCode:
           $ref: '#/components/schemas/LanguageCode'
-          title: ''
-          description: Contact's language code
-          example: EN
+          title: Language Code
+          description: Contact's language code.
+          examples:
+          - EN
         cellphone:
           type: string
-          title: ''
-          description: Contact's cellphone number
+          format: phone
+          title: Cellphone
+          description: Contact's cellphone number.
+          examples:
+          - '+14084029292'
         ownerIdentifier:
           anyOf:
           - $ref: '#/components/schemas/InternalUserIdentifierRequest'
           - type: 'null'
-          title: ''
-          description: Identifier of the salesperson or user who owns this contact
+          title: Owner Identifier
+          description: Identifier of the salesperson or user who owns this contact.
         customAttributes:
-          items: {}
-          type: array
-          title: ''
-          description: Array of custom key-value attributes
+          $ref: '#/components/schemas/CustomAttributesBody'
+          title: Custom Attributes
+          description: Object with open and closed custom attributes.
       additionalProperties: false
       type: object
       required:
@@ -1152,100 +1640,118 @@ components:
       - languageCode
       - cellphone
       title: CreateContactBody
+      description: Request body for creating a new contact.
     CreateConversationRequest:
       properties:
         participants:
           $ref: '#/components/schemas/CreateParticipantsOnConversationRequest'
-          title: ''
-          description: Participants to add to conversation
+          title: Participants
+          description: Participants to add to conversation.
         name:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: Optional name/title for the conversation
-          example: b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Name
+          description: Optional name/title for the conversation.
+          examples:
+          - Bridge Support Team
+          - null
         status:
           $ref: '#/components/schemas/ConversationStatus'
-          title: ''
+          title: Status
           description: Initial conversation status - 'active' for visible conversations,
-            'ghost' for invisible until first interaction
+            'ghost' for invisible until first interaction.
           default: ACTIVE
-          example: ACTIVE
+          examples:
+          - ACTIVE
         teamId:
           anyOf:
           - type: string
             format: uuid
           - type: 'null'
-          title: ''
+          title: Team Identifier
           description: Team UUID for round-robin assignment (optional, mutually exclusive
-            with internalParticipants)
+            with internalParticipants).
+          examples:
+          - 9fd1468d-e5ca-4ba3-98d1-13017e6f3808
       additionalProperties: false
       type: object
       required:
       - participants
       title: CreateConversationRequest
+      description: Request body for creating a new conversation.
     CreateParticipantsOnConversationRequest:
       properties:
         externals:
           items:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
-          title: ''
-          description: Array of external user identifiers
+          title: Externals
+          description: Array of external user identifiers.
         internals:
           items:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
-          title: ''
+          title: Internals
           description: Array of internal user identifiers (optional, mutually exclusive
-            with teamId)
+            with teamId).
       type: object
       title: CreateParticipantsOnConversationRequest
+      description: Request body for participants when creating a new conversation.
     CustomAttributeResponse:
       properties:
         key:
           type: string
-          title: ''
+          title: Key
           description: Attribute key/name
         values:
           items:
             type: string
           type: array
-          title: ''
+          title: Values
           description: Attribute value
       type: object
       required:
       - key
       title: CustomAttributeResponse
+      description: Response body for custom attributes in contact-related operations.
     CustomAttributes:
       properties:
         id:
           type: string
-          title: ''
-          description: Unique custom attribute identifier
+          title: Identifier
+          description: Unique custom attribute identifier.
+          examples:
+          - 651c97c1-b31d-466f-825c-fe77b39e7ae6
         category:
           type: string
           enum:
           - OPEN
           - CLOSED
-          title: ''
-          description: category of custom attribute
+          title: Category
+          description: Category of custom attribute.
+          examples:
+          - OPEN
+          - CLOSED
         isRequired:
           type: boolean
-          title: ''
-          description: define if the custom attribute is required
+          title: Is Required
+          description: Define if the custom attribute is required.
+          examples:
+          - true
+          - false
         keyName:
           type: string
-          title: ''
-          description: name of custom attribute
+          title: Key Name
+          description: Name of custom attribute.
         closedAttributesValues:
           anyOf:
           - items:
               $ref: '#/components/schemas/ClosedAttribute'
             type: array
           - type: 'null'
-          title: ''
+          title: Closed Attributes Values
+          description: List of closed attribute values.
         type:
           type: string
           enum:
@@ -1254,8 +1760,20 @@ components:
           - DATE
           - SELECT
           - MULTI_SELECT
-          title: ''
-          description: type of the values of custom attributes
+          title: Type
+          description: Type of the values of custom attributes.
+          examples:
+          - TEXT
+          - NUMBER
+          - DATE
+          - SELECT
+          - MULTI_SELECT
+        deletedAt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Deleted At
+          description: Soft-delete timestamp. Null means the attribute is active.
       type: object
       required:
       - id
@@ -1264,67 +1782,99 @@ components:
       - keyName
       - type
       title: CustomAttributes
+      description: Object representing the custom attribute.
+    CustomAttributesBody:
+      properties:
+        openAttributes:
+          items:
+            $ref: '#/components/schemas/OpenAttributeRequest'
+          type: array
+          title: Open Attributes
+          description: Array of open attributes.
+        closedAttributes:
+          items:
+            $ref: '#/components/schemas/ClosedAttributeRequest'
+          type: array
+          title: Closed Attributes
+          description: Array of closed attributes.
+      type: object
+      title: CustomAttributesBody
+      description: Request body for custom attributes operations.
     CustomAttributesResponse:
       properties:
-        custom_attributes:
+        customAttributes:
           items:
             $ref: '#/components/schemas/CustomAttributes'
           type: array
-          title: ''
-          description: list of custom attributes
+          title: Custom Attributes
+          description: List of custom attributes objects with their values.
       type: object
       required:
-      - custom_attributes
+      - customAttributes
       title: CustomAttributesResponse
+      description: Response body for custom attributes operations.
     ExternalOperationRequest:
       properties:
         add:
           items:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
-          title: ''
-          description: External participants to add
+          title: Add
+          description: External participants to add.
         remove:
           items:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
-          title: ''
-          description: External participants to remove
+          title: Remove
+          description: External participants to remove.
       type: object
       title: ExternalOperationRequest
+      description: Operations for external participants in a conversation.
     ExternalParticipant:
       properties:
         identifier:
           type: string
-          title: ''
-          description: Participant identifier value
+          title: Identifier
+          description: Participant identifier value.
+          examples:
+          - ef7ee722-5f95-415a-9a98-81eeae178b11
         identifierType:
           type: string
           enum:
           - ID
           - EMAIL
           - PHONE
-          title: ''
+          title: Identifier Type
           description: Type of identifier for external participants (ID, EMAIL, or
-            PHONE)
+            PHONE).
+          examples:
+          - EMAIL
+          - PHONE
+          - ID
         role:
           $ref: '#/components/schemas/UserType'
-          title: ''
-          description: Participant role in the conversation
+          title: Role
+          description: Participant role in the conversation.
+          examples:
+          - EXTERNAL
+          - INTERNAL
         joinedAt:
           type: string
           format: date-time
-          title: ''
-          description: Timestamp when participant joined the conversation
-          example: '2025-09-19T18:25:43Z'
+          title: Joined At
+          description: Timestamp when participant joined the conversation.
+          examples:
+          - '2004-04-10T09:00:00.000Z'
         lastSeenAt:
           anyOf:
           - type: string
             format: date-time
           - type: 'null'
-          title: ''
-          description: Timestamp when participant was last seen
-          example: '2025-09-19T18:25:43Z'
+          title: Last Seen At
+          description: Timestamp when participant was last seen.
+          examples:
+          - null
+          - '2004-04-10T09:00:00.000Z'
       type: object
       required:
       - identifier
@@ -1332,38 +1882,51 @@ components:
       - role
       - joinedAt
       title: Participant
+      description: Object representing the external participant in the conversation.
     ExternalUserIdentifierRequest:
       properties:
         identifier:
           type: string
-          title: ''
-          description: User identifier value
+          title: Identifier
+          description: User identifier value.
+          examples:
+          - john.doe@example.com
+          - '+13802098869'
+          - 37673840-6259-40f9-bbe5-a7db40f8e3cf
         identifierType:
           type: string
           enum:
           - ID
           - EMAIL
           - PHONE
-          title: ''
-          description: Type of identifier for external users (ID, EMAIL or PHONE)
+          title: Identifier Type
+          description: Type of identifier for external users (ID, EMAIL or PHONE).
+          examples:
+          - EMAIL
+          - PHONE
+          - ID
         messageProviderType:
           anyOf:
           - $ref: '#/components/schemas/MessageProviderType'
           - type: 'null'
-          title: ''
-          description: Message provider type of the conversation
+          title: Message Provider Type
+          description: Message provider type of the conversation.
+          examples:
+          - WHATSAPP
+          - null
         providerChannelId:
           anyOf:
           - type: string
           - type: 'null'
-          title: Providerchannelid
+          title: Provider Channel Identifier
           description: Provider channel id of channel that be used by Bridge to communicate
-            with user
+            with user.
       type: object
       required:
       - identifier
       - identifierType
       title: ExternalUserIdentifierRequest
+      description: Body to identify an external user in Bridge System.
     FileType:
       type: string
       enum:
@@ -1388,47 +1951,59 @@ components:
           items:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
-          title: ''
-          description: Internal participants to add
+          title: Add
+          description: Internal participants to add.
         remove:
           items:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
-          title: ''
+          title: Remove
           description: Internal participants to remove
       type: object
       title: InternalOperationRequest
+      description: Operations for internal participants in a conversation.
     InternalParticipant:
       properties:
         identifier:
           type: string
-          title: ''
-          description: Participant identifier value
+          title: Identifier
+          description: Participant identifier value.
+          examples:
+          - ef7ee722-5f95-415a-9a98-81eeae178b11
         identifierType:
           type: string
           enum:
           - ID
           - EMAIL
-          title: ''
-          description: Type of identifier for internal participants (ID or EMAIL)
+          title: Identifier Type
+          description: Type of identifier for internal participants (ID or EMAIL).
+          examples:
+          - EMAIL
+          - ID
         role:
           $ref: '#/components/schemas/UserType'
-          title: ''
-          description: Participant role in the conversation
+          title: Role
+          description: Participant role in the conversation.
+          examples:
+          - EXTERNAL
+          - INTERNAL
         joinedAt:
           type: string
           format: date-time
-          title: ''
-          description: Timestamp when participant joined the conversation
-          example: '2025-09-19T18:25:43Z'
+          title: Joined At
+          description: Timestamp when participant joined the conversation.
+          examples:
+          - '2004-04-10T09:00:00.000Z'
         lastSeenAt:
           anyOf:
           - type: string
             format: date-time
           - type: 'null'
-          title: ''
-          description: Timestamp when participant was last seen
-          example: '2025-09-19T18:25:43Z'
+          title: Last Seen At
+          description: Timestamp when participant was last seen.
+          examples:
+          - null
+          - '2004-04-10T09:00:00.000Z'
       type: object
       required:
       - identifier
@@ -1436,24 +2011,33 @@ components:
       - role
       - joinedAt
       title: Participant
+      description: Object representing the internal participant in the conversation.
     InternalUserIdentifierRequest:
       properties:
         identifier:
           type: string
-          title: ''
-          description: User identifier value
+          title: Identifier
+          description: User identifier value.
+          examples:
+          - john.doe@example.com
+          - '+13802098869'
+          - 37673840-6259-40f9-bbe5-a7db40f8e3cf
         identifierType:
           type: string
           enum:
           - ID
           - EMAIL
-          title: ''
-          description: Type of identifier for internal users (ID or EMAIL)
+          title: Identifier Type
+          description: Type of identifier for internal users (ID or EMAIL).
+          examples:
+          - EMAIL
+          - ID
       type: object
       required:
       - identifier
       - identifierType
       title: InternalUserIdentifierRequest
+      description: Body to identify an internal user in Bridge System.
     LanguageCode:
       type: string
       enum:
@@ -1464,99 +2048,153 @@ components:
       type: string
       enum:
       - WHATSAPP
+      - SMS
+      - TELEGRAM
+      - INSTAGRAM
+      - TWITTER
+      - LINE
+      - FACEBOOK
+      - IMESSAGE
+      - WHATSAPP_TEST
       - HEYGIA
       title: MessageProviderType
     MessageRequest:
       properties:
         conversationId:
           type: string
-          title: ''
-          description: ID of the conversation
+          title: Conversation Identifier
+          description: Identifier of the conversation.
+          examples:
+          - d290f1ee-6c54-4b01-90e6-d701748f0851
         messageBody:
           type: string
-          title: ''
-          description: Body of the message
+          title: Message Body
+          description: Body of the message.
+          examples:
+          - Hello, welcome to Bridge!
         replyToMessageId:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: ID of the message being replied to
+          title: Reply To Message Identifier
+          description: Identifier of the message being replied to.
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          - null
         enableExternalBroadcast:
           type: boolean
-          title: ''
-          description: Flag to enable external broadcast
+          title: Enable External Broadcast
+          description: Flag to enable external broadcast.
+          examples:
+          - true
+          - false
         mediaIds:
           items:
             type: string
           type: array
-          title: ''
-          description: List of media IDs associated with the message
+          title: Media Identifiers
+          description: List of media IDs associated with the message.
+          examples:
+          - - a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6
       type: object
       required:
       - conversationId
       - messageBody
       - enableExternalBroadcast
       title: MessageRequest
+      description: Request body for creating a new message within a specified conversation.
     MessageResponse:
       properties:
         messagingProduct:
           type: string
-          title: ''
-          description: Product name, e.g., bridge
+          title: Messaging Product
+          description: Product name.
           default: bridge
+          examples:
+          - bridge
         messageId:
           type: string
-          title: ''
-          description: Unique message identifier as a UUID string
+          title: Message Identifier
+          description: Unique message identifier as a UUID string.
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
       type: object
       required:
       - messageId
       title: MessageResponse
+      description: Response body for message-related operations.
+    OpenAttributeRequest:
+      properties:
+        customAttributeId:
+          type: string
+          title: Custom Attribute Identifier
+          description: Unique open custom attribute identifier.
+          examples:
+          - 651c97c1-b31d-466f-825c-fe77b39e7ae6
+        content:
+          type: string
+          title: Content
+          description: Value of open attribute.
+      type: object
+      required:
+      - customAttributeId
+      - content
+      title: OpenAttributeRequest
+      description: Request body for open custom attributes operations.
     ParticipantOperationsRequest:
       properties:
         externals:
           anyOf:
           - $ref: '#/components/schemas/ExternalOperationRequest'
           - type: 'null'
-          title: ''
+          title: Externals
           description: External user operations, this should provided with "add" and
-            "remove" operations
+            "remove" operations.
         internals:
           anyOf:
           - $ref: '#/components/schemas/InternalOperationRequest'
           - type: 'null'
-          title: ''
+          title: Internals
           description: Internal user operations, this should provided with "add" and
             "remove" operations
       type: object
       title: ParticipantOperationsRequest
+      description: Request body for participant operations when updating a conversation.
     PreloadedFileRequest:
       properties:
         name:
           type: string
-          title: ''
-          description: Original file name including extension
-          example: prueba.jpg
+          title: Name
+          description: Original file name including extension.
+          examples:
+          - prueba.jpg
         fileType:
           $ref: '#/components/schemas/FileType'
-          title: ''
-          description: Logical file type category
-          example: IMAGE
+          title: File Type
+          description: Logical file type category.
+          examples:
+          - IMAGE
+          - VIDEO
+          - AUDIO
+          - DOCUMENT
         contentType:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: MIME type of the file (e.g., image/jpeg)
-          example: image/jpeg
+          title: Content Type
+          description: MIME type of the file.
+          examples:
+          - image/jpeg
+          - application/pdf
+          - null
         checksumBase64:
           type: string
-          title: ''
+          title: Checksum Base64
           description: Base64-encoded SHA-256 digest of the entire file. This value
             will be used to sign the presigned PUT and must be sent back in the header
             x-amz-checksum-sha256 during upload.
-          example: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
+          examples:
+          - OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
       additionalProperties: false
       type: object
       required:
@@ -1564,67 +2202,128 @@ components:
       - fileType
       - checksumBase64
       title: PreloadedFileRequest
-      examples:
-      - checksumBase64: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
-        contentType: image/jpeg
-        fileType: IMAGE
-        name: prueba.jpg
+      description: Request for a file to be preloaded with a presigned URL.
     PreloadedFileResponse:
       properties:
         mediaId:
           type: string
-          title: ''
-          description: Unique media identifier
+          title: Media Identifier
+          description: Unique media identifier.
+          examples:
+          - 4a2c1f7e-2f84-4a5f-bd2d-6b6b2f0c1234
         presignUrl:
           $ref: '#/components/schemas/PresignPut'
-          title: ''
-          description: Presigned PUT data to upload the media (url, method and headers)
+          title: Presign Url
+          description: Presigned PUT data to upload the media (url, method and headers).
       additionalProperties: false
       type: object
       required:
       - mediaId
       - presignUrl
       title: PreloadedFileResponse
-      examples:
-      - mediaId: 4a2c1f7e-2f84-4a5f-bd2d-6b6b2f0c1234
-        presignUrl:
-          headers:
-            Content-Type: image/jpeg
-            x-amz-checksum-sha256: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
-          method: PUT
-          url: https://s3.amazonaws.com/bucket/path/to/object
+      description: Response for a preloaded file with presigned URL for upload.
     PresignPut:
       properties:
         url:
           type: string
           title: Url
-          description: Presigned PUT URL
+          description: Presigned PUT URL.
+          examples:
+          - https://s3.amazonaws.com/bucket/path/to/object
         method:
           type: string
           const: PUT
           title: Method
-          description: HTTP method to use for the upload
+          description: HTTP method to use for the upload.
           default: PUT
+          examples:
+          - PUT
         headers:
           additionalProperties:
             type: string
           type: object
           title: Headers
           description: Headers required for the presigned PUT (e.g., Content-Type,
-            x-amz-checksum-sha256)
+            x-amz-checksum-sha256).
+          examples:
+          - Content-Type: image/jpeg
+            x-amz-checksum-sha256: OaZ+I0yqf3u3u5w8h0Y2v4e7W9vHh3zbn2mA2m1yPVo=
       type: object
       required:
       - url
       title: PresignPut
+      description: Presigned PUT data for uploading a media file.
+    Problem:
+      properties:
+        title:
+          type: string
+          title: Title
+          description: Short, summary of the problem type.
+        status:
+          type: integer
+          title: Status
+          description: HTTP status code generated by the origin server for this occurrence
+            of the problem.
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+          description: Explanation specific to this occurrence of the problem.
+        instance:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Instance
+          description: A URI reference that identifies the specific occurrence of
+            the problem.
+        traceId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Traceid
+          description: Trace ID for debugging purposes.
+        code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Code
+          description: Error code for identification, view the error codes page for
+            more details.
+        errors:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Errors
+          description: List of error details.
+        extra:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Extra
+          description: Extra information about the problem.
+      type: object
+      required:
+      - title
+      - status
+      title: Problem
+      description: Object representing a Problem response body.
     ProviderChannel:
       properties:
         provider:
           $ref: '#/components/schemas/MessageProviderType'
-          title: ''
-          description: Provider name of the messaging channel (e.g. WHATSAPP, HEYGIA).
+          title: Provider
+          description: Provider name of the messaging channel.
+          examples:
+          - WHATSAPP
+          - HEYGIA
         identifier:
           type: string
-          title: ''
+          title: Identifier
           description: Identifier associated with this provider channel, in E.164
             format without the '+' sign.
       type: object
@@ -1632,17 +2331,20 @@ components:
       - provider
       - identifier
       title: ProviderChannel
+      description: Provider channel associated in a workspace.
     ProviderChannelResponse:
       properties:
         workspaceId:
           type: string
-          title: ''
+          title: Workspace Identifier
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - 92b2d4f3-81e1-4b61-a7ec-6f4ff3b58be5
         providerChannels:
           items:
             $ref: '#/components/schemas/ProviderChannel'
           type: array
-          title: ''
+          title: Provider Channels
           description: List of provider channels (phone numbers) available for this
             workspace.
       type: object
@@ -1650,79 +2352,99 @@ components:
       - workspaceId
       - providerChannels
       title: ProviderChannelResponse
+      description: Response body for provider channels operations.
     UpdateContactBody:
       properties:
         firstName:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: Contact's first name
+          title: First Name
+          description: Contact's first name.
+          examples:
+          - John
+          - null
         lastName:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: Contact's last name
+          title: Last Name
+          description: Contact's last name.
+          examples:
+          - Doe
+          - null
         email:
           anyOf:
           - type: string
+            format: email
           - type: 'null'
-          title: ''
-          description: Contact's email address
+          title: Email
+          description: Contact's email address.
+          examples:
+          - john.doe@example.com
+          - null
         languageCode:
           anyOf:
           - $ref: '#/components/schemas/LanguageCode'
           - type: 'null'
-          enum:
-          - ES
+          title: Language Code
+          description: Contact's language code.
+          examples:
           - EN
-          title: ''
-          description: Contact's language code
-          example: EN
         cellphone:
           anyOf:
           - type: string
+            format: phone
           - type: 'null'
-          title: ''
-          description: Contact's cellphone number
+          title: Cellphone
+          description: Contact's cellphone number.
+          examples:
+          - '+14084029292'
+          - null
         ownerIdentifier:
           anyOf:
           - $ref: '#/components/schemas/InternalUserIdentifierRequest'
           - type: 'null'
-          title: ''
-          description: Identifier of the salesperson or user who owns this contact
+          title: Owner Identifier
+          description: Identifier of the salesperson or user who owns this contact.
+        customAttributes:
+          $ref: '#/components/schemas/CustomAttributesBody'
+          title: Custom Attributes
+          description: Array of custom key-value attributes.
       additionalProperties: false
       type: object
       title: UpdateContactBody
+      description: Request body for updating an existing contact.
     UpdateConversation:
       properties:
         name:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
-          description: Optional name/title for the conversation
+          title: Name
+          description: Optional name/title for the conversation.
+          examples:
+          - Client Support
+          - null
         status:
           anyOf:
           - $ref: '#/components/schemas/ConversationStatus'
           - type: 'null'
-          enum:
-          - ACTIVE
-          - GHOST
-          title: ''
+          title: Status
           description: Initial conversation status - 'active' for visible conversations,
-            'ghost' for invisible until first interaction
-          example: ACTIVE
+            'ghost' for invisible until first interaction.
+          examples:
+          - ACTIVE
         participants:
           anyOf:
           - $ref: '#/components/schemas/ParticipantOperationsRequest'
           - type: 'null'
-          title: ''
-          description: Participants operations to add and remove from a conversation
+          title: Participants
+          description: Participants operations to add and remove from a conversation.
       additionalProperties: false
       type: object
       title: UpdateConversation
+      description: Request body for updating an existing conversation.
     UserType:
       type: string
       enum:
@@ -1750,3 +2472,9 @@ components:
       - msg
       - type
       title: ValidationError
+  securitySchemes:
+    x-api-key:
+      type: apiKey
+      description: Copy the API key as provided by the Bridge Console.
+      in: header
+      name: x-api-key
