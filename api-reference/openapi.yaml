@@ -252,25 +252,24 @@ paths:
                     title: Min Internal Users Required
                     status: 409
                     code: BRIDGE_CONVERSATION_0205
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '422':
-          description: Unprocessable Content
-          content:
-            application/json:
-              examples:
                 EXTERNAL_USER_NOT_IN_WORKSPACE:
                   value:
                     title: External User Not In Workspace
-                    status: 422
+                    status: 409
                     code: BRIDGE_EXTERNAL_0004
                 INTERNAL_USERS_NOT_IN_WORKSPACE:
                   value:
                     title: Internal Users Not In Workspace
-                    status: 422
+                    status: 409
                     code: BRIDGE_INTERNAL_0002
               schema:
                 $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /bridge/api/v1/workspaces/{workspaceId}/conversations:
     get:
       tags:
@@ -338,9 +337,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          title: Internaluseridentifier
           description: Identifier of internal user, if you are sending a phone number
             take care to encode the request url (including params)
+          title: Internaluseridentifier
         description: Identifier of internal user, if you are sending a phone number
           take care to encode the request url (including params)
       - name: internalUserIdentifierType
@@ -350,10 +349,10 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          title: Internaluseridentifiertype
           enum:
           - ID
           - EMAIL
+          title: Internaluseridentifiertype
       - name: externalUserIdentifier
         in: query
         required: false
@@ -391,6 +390,11 @@ paths:
                     title: Bad Request
                     status: 400
                     code: BRIDGE_CORE_0103
+                INVALID_CURSOR:
+                  value:
+                    title: Invalid Cursor
+                    status: 400
+                    code: BRIDGE_CORE_0104
               schema:
                 $ref: '#/components/schemas/Problem'
         '403':
@@ -427,28 +431,29 @@ paths:
                     code: BRIDGE_EXTERNAL_0001
               schema:
                 $ref: '#/components/schemas/Problem'
-        '422':
-          description: Unprocessable Content
+        '409':
+          description: Conflict
           content:
             application/json:
               examples:
                 INTERNAL_USERS_NOT_IN_WORKSPACE:
                   value:
                     title: Internal Users Not In Workspace
-                    status: 422
+                    status: 409
                     code: BRIDGE_INTERNAL_0002
                 EXTERNAL_USER_NOT_IN_WORKSPACE:
                   value:
                     title: External User Not In Workspace
-                    status: 422
+                    status: 409
                     code: BRIDGE_EXTERNAL_0004
-                INVALID_CURSOR:
-                  value:
-                    title: Invalid Cursor
-                    status: 422
-                    code: BRIDGE_CORE_0104
               schema:
                 $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     post:
       tags:
       - Conversations API
@@ -548,25 +553,24 @@ paths:
                     title: Conversation With Same Participants Already Exists
                     status: 409
                     code: BRIDGE_CONVERSATION_0003
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '422':
-          description: Unprocessable Content
-          content:
-            application/json:
-              examples:
                 EXTERNAL_USER_NOT_IN_WORKSPACE:
                   value:
                     title: External User Not In Workspace
-                    status: 422
+                    status: 409
                     code: BRIDGE_EXTERNAL_0004
                 INTERNAL_USERS_NOT_IN_WORKSPACE:
                   value:
                     title: Internal Users Not In Workspace
-                    status: 422
+                    status: 409
                     code: BRIDGE_INTERNAL_0002
               schema:
                 $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /bridge/api/v1/workspaces/{workspaceId}/messages:
     post:
       tags:
@@ -813,20 +817,19 @@ paths:
                     title: External User Already Exists
                     status: 409
                     code: BRIDGE_EXTERNAL_0002
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '422':
-          description: Unprocessable Content
-          content:
-            application/json:
-              examples:
                 EXTERNAL_USER_NOT_IN_WORKSPACE:
                   value:
                     title: External User Not In Workspace
-                    status: 422
+                    status: 409
                     code: BRIDGE_EXTERNAL_0004
               schema:
                 $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /bridge/api/v1/workspaces/{workspaceId}/contacts:
     get:
       tags:
@@ -858,8 +861,8 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          title: Owneremail
           description: Filter contacts by owner email address
+          title: Owneremail
         description: Filter contacts by owner email address
       - name: search
         in: query
@@ -868,9 +871,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
-          title: Search
           description: Search contacts by name, email, or cellphone
           example: John Doe
+          title: Search
         description: Search contacts by name, email, or cellphone
       - name: limit
         in: query
@@ -929,18 +932,24 @@ paths:
                     code: BRIDGE_INTERNAL_0001
               schema:
                 $ref: '#/components/schemas/Problem'
-        '422':
-          description: Unprocessable Content
+        '400':
+          description: Bad Request
           content:
             application/json:
               examples:
                 INVALID_CURSOR:
                   value:
                     title: Invalid Cursor
-                    status: 422
+                    status: 400
                     code: BRIDGE_CORE_0104
               schema:
                 $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
     post:
       tags:
       - Contacts API
@@ -1321,7 +1330,7 @@ components:
       properties:
         id:
           type: string
-          title: ''
+          title: Identifier
           description: Unique closed attribute identifier
           examples:
           - 62de01f0-fd48-467c-9c35-18647c51532a
@@ -1329,7 +1338,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Value
           description: Value of closed attributes
       type: object
       required:
@@ -1340,7 +1349,7 @@ components:
       properties:
         customAttributeId:
           type: string
-          title: Customattributeid
+          title: Custom Attribute Identifier
           description: Unique closed custom attribute identifier.
           examples:
           - 651c97c1-b31d-466f-825c-fe77b39e7ae6
@@ -1348,7 +1357,7 @@ components:
           items:
             type: string
           type: array
-          title: Closedcustomattributeids
+          title: Closed Custom Attribute Identifiers
           description: List of unique closed attribute value identifiers.
           examples:
           - - 62de01f0-fd48-467c-9c35-18647c51532a
@@ -1363,25 +1372,25 @@ components:
       properties:
         id:
           type: string
-          title: ''
+          title: Identifier
           description: Unique identifier for the contact (UUID v4).
           examples:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         workspaceId:
           type: string
-          title: ''
+          title: Workspace Identifier
           description: Unique identifier of the workspace this contact belongs to
           examples:
           - 92b2d4f3-81e1-4b61-a7ec-6f4ff3b58be5
         firstName:
           type: string
-          title: ''
+          title: First Name
           description: Contact's first name.
           examples:
           - John
         lastName:
           type: string
-          title: ''
+          title: Last Name
           description: Contact's last name.
           examples:
           - Doe
@@ -1390,7 +1399,7 @@ components:
           - type: string
             format: email
           - type: 'null'
-          title: ''
+          title: Email
           description: Contact's email address.
           examples:
           - john.doe@example.com
@@ -1400,21 +1409,20 @@ components:
           - type: string
             format: phone
           - type: 'null'
-          title: ''
+          title: Cellphone
           description: Contact's cellphone address.
           examples:
           - '+14084029292'
           - null
         customAttributes:
           items:
-            additionalProperties: true
-            type: object
+            $ref: '#/components/schemas/CustomAttributeResponse'
           type: array
-          title: ''
+          title: Custom Attributes
           description: Array of custom key-value attributes.
         languageCode:
           $ref: '#/components/schemas/LanguageCode'
-          title: ''
+          title: Language Code
           description: Language code from external user.
           examples:
           - EN
@@ -1422,20 +1430,20 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Owner Identifier
           description: Email address of the salesperson or user who owns this contact.
           examples:
           - 37673840-6259-40f9-bbe5-a7db40f8e3cf
           - null
         createdAt:
           type: string
-          title: ''
+          title: Created At
           description: Timestamp when the contact was created.
           examples:
           - '2003-04-10T08:00:00.000Z'
         updatedAt:
           type: string
-          title: ''
+          title: Updated At
           description: Timestamp when the contact was last updated.
           examples:
           - '2003-04-10T08:00:00.000Z'
@@ -1456,13 +1464,13 @@ components:
           items:
             $ref: '#/components/schemas/ContactResponse'
           type: array
-          title: ''
+          title: Contacts
           description: Array of contacts.
         cursor:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Cursor
           description: Cursor to be send on next page.
       type: object
       required:
@@ -1475,13 +1483,13 @@ components:
           items:
             $ref: '#/components/schemas/ConversationResponse'
           type: array
-          title: ''
+          title: Conversations
           description: List of conversations.
         cursor:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Cursor
           description: Cursor for fetching the next page of conversations. Null if
             there are no more pages.
           examples:
@@ -1498,13 +1506,13 @@ components:
           items:
             $ref: '#/components/schemas/ExternalParticipant'
           type: array
-          title: Participants
+          title: Externals
           description: List of external participants.
         internals:
           items:
             $ref: '#/components/schemas/InternalParticipant'
           type: array
-          title: Participants
+          title: Internals
           description: List of internal participants.
       type: object
       required:
@@ -1516,25 +1524,25 @@ components:
       properties:
         id:
           type: string
-          title: ''
+          title: Identifier
           description: Unique identifier of the conversation (UUID v4).
           examples:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         workspaceId:
           type: string
-          title: ''
+          title: Workspace Identifier
           description: Unique identifier of the workspace (UUID v4).
           examples:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
         participants:
           $ref: '#/components/schemas/ConversationParticipantsResponse'
-          title: Participants structure
+          title: Participants
           description: Participants of the conversation.
         name:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Name
           description: Optional name/title for the conversation.
           examples:
           - Bridge Support Team
@@ -1542,7 +1550,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ConversationStatus'
           - type: 'null'
-          title: ''
+          title: Status
           description: Current conversation status - 'ACTIVE' for visible conversations,
             'GHOST' for invisible until first interaction.
           examples:
@@ -1550,14 +1558,14 @@ components:
         createdAt:
           type: string
           format: date-time
-          title: ''
+          title: Created At
           description: Timestamp when the conversation was created.
           examples:
           - '2003-04-10T09:00:00.000Z'
         updatedAt:
           type: string
           format: date-time
-          title: ''
+          title: Updated At
           description: Timestamp when the conversation was last updated.
           examples:
           - '2003-04-10T09:00:00.000Z'
@@ -1580,14 +1588,14 @@ components:
       properties:
         firstName:
           type: string
-          title: ''
+          title: First Name
           description: Contact's first name.
           examples:
           - John
           - Alice
         lastName:
           type: string
-          title: ''
+          title: Last Name
           description: Contact's last name.
           examples:
           - Doe
@@ -1596,21 +1604,21 @@ components:
           - type: string
             format: email
           - type: 'null'
-          title: ''
+          title: Email
           description: Contact's email address.
           examples:
           - john.doe@example.com
           - null
         languageCode:
           $ref: '#/components/schemas/LanguageCode'
-          title: ''
+          title: Language Code
           description: Contact's language code.
           examples:
           - EN
         cellphone:
           type: string
           format: phone
-          title: ''
+          title: Cellphone
           description: Contact's cellphone number.
           examples:
           - '+14084029292'
@@ -1618,12 +1626,12 @@ components:
           anyOf:
           - $ref: '#/components/schemas/InternalUserIdentifierRequest'
           - type: 'null'
-          title: ''
+          title: Owner Identifier
           description: Identifier of the salesperson or user who owns this contact.
         customAttributes:
           $ref: '#/components/schemas/CustomAttributesBody'
-          title: ''
-          description: Array of custom key-value attributes.
+          title: Custom Attributes
+          description: Object with open and closed custom attributes.
       additionalProperties: false
       type: object
       required:
@@ -1637,20 +1645,20 @@ components:
       properties:
         participants:
           $ref: '#/components/schemas/CreateParticipantsOnConversationRequest'
-          title: ''
+          title: Participants
           description: Participants to add to conversation.
         name:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Name
           description: Optional name/title for the conversation.
           examples:
           - Bridge Support Team
           - null
         status:
           $ref: '#/components/schemas/ConversationStatus'
-          title: ''
+          title: Status
           description: Initial conversation status - 'active' for visible conversations,
             'ghost' for invisible until first interaction.
           default: ACTIVE
@@ -1661,7 +1669,7 @@ components:
           - type: string
             format: uuid
           - type: 'null'
-          title: ''
+          title: Team Identifier
           description: Team UUID for round-robin assignment (optional, mutually exclusive
             with internalParticipants).
           examples:
@@ -1678,23 +1686,40 @@ components:
           items:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
-          title: ''
+          title: Externals
           description: Array of external user identifiers.
         internals:
           items:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
-          title: ''
+          title: Internals
           description: Array of internal user identifiers (optional, mutually exclusive
             with teamId).
       type: object
       title: CreateParticipantsOnConversationRequest
       description: Request body for participants when creating a new conversation.
+    CustomAttributeResponse:
+      properties:
+        key:
+          type: string
+          title: Key
+          description: Attribute key/name
+        values:
+          items:
+            type: string
+          type: array
+          title: Values
+          description: Attribute value
+      type: object
+      required:
+      - key
+      title: CustomAttributeResponse
+      description: Response body for custom attributes in contact-related operations.
     CustomAttributes:
       properties:
         id:
           type: string
-          title: ''
+          title: Identifier
           description: Unique custom attribute identifier.
           examples:
           - 651c97c1-b31d-466f-825c-fe77b39e7ae6
@@ -1703,21 +1728,21 @@ components:
           enum:
           - OPEN
           - CLOSED
-          title: ''
+          title: Category
           description: Category of custom attribute.
           examples:
           - OPEN
           - CLOSED
         isRequired:
           type: boolean
-          title: ''
+          title: Is Required
           description: Define if the custom attribute is required.
           examples:
           - true
           - false
         keyName:
           type: string
-          title: ''
+          title: Key Name
           description: Name of custom attribute.
         closedAttributesValues:
           anyOf:
@@ -1725,7 +1750,7 @@ components:
               $ref: '#/components/schemas/ClosedAttribute'
             type: array
           - type: 'null'
-          title: ''
+          title: Closed Attributes Values
           description: List of closed attribute values.
         type:
           type: string
@@ -1735,7 +1760,7 @@ components:
           - DATE
           - SELECT
           - MULTI_SELECT
-          title: ''
+          title: Type
           description: Type of the values of custom attributes.
           examples:
           - TEXT
@@ -1747,7 +1772,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Deleted At
           description: Soft-delete timestamp. Null means the attribute is active.
       type: object
       required:
@@ -1764,28 +1789,28 @@ components:
           items:
             $ref: '#/components/schemas/OpenAttributeRequest'
           type: array
-          title: Openattributes
+          title: Open Attributes
           description: Array of open attributes.
         closedAttributes:
           items:
             $ref: '#/components/schemas/ClosedAttributeRequest'
           type: array
-          title: Closedattributes
+          title: Closed Attributes
           description: Array of closed attributes.
       type: object
       title: CustomAttributesBody
       description: Request body for custom attributes operations.
     CustomAttributesResponse:
       properties:
-        custom_attributes:
+        customAttributes:
           items:
             $ref: '#/components/schemas/CustomAttributes'
           type: array
-          title: ''
+          title: Custom Attributes
           description: List of custom attributes objects with their values.
       type: object
       required:
-      - custom_attributes
+      - customAttributes
       title: CustomAttributesResponse
       description: Response body for custom attributes operations.
     ExternalOperationRequest:
@@ -1794,13 +1819,13 @@ components:
           items:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
-          title: ''
+          title: Add
           description: External participants to add.
         remove:
           items:
             $ref: '#/components/schemas/ExternalUserIdentifierRequest'
           type: array
-          title: ''
+          title: Remove
           description: External participants to remove.
       type: object
       title: ExternalOperationRequest
@@ -1809,7 +1834,7 @@ components:
       properties:
         identifier:
           type: string
-          title: ''
+          title: Identifier
           description: Participant identifier value.
           examples:
           - ef7ee722-5f95-415a-9a98-81eeae178b11
@@ -1819,7 +1844,7 @@ components:
           - ID
           - EMAIL
           - PHONE
-          title: ''
+          title: Identifier Type
           description: Type of identifier for external participants (ID, EMAIL, or
             PHONE).
           examples:
@@ -1828,7 +1853,7 @@ components:
           - ID
         role:
           $ref: '#/components/schemas/UserType'
-          title: ''
+          title: Role
           description: Participant role in the conversation.
           examples:
           - EXTERNAL
@@ -1836,7 +1861,7 @@ components:
         joinedAt:
           type: string
           format: date-time
-          title: ''
+          title: Joined At
           description: Timestamp when participant joined the conversation.
           examples:
           - '2004-04-10T09:00:00.000Z'
@@ -1845,7 +1870,7 @@ components:
           - type: string
             format: date-time
           - type: 'null'
-          title: ''
+          title: Last Seen At
           description: Timestamp when participant was last seen.
           examples:
           - null
@@ -1862,7 +1887,7 @@ components:
       properties:
         identifier:
           type: string
-          title: ''
+          title: Identifier
           description: User identifier value.
           examples:
           - john.doe@example.com
@@ -1874,7 +1899,7 @@ components:
           - ID
           - EMAIL
           - PHONE
-          title: ''
+          title: Identifier Type
           description: Type of identifier for external users (ID, EMAIL or PHONE).
           examples:
           - EMAIL
@@ -1884,7 +1909,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/MessageProviderType'
           - type: 'null'
-          title: ''
+          title: Message Provider Type
           description: Message provider type of the conversation.
           examples:
           - WHATSAPP
@@ -1893,7 +1918,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: Providerchannelid
+          title: Provider Channel Identifier
           description: Provider channel id of channel that be used by Bridge to communicate
             with user.
       type: object
@@ -1926,13 +1951,13 @@ components:
           items:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
-          title: ''
+          title: Add
           description: Internal participants to add.
         remove:
           items:
             $ref: '#/components/schemas/InternalUserIdentifierRequest'
           type: array
-          title: ''
+          title: Remove
           description: Internal participants to remove
       type: object
       title: InternalOperationRequest
@@ -1941,7 +1966,7 @@ components:
       properties:
         identifier:
           type: string
-          title: ''
+          title: Identifier
           description: Participant identifier value.
           examples:
           - ef7ee722-5f95-415a-9a98-81eeae178b11
@@ -1950,14 +1975,14 @@ components:
           enum:
           - ID
           - EMAIL
-          title: ''
+          title: Identifier Type
           description: Type of identifier for internal participants (ID or EMAIL).
           examples:
           - EMAIL
           - ID
         role:
           $ref: '#/components/schemas/UserType'
-          title: ''
+          title: Role
           description: Participant role in the conversation.
           examples:
           - EXTERNAL
@@ -1965,7 +1990,7 @@ components:
         joinedAt:
           type: string
           format: date-time
-          title: ''
+          title: Joined At
           description: Timestamp when participant joined the conversation.
           examples:
           - '2004-04-10T09:00:00.000Z'
@@ -1974,7 +1999,7 @@ components:
           - type: string
             format: date-time
           - type: 'null'
-          title: ''
+          title: Last Seen At
           description: Timestamp when participant was last seen.
           examples:
           - null
@@ -1991,7 +2016,7 @@ components:
       properties:
         identifier:
           type: string
-          title: ''
+          title: Identifier
           description: User identifier value.
           examples:
           - john.doe@example.com
@@ -2002,7 +2027,7 @@ components:
           enum:
           - ID
           - EMAIL
-          title: ''
+          title: Identifier Type
           description: Type of identifier for internal users (ID or EMAIL).
           examples:
           - EMAIL
@@ -2037,13 +2062,13 @@ components:
       properties:
         conversationId:
           type: string
-          title: ''
+          title: Conversation Identifier
           description: Identifier of the conversation.
           examples:
           - d290f1ee-6c54-4b01-90e6-d701748f0851
         messageBody:
           type: string
-          title: ''
+          title: Message Body
           description: Body of the message.
           examples:
           - Hello, welcome to Bridge!
@@ -2051,14 +2076,14 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Reply To Message Identifier
           description: Identifier of the message being replied to.
           examples:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           - null
         enableExternalBroadcast:
           type: boolean
-          title: ''
+          title: Enable External Broadcast
           description: Flag to enable external broadcast.
           examples:
           - true
@@ -2067,7 +2092,7 @@ components:
           items:
             type: string
           type: array
-          title: ''
+          title: Media Identifiers
           description: List of media IDs associated with the message.
           examples:
           - - a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6
@@ -2082,14 +2107,14 @@ components:
       properties:
         messagingProduct:
           type: string
-          title: ''
+          title: Messaging Product
           description: Product name.
           default: bridge
           examples:
           - bridge
         messageId:
           type: string
-          title: ''
+          title: Message Identifier
           description: Unique message identifier as a UUID string.
           examples:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
@@ -2102,7 +2127,7 @@ components:
       properties:
         customAttributeId:
           type: string
-          title: Customattributeid
+          title: Custom Attribute Identifier
           description: Unique open custom attribute identifier.
           examples:
           - 651c97c1-b31d-466f-825c-fe77b39e7ae6
@@ -2122,14 +2147,14 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ExternalOperationRequest'
           - type: 'null'
-          title: ''
+          title: Externals
           description: External user operations, this should provided with "add" and
             "remove" operations.
         internals:
           anyOf:
           - $ref: '#/components/schemas/InternalOperationRequest'
           - type: 'null'
-          title: ''
+          title: Internals
           description: Internal user operations, this should provided with "add" and
             "remove" operations
       type: object
@@ -2139,13 +2164,13 @@ components:
       properties:
         name:
           type: string
-          title: ''
+          title: Name
           description: Original file name including extension.
           examples:
           - prueba.jpg
         fileType:
           $ref: '#/components/schemas/FileType'
-          title: ''
+          title: File Type
           description: Logical file type category.
           examples:
           - IMAGE
@@ -2156,7 +2181,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Content Type
           description: MIME type of the file.
           examples:
           - image/jpeg
@@ -2164,7 +2189,7 @@ components:
           - null
         checksumBase64:
           type: string
-          title: ''
+          title: Checksum Base64
           description: Base64-encoded SHA-256 digest of the entire file. This value
             will be used to sign the presigned PUT and must be sent back in the header
             x-amz-checksum-sha256 during upload.
@@ -2182,13 +2207,13 @@ components:
       properties:
         mediaId:
           type: string
-          title: ''
+          title: Media Identifier
           description: Unique media identifier.
           examples:
           - 4a2c1f7e-2f84-4a5f-bd2d-6b6b2f0c1234
         presignUrl:
           $ref: '#/components/schemas/PresignPut'
-          title: ''
+          title: Presign Url
           description: Presigned PUT data to upload the media (url, method and headers).
       additionalProperties: false
       type: object
@@ -2291,14 +2316,14 @@ components:
       properties:
         provider:
           $ref: '#/components/schemas/MessageProviderType'
-          title: ''
+          title: Provider
           description: Provider name of the messaging channel.
           examples:
           - WHATSAPP
           - HEYGIA
         identifier:
           type: string
-          title: ''
+          title: Identifier
           description: Identifier associated with this provider channel, in E.164
             format without the '+' sign.
       type: object
@@ -2311,7 +2336,7 @@ components:
       properties:
         workspaceId:
           type: string
-          title: ''
+          title: Workspace Identifier
           description: Unique identifier of the workspace (UUID v4).
           examples:
           - 92b2d4f3-81e1-4b61-a7ec-6f4ff3b58be5
@@ -2319,7 +2344,7 @@ components:
           items:
             $ref: '#/components/schemas/ProviderChannel'
           type: array
-          title: ''
+          title: Provider Channels
           description: List of provider channels (phone numbers) available for this
             workspace.
       type: object
@@ -2334,7 +2359,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: First Name
           description: Contact's first name.
           examples:
           - John
@@ -2343,7 +2368,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Last Name
           description: Contact's last name.
           examples:
           - Doe
@@ -2353,7 +2378,7 @@ components:
           - type: string
             format: email
           - type: 'null'
-          title: ''
+          title: Email
           description: Contact's email address.
           examples:
           - john.doe@example.com
@@ -2362,7 +2387,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/LanguageCode'
           - type: 'null'
-          title: ''
+          title: Language Code
           description: Contact's language code.
           examples:
           - EN
@@ -2371,7 +2396,7 @@ components:
           - type: string
             format: phone
           - type: 'null'
-          title: ''
+          title: Cellphone
           description: Contact's cellphone number.
           examples:
           - '+14084029292'
@@ -2380,11 +2405,11 @@ components:
           anyOf:
           - $ref: '#/components/schemas/InternalUserIdentifierRequest'
           - type: 'null'
-          title: ''
+          title: Owner Identifier
           description: Identifier of the salesperson or user who owns this contact.
         customAttributes:
           $ref: '#/components/schemas/CustomAttributesBody'
-          title: ''
+          title: Custom Attributes
           description: Array of custom key-value attributes.
       additionalProperties: false
       type: object
@@ -2396,7 +2421,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-          title: ''
+          title: Name
           description: Optional name/title for the conversation.
           examples:
           - Client Support
@@ -2405,7 +2430,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ConversationStatus'
           - type: 'null'
-          title: ''
+          title: Status
           description: Initial conversation status - 'active' for visible conversations,
             'ghost' for invisible until first interaction.
           examples:
@@ -2414,7 +2439,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ParticipantOperationsRequest'
           - type: 'null'
-          title: ''
+          title: Participants
           description: Participants operations to add and remove from a conversation.
       additionalProperties: false
       type: object
