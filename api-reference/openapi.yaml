@@ -1055,24 +1055,13 @@ paths:
         use the correct HTTP method or headers, AWS will reject the upload request.
 
 
-        | Type | Supported Extensions | Content Types | Max Size |
-
-        |------|---------------------|---------------|----------|
-
-        | Image | .gif, .jpeg, .jpg, .png, .webp | image/gif, image/jpeg, image/png,
-        image/webp | 16 MB |
-
-        | Video | .avi, .mov, .mp4 | video/x-msvideo, video/quicktime, video/mp4 |
-        64 MB |
-
-        | Audio | .m4a, .mp3, .ogg, .wav | audio/mp4, audio/mpeg, audio/ogg, audio/wav
-        | 16 MB |
-
-        | Document | .doc, .docx, .pdf, .ppt, .pptx, .txt, .xls, .xlsx | application/msword,
-        application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/pdf,
-        application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation,
-        text/plain, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-        | 100 MB |'
+        <table><tr><th>Type</th><th>Extension</th><th>Content Type</th><th>Max Size</th></tr><tr><td
+        rowspan="5">Image</td><td>.gif</td><td>image/gif</td><td rowspan="5">16 MB</td></tr><tr><td>.jpeg</td><td>image/jpeg</td></tr><tr><td>.jpg</td><td>image/jpeg</td></tr><tr><td>.png</td><td>image/png</td></tr><tr><td>.webp</td><td>image/webp</td></tr><tr><td
+        rowspan="3">Video</td><td>.avi</td><td>video/x-msvideo</td><td rowspan="3">64
+        MB</td></tr><tr><td>.mov</td><td>video/quicktime</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td
+        rowspan="4">Audio</td><td>.m4a</td><td>audio/mp4</td><td rowspan="4">16 MB</td></tr><tr><td>.mp3</td><td>audio/mpeg</td></tr><tr><td>.ogg</td><td>audio/ogg</td></tr><tr><td>.wav</td><td>audio/wav</td></tr><tr><td
+        rowspan="8">Document</td><td>.doc</td><td>application/msword</td><td rowspan="8">100
+        MB</td></tr><tr><td>.docx</td><td>application/vnd.openxmlformats-officedocument.wordprocessingml.document</td></tr><tr><td>.pdf</td><td>application/pdf</td></tr><tr><td>.ppt</td><td>application/vnd.ms-powerpoint</td></tr><tr><td>.pptx</td><td>application/vnd.openxmlformats-officedocument.presentationml.presentation</td></tr><tr><td>.txt</td><td>text/plain</td></tr><tr><td>.xls</td><td>application/vnd.ms-excel</td></tr><tr><td>.xlsx</td><td>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td></tr></table>'
       operationId: create_preloaded_files_bridge_api_v1_workspaces__workspaceId__files_post
       security:
       - x-api-key: []
