@@ -758,16 +758,16 @@ paths:
                     code: BRIDGE_WORKSPACE_0001
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
+        '409':
+          description: Conflict
           content:
             application/json:
               examples:
-                CONVERSATION_NOT_ACTIVE:
+                CONVERSATION_IS_RELEASED:
                   value:
-                    title: Conversation Not Active
-                    status: 400
-                    code: BRIDGE_CONVERSATION_0004
+                    title: Conversation Is Released
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0007
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
