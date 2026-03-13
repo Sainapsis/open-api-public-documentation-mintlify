@@ -329,6 +329,9 @@ paths:
           enum:
           - ACTIVE
           - GHOST
+          - RELEASED
+          - NOT_ASSIGNED_TO_HUMAN
+          - BLOCKED
         description: Conversation status
       - name: internalUserIdentifier
         in: query
@@ -571,6 +574,120 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/release:
+    post:
+      tags:
+      - Conversations API
+      summary: Release conversation
+      description: 'Release a conversation: mark as released, remove external participants,
+        move to RELEASED section.'
+      operationId: release_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__release_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: conversationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the conversation (UUID v4).
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+          title: Conversationid
+        description: Unique identifier of the conversation (UUID v4).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/ReleaseConversationBody'
+              - type: 'null'
+              description: Body for POST release conversation. Optional reason.
+              title: Body
+      responses:
+        '204':
+          description: Successful Response
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                CONVERSATION_NOT_FOUND:
+                  value:
+                    title: Conversation Not Found
+                    status: 404
+                    code: BRIDGE_CONVERSATION_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                WORKSPACE_WITHOUT_CONFIGURED_FIELD:
+                  value:
+                    title: Workspace Without Configured Field
+                    status: 409
+                    code: BRIDGE_WORKSPACE_0004
+                CONVERSATION_WITH_INCONSISTENT_STATE:
+                  value:
+                    title: Conversation With Inconsistent State
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0006
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                CONVERSATION_NOT_IN_WORKSPACE:
+                  value:
+                    title: Conversation Not In Workspace
+                    status: 400
+                    code: BRIDGE_CONVERSATION_0002
+                CONVERSATION_NOT_ACTIVE:
+                  value:
+                    title: Conversation Not Active
+                    status: 400
+                    code: BRIDGE_CONVERSATION_0004
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /bridge/api/v1/workspaces/{workspaceId}/messages:
     post:
       tags:
@@ -639,6 +756,18 @@ paths:
                     title: Workspace Not Found
                     status: 404
                     code: BRIDGE_WORKSPACE_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                CONVERSATION_IS_RELEASED:
+                  value:
+                    title: Conversation Is Released
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0007
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
@@ -1572,6 +1701,9 @@ components:
       enum:
       - ACTIVE
       - GHOST
+      - RELEASED
+      - NOT_ASSIGNED_TO_HUMAN
+      - BLOCKED
       title: ConversationStatus
     CreateContactBody:
       properties:
@@ -2342,6 +2474,20 @@ components:
       - providerChannels
       title: ProviderChannelResponse
       description: Response body for provider channels operations.
+    ReleaseConversationBody:
+      properties:
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+          description: Optional reason for releasing the conversation.
+          examples:
+          - The conversation is over
+          - null
+      type: object
+      title: ReleaseConversationBody
+      description: Body for POST release conversation. Optional reason.
     UpdateContactBody:
       properties:
         firstName:
