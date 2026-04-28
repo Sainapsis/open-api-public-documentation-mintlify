@@ -1160,6 +1160,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/contacts/partial:
+    post:
+      tags:
+      - Contacts API
+      summary: Create or update a contact
+      description: Create or update a contact using only cellphone. Classifies as
+        NORMAL or PARTIAL.
+      operationId: create_partial_contact_bridge_api_v1_workspaces__workspaceId__contacts_partial_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartialContactBody'
+              description: Request body for partial contact creation. Only cellphone
+                is required.
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /bridge/api/v1/workspaces/{workspaceId}/files:
     post:
       tags:
@@ -1500,18 +1572,32 @@ components:
           description: Unique identifier of the workspace this contact belongs to
           examples:
           - 92b2d4f3-81e1-4b61-a7ec-6f4ff3b58be5
+        type:
+          $ref: '#/components/schemas/ExternalUserType'
+          title: Contact Type
+          description: NORMAL when all required identity and custom attribute fields
+            are present, PARTIAL otherwise.
+          examples:
+          - NORMAL
+          - PARTIAL
         firstName:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: First Name
           description: Contact's first name.
           examples:
           - John
+          - null
         lastName:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Last Name
           description: Contact's last name.
           examples:
           - Doe
+          - null
         email:
           anyOf:
           - type: string
@@ -1539,11 +1625,14 @@ components:
           title: Custom Attributes
           description: Array of custom key-value attributes.
         languageCode:
-          $ref: '#/components/schemas/LanguageCode'
+          anyOf:
+          - $ref: '#/components/schemas/LanguageCode'
+          - type: 'null'
           title: Language Code
           description: Language code from external user.
           examples:
           - EN
+          - null
         ownerId:
           anyOf:
           - type: string
@@ -1569,9 +1658,7 @@ components:
       required:
       - id
       - workspaceId
-      - firstName
-      - lastName
-      - languageCode
+      - type
       - createdAt
       - updatedAt
       title: ContactResponse
@@ -1801,6 +1888,76 @@ components:
       - participants
       title: CreateConversationRequest
       description: Request body for creating a new conversation.
+    CreatePartialContactBody:
+      properties:
+        cellphone:
+          type: string
+          format: phone
+          title: Cellphone
+          description: Contact's cellphone number in E.164 format. Used to identify
+            the contact for upsert.
+          examples:
+          - '+14084029292'
+        firstName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Name
+          description: Contact's first name. Required for NORMAL classification.
+          examples:
+          - Maria
+          - null
+        lastName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Name
+          description: Contact's last name. Required for NORMAL classification.
+          examples:
+          - Lopez
+          - null
+        email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+          title: Email
+          description: Contact's email address.
+          examples:
+          - maria@acme.com
+          - null
+        languageCode:
+          anyOf:
+          - $ref: '#/components/schemas/LanguageCode'
+          - type: 'null'
+          title: Language Code
+          description: Contact's language code. Required for NORMAL classification.
+          examples:
+          - EN
+          - null
+        ownerIdentifier:
+          anyOf:
+          - $ref: '#/components/schemas/InternalUserIdentifierRequest'
+          - type: 'null'
+          title: Owner Identifier
+          description: Identifier of the salesperson or user who owns this contact.
+          examples:
+          - identifier: jane@acme.com
+            identifierType: EMAIL
+          - null
+        customAttributes:
+          $ref: '#/components/schemas/CustomAttributesBody'
+          title: Custom Attributes
+          description: Object with open and closed custom attributes.
+          examples:
+          - closedAttributes: []
+            openAttributes: []
+      additionalProperties: false
+      type: object
+      required:
+      - cellphone
+      title: CreatePartialContactBody
+      description: Request body for partial contact creation. Only cellphone is required.
     CreateParticipantsOnConversationRequest:
       properties:
         externals:
@@ -2048,6 +2205,12 @@ components:
       - identifierType
       title: ExternalUserIdentifierRequest
       description: Body to identify an external user in Bridge System.
+    ExternalUserType:
+      type: string
+      enum:
+      - PARTIAL
+      - NORMAL
+      title: ExternalUserType
     FileType:
       type: string
       enum:
@@ -2585,6 +2748,7 @@ components:
       enum:
       - INTERNAL
       - EXTERNAL
+      - BOT
       title: UserType
     ValidationError:
       properties:
@@ -2601,6 +2765,11 @@ components:
         type:
           type: string
           title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
       type: object
       required:
       - loc
