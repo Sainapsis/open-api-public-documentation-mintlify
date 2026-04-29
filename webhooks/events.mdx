@@ -56,6 +56,236 @@ Triggered whenever conversation summaries are created, updated, or deleted.
 
 ---
 
+## Task Updates (`v1`)
+
+Triggered when tasks are created or their state changes (status, assignment, reminders).
+
+Payloads vary by `eventType`. Use `payload.details` to understand what changed.
+
+### Example Payloads
+
+**task.created**
+
+```json
+{
+  "eventId": "evt_123456789",
+  "eventType": "task.created",
+  "entity": "task",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-01-15T10:30:00.000Z",
+  "payload": {
+    "taskId": "task_123",
+    "actorType": "USER",
+    "actorId": "user_123",
+    "task": {
+      "title": "Sample task",
+      "description": "Example task description",
+      "type": "TASK",
+      "priority": "NORMAL",
+      "status": "OPEN",
+      "sourceType": "MANUAL",
+      "dueDate": "2026-01-20T00:00:00.000Z",
+      "recurrenceEnded": false,
+      "createdAt": "2026-01-15T10:30:00.000Z",
+      "updatedAt": "2026-01-15T10:30:00.000Z"
+    },
+    "assignees": [
+      {
+        "assigneeId": "user_456",
+        "assigneeType": "USER"
+      }
+    ],
+    "conversations": [
+      {
+        "id": "conv_123",
+        "status": "ACTIVE",
+        "createdAt": "2026-01-14T09:10:00.000Z",
+        "updatedAt": "2026-01-14T09:10:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+**task.assigned**
+
+```json
+{
+  "eventId": "evt_123456790",
+  "eventType": "task.assigned",
+  "entity": "task",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-01-15T10:31:00.000Z",
+  "payload": {
+    "taskId": "task_123",
+    "actorType": "USER",
+    "actorId": "user_123",
+    "details": {
+      "assignee": {
+        "assigneeId": "user_456"
+      }
+    }
+  }
+}
+```
+
+**task.unassigned**
+
+```json
+{
+  "eventId": "evt_123456791",
+  "eventType": "task.unassigned",
+  "entity": "task",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-01-15T10:32:00.000Z",
+  "payload": {
+    "taskId": "task_123",
+    "actorType": "USER",
+    "actorId": "user_123",
+    "details": {
+      "assignee": {
+        "assigneeId": "user_456"
+      }
+    }
+  }
+}
+```
+
+**task.status_changed (OPEN -> CLOSED)**
+
+```json
+{
+  "eventId": "evt_123456792",
+  "eventType": "task.status_changed",
+  "entity": "task",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-01-15T10:33:00.000Z",
+  "payload": {
+    "taskId": "task_123",
+    "actorType": "USER",
+    "actorId": "user_123",
+    "details": {
+      "statusChange": {
+        "fromStatus": "OPEN",
+        "toStatus": "CLOSED"
+      }
+    }
+  }
+}
+```
+
+**task.status_changed (CLOSED -> OPEN)**
+
+```json
+{
+  "eventId": "evt_123456793",
+  "eventType": "task.status_changed",
+  "entity": "task",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-01-15T10:34:00.000Z",
+  "payload": {
+    "taskId": "task_123",
+    "actorType": "USER",
+    "actorId": "user_123",
+    "task": {
+      "title": "Sample task",
+      "description": "Example task description",
+      "type": "TASK",
+      "priority": "NORMAL",
+      "status": "OPEN",
+      "sourceType": "MANUAL",
+      "dueDate": "2026-01-20T00:00:00.000Z",
+      "recurrenceEnded": false,
+      "createdAt": "2026-01-15T10:30:00.000Z",
+      "updatedAt": "2026-01-15T10:34:00.000Z"
+    },
+    "conversations": [
+      {
+        "id": "conv_123",
+        "status": "ACTIVE",
+        "createdAt": "2026-01-14T09:10:00.000Z",
+        "updatedAt": "2026-01-14T09:10:00.000Z"
+      }
+    ],
+    "details": {
+      "statusChange": {
+        "fromStatus": "CLOSED",
+        "toStatus": "OPEN"
+      }
+    }
+  }
+}
+```
+
+**task.remove_reminder**
+
+```json
+{
+  "eventId": "evt_123456794",
+  "eventType": "task.remove_reminder",
+  "entity": "task",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-01-15T10:35:00.000Z",
+  "payload": {
+    "taskId": "task_456",
+    "actorType": "USER",
+    "actorId": "user_123",
+    "details": {
+      "reminder": {
+        "reminderId": "rem_123"
+      }
+    }
+  }
+}
+```
+
+**task.field_updated**
+
+```json
+{
+  "eventId": "evt_123456795",
+  "eventType": "task.field_updated",
+  "entity": "task",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-01-15T10:36:00.000Z",
+  "payload": {
+    "taskId": "task_123",
+    "actorType": "USER",
+    "actorId": "user_123",
+    "task": {
+      "title": "Sample task",
+      "description": "Example updated description",
+      "type": "TASK",
+      "priority": "NORMAL",
+      "status": "OPEN",
+      "sourceType": "MANUAL",
+      "dueDate": "2026-01-20T00:00:00.000Z",
+      "recurrenceEnded": false,
+      "createdAt": "2026-01-15T10:30:00.000Z",
+      "updatedAt": "2026-01-15T10:36:00.000Z"
+    },
+    "details": {
+      "fieldUpdate": {
+        "changedFields": ["description"]
+      }
+    }
+  }
+}
+```
+
+### Event Types
+
+| Event Type             | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| `task.created`         | A new task was created                            |
+| `task.status_changed`  | The task status changed (e.g. `OPEN` → `CLOSED`) |
+| `task.assigned`        | A user was assigned to the task                   |
+| `task.unassigned`      | A user was unassigned from the task               |
+| `task.remove_reminder` | A task reminder was removed                       |
+| `task.field_updated`   | A task field was updated                          |
+
+---
+
 ## Contact Updates (`v1`)
 
 Triggered when contact records are created, updated, or deleted.
