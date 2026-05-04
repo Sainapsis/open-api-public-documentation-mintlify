@@ -467,7 +467,7 @@ paths:
         External users (contacts) can be identified by ID, email, or phone.
         Internal users are only assigned when explicitly specified; otherwise, conversations are auto-assigned by round-robin through a team or left open for any available internal user.
 
-        To create an internal-only conversation (type MANY_INTERNAL, no external contacts), omit `participants.externals` or pass an empty array, and provide at least 2 entries in `participants.internals`.
+        To create an internal-only conversation (with no external contacts), omit `participants.externals` or pass an empty array, and provide at least 2 entries in `participants.internals`.
       operationId: create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post
       security:
       - x-api-key: []
