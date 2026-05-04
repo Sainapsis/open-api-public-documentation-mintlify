@@ -98,6 +98,25 @@ Receive notifications when contacts are created, updated, or deleted.
 - `contact.updated`
 - `contact.deleted`
 
+### Call Notifications (`v1`)
+
+Receive a single webhook for each lifecycle phase of a call: created, ringing, started, and finished. Calls are not deleted.
+
+- `call.created`
+- `call.updated`
+
+### Meeting Notifications (`v1`)
+
+Receive a notification when a meeting reaches the CREATED state. Meetings are not deleted, so only the `meeting.updated` event is emitted.
+
+- `meeting.updated`
+
+### Email Notifications (`v1`)
+
+Receive a notification once an email has been processed and the AI summary is available. Emails are not deleted, so only the `email.updated` event is emitted.
+
+- `email.updated`
+
 ---
 
 ## Verifying Your Configuration

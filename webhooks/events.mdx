@@ -60,7 +60,7 @@ Triggered whenever conversation summaries are created, updated, or deleted.
 
 Triggered when tasks are created or their state changes (status, assignment, reminders).
 
-Payloads vary by `eventType`. Use `payload.details` to understand what changed.
+Payloads vary by event type. The `details` field in the payload describes what changed for that specific event.
 
 ### Example Payloads
 
@@ -278,7 +278,7 @@ Payloads vary by `eventType`. Use `payload.details` to understand what changed.
 | Event Type             | Description                                       |
 | ---------------------- | ------------------------------------------------- |
 | `task.created`         | A new task was created                            |
-| `task.status_changed`  | The task status changed (e.g. `OPEN` → `CLOSED`) |
+| `task.status_changed`  | The task status changed (for example, from OPEN to CLOSED) |
 | `task.assigned`        | A user was assigned to the task                   |
 | `task.unassigned`      | A user was unassigned from the task               |
 | `task.remove_reminder` | A task reminder was removed                       |
@@ -337,10 +337,295 @@ Triggered when contact records are created, updated, or deleted.
 
 ---
 
+## Call Notifications (`v1`)
+
+Triggered as a call moves through its lifecycle. Bridge emits at most one webhook per lifecycle phase per call, so your integration receives a clean four-phase timeline (created, ringing, started, finished) rather than every intermediate state transition Bridge writes internally.
+
+The current phase is derivable from the call state and the participants' statuses:
+
+| Phase    | How to detect                                                            |
+| -------- | ------------------------------------------------------------------------ |
+| created  | state is CREATED and no participant has joined or is ringing             |
+| ringing  | a participant has status RINGING and nobody has joined yet               |
+| started  | state is STARTED and two participants are JOINED                         |
+| finished | state is FINISHED                                                        |
+
+Missed calls (nobody answered) skip the started phase — the integration receives created, ringing, and finished only.
+
+### Example Payloads
+
+**call.created**
+
+```json
+{
+  "eventId": "evt_call_001",
+  "eventType": "call.created",
+  "entity": "call",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-05-04T00:48:05.815Z",
+  "payload": {
+    "callId": "call_abc123",
+    "conversationId": "conv_xyz",
+    "messageId": "msg_xyz",
+    "callType": "ONE_TO_ONE",
+    "channelProvider": "WHATSAPP",
+    "state": "CREATED",
+    "createdAt": "2026-05-04T00:48:05.815Z",
+    "updatedAt": "2026-05-04T00:48:05.815Z",
+    "participants": {
+      "internal": [
+        {
+          "userId": "user_internal_1",
+          "name": "Jane Doe",
+          "email": "jane@example.com",
+          "status": "INITIALIZED"
+        }
+      ],
+      "external": [
+        {
+          "userId": "user_external_1",
+          "name": "John Smith",
+          "email": "john@example.com",
+          "status": "INITIALIZED"
+        }
+      ]
+    }
+  }
+}
+```
+
+**call.updated (ringing)**
+
+```json
+{
+  "eventId": "evt_call_002",
+  "eventType": "call.updated",
+  "entity": "call",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-05-04T00:48:06.243Z",
+  "payload": {
+    "callId": "call_abc123",
+    "conversationId": "conv_xyz",
+    "messageId": "msg_xyz",
+    "callType": "ONE_TO_ONE",
+    "channelProvider": "WHATSAPP",
+    "state": "CREATED",
+    "createdAt": "2026-05-04T00:48:05.815Z",
+    "updatedAt": "2026-05-04T00:48:06.243Z",
+    "participants": {
+      "internal": [
+        {
+          "userId": "user_internal_1",
+          "name": "Jane Doe",
+          "email": "jane@example.com",
+          "status": "INITIALIZED"
+        }
+      ],
+      "external": [
+        {
+          "userId": "user_external_1",
+          "name": "John Smith",
+          "email": "john@example.com",
+          "status": "RINGING"
+        }
+      ]
+    }
+  }
+}
+```
+
+**call.updated (started)**
+
+```json
+{
+  "eventId": "evt_call_003",
+  "eventType": "call.updated",
+  "entity": "call",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-05-04T00:48:12.771Z",
+  "payload": {
+    "callId": "call_abc123",
+    "conversationId": "conv_xyz",
+    "messageId": "msg_xyz",
+    "callType": "ONE_TO_ONE",
+    "channelProvider": "WHATSAPP",
+    "state": "STARTED",
+    "startedAt": "2026-05-04T00:48:12.125Z",
+    "createdAt": "2026-05-04T00:48:05.815Z",
+    "updatedAt": "2026-05-04T00:48:12.771Z",
+    "participants": {
+      "internal": [
+        {
+          "userId": "user_internal_1",
+          "name": "Jane Doe",
+          "email": "jane@example.com",
+          "status": "JOINED",
+          "joinedAt": "2026-05-04T00:48:12.125Z"
+        }
+      ],
+      "external": [
+        {
+          "userId": "user_external_1",
+          "name": "John Smith",
+          "email": "john@example.com",
+          "status": "JOINED",
+          "joinedAt": "2026-05-04T00:48:12.124Z"
+        }
+      ]
+    }
+  }
+}
+```
+
+**call.updated (finished)**
+
+```json
+{
+  "eventId": "evt_call_004",
+  "eventType": "call.updated",
+  "entity": "call",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-05-04T00:48:20.113Z",
+  "payload": {
+    "callId": "call_abc123",
+    "conversationId": "conv_xyz",
+    "messageId": "msg_xyz",
+    "callType": "ONE_TO_ONE",
+    "channelProvider": "WHATSAPP",
+    "state": "FINISHED",
+    "startedAt": "2026-05-04T00:48:12.125Z",
+    "finishedAt": "2026-05-04T00:48:19.389Z",
+    "createdAt": "2026-05-04T00:48:05.815Z",
+    "updatedAt": "2026-05-04T00:48:20.113Z",
+    "participants": {
+      "internal": [
+        {
+          "userId": "user_internal_1",
+          "name": "Jane Doe",
+          "email": "jane@example.com",
+          "status": "LEFT",
+          "joinedAt": "2026-05-04T00:48:12.125Z",
+          "leftAt": "2026-05-04T00:48:19.388Z"
+        }
+      ],
+      "external": [
+        {
+          "userId": "user_external_1",
+          "name": "John Smith",
+          "email": "john@example.com",
+          "status": "LEFT",
+          "joinedAt": "2026-05-04T00:48:12.124Z",
+          "leftAt": "2026-05-04T00:48:19.387Z"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Event Types
+
+| Event Type     | Description                  |
+| -------------- | ---------------------------- |
+| `call.created` | A new call was provisioned   |
+| `call.updated` | A call lifecycle phase changed (ringing, started, finished) |
+
+---
+
+## Meeting Notifications (`v1`)
+
+Triggered when a meeting reaches the CREATED state. Meeting cancellations are surfaced through the corresponding email notification.
+
+### Example Payload
+
+```json
+{
+  "eventId": "evt_meeting_001",
+  "eventType": "meeting.updated",
+  "entity": "meeting",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-05-04T00:46:40.954Z",
+  "payload": {
+    "meetingId": "meeting_abc123",
+    "conversationId": "conv_xyz",
+    "messageId": "msg_xyz",
+    "subject": "Meeting with John Smith",
+    "providerType": "TEAMS",
+    "status": "CREATED",
+    "organizerInternalUserId": "user_internal_1",
+    "internalParticipants": ["user_internal_1"],
+    "externalParticipants": ["user_external_1"],
+    "startDateTime": "2026-05-04T01:00:00.000Z",
+    "endDateTime": "2026-05-04T01:15:00.000Z",
+    "createdAt": "2026-05-04T00:46:29.944Z",
+    "updatedAt": "2026-05-04T00:46:40.954Z",
+    "provider": {
+      "joinUrl": "https://teams.microsoft.com/l/meetup-join/...",
+      "calendarEventId": "AAMkADhlMWVlMWJhLWUyZTMtNDllOC...",
+      "chatId": "MWM1Zjg4MmUtZjk0Mi00YjJkLTgyNTItNmRiODNiZmM1NWEw",
+      "providerMeetingId": "MSowODJkZmFjYy1iNDZmLTRiNDItOGYzOS0xMzI0NDcyMzUwMWUq..."
+    }
+  }
+}
+```
+
+### Event Types
+
+| Event Type        | Description                                |
+| ----------------- | ------------------------------------------ |
+| `meeting.updated` | A meeting reached the `CREATED` state      |
+
+---
+
+## Email Notifications (`v1`)
+
+Triggered once an email has been processed and the AI summary is available.
+
+The `sentFromBridge` field indicates direction: true for outbound emails sent from the workspace, false for inbound emails received.
+
+### Example Payload
+
+```json
+{
+  "eventId": "evt_email_001",
+  "eventType": "email.updated",
+  "entity": "email",
+  "workspaceId": "ws_123",
+  "timestamp": "2026-05-04T00:45:31.261Z",
+  "payload": {
+    "emailId": "email_abc123",
+    "conversationId": "conv_xyz",
+    "threadId": "AAQkADhlMWVlMWJhLWUyZTMtNDllOC05MDg2LWMzNjFkMTI5MjM4MA...",
+    "providerType": "OUTLOOK",
+    "status": "PROCESSED",
+    "subject": "Project update",
+    "sender": "jane@example.com",
+    "recipients": [
+      { "recipientEmail": "john@example.com" }
+    ],
+    "summary": "Jane confirms the project is on track and shares next steps.",
+    "importance": "NORMAL",
+    "sentFromBridge": true,
+    "hasAttachments": false,
+    "sentAt": "2026-05-04T00:45:09.000Z",
+    "createdAt": "2026-05-04T00:45:09.000Z",
+    "updatedAt": "2026-05-04T00:45:31.261Z"
+  }
+}
+```
+
+### Event Types
+
+| Event Type      | Description                                          |
+| --------------- | ---------------------------------------------------- |
+| `email.updated` | An email reached the summarized state                |
+
+---
+
 ## Notes
 
 - Bridge may add new event categories in the future.
-- Always check the `eventType` field to determine which handler to execute.
+- Always check the event type field to determine which handler to execute.
 - Webhook payloads are versioned — ensure your integration supports the declared version in each event.
 
 ---
