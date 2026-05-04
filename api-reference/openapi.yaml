@@ -462,12 +462,12 @@ paths:
       - Conversations API
       summary: Creates a new conversation with flexible user identification.
       description: |
-        Create a new conversation with flexible user identification.
+        Create a new conversation with flexible participant identification.
 
-        External users (contacts) can be identified by ID, email, or phone.
-        Internal users are only assigned when explicitly specified; otherwise, conversations are auto-assigned by round-robin through a team or left open for any available internal user.
+        Contacts can be identified by ID, email, or phone.
+        Bridge users (your internal team members) are only assigned when explicitly specified; otherwise, conversations are auto-assigned by round-robin through a team or left open for any available Bridge user.
 
-        To create an internal-only conversation (with no external contacts), omit `participants.externals` or pass an empty array, and provide at least 2 entries in `participants.internals`.
+        To create an internal-only conversation (with no contacts), omit `participants.externals` or pass an empty array, and provide at least 2 entries in `participants.internals` (the Bridge users participating in the thread).
       operationId: create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post
       security:
       - x-api-key: []
