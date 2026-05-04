@@ -502,11 +502,11 @@ paths:
           content:
             application/json:
               examples:
-                INTERNAL_PARTICIPANTS_REQUIRED:
+                MIN_PARTICIPANTS_REQUIRED:
                   value:
-                    title: Internal Participants Required
+                    title: Min Participants Required
                     status: 400
-                    code: BRIDGE_CONVERSATION_0202
+                    code: BRIDGE_CONVERSATION_0210
               schema:
                 $ref: '#/components/schemas/Problem'
         '403':
