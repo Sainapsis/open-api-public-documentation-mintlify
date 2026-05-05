@@ -56,288 +56,296 @@ Triggered whenever conversation summaries are created, updated, or deleted.
 
 ---
 
-## Task Updates (`v1`)
+## Task Updates
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Triggered when tasks are created or their state changes (status, assignment, reminders).
 
 Payloads vary by event type. The `details` field in the payload describes what changed for that specific event.
 
-### Example Payloads
+<Tabs>
+  <Tab title="Event types">
+    | Event Type             | Description                                       |
+    | ---------------------- | ------------------------------------------------- |
+    | `task.created`         | A new task was created                            |
+    | `task.status_changed`  | The task status changed (for example, from OPEN to CLOSED) |
+    | `task.assigned`        | A user was assigned to the task                   |
+    | `task.unassigned`      | A user was unassigned from the task               |
+    | `task.remove_reminder` | A task reminder was removed                       |
+    | `task.field_updated`   | A task field was updated                          |
+  </Tab>
+  <Tab title="Example payloads">
+    **task.created**
 
-**task.created**
-
-```json
-{
-  "eventId": "evt_123456789",
-  "eventType": "task.created",
-  "entity": "task",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-01-15T10:30:00.000Z",
-  "payload": {
-    "taskId": "task_123",
-    "actorType": "USER",
-    "actorId": "user_123",
-    "task": {
-      "title": "Sample task",
-      "description": "Example task description",
-      "type": "TASK",
-      "priority": "NORMAL",
-      "status": "OPEN",
-      "sourceType": "MANUAL",
-      "dueDate": "2026-01-20T00:00:00.000Z",
-      "recurrenceEnded": false,
-      "createdAt": "2026-01-15T10:30:00.000Z",
-      "updatedAt": "2026-01-15T10:30:00.000Z"
-    },
-    "assignees": [
-      {
-        "assigneeId": "user_456",
-        "assigneeType": "USER"
-      }
-    ],
-    "conversations": [
-      {
-        "id": "conv_123",
-        "status": "ACTIVE",
-        "createdAt": "2026-01-14T09:10:00.000Z",
-        "updatedAt": "2026-01-14T09:10:00.000Z"
-      }
-    ]
-  }
-}
-```
-
-**task.assigned**
-
-```json
-{
-  "eventId": "evt_123456790",
-  "eventType": "task.assigned",
-  "entity": "task",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-01-15T10:31:00.000Z",
-  "payload": {
-    "taskId": "task_123",
-    "actorType": "USER",
-    "actorId": "user_123",
-    "details": {
-      "assignee": {
-        "assigneeId": "user_456"
+    ```json
+    {
+      "eventId": "evt_123456789",
+      "eventType": "task.created",
+      "entity": "task",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-01-15T10:30:00.000Z",
+      "payload": {
+        "taskId": "task_123",
+        "actorType": "USER",
+        "actorId": "user_123",
+        "task": {
+          "title": "Sample task",
+          "description": "Example task description",
+          "type": "TASK",
+          "priority": "NORMAL",
+          "status": "OPEN",
+          "sourceType": "MANUAL",
+          "dueDate": "2026-01-20T00:00:00.000Z",
+          "recurrenceEnded": false,
+          "createdAt": "2026-01-15T10:30:00.000Z",
+          "updatedAt": "2026-01-15T10:30:00.000Z"
+        },
+        "assignees": [
+          {
+            "assigneeId": "user_456",
+            "assigneeType": "USER"
+          }
+        ],
+        "conversations": [
+          {
+            "id": "conv_123",
+            "status": "ACTIVE",
+            "createdAt": "2026-01-14T09:10:00.000Z",
+            "updatedAt": "2026-01-14T09:10:00.000Z"
+          }
+        ]
       }
     }
-  }
-}
-```
+    ```
 
-**task.unassigned**
+    **task.assigned**
 
-```json
-{
-  "eventId": "evt_123456791",
-  "eventType": "task.unassigned",
-  "entity": "task",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-01-15T10:32:00.000Z",
-  "payload": {
-    "taskId": "task_123",
-    "actorType": "USER",
-    "actorId": "user_123",
-    "details": {
-      "assignee": {
-        "assigneeId": "user_456"
+    ```json
+    {
+      "eventId": "evt_123456790",
+      "eventType": "task.assigned",
+      "entity": "task",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-01-15T10:31:00.000Z",
+      "payload": {
+        "taskId": "task_123",
+        "actorType": "USER",
+        "actorId": "user_123",
+        "details": {
+          "assignee": {
+            "assigneeId": "user_456"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
-**task.status_changed (OPEN -> CLOSED)**
+    **task.unassigned**
 
-```json
-{
-  "eventId": "evt_123456792",
-  "eventType": "task.status_changed",
-  "entity": "task",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-01-15T10:33:00.000Z",
-  "payload": {
-    "taskId": "task_123",
-    "actorType": "USER",
-    "actorId": "user_123",
-    "details": {
-      "statusChange": {
-        "fromStatus": "OPEN",
-        "toStatus": "CLOSED"
+    ```json
+    {
+      "eventId": "evt_123456791",
+      "eventType": "task.unassigned",
+      "entity": "task",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-01-15T10:32:00.000Z",
+      "payload": {
+        "taskId": "task_123",
+        "actorType": "USER",
+        "actorId": "user_123",
+        "details": {
+          "assignee": {
+            "assigneeId": "user_456"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
-**task.status_changed (CLOSED -> OPEN)**
+    **task.status_changed (OPEN -> CLOSED)**
 
-```json
-{
-  "eventId": "evt_123456793",
-  "eventType": "task.status_changed",
-  "entity": "task",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-01-15T10:34:00.000Z",
-  "payload": {
-    "taskId": "task_123",
-    "actorType": "USER",
-    "actorId": "user_123",
-    "task": {
-      "title": "Sample task",
-      "description": "Example task description",
-      "type": "TASK",
-      "priority": "NORMAL",
-      "status": "OPEN",
-      "sourceType": "MANUAL",
-      "dueDate": "2026-01-20T00:00:00.000Z",
-      "recurrenceEnded": false,
-      "createdAt": "2026-01-15T10:30:00.000Z",
-      "updatedAt": "2026-01-15T10:34:00.000Z"
-    },
-    "conversations": [
-      {
-        "id": "conv_123",
-        "status": "ACTIVE",
-        "createdAt": "2026-01-14T09:10:00.000Z",
-        "updatedAt": "2026-01-14T09:10:00.000Z"
-      }
-    ],
-    "details": {
-      "statusChange": {
-        "fromStatus": "CLOSED",
-        "toStatus": "OPEN"
+    ```json
+    {
+      "eventId": "evt_123456792",
+      "eventType": "task.status_changed",
+      "entity": "task",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-01-15T10:33:00.000Z",
+      "payload": {
+        "taskId": "task_123",
+        "actorType": "USER",
+        "actorId": "user_123",
+        "details": {
+          "statusChange": {
+            "fromStatus": "OPEN",
+            "toStatus": "CLOSED"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
-**task.remove_reminder**
+    **task.status_changed (CLOSED -> OPEN)**
 
-```json
-{
-  "eventId": "evt_123456794",
-  "eventType": "task.remove_reminder",
-  "entity": "task",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-01-15T10:35:00.000Z",
-  "payload": {
-    "taskId": "task_456",
-    "actorType": "USER",
-    "actorId": "user_123",
-    "details": {
-      "reminder": {
-        "reminderId": "rem_123"
+    ```json
+    {
+      "eventId": "evt_123456793",
+      "eventType": "task.status_changed",
+      "entity": "task",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-01-15T10:34:00.000Z",
+      "payload": {
+        "taskId": "task_123",
+        "actorType": "USER",
+        "actorId": "user_123",
+        "task": {
+          "title": "Sample task",
+          "description": "Example task description",
+          "type": "TASK",
+          "priority": "NORMAL",
+          "status": "OPEN",
+          "sourceType": "MANUAL",
+          "dueDate": "2026-01-20T00:00:00.000Z",
+          "recurrenceEnded": false,
+          "createdAt": "2026-01-15T10:30:00.000Z",
+          "updatedAt": "2026-01-15T10:34:00.000Z"
+        },
+        "conversations": [
+          {
+            "id": "conv_123",
+            "status": "ACTIVE",
+            "createdAt": "2026-01-14T09:10:00.000Z",
+            "updatedAt": "2026-01-14T09:10:00.000Z"
+          }
+        ],
+        "details": {
+          "statusChange": {
+            "fromStatus": "CLOSED",
+            "toStatus": "OPEN"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
-**task.field_updated**
+    **task.remove_reminder**
 
-```json
-{
-  "eventId": "evt_123456795",
-  "eventType": "task.field_updated",
-  "entity": "task",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-01-15T10:36:00.000Z",
-  "payload": {
-    "taskId": "task_123",
-    "actorType": "USER",
-    "actorId": "user_123",
-    "task": {
-      "title": "Sample task",
-      "description": "Example updated description",
-      "type": "TASK",
-      "priority": "NORMAL",
-      "status": "OPEN",
-      "sourceType": "MANUAL",
-      "dueDate": "2026-01-20T00:00:00.000Z",
-      "recurrenceEnded": false,
-      "createdAt": "2026-01-15T10:30:00.000Z",
-      "updatedAt": "2026-01-15T10:36:00.000Z"
-    },
-    "details": {
-      "fieldUpdate": {
-        "changedFields": ["description"]
+    ```json
+    {
+      "eventId": "evt_123456794",
+      "eventType": "task.remove_reminder",
+      "entity": "task",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-01-15T10:35:00.000Z",
+      "payload": {
+        "taskId": "task_456",
+        "actorType": "USER",
+        "actorId": "user_123",
+        "details": {
+          "reminder": {
+            "reminderId": "rem_123"
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
-### Event Types
+    **task.field_updated**
 
-| Event Type             | Description                                       |
-| ---------------------- | ------------------------------------------------- |
-| `task.created`         | A new task was created                            |
-| `task.status_changed`  | The task status changed (for example, from OPEN to CLOSED) |
-| `task.assigned`        | A user was assigned to the task                   |
-| `task.unassigned`      | A user was unassigned from the task               |
-| `task.remove_reminder` | A task reminder was removed                       |
-| `task.field_updated`   | A task field was updated                          |
+    ```json
+    {
+      "eventId": "evt_123456795",
+      "eventType": "task.field_updated",
+      "entity": "task",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-01-15T10:36:00.000Z",
+      "payload": {
+        "taskId": "task_123",
+        "actorType": "USER",
+        "actorId": "user_123",
+        "task": {
+          "title": "Sample task",
+          "description": "Example updated description",
+          "type": "TASK",
+          "priority": "NORMAL",
+          "status": "OPEN",
+          "sourceType": "MANUAL",
+          "dueDate": "2026-01-20T00:00:00.000Z",
+          "recurrenceEnded": false,
+          "createdAt": "2026-01-15T10:30:00.000Z",
+          "updatedAt": "2026-01-15T10:36:00.000Z"
+        },
+        "details": {
+          "fieldUpdate": {
+            "changedFields": ["description"]
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ---
 
-## Contact Updates (`v1`)
+## Contact Updates
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Triggered when contact records are created, updated, or deleted.
 
-### Example Payload
-
-```json
-{
-  "eventId": "evt_987654321",
-  "eventType": "contact.updated",
-  "entity": "contact",
-  "workspaceId": "ws_123",
-  "timestamp": "2025-01-15T10:30:00Z",
-  "payload": {
-    "id": "contact_123",
-    "firstName": "John",
-    "lastName": "Doe",
-    "email": "john@example.com",
-    "cellphone": "+1234567890",
-    "languageCode": "en",
-    "openAttributes": [
-      {
-        "customAttributeId": "attr_1",
-        "content": "custom value"
+<Tabs>
+  <Tab title="Event types">
+    | Event Type        | Description                  |
+    | ----------------- | ---------------------------- |
+    | `contact.created` | A new contact was created    |
+    | `contact.updated` | A contact record was updated |
+    | `contact.deleted` | A contact record was deleted |
+  </Tab>
+  <Tab title="Example payload">
+    ```json
+    {
+      "eventId": "evt_987654321",
+      "eventType": "contact.updated",
+      "entity": "contact",
+      "workspaceId": "ws_123",
+      "timestamp": "2025-01-15T10:30:00Z",
+      "payload": {
+        "id": "contact_123",
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john@example.com",
+        "cellphone": "+1234567890",
+        "languageCode": "en",
+        "openAttributes": [
+          {
+            "customAttributeId": "attr_1",
+            "content": "custom value"
+          }
+        ],
+        "closedAttributes": [
+          {
+            "customAttributeId": "attr_2",
+            "closedCustomAttributeIds": ["option_1", "option_2"]
+          }
+        ],
+        "internalUserOwnerId": "user_123",
+        "crmContactId": "crm_456",
+        "crmLastSyncedAt": "2025-01-15T09:00:00Z",
+        "createdAt": "2025-01-01T00:00:00Z",
+        "updatedAt": "2025-01-15T10:30:00Z"
       }
-    ],
-    "closedAttributes": [
-      {
-        "customAttributeId": "attr_2",
-        "closedCustomAttributeIds": ["option_1", "option_2"]
-      }
-    ],
-    "internalUserOwnerId": "user_123",
-    "crmContactId": "crm_456",
-    "crmLastSyncedAt": "2025-01-15T09:00:00Z",
-    "createdAt": "2025-01-01T00:00:00Z",
-    "updatedAt": "2025-01-15T10:30:00Z"
-  }
-}
-```
-
-### Event Types
-
-| Event Type        | Description                  |
-| ----------------- | ---------------------------- |
-| `contact.created` | A new contact was created    |
-| `contact.updated` | A contact record was updated |
-| `contact.deleted` | A contact record was deleted |
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ---
 
-## Call Notifications (`v1`)
+## Call Notifications
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Triggered as a call moves through its lifecycle. Bridge emits at most one webhook per lifecycle phase per call, so your integration receives a clean four-phase timeline (created, ringing, started, finished) rather than every intermediate state transition Bridge writes internally.
 
@@ -352,273 +360,280 @@ The current phase is derivable from the call state and the participants' statuse
 
 Missed calls (nobody answered) skip the started phase — the integration receives created, ringing, and finished only.
 
-### Example Payloads
+<Tabs>
+  <Tab title="Event types">
+    | Event Type     | Description                  |
+    | -------------- | ---------------------------- |
+    | `call.created` | A new call was provisioned   |
+    | `call.updated` | A call lifecycle phase changed (ringing, started, finished) |
+  </Tab>
+  <Tab title="Example payloads">
+    **call.created**
 
-**call.created**
-
-```json
-{
-  "eventId": "evt_call_001",
-  "eventType": "call.created",
-  "entity": "call",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-05-04T00:48:05.815Z",
-  "payload": {
-    "callId": "call_abc123",
-    "conversationId": "conv_xyz",
-    "messageId": "msg_xyz",
-    "callType": "ONE_TO_ONE",
-    "channelProvider": "WHATSAPP",
-    "state": "CREATED",
-    "createdAt": "2026-05-04T00:48:05.815Z",
-    "updatedAt": "2026-05-04T00:48:05.815Z",
-    "participants": {
-      "internal": [
-        {
-          "userId": "user_internal_1",
-          "name": "Jane Doe",
-          "email": "jane@example.com",
-          "status": "INITIALIZED"
+    ```json
+    {
+      "eventId": "evt_call_001",
+      "eventType": "call.created",
+      "entity": "call",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-05-04T00:48:05.815Z",
+      "payload": {
+        "callId": "call_abc123",
+        "conversationId": "conv_xyz",
+        "messageId": "msg_xyz",
+        "callType": "ONE_TO_ONE",
+        "channelProvider": "WHATSAPP",
+        "state": "CREATED",
+        "createdAt": "2026-05-04T00:48:05.815Z",
+        "updatedAt": "2026-05-04T00:48:05.815Z",
+        "participants": {
+          "internal": [
+            {
+              "userId": "user_internal_1",
+              "name": "Jane Doe",
+              "email": "jane@example.com",
+              "status": "INITIALIZED"
+            }
+          ],
+          "external": [
+            {
+              "userId": "user_external_1",
+              "name": "John Smith",
+              "email": "john@example.com",
+              "status": "INITIALIZED"
+            }
+          ]
         }
-      ],
-      "external": [
-        {
-          "userId": "user_external_1",
-          "name": "John Smith",
-          "email": "john@example.com",
-          "status": "INITIALIZED"
-        }
-      ]
+      }
     }
-  }
-}
-```
+    ```
 
-**call.updated (ringing)**
+    **call.updated (ringing)**
 
-```json
-{
-  "eventId": "evt_call_002",
-  "eventType": "call.updated",
-  "entity": "call",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-05-04T00:48:06.243Z",
-  "payload": {
-    "callId": "call_abc123",
-    "conversationId": "conv_xyz",
-    "messageId": "msg_xyz",
-    "callType": "ONE_TO_ONE",
-    "channelProvider": "WHATSAPP",
-    "state": "CREATED",
-    "createdAt": "2026-05-04T00:48:05.815Z",
-    "updatedAt": "2026-05-04T00:48:06.243Z",
-    "participants": {
-      "internal": [
-        {
-          "userId": "user_internal_1",
-          "name": "Jane Doe",
-          "email": "jane@example.com",
-          "status": "INITIALIZED"
+    ```json
+    {
+      "eventId": "evt_call_002",
+      "eventType": "call.updated",
+      "entity": "call",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-05-04T00:48:06.243Z",
+      "payload": {
+        "callId": "call_abc123",
+        "conversationId": "conv_xyz",
+        "messageId": "msg_xyz",
+        "callType": "ONE_TO_ONE",
+        "channelProvider": "WHATSAPP",
+        "state": "CREATED",
+        "createdAt": "2026-05-04T00:48:05.815Z",
+        "updatedAt": "2026-05-04T00:48:06.243Z",
+        "participants": {
+          "internal": [
+            {
+              "userId": "user_internal_1",
+              "name": "Jane Doe",
+              "email": "jane@example.com",
+              "status": "INITIALIZED"
+            }
+          ],
+          "external": [
+            {
+              "userId": "user_external_1",
+              "name": "John Smith",
+              "email": "john@example.com",
+              "status": "RINGING"
+            }
+          ]
         }
-      ],
-      "external": [
-        {
-          "userId": "user_external_1",
-          "name": "John Smith",
-          "email": "john@example.com",
-          "status": "RINGING"
-        }
-      ]
+      }
     }
-  }
-}
-```
+    ```
 
-**call.updated (started)**
+    **call.updated (started)**
 
-```json
-{
-  "eventId": "evt_call_003",
-  "eventType": "call.updated",
-  "entity": "call",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-05-04T00:48:12.771Z",
-  "payload": {
-    "callId": "call_abc123",
-    "conversationId": "conv_xyz",
-    "messageId": "msg_xyz",
-    "callType": "ONE_TO_ONE",
-    "channelProvider": "WHATSAPP",
-    "state": "STARTED",
-    "startedAt": "2026-05-04T00:48:12.125Z",
-    "createdAt": "2026-05-04T00:48:05.815Z",
-    "updatedAt": "2026-05-04T00:48:12.771Z",
-    "participants": {
-      "internal": [
-        {
-          "userId": "user_internal_1",
-          "name": "Jane Doe",
-          "email": "jane@example.com",
-          "status": "JOINED",
-          "joinedAt": "2026-05-04T00:48:12.125Z"
+    ```json
+    {
+      "eventId": "evt_call_003",
+      "eventType": "call.updated",
+      "entity": "call",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-05-04T00:48:12.771Z",
+      "payload": {
+        "callId": "call_abc123",
+        "conversationId": "conv_xyz",
+        "messageId": "msg_xyz",
+        "callType": "ONE_TO_ONE",
+        "channelProvider": "WHATSAPP",
+        "state": "STARTED",
+        "startedAt": "2026-05-04T00:48:12.125Z",
+        "createdAt": "2026-05-04T00:48:05.815Z",
+        "updatedAt": "2026-05-04T00:48:12.771Z",
+        "participants": {
+          "internal": [
+            {
+              "userId": "user_internal_1",
+              "name": "Jane Doe",
+              "email": "jane@example.com",
+              "status": "JOINED",
+              "joinedAt": "2026-05-04T00:48:12.125Z"
+            }
+          ],
+          "external": [
+            {
+              "userId": "user_external_1",
+              "name": "John Smith",
+              "email": "john@example.com",
+              "status": "JOINED",
+              "joinedAt": "2026-05-04T00:48:12.124Z"
+            }
+          ]
         }
-      ],
-      "external": [
-        {
-          "userId": "user_external_1",
-          "name": "John Smith",
-          "email": "john@example.com",
-          "status": "JOINED",
-          "joinedAt": "2026-05-04T00:48:12.124Z"
-        }
-      ]
+      }
     }
-  }
-}
-```
+    ```
 
-**call.updated (finished)**
+    **call.updated (finished)**
 
-```json
-{
-  "eventId": "evt_call_004",
-  "eventType": "call.updated",
-  "entity": "call",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-05-04T00:48:20.113Z",
-  "payload": {
-    "callId": "call_abc123",
-    "conversationId": "conv_xyz",
-    "messageId": "msg_xyz",
-    "callType": "ONE_TO_ONE",
-    "channelProvider": "WHATSAPP",
-    "state": "FINISHED",
-    "startedAt": "2026-05-04T00:48:12.125Z",
-    "finishedAt": "2026-05-04T00:48:19.389Z",
-    "createdAt": "2026-05-04T00:48:05.815Z",
-    "updatedAt": "2026-05-04T00:48:20.113Z",
-    "participants": {
-      "internal": [
-        {
-          "userId": "user_internal_1",
-          "name": "Jane Doe",
-          "email": "jane@example.com",
-          "status": "LEFT",
-          "joinedAt": "2026-05-04T00:48:12.125Z",
-          "leftAt": "2026-05-04T00:48:19.388Z"
+    ```json
+    {
+      "eventId": "evt_call_004",
+      "eventType": "call.updated",
+      "entity": "call",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-05-04T00:48:20.113Z",
+      "payload": {
+        "callId": "call_abc123",
+        "conversationId": "conv_xyz",
+        "messageId": "msg_xyz",
+        "callType": "ONE_TO_ONE",
+        "channelProvider": "WHATSAPP",
+        "state": "FINISHED",
+        "startedAt": "2026-05-04T00:48:12.125Z",
+        "finishedAt": "2026-05-04T00:48:19.389Z",
+        "createdAt": "2026-05-04T00:48:05.815Z",
+        "updatedAt": "2026-05-04T00:48:20.113Z",
+        "participants": {
+          "internal": [
+            {
+              "userId": "user_internal_1",
+              "name": "Jane Doe",
+              "email": "jane@example.com",
+              "status": "LEFT",
+              "joinedAt": "2026-05-04T00:48:12.125Z",
+              "leftAt": "2026-05-04T00:48:19.388Z"
+            }
+          ],
+          "external": [
+            {
+              "userId": "user_external_1",
+              "name": "John Smith",
+              "email": "john@example.com",
+              "status": "LEFT",
+              "joinedAt": "2026-05-04T00:48:12.124Z",
+              "leftAt": "2026-05-04T00:48:19.387Z"
+            }
+          ]
         }
-      ],
-      "external": [
-        {
-          "userId": "user_external_1",
-          "name": "John Smith",
-          "email": "john@example.com",
-          "status": "LEFT",
-          "joinedAt": "2026-05-04T00:48:12.124Z",
-          "leftAt": "2026-05-04T00:48:19.387Z"
-        }
-      ]
+      }
     }
-  }
-}
-```
-
-### Event Types
-
-| Event Type     | Description                  |
-| -------------- | ---------------------------- |
-| `call.created` | A new call was provisioned   |
-| `call.updated` | A call lifecycle phase changed (ringing, started, finished) |
+    ```
+  </Tab>
+</Tabs>
 
 ---
 
-## Meeting Notifications (`v1`)
+## Meeting Notifications
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Triggered when a meeting reaches the CREATED state. Meeting cancellations are surfaced through the corresponding email notification.
 
-### Example Payload
-
-```json
-{
-  "eventId": "evt_meeting_001",
-  "eventType": "meeting.updated",
-  "entity": "meeting",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-05-04T00:46:40.954Z",
-  "payload": {
-    "meetingId": "meeting_abc123",
-    "conversationId": "conv_xyz",
-    "messageId": "msg_xyz",
-    "subject": "Meeting with John Smith",
-    "providerType": "TEAMS",
-    "status": "CREATED",
-    "organizerInternalUserId": "user_internal_1",
-    "internalParticipants": ["user_internal_1"],
-    "externalParticipants": ["user_external_1"],
-    "startDateTime": "2026-05-04T01:00:00.000Z",
-    "endDateTime": "2026-05-04T01:15:00.000Z",
-    "createdAt": "2026-05-04T00:46:29.944Z",
-    "updatedAt": "2026-05-04T00:46:40.954Z",
-    "provider": {
-      "joinUrl": "https://teams.microsoft.com/l/meetup-join/...",
-      "calendarEventId": "AAMkADhlMWVlMWJhLWUyZTMtNDllOC...",
-      "chatId": "MWM1Zjg4MmUtZjk0Mi00YjJkLTgyNTItNmRiODNiZmM1NWEw",
-      "providerMeetingId": "MSowODJkZmFjYy1iNDZmLTRiNDItOGYzOS0xMzI0NDcyMzUwMWUq..."
+<Tabs>
+  <Tab title="Event types">
+    | Event Type        | Description                                |
+    | ----------------- | ------------------------------------------ |
+    | `meeting.updated` | A meeting reached the `CREATED` state      |
+  </Tab>
+  <Tab title="Example payload">
+    ```json
+    {
+      "eventId": "evt_meeting_001",
+      "eventType": "meeting.updated",
+      "entity": "meeting",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-05-04T00:46:40.954Z",
+      "payload": {
+        "meetingId": "meeting_abc123",
+        "conversationId": "conv_xyz",
+        "messageId": "msg_xyz",
+        "subject": "Meeting with John Smith",
+        "providerType": "TEAMS",
+        "status": "CREATED",
+        "organizerInternalUserId": "user_internal_1",
+        "internalParticipants": ["user_internal_1"],
+        "externalParticipants": ["user_external_1"],
+        "startDateTime": "2026-05-04T01:00:00.000Z",
+        "endDateTime": "2026-05-04T01:15:00.000Z",
+        "createdAt": "2026-05-04T00:46:29.944Z",
+        "updatedAt": "2026-05-04T00:46:40.954Z",
+        "provider": {
+          "joinUrl": "https://teams.microsoft.com/l/meetup-join/...",
+          "calendarEventId": "AAMkADhlMWVlMWJhLWUyZTMtNDllOC...",
+          "chatId": "MWM1Zjg4MmUtZjk0Mi00YjJkLTgyNTItNmRiODNiZmM1NWEw",
+          "providerMeetingId": "MSowODJkZmFjYy1iNDZmLTRiNDItOGYzOS0xMzI0NDcyMzUwMWUq..."
+        }
+      }
     }
-  }
-}
-```
-
-### Event Types
-
-| Event Type        | Description                                |
-| ----------------- | ------------------------------------------ |
-| `meeting.updated` | A meeting reached the `CREATED` state      |
+    ```
+  </Tab>
+</Tabs>
 
 ---
 
-## Email Notifications (`v1`)
+## Email Notifications
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Triggered once an email has been processed and the AI summary is available.
 
 The `sentFromBridge` field indicates direction: true for outbound emails sent from the workspace, false for inbound emails received.
 
-### Example Payload
-
-```json
-{
-  "eventId": "evt_email_001",
-  "eventType": "email.updated",
-  "entity": "email",
-  "workspaceId": "ws_123",
-  "timestamp": "2026-05-04T00:45:31.261Z",
-  "payload": {
-    "emailId": "email_abc123",
-    "conversationId": "conv_xyz",
-    "threadId": "AAQkADhlMWVlMWJhLWUyZTMtNDllOC05MDg2LWMzNjFkMTI5MjM4MA...",
-    "providerType": "OUTLOOK",
-    "status": "PROCESSED",
-    "subject": "Project update",
-    "sender": "jane@example.com",
-    "recipients": [
-      { "recipientEmail": "john@example.com" }
-    ],
-    "summary": "Jane confirms the project is on track and shares next steps.",
-    "importance": "NORMAL",
-    "sentFromBridge": true,
-    "hasAttachments": false,
-    "sentAt": "2026-05-04T00:45:09.000Z",
-    "createdAt": "2026-05-04T00:45:09.000Z",
-    "updatedAt": "2026-05-04T00:45:31.261Z"
-  }
-}
-```
-
-### Event Types
-
-| Event Type      | Description                                          |
-| --------------- | ---------------------------------------------------- |
-| `email.updated` | An email reached the summarized state                |
+<Tabs>
+  <Tab title="Event types">
+    | Event Type      | Description                                          |
+    | --------------- | ---------------------------------------------------- |
+    | `email.updated` | An email reached the summarized state                |
+  </Tab>
+  <Tab title="Example payload">
+    ```json
+    {
+      "eventId": "evt_email_001",
+      "eventType": "email.updated",
+      "entity": "email",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-05-04T00:45:31.261Z",
+      "payload": {
+        "emailId": "email_abc123",
+        "conversationId": "conv_xyz",
+        "threadId": "AAQkADhlMWVlMWJhLWUyZTMtNDllOC05MDg2LWMzNjFkMTI5MjM4MA...",
+        "providerType": "OUTLOOK",
+        "status": "PROCESSED",
+        "subject": "Project update",
+        "sender": "jane@example.com",
+        "recipients": [
+          { "recipientEmail": "john@example.com" }
+        ],
+        "summary": "Jane confirms the project is on track and shares next steps.",
+        "importance": "NORMAL",
+        "sentFromBridge": true,
+        "hasAttachments": false,
+        "sentAt": "2026-05-04T00:45:09.000Z",
+        "createdAt": "2026-05-04T00:45:09.000Z",
+        "updatedAt": "2026-05-04T00:45:31.261Z"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ---
 
