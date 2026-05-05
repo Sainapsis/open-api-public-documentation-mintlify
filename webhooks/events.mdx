@@ -360,12 +360,15 @@ The current phase is derivable from the call state and the participants' statuse
 
 Missed calls (nobody answered) skip the started phase — the integration receives created, ringing, and finished only.
 
+Once a call finishes, Bridge runs the recording through an asynchronous AI transcription pipeline. When the transcript is ready, the integration receives an additional `call.transcription.created` event with the full transcript broken down into time-coded segments per speaker. This event arrives **after** the `call.updated (finished)` event, typically several seconds to a few minutes later depending on call length. Diarization (multi-speaker labelling) depends on the audio source quality — mono recordings may produce a single speaker label for the entire transcript.
+
 <Tabs>
   <Tab title="Event types">
-    | Event Type     | Description                  |
-    | -------------- | ---------------------------- |
-    | `call.created` | A new call was provisioned   |
-    | `call.updated` | A call lifecycle phase changed (ringing, started, finished) |
+    | Event Type                    | Description                                                 |
+    | ----------------------------- | ----------------------------------------------------------- |
+    | `call.created`                | A new call was provisioned                                  |
+    | `call.updated`                | A call lifecycle phase changed (ringing, started, finished) |
+    | `call.transcription.created`  | The AI transcript for a finished call is ready              |
   </Tab>
   <Tab title="Example payloads">
     **call.created**
@@ -536,6 +539,42 @@ Missed calls (nobody answered) skip the started phase — the integration receiv
       }
     }
     ```
+
+    **call.transcription.created**
+
+    ```json
+    {
+      "eventId": "evt_call_005",
+      "eventType": "call.transcription.created",
+      "entity": "call",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-05-04T00:50:14.231Z",
+      "payload": {
+        "callId": "call_abc123",
+        "transcriptionId": "txn_xyz789",
+        "conversationId": "conv_xyz",
+        "duration": "27",
+        "startedAt": "2026-05-04T00:48:12.125Z",
+        "finishedAt": "2026-05-04T00:48:19.389Z",
+        "transcript": [
+          {
+            "speaker": "0",
+            "text": "Hi, how can I help you today?",
+            "start": 1.44,
+            "end": 5.2
+          },
+          {
+            "speaker": "1",
+            "text": "I have a question about your product.",
+            "start": 5.5,
+            "end": 12.3
+          }
+        ]
+      }
+    }
+    ```
+
+    Each transcript segment carries the diarized `speaker` label (typically `"0"`, `"1"`, ...), the `text`, and `start`/`end` offsets in seconds from the call start.
   </Tab>
 </Tabs>
 
