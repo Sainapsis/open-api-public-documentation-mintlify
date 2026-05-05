@@ -76,9 +76,9 @@ Payloads vary by event type. The `details` field in the payload describes what c
     | `task.field_updated`   | A task field was updated                          |
   </Tab>
   <Tab title="Example payloads">
-    **task.created**
+    <CodeGroup>
 
-    ```json
+    ```json Created
     {
       "eventId": "evt_123456789",
       "eventType": "task.created",
@@ -102,10 +102,7 @@ Payloads vary by event type. The `details` field in the payload describes what c
           "updatedAt": "2026-01-15T10:30:00.000Z"
         },
         "assignees": [
-          {
-            "assigneeId": "user_456",
-            "assigneeType": "USER"
-          }
+          { "assigneeId": "user_456", "assigneeType": "USER" }
         ],
         "conversations": [
           {
@@ -119,9 +116,7 @@ Payloads vary by event type. The `details` field in the payload describes what c
     }
     ```
 
-    **task.assigned**
-
-    ```json
+    ```json Assigned
     {
       "eventId": "evt_123456790",
       "eventType": "task.assigned",
@@ -132,18 +127,12 @@ Payloads vary by event type. The `details` field in the payload describes what c
         "taskId": "task_123",
         "actorType": "USER",
         "actorId": "user_123",
-        "details": {
-          "assignee": {
-            "assigneeId": "user_456"
-          }
-        }
+        "details": { "assignee": { "assigneeId": "user_456" } }
       }
     }
     ```
 
-    **task.unassigned**
-
-    ```json
+    ```json Unassigned
     {
       "eventId": "evt_123456791",
       "eventType": "task.unassigned",
@@ -154,18 +143,12 @@ Payloads vary by event type. The `details` field in the payload describes what c
         "taskId": "task_123",
         "actorType": "USER",
         "actorId": "user_123",
-        "details": {
-          "assignee": {
-            "assigneeId": "user_456"
-          }
-        }
+        "details": { "assignee": { "assigneeId": "user_456" } }
       }
     }
     ```
 
-    **task.status_changed (OPEN -> CLOSED)**
-
-    ```json
+    ```json Status changed (open → closed)
     {
       "eventId": "evt_123456792",
       "eventType": "task.status_changed",
@@ -177,18 +160,13 @@ Payloads vary by event type. The `details` field in the payload describes what c
         "actorType": "USER",
         "actorId": "user_123",
         "details": {
-          "statusChange": {
-            "fromStatus": "OPEN",
-            "toStatus": "CLOSED"
-          }
+          "statusChange": { "fromStatus": "OPEN", "toStatus": "CLOSED" }
         }
       }
     }
     ```
 
-    **task.status_changed (CLOSED -> OPEN)**
-
-    ```json
+    ```json Status changed (closed → open)
     {
       "eventId": "evt_123456793",
       "eventType": "task.status_changed",
@@ -220,18 +198,13 @@ Payloads vary by event type. The `details` field in the payload describes what c
           }
         ],
         "details": {
-          "statusChange": {
-            "fromStatus": "CLOSED",
-            "toStatus": "OPEN"
-          }
+          "statusChange": { "fromStatus": "CLOSED", "toStatus": "OPEN" }
         }
       }
     }
     ```
 
-    **task.remove_reminder**
-
-    ```json
+    ```json Reminder removed
     {
       "eventId": "evt_123456794",
       "eventType": "task.remove_reminder",
@@ -242,18 +215,12 @@ Payloads vary by event type. The `details` field in the payload describes what c
         "taskId": "task_456",
         "actorType": "USER",
         "actorId": "user_123",
-        "details": {
-          "reminder": {
-            "reminderId": "rem_123"
-          }
-        }
+        "details": { "reminder": { "reminderId": "rem_123" } }
       }
     }
     ```
 
-    **task.field_updated**
-
-    ```json
+    ```json Field updated
     {
       "eventId": "evt_123456795",
       "eventType": "task.field_updated",
@@ -277,13 +244,13 @@ Payloads vary by event type. The `details` field in the payload describes what c
           "updatedAt": "2026-01-15T10:36:00.000Z"
         },
         "details": {
-          "fieldUpdate": {
-            "changedFields": ["description"]
-          }
+          "fieldUpdate": { "changedFields": ["description"] }
         }
       }
     }
     ```
+
+    </CodeGroup>
   </Tab>
 </Tabs>
 
@@ -371,9 +338,9 @@ Once a call finishes, Bridge runs the recording through an asynchronous AI trans
     | `call.transcription.created`  | The AI transcript for a finished call is ready              |
   </Tab>
   <Tab title="Example payloads">
-    **call.created**
+    <CodeGroup>
 
-    ```json
+    ```json Created
     {
       "eventId": "evt_call_001",
       "eventType": "call.created",
@@ -391,29 +358,17 @@ Once a call finishes, Bridge runs the recording through an asynchronous AI trans
         "updatedAt": "2026-05-04T00:48:05.815Z",
         "participants": {
           "internal": [
-            {
-              "userId": "user_internal_1",
-              "name": "Jane Doe",
-              "email": "jane@example.com",
-              "status": "INITIALIZED"
-            }
+            { "userId": "user_internal_1", "name": "Jane Doe", "email": "jane@example.com", "status": "INITIALIZED" }
           ],
           "external": [
-            {
-              "userId": "user_external_1",
-              "name": "John Smith",
-              "email": "john@example.com",
-              "status": "INITIALIZED"
-            }
+            { "userId": "user_external_1", "name": "John Smith", "email": "john@example.com", "status": "INITIALIZED" }
           ]
         }
       }
     }
     ```
 
-    **call.updated (ringing)**
-
-    ```json
+    ```json Ringing
     {
       "eventId": "evt_call_002",
       "eventType": "call.updated",
@@ -431,29 +386,17 @@ Once a call finishes, Bridge runs the recording through an asynchronous AI trans
         "updatedAt": "2026-05-04T00:48:06.243Z",
         "participants": {
           "internal": [
-            {
-              "userId": "user_internal_1",
-              "name": "Jane Doe",
-              "email": "jane@example.com",
-              "status": "INITIALIZED"
-            }
+            { "userId": "user_internal_1", "name": "Jane Doe", "email": "jane@example.com", "status": "INITIALIZED" }
           ],
           "external": [
-            {
-              "userId": "user_external_1",
-              "name": "John Smith",
-              "email": "john@example.com",
-              "status": "RINGING"
-            }
+            { "userId": "user_external_1", "name": "John Smith", "email": "john@example.com", "status": "RINGING" }
           ]
         }
       }
     }
     ```
 
-    **call.updated (started)**
-
-    ```json
+    ```json Started
     {
       "eventId": "evt_call_003",
       "eventType": "call.updated",
@@ -472,31 +415,17 @@ Once a call finishes, Bridge runs the recording through an asynchronous AI trans
         "updatedAt": "2026-05-04T00:48:12.771Z",
         "participants": {
           "internal": [
-            {
-              "userId": "user_internal_1",
-              "name": "Jane Doe",
-              "email": "jane@example.com",
-              "status": "JOINED",
-              "joinedAt": "2026-05-04T00:48:12.125Z"
-            }
+            { "userId": "user_internal_1", "name": "Jane Doe", "email": "jane@example.com", "status": "JOINED", "joinedAt": "2026-05-04T00:48:12.125Z" }
           ],
           "external": [
-            {
-              "userId": "user_external_1",
-              "name": "John Smith",
-              "email": "john@example.com",
-              "status": "JOINED",
-              "joinedAt": "2026-05-04T00:48:12.124Z"
-            }
+            { "userId": "user_external_1", "name": "John Smith", "email": "john@example.com", "status": "JOINED", "joinedAt": "2026-05-04T00:48:12.124Z" }
           ]
         }
       }
     }
     ```
 
-    **call.updated (finished)**
-
-    ```json
+    ```json Finished
     {
       "eventId": "evt_call_004",
       "eventType": "call.updated",
@@ -516,33 +445,17 @@ Once a call finishes, Bridge runs the recording through an asynchronous AI trans
         "updatedAt": "2026-05-04T00:48:20.113Z",
         "participants": {
           "internal": [
-            {
-              "userId": "user_internal_1",
-              "name": "Jane Doe",
-              "email": "jane@example.com",
-              "status": "LEFT",
-              "joinedAt": "2026-05-04T00:48:12.125Z",
-              "leftAt": "2026-05-04T00:48:19.388Z"
-            }
+            { "userId": "user_internal_1", "name": "Jane Doe", "email": "jane@example.com", "status": "LEFT", "joinedAt": "2026-05-04T00:48:12.125Z", "leftAt": "2026-05-04T00:48:19.388Z" }
           ],
           "external": [
-            {
-              "userId": "user_external_1",
-              "name": "John Smith",
-              "email": "john@example.com",
-              "status": "LEFT",
-              "joinedAt": "2026-05-04T00:48:12.124Z",
-              "leftAt": "2026-05-04T00:48:19.387Z"
-            }
+            { "userId": "user_external_1", "name": "John Smith", "email": "john@example.com", "status": "LEFT", "joinedAt": "2026-05-04T00:48:12.124Z", "leftAt": "2026-05-04T00:48:19.387Z" }
           ]
         }
       }
     }
     ```
 
-    **call.transcription.created**
-
-    ```json
+    ```json Transcription created
     {
       "eventId": "evt_call_005",
       "eventType": "call.transcription.created",
@@ -557,22 +470,14 @@ Once a call finishes, Bridge runs the recording through an asynchronous AI trans
         "startedAt": "2026-05-04T00:48:12.125Z",
         "finishedAt": "2026-05-04T00:48:19.389Z",
         "transcript": [
-          {
-            "speaker": "0",
-            "text": "Hi, how can I help you today?",
-            "start": 1.44,
-            "end": 5.2
-          },
-          {
-            "speaker": "1",
-            "text": "I have a question about your product.",
-            "start": 5.5,
-            "end": 12.3
-          }
+          { "speaker": "0", "text": "Hi, how can I help you today?", "start": 1.44, "end": 5.2 },
+          { "speaker": "1", "text": "I have a question about your product.", "start": 5.5, "end": 12.3 }
         ]
       }
     }
     ```
+
+    </CodeGroup>
 
     Each transcript segment carries the diarized `speaker` label (typically `"0"`, `"1"`, ...), the `text`, and `start`/`end` offsets in seconds from the call start.
   </Tab>
