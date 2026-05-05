@@ -79,7 +79,9 @@ Receive notifications when conversation summaries are created, updated, or delet
 - `conversation_summary.updated`
 - `conversation_summary.deleted` */}
 
-### Tasks Notifications (`v1`)
+### Tasks Notifications
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Receive notifications when tasks are created or their state changes.
 
@@ -90,7 +92,9 @@ Receive notifications when tasks are created or their state changes.
 - `task.remove_reminder`
 - `task.field_updated`
 
-### Contact Updates (`v1`)
+### Contact Updates
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Receive notifications when contacts are created, updated, or deleted.
 
@@ -98,20 +102,27 @@ Receive notifications when contacts are created, updated, or deleted.
 - `contact.updated`
 - `contact.deleted`
 
-### Call Notifications (`v1`)
+### Call Notifications
 
-Receive a single webhook for each lifecycle phase of a call: created, ringing, started, and finished. Calls are not deleted.
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+
+Receive a single webhook for each lifecycle phase of a call (created, ringing, started, finished) plus the AI transcript once it is ready. Calls are not deleted.
 
 - `call.created`
 - `call.updated`
+- `call.transcription.created`
 
-### Meeting Notifications (`v1`)
+### Meeting Notifications
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Receive a notification when a meeting reaches the CREATED state. Meetings are not deleted, so only the `meeting.updated` event is emitted.
 
 - `meeting.updated`
 
-### Email Notifications (`v1`)
+### Email Notifications
+
+<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
 Receive a notification once an email has been processed and the AI summary is available. Emails are not deleted, so only the `email.updated` event is emitted.
 
