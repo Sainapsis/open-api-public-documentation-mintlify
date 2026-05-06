@@ -1157,6 +1157,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/contacts/partial:
+    post:
+      tags:
+      - Contacts API
+      summary: Create or update a contact
+      description: Create or update a contact using only cellphone. Classifies as
+        NORMAL or PARTIAL.
+      operationId: create_partial_contact_bridge_api_v1_workspaces__workspaceId__contacts_partial_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartialContactBody'
+              description: Request body for partial contact creation. Only cellphone
+                is required.
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /bridge/api/v1/workspaces/{workspaceId}/files:
     post:
       tags:
@@ -1439,6 +1511,135 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/leadscout/outbound:
+    post:
+      tags:
+      - LeadScout API
+      summary: Initiate a LeadScout outbound conversation with a known lead
+      description: 'Initiate an AI-controlled outbound conversation against a known
+        lead.
+
+
+        Pre-flight checks (template registered + APPROVED, contact exists, channel
+        resolvable,
+
+        no active conversation already running) all run before any write. On success
+        the
+
+        conversation is created controlled by the prospection agent, the template
+        is persisted
+
+        as the first message.'
+      operationId: initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeadscoutOutboundRequest'
+              description: Request body for initiating a LeadScout outbound conversation.
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeadscoutOutboundResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+                PROVIDER_CHANNEL_NOT_FOUND:
+                  value:
+                    title: Provider Channel Not Found
+                    status: 404
+                    code: BRIDGE_PROVIDER_CHANNEL_0001
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                CONVERSATION_WITH_SAME_PARTICIPANTS_ALREADY_EXISTS:
+                  value:
+                    title: Conversation With Same Participants Already Exists
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0003
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              examples:
+                CONVERSATION_OPERATION_FAILED:
+                  value:
+                    title: Conversation Operation Failed
+                    status: 500
+                    code: BRIDGE_CONVERSATION_0005
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                INACTIVE_INTERNAL_USER:
+                  value:
+                    title: Inactive Internal User
+                    status: 400
+                    code: BRIDGE_INTERNAL_0003
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     ClosedAttribute:
@@ -1497,18 +1698,32 @@ components:
           description: Unique identifier of the workspace this contact belongs to
           examples:
           - 92b2d4f3-81e1-4b61-a7ec-6f4ff3b58be5
+        type:
+          $ref: '#/components/schemas/ExternalUserType'
+          title: Contact Type
+          description: NORMAL when all required identity and custom attribute fields
+            are present, PARTIAL otherwise.
+          examples:
+          - NORMAL
+          - PARTIAL
         firstName:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: First Name
           description: Contact's first name.
           examples:
           - John
+          - null
         lastName:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Last Name
           description: Contact's last name.
           examples:
           - Doe
+          - null
         email:
           anyOf:
           - type: string
@@ -1536,11 +1751,14 @@ components:
           title: Custom Attributes
           description: Array of custom key-value attributes.
         languageCode:
-          $ref: '#/components/schemas/LanguageCode'
+          anyOf:
+          - $ref: '#/components/schemas/LanguageCode'
+          - type: 'null'
           title: Language Code
           description: Language code from external user.
           examples:
           - EN
+          - null
         ownerId:
           anyOf:
           - type: string
@@ -1566,9 +1784,7 @@ components:
       required:
       - id
       - workspaceId
-      - firstName
-      - lastName
-      - languageCode
+      - type
       - createdAt
       - updatedAt
       title: ContactResponse
@@ -1798,6 +2014,76 @@ components:
       - participants
       title: CreateConversationRequest
       description: Request body for creating a new conversation.
+    CreatePartialContactBody:
+      properties:
+        cellphone:
+          type: string
+          format: phone
+          title: Cellphone
+          description: Contact's cellphone number in E.164 format. Used to identify
+            the contact for upsert.
+          examples:
+          - '+14084029292'
+        firstName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Name
+          description: Contact's first name. Required for NORMAL classification.
+          examples:
+          - Maria
+          - null
+        lastName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Name
+          description: Contact's last name. Required for NORMAL classification.
+          examples:
+          - Lopez
+          - null
+        email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+          title: Email
+          description: Contact's email address.
+          examples:
+          - maria@acme.com
+          - null
+        languageCode:
+          anyOf:
+          - $ref: '#/components/schemas/LanguageCode'
+          - type: 'null'
+          title: Language Code
+          description: Contact's language code. Required for NORMAL classification.
+          examples:
+          - EN
+          - null
+        ownerIdentifier:
+          anyOf:
+          - $ref: '#/components/schemas/InternalUserIdentifierRequest'
+          - type: 'null'
+          title: Owner Identifier
+          description: Identifier of the salesperson or user who owns this contact.
+          examples:
+          - identifier: jane@acme.com
+            identifierType: EMAIL
+          - null
+        customAttributes:
+          $ref: '#/components/schemas/CustomAttributesBody'
+          title: Custom Attributes
+          description: Object with open and closed custom attributes.
+          examples:
+          - closedAttributes: []
+            openAttributes: []
+      additionalProperties: false
+      type: object
+      required:
+      - cellphone
+      title: CreatePartialContactBody
+      description: Request body for partial contact creation. Only cellphone is required.
     CreateParticipantsOnConversationRequest:
       properties:
         externals:
@@ -1904,15 +2190,19 @@ components:
     CustomAttributesBody:
       properties:
         openAttributes:
-          items:
-            $ref: '#/components/schemas/OpenAttributeRequest'
-          type: array
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAttributeRequest'
+            type: array
+          - type: 'null'
           title: Open Attributes
           description: Array of open attributes.
         closedAttributes:
-          items:
-            $ref: '#/components/schemas/ClosedAttributeRequest'
-          type: array
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ClosedAttributeRequest'
+            type: array
+          - type: 'null'
           title: Closed Attributes
           description: Array of closed attributes.
       type: object
@@ -2045,6 +2335,12 @@ components:
       - identifierType
       title: ExternalUserIdentifierRequest
       description: Body to identify an external user in Bridge System.
+    ExternalUserType:
+      type: string
+      enum:
+      - PARTIAL
+      - NORMAL
+      title: ExternalUserType
     FileType:
       type: string
       enum:
@@ -2089,10 +2385,7 @@ components:
           examples:
           - ef7ee722-5f95-415a-9a98-81eeae178b11
         identifierType:
-          type: string
-          enum:
-          - ID
-          - EMAIL
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
           title: Identifier Type
           description: Type of identifier for internal participants (ID or EMAIL).
           examples:
@@ -2130,6 +2423,12 @@ components:
       - joinedAt
       title: Participant
       description: Object representing the internal participant in the conversation.
+    InternalParticipantIdentifierType:
+      type: string
+      enum:
+      - ID
+      - EMAIL
+      title: InternalParticipantIdentifierType
     InternalUserIdentifierRequest:
       properties:
         identifier:
@@ -2141,10 +2440,7 @@ components:
           - '+13802098869'
           - 37673840-6259-40f9-bbe5-a7db40f8e3cf
         identifierType:
-          type: string
-          enum:
-          - ID
-          - EMAIL
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
           title: Identifier Type
           description: Type of identifier for internal users (ID or EMAIL).
           examples:
@@ -2162,6 +2458,190 @@ components:
       - ES
       - EN
       title: LanguageCode
+    LeadscoutOutboundContactRef:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Phone number in E.164 format identifying the contact.
+          examples:
+          - '+573001234567'
+        identifierType:
+          type: string
+          const: PHONE
+          title: Identifier Type
+          description: Type of identifier. Only PHONE is supported on the happy path.
+          examples:
+          - PHONE
+        messageProviderType:
+          type: string
+          const: WHATSAPP
+          title: Message Provider Type
+          description: Provider used to deliver the template. Only WHATSAPP is supported
+            on the happy path.
+          examples:
+          - WHATSAPP
+        providerChannelId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider Channel Identifier
+          description: Optional explicit WhatsApp channel id. If omitted, the workspace's
+            single WhatsApp channel is used; in workspaces with multiple channels
+            this field is required.
+          examples:
+          - a3a3a3a3-3a3a-3a3a-3a3a-3a3a3a3a3a3a
+          - null
+      type: object
+      required:
+      - identifier
+      - identifierType
+      - messageProviderType
+      title: LeadscoutOutboundContactRef
+      description: Identifies the lead the outbound conversation will target.
+    LeadscoutOutboundHandoffOverride:
+      properties:
+        preAssignedUser:
+          $ref: '#/components/schemas/LeadscoutOutboundPreAssignedUser'
+          title: Pre-assigned User
+          description: The internal user to assign as advisor when the AI hands off
+            the conversation. Validated at request time — if the user does not exist,
+            is inactive, or belongs to a different workspace, the request is rejected
+            before any conversation is created.
+          examples:
+          - identifier: advisor@acme.com
+            identifierType: EMAIL
+      additionalProperties: false
+      type: object
+      required:
+      - preAssignedUser
+      title: LeadscoutOutboundHandoffOverride
+      description: Overrides the default advisor assignment for the outbound conversation.
+    LeadscoutOutboundPreAssignedUser:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Value that identifies the internal user, interpreted according
+            to identifier_type.
+          examples:
+          - advisor@acme.com
+          - usr_01HZ2K3J4M5N6P7Q8R9S0T1UV2
+        identifierType:
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
+          title: Identifier Type
+          description: How to resolve the identifier. ID looks up by internal user
+            ID; EMAIL looks up by email address.
+          examples:
+          - EMAIL
+          - ID
+      additionalProperties: false
+      type: object
+      required:
+      - identifier
+      - identifierType
+      title: LeadscoutOutboundPreAssignedUser
+      description: Identifies the internal user who should receive the handoff.
+    LeadscoutOutboundRequest:
+      properties:
+        contact:
+          $ref: '#/components/schemas/LeadscoutOutboundContactRef'
+          title: Contact
+          description: The lead this outbound conversation targets. Must already exist
+            in the workspace.
+        template:
+          $ref: '#/components/schemas/LeadscoutOutboundTemplateRef'
+          title: Template
+          description: The opening template to send.
+        handoffOverride:
+          anyOf:
+          - $ref: '#/components/schemas/LeadscoutOutboundHandoffOverride'
+          - type: 'null'
+          title: Handoff Override
+          description: Optional override to pre-assign a specific internal user as
+            the handoff advisor. Validated at request time; conversation creation
+            is aborted if validation fails.
+      type: object
+      required:
+      - contact
+      - template
+      title: LeadscoutOutboundRequest
+      description: Request body for initiating a LeadScout outbound conversation.
+    LeadscoutOutboundResponse:
+      properties:
+        conversation:
+          $ref: '#/components/schemas/ConversationResponse'
+          title: Conversation
+          description: The newly created AI-controlled conversation.
+        contact:
+          $ref: '#/components/schemas/ContactResponse'
+          title: Contact
+          description: The contact the conversation was initiated with.
+        alreadyInitiated:
+          type: boolean
+          title: Already Initiated
+          description: True if the outbound was previously initiated for this contact
+            + channel. Always false on the happy-path goal.
+          default: false
+          examples:
+          - false
+        templateSent:
+          $ref: '#/components/schemas/LeadscoutTemplateSent'
+          title: Template Sent
+          description: Summary of the dispatched template.
+      type: object
+      required:
+      - conversation
+      - contact
+      - templateSent
+      title: LeadscoutOutboundResponse
+      description: Response body for a successful LeadScout outbound initiation.
+    LeadscoutOutboundTemplateRef:
+      properties:
+        name:
+          type: string
+          title: Template Name
+          description: Name of the registered Meta-approved template to send.
+          examples:
+          - leadscout_outbound_fb_v1
+        orderedParams:
+          items:
+            type: string
+          type: array
+          title: Ordered Parameters
+          description: Caller-supplied values for the template's CALLER-source parameter
+            slots, in position order.
+          examples:
+          - - Maria
+            - ACME
+      type: object
+      required:
+      - name
+      title: LeadscoutOutboundTemplateRef
+      description: References the Meta-approved template that will open the conversation.
+    LeadscoutTemplateSent:
+      properties:
+        name:
+          type: string
+          title: Template Name
+          description: Name of the template that was dispatched.
+          examples:
+          - leadscout_outbound_fb_v1
+        messageId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message Identifier
+          description: Meta wamid of the dispatched template. Null on the happy path
+            until the send pipeline propagates the wamid back to the inbound API.
+          examples:
+          - null
+          - wamid.HBgM...
+      type: object
+      required:
+      - name
+      title: LeadscoutTemplateSent
+      description: Summary of the template dispatched to open the conversation.
     MessageProviderType:
       type: string
       enum:
@@ -2529,7 +3009,7 @@ components:
             format: phone
           - type: 'null'
           title: Cellphone
-          description: Contact's cellphone number.
+          description: Contact's cellphone number in E.164 format.
           examples:
           - '+14084029292'
           - null
@@ -2582,6 +3062,7 @@ components:
       enum:
       - INTERNAL
       - EXTERNAL
+      - BOT
       title: UserType
     ValidationError:
       properties:
@@ -2598,6 +3079,11 @@ components:
         type:
           type: string
           title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
       type: object
       required:
       - loc
