@@ -505,11 +505,11 @@ paths:
           content:
             application/json:
               examples:
-                EXTERNAL_PARTICIPANTS_REQUIRED:
+                MIN_PARTICIPANTS_REQUIRED:
                   value:
-                    title: External Participants Required
+                    title: Min Participants Required
                     status: 400
-                    code: BRIDGE_CONVERSATION_0201
+                    code: BRIDGE_CONVERSATION_0210
               schema:
                 $ref: '#/components/schemas/Problem'
         '403':
@@ -1532,8 +1532,7 @@ paths:
         conversation is created controlled by the prospection agent, the template
         is persisted
 
-        as the first message, and the dispatch is logged in the prospecting agent
-        history.'
+        as the first message.'
       operationId: initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post
       security:
       - x-api-key: []
@@ -2194,15 +2193,19 @@ components:
     CustomAttributesBody:
       properties:
         openAttributes:
-          items:
-            $ref: '#/components/schemas/OpenAttributeRequest'
-          type: array
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAttributeRequest'
+            type: array
+          - type: 'null'
           title: Open Attributes
           description: Array of open attributes.
         closedAttributes:
-          items:
-            $ref: '#/components/schemas/ClosedAttributeRequest'
-          type: array
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ClosedAttributeRequest'
+            type: array
+          - type: 'null'
           title: Closed Attributes
           description: Array of closed attributes.
       type: object
@@ -2385,10 +2388,7 @@ components:
           examples:
           - ef7ee722-5f95-415a-9a98-81eeae178b11
         identifierType:
-          type: string
-          enum:
-          - ID
-          - EMAIL
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
           title: Identifier Type
           description: Type of identifier for internal participants (ID or EMAIL).
           examples:
@@ -2426,6 +2426,12 @@ components:
       - joinedAt
       title: Participant
       description: Object representing the internal participant in the conversation.
+    InternalParticipantIdentifierType:
+      type: string
+      enum:
+      - ID
+      - EMAIL
+      title: InternalParticipantIdentifierType
     InternalUserIdentifierRequest:
       properties:
         identifier:
@@ -2437,10 +2443,7 @@ components:
           - '+13802098869'
           - 37673840-6259-40f9-bbe5-a7db40f8e3cf
         identifierType:
-          type: string
-          enum:
-          - ID
-          - EMAIL
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
           title: Identifier Type
           description: Type of identifier for internal users (ID or EMAIL).
           examples:
@@ -2458,6 +2461,190 @@ components:
       - ES
       - EN
       title: LanguageCode
+    LeadscoutOutboundContactRef:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Phone number in E.164 format identifying the contact.
+          examples:
+          - '+573001234567'
+        identifierType:
+          type: string
+          const: PHONE
+          title: Identifier Type
+          description: Type of identifier. Only PHONE is supported on the happy path.
+          examples:
+          - PHONE
+        messageProviderType:
+          type: string
+          const: WHATSAPP
+          title: Message Provider Type
+          description: Provider used to deliver the template. Only WHATSAPP is supported
+            on the happy path.
+          examples:
+          - WHATSAPP
+        providerChannelId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider Channel Identifier
+          description: Optional explicit WhatsApp channel id. If omitted, the workspace's
+            single WhatsApp channel is used; in workspaces with multiple channels
+            this field is required.
+          examples:
+          - a3a3a3a3-3a3a-3a3a-3a3a-3a3a3a3a3a3a
+          - null
+      type: object
+      required:
+      - identifier
+      - identifierType
+      - messageProviderType
+      title: LeadscoutOutboundContactRef
+      description: Identifies the lead the outbound conversation will target.
+    LeadscoutOutboundHandoffOverride:
+      properties:
+        preAssignedUser:
+          $ref: '#/components/schemas/LeadscoutOutboundPreAssignedUser'
+          title: Pre-assigned User
+          description: The internal user to assign as advisor when the AI hands off
+            the conversation. Validated at request time — if the user does not exist,
+            is inactive, or belongs to a different workspace, the request is rejected
+            before any conversation is created.
+          examples:
+          - identifier: advisor@acme.com
+            identifierType: EMAIL
+      additionalProperties: false
+      type: object
+      required:
+      - preAssignedUser
+      title: LeadscoutOutboundHandoffOverride
+      description: Overrides the default advisor assignment for the outbound conversation.
+    LeadscoutOutboundPreAssignedUser:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Value that identifies the internal user, interpreted according
+            to identifier_type.
+          examples:
+          - advisor@acme.com
+          - usr_01HZ2K3J4M5N6P7Q8R9S0T1UV2
+        identifierType:
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
+          title: Identifier Type
+          description: How to resolve the identifier. ID looks up by internal user
+            ID; EMAIL looks up by email address.
+          examples:
+          - EMAIL
+          - ID
+      additionalProperties: false
+      type: object
+      required:
+      - identifier
+      - identifierType
+      title: LeadscoutOutboundPreAssignedUser
+      description: Identifies the internal user who should receive the handoff.
+    LeadscoutOutboundRequest:
+      properties:
+        contact:
+          $ref: '#/components/schemas/LeadscoutOutboundContactRef'
+          title: Contact
+          description: The lead this outbound conversation targets. Must already exist
+            in the workspace.
+        template:
+          $ref: '#/components/schemas/LeadscoutOutboundTemplateRef'
+          title: Template
+          description: The opening template to send.
+        handoffOverride:
+          anyOf:
+          - $ref: '#/components/schemas/LeadscoutOutboundHandoffOverride'
+          - type: 'null'
+          title: Handoff Override
+          description: Optional override to pre-assign a specific internal user as
+            the handoff advisor. Validated at request time; conversation creation
+            is aborted if validation fails.
+      type: object
+      required:
+      - contact
+      - template
+      title: LeadscoutOutboundRequest
+      description: Request body for initiating a LeadScout outbound conversation.
+    LeadscoutOutboundResponse:
+      properties:
+        conversation:
+          $ref: '#/components/schemas/ConversationResponse'
+          title: Conversation
+          description: The newly created AI-controlled conversation.
+        contact:
+          $ref: '#/components/schemas/ContactResponse'
+          title: Contact
+          description: The contact the conversation was initiated with.
+        alreadyInitiated:
+          type: boolean
+          title: Already Initiated
+          description: True if the outbound was previously initiated for this contact
+            + channel. Always false on the happy-path goal.
+          default: false
+          examples:
+          - false
+        templateSent:
+          $ref: '#/components/schemas/LeadscoutTemplateSent'
+          title: Template Sent
+          description: Summary of the dispatched template.
+      type: object
+      required:
+      - conversation
+      - contact
+      - templateSent
+      title: LeadscoutOutboundResponse
+      description: Response body for a successful LeadScout outbound initiation.
+    LeadscoutOutboundTemplateRef:
+      properties:
+        name:
+          type: string
+          title: Template Name
+          description: Name of the registered Meta-approved template to send.
+          examples:
+          - leadscout_outbound_fb_v1
+        orderedParams:
+          items:
+            type: string
+          type: array
+          title: Ordered Parameters
+          description: Caller-supplied values for the template's CALLER-source parameter
+            slots, in position order.
+          examples:
+          - - Maria
+            - ACME
+      type: object
+      required:
+      - name
+      title: LeadscoutOutboundTemplateRef
+      description: References the Meta-approved template that will open the conversation.
+    LeadscoutTemplateSent:
+      properties:
+        name:
+          type: string
+          title: Template Name
+          description: Name of the template that was dispatched.
+          examples:
+          - leadscout_outbound_fb_v1
+        messageId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message Identifier
+          description: Meta wamid of the dispatched template. Null on the happy path
+            until the send pipeline propagates the wamid back to the inbound API.
+          examples:
+          - null
+          - wamid.HBgM...
+      type: object
+      required:
+      - name
+      title: LeadscoutTemplateSent
+      description: Summary of the template dispatched to open the conversation.
     MessageProviderType:
       type: string
       enum:
@@ -2825,7 +3012,7 @@ components:
             format: phone
           - type: 'null'
           title: Cellphone
-          description: Contact's cellphone number.
+          description: Contact's cellphone number in E.164 format.
           examples:
           - '+14084029292'
           - null
@@ -2906,196 +3093,6 @@ components:
       - msg
       - type
       title: ValidationError
-    InternalParticipantIdentifierType:
-      type: string
-      enum:
-      - ID
-      - EMAIL
-      title: InternalParticipantIdentifierType
-    LeadscoutOutboundContactRef:
-      properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Phone number in E.164 format identifying the contact.
-          examples:
-          - '+573001234567'
-        identifierType:
-          type: string
-          const: PHONE
-          title: Identifier Type
-          description: Type of identifier. Only PHONE is supported on the happy path.
-          examples:
-          - PHONE
-        messageProviderType:
-          type: string
-          const: WHATSAPP
-          title: Message Provider Type
-          description: Provider used to deliver the template. Only WHATSAPP is supported
-            on the happy path.
-          examples:
-          - WHATSAPP
-        providerChannelId:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Provider Channel Identifier
-          description: Optional explicit WhatsApp channel id. If omitted, the workspace's
-            single WhatsApp channel is used; in workspaces with multiple channels
-            this field is required.
-          examples:
-          - a3a3a3a3-3a3a-3a3a-3a3a-3a3a3a3a3a3a
-          - null
-      type: object
-      required:
-      - identifier
-      - identifierType
-      - messageProviderType
-      title: LeadscoutOutboundContactRef
-      description: Identifies the lead the outbound conversation will target.
-    LeadscoutOutboundHandoffOverride:
-      properties:
-        preAssignedUser:
-          $ref: '#/components/schemas/LeadscoutOutboundPreAssignedUser'
-          title: Pre-assigned User
-          description: The internal user to assign as advisor when the AI hands off
-            the conversation. Validated at request time — if the user does not exist,
-            is inactive, or belongs to a different workspace, the request is rejected
-            before any conversation is created.
-          examples:
-          - identifier: advisor@acme.com
-            identifierType: EMAIL
-      additionalProperties: false
-      type: object
-      required:
-      - preAssignedUser
-      title: LeadscoutOutboundHandoffOverride
-      description: Overrides the default advisor assignment for the outbound conversation.
-    LeadscoutOutboundPreAssignedUser:
-      properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Value that identifies the internal user, interpreted according
-            to identifier_type.
-          examples:
-          - advisor@acme.com
-          - usr_01HZ2K3J4M5N6P7Q8R9S0T1UV2
-        identifierType:
-          $ref: '#/components/schemas/InternalParticipantIdentifierType'
-          title: Identifier Type
-          description: How to resolve the identifier. ID looks up by internal user
-            ID; EMAIL looks up by email address.
-          examples:
-          - EMAIL
-          - ID
-      additionalProperties: false
-      type: object
-      required:
-      - identifier
-      - identifierType
-      title: LeadscoutOutboundPreAssignedUser
-      description: Identifies the internal user who should receive the handoff.
-    LeadscoutOutboundRequest:
-      properties:
-        contact:
-          $ref: '#/components/schemas/LeadscoutOutboundContactRef'
-          title: Contact
-          description: The lead this outbound conversation targets. Must already exist
-            in the workspace.
-        template:
-          $ref: '#/components/schemas/LeadscoutOutboundTemplateRef'
-          title: Template
-          description: The opening template to send.
-        handoffOverride:
-          anyOf:
-          - $ref: '#/components/schemas/LeadscoutOutboundHandoffOverride'
-          - type: 'null'
-          title: Handoff Override
-          description: Optional override to pre-assign a specific internal user as
-            the handoff advisor. Validated at request time; conversation creation
-            is aborted if validation fails.
-      type: object
-      required:
-      - contact
-      - template
-      title: LeadscoutOutboundRequest
-      description: Request body for initiating a LeadScout outbound conversation.
-    LeadscoutOutboundResponse:
-      properties:
-        conversation:
-          $ref: '#/components/schemas/ConversationResponse'
-          title: Conversation
-          description: The newly created AI-controlled conversation.
-        contact:
-          $ref: '#/components/schemas/ContactResponse'
-          title: Contact
-          description: The contact the conversation was initiated with.
-        alreadyInitiated:
-          type: boolean
-          title: Already Initiated
-          description: True if the outbound was previously initiated for this contact
-            + channel. Always false on the happy-path goal.
-          default: false
-          examples:
-          - false
-        templateSent:
-          $ref: '#/components/schemas/LeadscoutTemplateSent'
-          title: Template Sent
-          description: Summary of the dispatched template.
-      type: object
-      required:
-      - conversation
-      - contact
-      - templateSent
-      title: LeadscoutOutboundResponse
-      description: Response body for a successful LeadScout outbound initiation.
-    LeadscoutOutboundTemplateRef:
-      properties:
-        name:
-          type: string
-          title: Template Name
-          description: Name of the registered Meta-approved template to send.
-          examples:
-          - leadscout_outbound_fb_v1
-        orderedParams:
-          items:
-            type: string
-          type: array
-          title: Ordered Parameters
-          description: Caller-supplied values for the template's CALLER-source parameter
-            slots, in position order.
-          examples:
-          - - Maria
-            - ACME
-      type: object
-      required:
-      - name
-      title: LeadscoutOutboundTemplateRef
-      description: References the Meta-approved template that will open the conversation.
-    LeadscoutTemplateSent:
-      properties:
-        name:
-          type: string
-          title: Template Name
-          description: Name of the template that was dispatched.
-          examples:
-          - leadscout_outbound_fb_v1
-        messageId:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Message Identifier
-          description: Meta wamid of the dispatched template. Null on the happy path
-            until the send pipeline propagates the wamid back to the inbound API.
-          examples:
-          - null
-          - wamid.HBgM...
-      type: object
-      required:
-      - name
-      title: LeadscoutTemplateSent
-      description: Summary of the template dispatched to open the conversation.
   securitySchemes:
     x-api-key:
       type: apiKey
