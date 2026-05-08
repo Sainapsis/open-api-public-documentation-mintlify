@@ -270,41 +270,109 @@ Triggered when contact records are created, updated, or deleted.
     | `contact.updated` | A contact record was updated |
     | `contact.deleted` | A contact record was deleted |
   </Tab>
-  <Tab title="Example payload">
-    ```json
+  <Tab title="Example payloads">
+    Ownership fields depend on whether the contact is linked to an external CRM:
+
+    - **CRM-synced contacts** carry `crmContactId` and `crmLastSyncedAt` (the contact's identity is owned by the CRM, not by an internal Bridge user).
+    - **Bridge-native contacts** (no CRM link) carry `internalUserOwnerId` instead — the Bridge user that owns the record.
+
+    These groups are mutually exclusive: a synced contact will not include `internalUserOwnerId`, and a non-synced contact will not include `crmContactId` or `crmLastSyncedAt`.
+
+    Each entry in `openAttributes` and `closedAttributes` includes a human-readable `name` alongside the `customAttributeId`. For closed attributes, `closedCustomAttributeIds` is an array of `{ id, content }` objects, where `content` is the selected option's display label.
+
+    <CodeGroup>
+
+    ```json CRM-synced
     {
-      "eventId": "evt_987654321",
+      "eventId": "evt_contact_001",
       "eventType": "contact.updated",
       "entity": "contact",
       "workspaceId": "ws_123",
-      "timestamp": "2025-01-15T10:30:00Z",
+      "timestamp": "2026-01-15T10:30:00.000Z",
       "payload": {
         "id": "contact_123",
         "firstName": "John",
         "lastName": "Doe",
         "email": "john@example.com",
         "cellphone": "+1234567890",
-        "languageCode": "en",
+        "languageCode": "EN",
         "openAttributes": [
           {
-            "customAttributeId": "attr_1",
-            "content": "custom value"
+            "customAttributeId": "attr_open_1",
+            "name": "Account Number",
+            "content": "14"
           }
         ],
         "closedAttributes": [
           {
-            "customAttributeId": "attr_2",
-            "closedCustomAttributeIds": ["option_1", "option_2"]
+            "customAttributeId": "attr_closed_1",
+            "name": "Preferred Language",
+            "closedCustomAttributeIds": [
+              { "id": "opt_1", "content": "ENGLISH" }
+            ]
+          },
+          {
+            "customAttributeId": "attr_closed_2",
+            "name": "Software Tools",
+            "closedCustomAttributeIds": [
+              { "id": "opt_2", "content": "Go" },
+              { "id": "opt_3", "content": "Postgres" }
+            ]
           }
         ],
-        "internalUserOwnerId": "user_123",
         "crmContactId": "crm_456",
-        "crmLastSyncedAt": "2025-01-15T09:00:00Z",
-        "createdAt": "2025-01-01T00:00:00Z",
-        "updatedAt": "2025-01-15T10:30:00Z"
+        "crmLastSyncedAt": "2026-01-10T09:00:00.000Z",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-15T10:30:00.000Z"
       }
     }
     ```
+
+    ```json Bridge-native (no CRM)
+    {
+      "eventId": "evt_contact_002",
+      "eventType": "contact.updated",
+      "entity": "contact",
+      "workspaceId": "ws_123",
+      "timestamp": "2026-01-15T10:32:00.000Z",
+      "payload": {
+        "id": "contact_456",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "email": "jane@example.com",
+        "cellphone": "+1987654321",
+        "languageCode": "EN",
+        "openAttributes": [
+          {
+            "customAttributeId": "attr_open_2",
+            "name": "Education level",
+            "content": "Secondary"
+          }
+        ],
+        "closedAttributes": [
+          {
+            "customAttributeId": "attr_closed_1",
+            "name": "Preferred Language",
+            "closedCustomAttributeIds": [
+              { "id": "opt_1", "content": "ENGLISH" }
+            ]
+          },
+          {
+            "customAttributeId": "attr_closed_3",
+            "name": "Gender",
+            "closedCustomAttributeIds": [
+              { "id": "opt_4", "content": "FEMALE" }
+            ]
+          }
+        ],
+        "internalUserOwnerId": "user_789",
+        "createdAt": "2026-01-05T15:47:49.000Z",
+        "updatedAt": "2026-01-15T10:32:00.000Z"
+      }
+    }
+    ```
+
+    </CodeGroup>
   </Tab>
 </Tabs>
 
