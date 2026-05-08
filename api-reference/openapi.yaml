@@ -461,13 +461,16 @@ paths:
       tags:
       - Conversations API
       summary: Creates a new conversation with flexible user identification.
-      description: |
-        Create a new conversation with flexible participant identification.
+      description: 'Create a new conversation with flexible user identification.
 
-        Contacts can be identified by ID, email, or phone.
-        Bridge users (your internal team members) are only assigned when explicitly specified; otherwise, conversations are auto-assigned by round-robin through a team or left open for any available Bridge user.
 
-        To create an internal-only conversation (with no contacts), omit `participants.externals` or pass an empty array, and provide at least 2 entries in `participants.internals` (the Bridge users participating in the thread).
+        External users can be identified by ID, email, or phone.
+
+        Internal users are only assigned when explicitly specified; otherwise, conversations
+        are
+
+        auto-assigned by round-robin through a team or left open for any available
+        internal user.'
       operationId: create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post
       security:
       - x-api-key: []
@@ -1523,7 +1526,7 @@ paths:
         Pre-flight checks (template registered + APPROVED, contact exists, channel
         resolvable,
 
-        no active conversation already running) all run before any write. On success
+        no blocking conversation already running) run before any write. On success
         the
 
         conversation is created controlled by the prospection agent, the template
@@ -1559,6 +1562,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LeadscoutOutboundResponse'
+        '200':
+          description: 'Idempotent hit: an AI-controlled outbound conversation already
+            exists for this contact and channel. No new template is dispatched and
+            no follow-up messages are persisted; the existing conversation is returned
+            with `alreadyInitiated=true`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeadscoutOutboundResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                BAD_REQUEST:
+                  value:
+                    title: Bad Request
+                    status: 400
+                    code: BRIDGE_CORE_0103
+                INACTIVE_INTERNAL_USER:
+                  value:
+                    title: Inactive Internal User
+                    status: 400
+                    code: BRIDGE_INTERNAL_0003
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1622,18 +1651,6 @@ paths:
                     code: BRIDGE_CONVERSATION_0005
               schema:
                 $ref: '#/components/schemas/Problem'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              examples:
-                INACTIVE_INTERNAL_USER:
-                  value:
-                    title: Inactive Internal User
-                    status: 400
-                    code: BRIDGE_INTERNAL_0003
-              schema:
-                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -1684,6 +1701,12 @@ components:
       - closedCustomAttributeIds
       title: ClosedAttributeRequest
       description: Request body for closed custom attributes operations.
+    ConsentStatus:
+      type: string
+      enum:
+      - GRANTED
+      - NOT_PROVIDED
+      title: ConsentStatus
     ContactResponse:
       properties:
         id:
@@ -2467,18 +2490,17 @@ components:
           examples:
           - '+573001234567'
         identifierType:
-          type: string
-          const: PHONE
+          $ref: '#/components/schemas/ParticipantIdentifierType'
           title: Identifier Type
-          description: Type of identifier. Only PHONE is supported on the happy path.
+          description: Type of identifier.
           examples:
           - PHONE
+          - EMAIL
+          - ID
         messageProviderType:
-          type: string
-          const: WHATSAPP
+          $ref: '#/components/schemas/MessageProviderType'
           title: Message Provider Type
-          description: Provider used to deliver the template. Only WHATSAPP is supported
-            on the happy path.
+          description: Provider used to deliver the template.
           examples:
           - WHATSAPP
         providerChannelId:
@@ -2490,7 +2512,7 @@ components:
             single WhatsApp channel is used; in workspaces with multiple channels
             this field is required.
           examples:
-          - a3a3a3a3-3a3a-3a3a-3a3a-3a3a3a3a3a3a
+          - c4f2a1e0-9b8d-4e7c-a6f5-1d2e3f4a5b6c
           - null
       type: object
       required:
@@ -2553,6 +2575,28 @@ components:
           $ref: '#/components/schemas/LeadscoutOutboundTemplateRef'
           title: Template
           description: The opening template to send.
+        additionalMessages:
+          items:
+            $ref: '#/components/schemas/OutboundFollowUpRequest'
+          type: array
+          maxItems: 5
+          title: Additional Messages
+          description: Up to five follow-up messages persisted on the conversation.
+            They are not delivered immediately; the agent decides when to send them
+            once the lead replies.
+        agentContext:
+          anyOf:
+          - $ref: '#/components/schemas/OutboundAgentContextRequest'
+          - type: 'null'
+          title: Agent Context
+          description: Optional notes and media stored on the conversation as context
+            for the agent.
+        consent:
+          anyOf:
+          - $ref: '#/components/schemas/OutboundConsentRequest'
+          - type: 'null'
+          title: Consent
+          description: Optional tenant-affirmed opt-in evidence recorded on the conversation.
         handoffOverride:
           anyOf:
           - $ref: '#/components/schemas/LeadscoutOutboundHandoffOverride'
@@ -2580,20 +2624,33 @@ components:
         alreadyInitiated:
           type: boolean
           title: Already Initiated
-          description: True if the outbound was previously initiated for this contact
-            + channel. Always false on the happy-path goal.
+          description: True if an active AI-controlled conversation already existed
+            for this contact + channel. When true, no new template is dispatched and
+            no follow-up messages are persisted.
           default: false
           examples:
           - false
+          - true
         templateSent:
-          $ref: '#/components/schemas/LeadscoutTemplateSent'
+          anyOf:
+          - $ref: '#/components/schemas/LeadscoutTemplateSent'
+          - type: 'null'
           title: Template Sent
-          description: Summary of the dispatched template.
+          description: Summary of the dispatched template. Null on idempotent hits
+            (alreadyInitiated=true).
+        additionalMessagesPersisted:
+          type: integer
+          title: Additional Messages Persisted
+          description: Count of follow-up messages persisted on the conversation.
+            Zero on idempotent hits.
+          default: 0
+          examples:
+          - 0
+          - 3
       type: object
       required:
       - conversation
       - contact
-      - templateSent
       title: LeadscoutOutboundResponse
       description: Response body for a successful LeadScout outbound initiation.
     LeadscoutOutboundTemplateRef:
@@ -2739,6 +2796,90 @@ components:
       - content
       title: OpenAttributeRequest
       description: Request body for open custom attributes operations.
+    OutboundAgentContextRequest:
+      properties:
+        notes:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Notes
+          description: Free-text notes for the agent, capped at 2000 characters.
+          examples:
+          - Lead asked about pricing tiers last week.
+          - null
+        mediaIds:
+          items:
+            type: string
+          type: array
+          title: Media Identifiers
+          description: Optional preloaded-file identifiers persisted on the conversation
+            as agent context.
+          examples:
+          - []
+          - - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+      type: object
+      title: OutboundAgentContextRequest
+      description: Notes and media stored on the conversation as agent context for
+        the AI / human reviewer.
+    OutboundConsentRequest:
+      properties:
+        status:
+          $ref: '#/components/schemas/ConsentStatus'
+          title: Status
+          description: Tenant-affirmed consent state. Use GRANTED (with capturedAt)
+            for explicit opt-in or NOT_PROVIDED when the tenant has no opt-in evidence
+            to attest.
+          examples:
+          - GRANTED
+          - NOT_PROVIDED
+        capturedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Captured At
+          description: ISO8601 timestamp (with milliseconds) when consent was captured
+            by the tenant. Required when status=GRANTED; null/omitted is accepted
+            when status=NOT_PROVIDED.
+          examples:
+          - '2026-04-20T10:00:00.000Z'
+          - null
+      type: object
+      required:
+      - status
+      title: OutboundConsentRequest
+      description: Tenant-affirmed opt-in evidence recorded verbatim on the conversation.
+    OutboundFollowUpRequest:
+      properties:
+        messageBody:
+          type: string
+          title: Message Body
+          description: Plain-text body for the follow-up message.
+          examples:
+          - Just confirming we're still on for tomorrow at 10am.
+        mediaIds:
+          items:
+            type: string
+          type: array
+          title: Media Identifiers
+          description: Optional preloaded-file identifiers to attach to the follow-up.
+          examples:
+          - []
+          - - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+      type: object
+      required:
+      - messageBody
+      title: OutboundFollowUpRequest
+      description: A pre-loaded follow-up message persisted on the conversation alongside
+        the opening template.
+    ParticipantIdentifierType:
+      type: string
+      enum:
+      - ID
+      - EMAIL
+      - PHONE
+      title: ParticipantIdentifierType
     ParticipantOperationsRequest:
       properties:
         externals:
