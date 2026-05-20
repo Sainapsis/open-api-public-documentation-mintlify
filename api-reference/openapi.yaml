@@ -1519,20 +1519,17 @@ paths:
       tags:
       - LeadScout API
       summary: Initiate a LeadScout outbound conversation with a known lead
-      description: 'Initiate an AI-controlled outbound conversation against a known
-        lead.
-
-
-        Pre-flight checks (template registered + APPROVED, contact exists, channel
-        resolvable,
-
-        no blocking conversation already running) run before any write. On success
-        the
-
-        conversation is created controlled by the prospection agent, the template
-        is persisted
-
-        as the first message.'
+      description: "Start an AI-controlled outbound conversation with a known lead.\n\
+        \nPre-flight checks run before any write: template exists and is APPROVED,\
+        \ contact\nexists, a WhatsApp channel resolves, a prospection agent owns it,\
+        \ and any\n`handoffOverride` user is valid.\n\nIf an active conversation is\
+        \ already running on the chosen channel:\n- `forceSend=false` (default) →\
+        \ `409` with the blocking conversation id.\n- `forceSend=true` → that conversation\
+        \ is reused; the new template and follow-ups\n  are appended to it and the\
+        \ response sets `alreadyInitiated=true`.\n\nOtherwise a fresh conversation\
+        \ is opened (controlled by the prospection agent) with\nthe template as its\
+        \ first message; `additionalMessages` are persisted for the agent\nto send\
+        \ once the lead replies."
       operationId: initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post
       security:
       - x-api-key: []
@@ -1558,15 +1555,6 @@ paths:
       responses:
         '201':
           description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LeadscoutOutboundResponse'
-        '200':
-          description: 'Idempotent hit: an AI-controlled outbound conversation already
-            exists for this contact and channel. No new template is dispatched and
-            no follow-up messages are persisted; the existing conversation is returned
-            with `alreadyInitiated=true`.'
           content:
             application/json:
               schema:
@@ -2605,6 +2593,19 @@ components:
           description: Optional override to pre-assign a specific internal user as
             the handoff advisor. Validated at request time; conversation creation
             is aborted if validation fails.
+        forceSend:
+          type: boolean
+          title: Force Send
+          description: 'When true, bypass all blockers on the chosen channel: any
+            active conversation (AI-prospecting or human) is ignored and a fresh outbound
+            is created. When no providerChannelId is supplied and every workspace
+            channel is occupied, the first candidate is used instead of raising AllProviderChannelsOccupied.
+            When false (default), an existing active conversation on the chosen channel
+            returns 409.'
+          default: false
+          examples:
+          - false
+          - true
       type: object
       required:
       - contact
@@ -2621,32 +2622,31 @@ components:
           $ref: '#/components/schemas/ContactResponse'
           title: Contact
           description: The contact the conversation was initiated with.
-        alreadyInitiated:
-          type: boolean
-          title: Already Initiated
-          description: True if an active AI-controlled conversation already existed
-            for this contact + channel. When true, no new template is dispatched and
-            no follow-up messages are persisted.
-          default: false
-          examples:
-          - false
-          - true
         templateSent:
           anyOf:
           - $ref: '#/components/schemas/LeadscoutTemplateSent'
           - type: 'null'
           title: Template Sent
-          description: Summary of the dispatched template. Null on idempotent hits
-            (alreadyInitiated=true).
+          description: Summary of the dispatched template.
         additionalMessagesPersisted:
           type: integer
           title: Additional Messages Persisted
           description: Count of follow-up messages persisted on the conversation.
-            Zero on idempotent hits.
           default: 0
           examples:
           - 0
           - 3
+        alreadyInitiated:
+          type: boolean
+          title: Already Initiated
+          description: True when this request landed on a pre-existing conversation
+            (forceSend=true reuse path); false when a fresh conversation was created.
+            Informational only — the new template and follow-ups are persisted either
+            way.
+          default: false
+          examples:
+          - false
+          - true
       type: object
       required:
       - conversation
