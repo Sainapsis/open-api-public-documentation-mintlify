@@ -2593,6 +2593,26 @@ components:
           description: Optional override to pre-assign a specific internal user as
             the handoff advisor. Validated at request time; conversation creation
             is aborted if validation fails.
+        brandId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Brand Identifier
+          description: Optional brand id. When provided, only channels linked to this
+            brand are eligible. Omit to consider every channel in the workspace.
+          examples:
+          - null
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+        campaignId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Campaign Identifier
+          description: Optional campaign reference stored on the conversation for
+            audit and reporting.
+          examples:
+          - null
+          - spring_promo_2026
         forceSend:
           type: boolean
           title: Force Send
