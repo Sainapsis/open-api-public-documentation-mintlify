@@ -24,7 +24,7 @@ All webhook events share the same top-level structure:
 
 <button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
 
-Triggered once per day, per conversation, when Bridge AI generates the daily summary. The summary captures the key points exchanged along with the IDs of the internal and external participants involved.
+Triggered once per day, per conversation, when Bridge AI generates the daily summary. The summary captures the key points exchanged along with the internal and external participants involved.
 
 <Tabs>
   <Tab title="Event types">
@@ -43,9 +43,13 @@ Triggered once per day, per conversation, when Bridge AI generates the daily sum
       "payload": {
         "conversationId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         "summaryDate": "2026-05-19",
-        "summary": "- Agent asked the customer about their preferred schedule and offered to book a product demo.\n- Customer replied they are unavailable on Monday morning.\n- Agent offered alternative slots later in the week and is waiting for confirmation.",
-        "externalUserIds": ["c1d2e3f4-a5b6-7890-cdef-012345678901"],
-        "internalUserIds": ["d4e5f6a7-b8c9-0123-defa-234567890123"],
+        "summary": "- Advisor asked the customer about their preferred schedule and offered to book a product demo.\n- Customer replied they are unavailable on Monday morning.\n- Advisor offered alternative slots later in the week and is waiting for confirmation.",
+        "externalUsers": [
+          { "id": "c1d2e3f4-a5b6-7890-cdef-012345678901", "first_name": "Ana", "last_name": "Garcia", "cellphone": "+57300000000" }
+        ],
+        "internalUsers": [
+          { "id": "d4e5f6a7-b8c9-0123-defa-234567890123", "first_name": "Bob", "last_name": "Smith", "cellphone": "+57301000000", "email": "bob.smith@example.com" }
+        ],
         "initMessageId": "f1e2d3c4-b5a6-7890-fedc-ba0987654321",
         "endMessageId": "a9b8c7d6-e5f4-3210-abcd-ef9876543210",
         "createdAt": "2026-05-19T05:03:15.910Z",
