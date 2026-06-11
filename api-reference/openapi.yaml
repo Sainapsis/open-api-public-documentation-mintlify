@@ -1257,7 +1257,8 @@ paths:
 
 
         <table><tr><th>Type</th><th>Extension</th><th>Content Type</th><th>Max Size</th></tr><tr><td
-        rowspan="5">Image</td><td>.gif</td><td>image/gif</td><td rowspan="5">16 MB</td></tr><tr><td>.jpeg</td><td>image/jpeg</td></tr><tr><td>.jpg</td><td>image/jpeg</td></tr><tr><td>.png</td><td>image/png</td></tr><tr><td>.webp</td><td>image/webp</td></tr><tr><td
+        rowspan="4">Image</td><td>.jpeg</td><td>image/jpeg</td><td rowspan="4">16 MB</td></tr><tr><td>.jpg</td><td>image/jpeg</td></tr><tr><td>.png</td><td>image/png</td></tr><tr><td>.webp</td><td>image/webp</td></tr><tr><td
+        rowspan="2">GIF</td><td>.gif</td><td>image/gif</td><td rowspan="2">3.5 MB</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td
         rowspan="3">Video</td><td>.avi</td><td>video/x-msvideo</td><td rowspan="3">64
         MB</td></tr><tr><td>.mov</td><td>video/quicktime</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td
         rowspan="4">Audio</td><td>.m4a</td><td>audio/mp4</td><td rowspan="4">16 MB</td></tr><tr><td>.mp3</td><td>audio/mpeg</td></tr><tr><td>.ogg</td><td>audio/ogg</td></tr><tr><td>.wav</td><td>audio/wav</td></tr><tr><td
@@ -2359,6 +2360,7 @@ components:
       - VIDEO
       - AUDIO
       - DOCUMENT
+      - GIF
       - STICKER
       title: FileType
     HTTPValidationError:
@@ -2936,6 +2938,7 @@ components:
           - VIDEO
           - AUDIO
           - DOCUMENT
+          - GIF
         contentType:
           anyOf:
           - type: string
