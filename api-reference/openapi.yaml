@@ -2870,7 +2870,6 @@ components:
         email:
           anyOf:
           - type: string
-            format: email
           - type: 'null'
           title: Email
           description: Internal user's email address.
@@ -2880,7 +2879,6 @@ components:
         cellphone:
           anyOf:
           - type: string
-            format: phone
           - type: 'null'
           title: Cellphone
           description: Internal user's cellphone number.
