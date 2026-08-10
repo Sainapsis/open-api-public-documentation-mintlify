@@ -1479,6 +1479,20 @@ paths:
           $ref: '#/components/schemas/MessageProviderType'
           description: Message provider type (e.g. WHATSAPP, HEYGIA).
         description: Message provider type (e.g. WHATSAPP, HEYGIA).
+      - name: brandId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional brand identifier. When supplied, only channels whose
+            corporate line belongs to that brand are returned. Honored for WHATSAPP
+            only; HEYGIA providers carry no brand.
+          title: Brandid
+        description: Optional brand identifier. When supplied, only channels whose
+          corporate line belongs to that brand are returned. Honored for WHATSAPP
+          only; HEYGIA providers carry no brand.
       responses:
         '200':
           description: Successful Response
@@ -2628,6 +2642,16 @@ components:
           title: Provider Channel Identifier
           description: Provider channel id of channel that be used by Bridge to communicate
             with user.
+        brandId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Brand Identifier
+          description: Brand that owns the corporate line used to reach the user.
+            When the workspace has at least one branded line, automatic line selection
+            stays inside this brand and the request must carry either brandId or providerChannelId;
+            naming neither is rejected. Ignored when the workspace has no branded
+            line.
       type: object
       required:
       - identifier
@@ -3775,11 +3799,6 @@ components:
         type:
           type: string
           title: Error Type
-        input:
-          title: Input
-        ctx:
-          type: object
-          title: Context
       type: object
       required:
       - loc
