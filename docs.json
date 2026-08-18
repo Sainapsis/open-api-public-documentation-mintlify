@@ -9,6 +9,15 @@
     "dark": "#1D4ED8"
   },
   "favicon": "/favicon.png",
+  "markdown": {
+    "instructions": [
+      "Bridge exposes two integration surfaces: the REST Integrations API for pushing data into Bridge, and webhooks for receiving events from Bridge.",
+      "The API host is https://api-connect-us.bridge.new. Do not use any other host.",
+      "Authenticate every API request with the x-api-key header. Bridge does not use bearer tokens or OAuth.",
+      "Error codes follow the BRIDGE_<DOMAIN>_<NNNN> format, for example BRIDGE_CONVERSATION_0001. Never invent a code that is not listed on the error codes page.",
+      "This documentation covers the Integrations API only. It does not describe the Bridge web application or its internal APIs."
+    ]
+  },
   "navigation": {
     "tabs": [
       {
