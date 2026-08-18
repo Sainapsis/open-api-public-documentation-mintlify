@@ -16,6 +16,7 @@
         "pages": [
           "index",
           "credentials",
+          "connect-your-agent",
           "error-codes"
         ]
       },

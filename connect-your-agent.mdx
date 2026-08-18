@@ -1,0 +1,123 @@
+---
+title: "Connect your AI agent"
+sidebarTitle: "Connect your agent"
+description: "Connect your AI coding assistant to the Bridge documentation through MCP so it answers from the published contract instead of its training data."
+keywords: ["MCP", "Model Context Protocol", "AI assistant", "Claude Code", "Cursor", "Codex"]
+---
+
+## Overview
+
+This documentation site publishes a **search MCP server** at `https://docs.bridge.new/mcp`. Connect it to your AI coding assistant and the assistant reads these pages directly — the REST API reference, the webhook events, the error codes — instead of relying on whatever it learned during training.
+
+The server is public and read-only. It needs no API Key and no configuration on your side beyond pointing your assistant at the URL.
+
+<Warning>
+  **This server reads documentation. It does not call the Bridge API.**
+
+  It searches and returns the pages of this site. It cannot create a contact, send a message, or read your workspace data. Your assistant still needs an API Key and your own code to call the Bridge API — see [Authentication](/credentials).
+</Warning>
+
+---
+
+## Connect your client
+
+<Tabs>
+  <Tab title="Claude Code">
+    Run:
+
+    ```bash
+    claude mcp add --transport http bridge-docs https://docs.bridge.new/mcp
+    ```
+
+    Verify the connection with `claude mcp list`.
+  </Tab>
+
+  <Tab title="Cursor">
+    1. Press <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> on Windows) to open the command palette.
+    2. Search for `Open MCP settings`.
+    3. Click **Add custom MCP** to open `mcp.json`.
+    4. Add the server:
+
+    ```json
+    {
+      "mcpServers": {
+        "bridge-docs": {
+          "url": "https://docs.bridge.new/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Codex">
+    In `~/.codex/config.toml`, add:
+
+    ```toml
+    [mcp_servers.bridge-docs]
+    url = "https://docs.bridge.new/mcp"
+    ```
+  </Tab>
+
+  <Tab title="VS Code">
+    Create a `.vscode/mcp.json` file in your project and add:
+
+    ```json
+    {
+      "servers": {
+        "bridge-docs": {
+          "type": "http",
+          "url": "https://docs.bridge.new/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Claude">
+    1. Go to the [Connectors](https://claude.ai/settings/connectors) page in your Claude settings.
+    2. Click **Add custom connector**.
+    3. Enter `bridge-docs` as the name and `https://docs.bridge.new/mcp` as the URL.
+    4. Click **Add**.
+    5. In a conversation, click the attachments button and select the server.
+  </Tab>
+</Tabs>
+
+{/* TODO: Claude Code verified against the live server. Verify the Cursor, Codex, VS Code and Claude snippets by connecting before merge. */}
+
+---
+
+## What your assistant can do
+
+Once connected, your assistant has three tools:
+
+| Tool | What it does |
+| :--- | :--- |
+| **Search documentation** | Searches these pages and returns matching content with links back to the source page. |
+| **Read pages** | Reads whole pages, so the assistant can pull a full endpoint definition or event schema rather than a snippet. |
+| **Submit feedback** | Reports a page that is wrong, outdated, or incomplete back to the Bridge team. |
+
+Your assistant decides when to use them based on your prompt. You do not need to ask it to search.
+
+---
+
+## Example questions
+
+Ask your assistant these in a project where you are integrating with Bridge:
+
+- Which header does the Bridge API use for authentication, and against which host?
+- Write a Python function that creates a contact in Bridge, using the required fields from the API reference.
+- Which webhook events does Bridge emit when a conversation changes, and what does each payload contain?
+- How do I verify the signature on an incoming Bridge webhook?
+- What does Bridge error code `BRIDGE_CONVERSATION_0001` mean?
+
+---
+
+## Scope and availability
+
+<Note>
+  The server returns what is published on this site. Pages that are not part of this site's navigation are not indexed and cannot be retrieved.
+</Note>
+
+The server is hosted by our documentation provider as part of this site. Treat it as best-effort: it has no separate uptime commitment, and it applies rate limits well above normal use. If a request fails, read the pages directly.
+
+If your assistant returns something that contradicts these pages, the pages are authoritative. Report it to [support@sainapsis.com](mailto:support@sainapsis.com).
