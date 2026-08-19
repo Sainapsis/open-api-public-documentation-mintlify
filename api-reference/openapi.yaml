@@ -1758,6 +1758,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}:
+    get:
+      tags:
+      - Templates API
+      summary: Discover a template's agnostic variable inventory
+      description: "Return a template's variables — agnostic `key`/`label`/`callerMustSupply`,\
+        \ never a Meta slot address or index.\n\n`templateId` accepts either the template's\
+        \ `id` or its `name` — the send contract\n(`POST .../leadscout/outbound`)\
+        \ identifies a template by `name`; this discovery endpoint\nalso accepts `id`,\
+        \ so a caller who only has one of the two can still look it up.\n\nA variable\
+        \ with `callerMustSupply: true` has no declared source — the caller must include\n\
+        its `key` in `parameters` when sending, or the send fails with a 422 naming\
+        \ that same `key`.\nA variable with `callerMustSupply: false` is either resolved\
+        \ by Bridge on its own (e.g. the\nrecipient's first name) or already has a\
+        \ value the caller may optionally override.\n\nError codes:\n- BRIDGE_CORE_0301:\
+        \ workspace in the path does not match the caller's own workspace (403)\n\
+        - BRIDGE_TEMPLATE_0001: no PROVIDER_TEMPLATE found for this workspace and\
+        \ identifier — covers\n  an unknown id/name, a template that belongs to another\
+        \ workspace, and a template that is\n  not a PROVIDER_TEMPLATE, identically\
+        \ (404); this endpoint never confirms the existence of\n  a template outside\
+        \ the caller's own workspace"
+      operationId: get_template_discovery_bridge_api_v1_workspaces__workspaceId__templates__templateId__get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - 5b1e3b8a-9e0a-4b7d-9d2a-3d2f1a5c8e11
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Template id or name — either identifies the same template.
+          examples:
+          - order_shipped_promo
+          - f0000040-0000-4000-8000-000000000040
+          title: Templateid
+        description: Template id or name — either identifies the same template.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateDiscoveryResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                PROVIDER_TEMPLATE_NOT_FOUND:
+                  value:
+                    title: Provider Template Not Found
+                    status: 404
+                    code: BRIDGE_TEMPLATE_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /bridge/api/v1/workspaces/{workspaceId}/users/{userId}:
     get:
       tags:
@@ -3196,6 +3280,19 @@ components:
           examples:
           - - Maria
             - ACME
+        parameters:
+          additionalProperties:
+            type: string
+          type: object
+          title: Parameters
+          description: Caller-supplied values keyed by the template's variable key
+            (see GET /templates/{id} for the key inventory), covering both body and
+            button slots. Prefer this over orderedParams for any template that has
+            a dynamic button. An unknown key, or a key that overlaps a slot already
+            covered by orderedParams, is rejected with 422.
+          examples:
+          - recipient_first_name: Maria
+            tracking_code: TRK123
         media:
           anyOf:
           - $ref: '#/components/schemas/OutboundTemplateMedia'
@@ -3678,6 +3775,156 @@ components:
       type: object
       title: ReleaseConversationBody
       description: Body for POST release conversation. Optional reason.
+    TemplateDiscoveryResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Unique identifier of the template.
+          examples:
+          - f0000040-0000-4000-8000-000000000040
+        name:
+          type: string
+          title: Name
+          description: Name of the template, used to identify it when sending.
+          examples:
+          - order_shipped_promo
+        language:
+          type: string
+          title: Language
+          description: Language of the resolved pivot (the template's default language).
+          examples:
+          - es
+        variables:
+          items:
+            $ref: '#/components/schemas/TemplateVariableResponse'
+          type: array
+          title: Variables
+          description: Agnostic inventory of this template's variables.
+        driftWarning:
+          $ref: '#/components/schemas/TemplateDriftWarningResponse'
+          title: Drift warning
+          description: Diagnostic-only declaration-vs-snapshot mismatch. Never blocks
+            a send.
+      type: object
+      required:
+      - id
+      - name
+      - language
+      - driftWarning
+      title: TemplateDiscoveryResponse
+      description: Agnostic inventory of a template's variables, for a caller that
+        must send it without knowing Meta's model.
+      examples:
+      - id: f0000040-0000-4000-8000-000000000040
+        language: es
+        name: order_shipped_promo
+        variables:
+        - callerMustSupply: false
+          key: first_name
+          label: Contact first name
+        - callerMustSupply: false
+          key: order_code
+          label: Order code
+        - callerMustSupply: false
+          key: shipment_id
+          label: Shipment ID
+        - callerMustSupply: true
+          key: promo_code
+          label: Promo code
+    TemplateDriftWarningResponse:
+      properties:
+        hasDrift:
+          type: boolean
+          title: Has drift
+        stale:
+          items:
+            $ref: '#/components/schemas/TemplateVariableRef'
+          type: array
+          title: Stale
+          description: Declared but no longer required by the snapshot.
+        missingLabels:
+          items:
+            $ref: '#/components/schemas/TemplateVariableRef'
+          type: array
+          title: Missing labels
+          description: Required by the snapshot but not yet declared.
+      type: object
+      required:
+      - hasDrift
+      title: TemplateDriftWarningResponse
+      description: 'Diagnostic-only mismatch between the declared variables and what
+        the Meta snapshot requires.
+
+
+        Per the authority rule, this never affects whether a send succeeds — the snapshot
+        alone
+
+        decides that. It exists so a caller (or the console) can flag a template whose
+        labels need
+
+        refreshing after an edit made directly in WhatsApp Manager.'
+    TemplateVariableRef:
+      properties:
+        key:
+          type: string
+          title: Key
+          examples:
+          - delivery_date
+        label:
+          type: string
+          title: Label
+          examples:
+          - Delivery date
+      type: object
+      required:
+      - key
+      - label
+      title: TemplateVariableRef
+      description: A slot identified only by its agnostic key/label — no Meta slot
+        address.
+    TemplateVariableResponse:
+      properties:
+        key:
+          type: string
+          title: Key
+          description: Agnostic identifier for this variable, stable across providers.
+          examples:
+          - tracking_code
+        label:
+          type: string
+          title: Label
+          description: Human-readable label for this variable.
+          examples:
+          - Tracking code
+        callerMustSupply:
+          type: boolean
+          title: Caller must supply
+          description: Whether the caller must supply a value for this variable when
+            sending the template (true when the template has no declared source for
+            it — e.g. a promo code only the caller knows; false when Bridge resolves
+            it on its own, e.g. from the recipient's profile).
+          examples:
+          - true
+          - false
+      type: object
+      required:
+      - key
+      - label
+      - callerMustSupply
+      title: TemplateVariableResponse
+      description: One template variable, identified by its agnostic key — no Meta
+        slot address ever appears here.
+      examples:
+      - callerMustSupply: false
+        key: first_name
+        label: Contact first name
+      - callerMustSupply: false
+        key: tracking_code
+        label: Tracking code
+      - callerMustSupply: true
+        key: promo_code
+        label: Promo code
     UpdateContactBody:
       properties:
         firstName:
