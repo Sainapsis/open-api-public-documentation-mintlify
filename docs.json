@@ -34,6 +34,33 @@
         "openapi": "api-reference/openapi.yaml"
       },
       {
+        "tab": "Lead Capture",
+        "groups": [
+          {
+            "group": "Integration",
+            "pages": [
+              "lead-capture/index",
+              "lead-capture/integration",
+              "lead-capture/errors"
+            ]
+          },
+          {
+            "group": "Endpoint",
+            "openapi": "api-reference/campaign-leads.openapi.yaml",
+            "pages": [
+              "POST /leadscout/campaign-leads"
+            ]
+          },
+          {
+            "group": "Before you launch",
+            "pages": [
+              "lead-capture/consent",
+              "lead-capture/templates"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Webhooks",
         "pages": [
           "webhooks",
