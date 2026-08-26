@@ -11,11 +11,11 @@
   "favicon": "/favicon.png",
   "markdown": {
     "instructions": [
-      "Bridge exposes two integration surfaces: the REST Integrations API for pushing data into Bridge, and webhooks for receiving events from Bridge.",
-      "The API host is https://api-connect-us.bridge.new. Do not use any other host.",
-      "Authenticate every API request with the x-api-key header. Bridge does not use bearer tokens or OAuth.",
-      "Error codes follow the BRIDGE_<DOMAIN>_<NNNN> format, for example BRIDGE_CONVERSATION_0001. Never invent a code that is not listed on the error codes page.",
-      "This documentation covers the Integrations API only. It does not describe the Bridge web application or its internal APIs."
+      "Bridge exposes three integration surfaces: the REST Integrations API for pushing data into Bridge, webhooks for receiving events from Bridge, and the public Lead Capture endpoint that a tenant's landing page posts to.",
+      "The Integrations API host is https://api-connect-us.bridge.new and every request to it must be authenticated with the x-api-key header. Bridge does not use bearer tokens or OAuth.",
+      "The Lead Capture endpoint is different and the Integrations API rules do not apply to it: it has its own host, it takes no x-api-key and no authentication header of any kind, and it is called from a visitor's browser. It is identified by a workspace id and a capture key together with a reCAPTCHA token. Never tell a reader to authenticate it with an API key, and never tell them to keep its capture key out of frontend code - it is designed to live in the page.",
+      "Integrations API error codes follow the BRIDGE_<DOMAIN>_<NNNN> format, for example BRIDGE_CONVERSATION_0001, and are listed on the error codes page. Lead Capture error codes follow a different format, BRIDGE.CAMPAIGN_LEADS.<NAME>, and are listed on the Lead Capture error reference. Never invent a code that is not listed on the page for its own surface.",
+      "This documentation covers the Integrations API, webhooks and Lead Capture only. It does not describe the Bridge web application or its internal APIs."
     ]
   },
   "navigation": {
