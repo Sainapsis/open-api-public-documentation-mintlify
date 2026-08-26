@@ -1,0 +1,68 @@
+---
+title: "Error reference"
+sidebarTitle: "Errors"
+description: "Every response the campaign-leads endpoint can return, and whether you can fix it."
+keywords: ["errors", "422", "403", "captcha", "troubleshooting"]
+---
+
+Error responses are [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem details: a
+`type`, a `title`, a `status`, and sometimes a `detail`.
+
+<Note>
+  **Error responses do not carry a request id.** Only a successful `202` does. If you need
+  to raise something with support, report the page URL and the approximate time instead.
+</Note>
+
+## Every response
+
+| Status | `type` | What happened | Can you fix it? |
+| --- | --- | --- | --- |
+| `400` | `invalid_payload` | A field is missing or malformed. | Yes |
+| `400` | `BRIDGE.CAMPAIGN_LEADS.INVALID_PHONE` | The phone number could not be read as a real number. | Yes — validate before submitting |
+| `400` | `BRIDGE.CAMPAIGN_LEADS.CONSENT_NOT_GRANTED` | `consent.status` was not `GRANTED`. | Yes |
+| `400` | `BRIDGE.CAMPAIGN_LEADS.BRAND_OR_LINE_REQUIRED` | Your workspace has brands enabled and no `brandId` was sent. | Yes |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_DISABLED` | Lead capture is not enabled for this workspace. | No — contact Bridge |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_KEY_MISMATCH` | The capture key is missing or wrong. | Yes |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTCHA_REJECTED` | The captcha token was missing, expired, already used, or scored too low. | Sometimes — see below |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.ORIGIN_NOT_ALLOWED` | The page's domain is not registered for this workspace. | No — contact Bridge |
+| `422` | `BRIDGE.CAMPAIGN_LEADS.CAPTCHA_PROVIDER_UNAVAILABLE` | We could not reach the captcha provider. | Retrying is safe |
+| `500` | `unexpected_error` | Something failed on our side. | No |
+
+Only the first failure is reported. Checks run in this order: workspace and capture key,
+then the phone number, then consent, then the brand, then the captcha and finally the
+domain. Fixing one error can reveal the next.
+
+## About the captcha rejection
+
+`CAPTCHA_REJECTED` covers four different situations, and two of them are yours to fix:
+
+- **The token expired.** It was minted too early. A reCAPTCHA v3 token lasts about two
+  minutes; mint it when the form is submitted, not when the page loads.
+- **The token was already used.** A token verifies once. If you retried a failed submission
+  without minting a new token, the replay is rejected.
+- **The score was too low**, or **no token was sent at all.** These two are the anti-bot
+  check doing its job. There is nothing to fix in your integration.
+
+Because all four return the same code, the useful diagnostic is whether the same visitor
+succeeds on a second attempt with a fresh token. If they do, it was timing, not a bot.
+
+## About the 422
+
+This is a transient failure on our side: we could not reach the captcha provider, so we
+could not decide whether the submission was genuine.
+
+**Retrying is safe.** The lead is preserved when this happens, and a retry cannot produce a
+duplicate message. Mint a fresh captcha token for the retry, as you would for any other one.
+
+## About the domain error
+
+The ordering here is genuinely surprising, so it is worth stating plainly.
+
+Your page's domain is checked against the domains registered for your workspace — but the
+domain we check is the one the **captcha provider reports**, not the one in the request's
+own headers. That check happens *after* the token verifies.
+
+The practical consequence: a page served from an unregistered domain fails at the captcha
+stage with `ORIGIN_NOT_ALLOWED`, not with a CORS error. If you are seeing this while your
+integration otherwise works, the domain is missing from your workspace configuration —
+contact Bridge to have it added.
