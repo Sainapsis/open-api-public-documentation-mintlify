@@ -1,0 +1,65 @@
+---
+title: "Consent requirements"
+sidebarTitle: "Consent"
+description: "What your opt-in must say, and what you are attesting to when you send consent.status GRANTED."
+keywords: ["consent", "opt-in", "WhatsApp", "compliance", "Meta"]
+---
+
+## What your form must carry
+
+Your landing page must ask for an explicit opt-in before you submit a lead. The wording is
+yours to write, but it has to do two things Meta requires:
+
+- **Name your business.** Not "us", not "our partners" — the business the person will hear
+  from.
+- **Say the person will receive WhatsApp communication from it.** Not "we may contact you";
+  name the channel.
+
+Meta lists a website form as a compliant way to collect this, so a checkbox on your landing
+page is enough — provided it says both of those things.
+
+<Warning>
+  A pre-ticked box is not an opt-in. Neither is a line of small print under a submit button
+  that the visitor never interacts with. The visitor has to take the action.
+</Warning>
+
+## What you are attesting to
+
+<Note>
+  Sending `consent.status: "GRANTED"` is an attestation **you** are making. We do not and
+  cannot verify that the visitor ticked a box — we record that you told us they did, and
+  when. If your WhatsApp sending is ever restricted, that record is what is presented on
+  your behalf.
+</Note>
+
+This is why `capturedAt` matters more than it looks. It must be the moment the visitor
+actually consented — not the moment your server got around to sending the request, and not a
+timestamp generated during a nightly batch. If the two ever have to be defended, the gap
+between them is the first thing anyone will look at.
+
+Send it as an ISO 8601 timestamp:
+
+```json
+{
+  "consent": {
+    "status": "GRANTED",
+    "capturedAt": "2026-08-26T14:32:07.184Z"
+  }
+}
+```
+
+If consent was not given, do not submit the lead. A submission with any status other than
+`GRANTED` is rejected with `BRIDGE.CAMPAIGN_LEADS.CONSENT_NOT_GRANTED`.
+
+## An example to adapt
+
+This is illustrative, not boilerplate to paste. Only you know what you will send and why,
+and the wording has to match that.
+
+> ☐ I agree to receive WhatsApp messages from **Acme Motors** about the quote I just
+> requested.
+
+What makes it work: it names the business, it names the channel, and it says what the
+messages will be about. What would break it: dropping the business name, saying "messages"
+without saying WhatsApp, or bundling the consent into a general terms-and-conditions
+checkbox that also covers unrelated things.

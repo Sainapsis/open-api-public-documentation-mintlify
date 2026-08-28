@@ -1,0 +1,235 @@
+---
+title: "Integration guide"
+sidebarTitle: "Integration"
+description: "Post a lead from your landing page: the example, and the three rules that are not obvious from the contract."
+keywords: ["integration", "reCAPTCHA", "CORS", "campaign leads", "example"]
+---
+
+## The example
+
+The Bridge admin console generates this block already filled in with your workspace's
+values. The version below uses placeholders so you can read it before you have them.
+
+Replace the form markup and the consent wording with your own. The script underneath only
+needs to change if your field ids differ from the ones used here.
+
+```html
+<!--
+  Campaign leads integration example.
+  This is a starting point, not a drop-in script: replace the form fields, labels and
+  consent copy below with your own. The integration script does not need to change unless
+  your form's field ids differ from the ones used here.
+  What this does: collects a phone number (and optionally a name), mints a reCAPTCHA v3
+  token, and POSTs the lead to the campaign-leads endpoint. A 202 response means the lead
+  was accepted and queued -- a separate service sends the first WhatsApp message later, so
+  do not tell the visitor "message sent"; something like "we'll message you shortly" is
+  accurate.
+-->
+<script>
+  window.__CAMPAIGN_LEADS__ = {"workspaceId":"YOUR_WORKSPACE_ID","captureKey":"YOUR_CAPTURE_KEY","endpoint":"https://integrations-us.app.bridge.new/api/v1/leadscout/campaign-leads","brandId":null,"recaptchaSiteKey":"YOUR_RECAPTCHA_SITE_KEY","recaptchaAction":"submit_campaign_lead","trackedParams":[]};
+</script>
+<!-- ============================================================
+     EXAMPLE FORM -- replace with your own markup and consent copy.
+     Keep the element ids (or update the selectors in the script below to match yours).
+     ============================================================ -->
+<form id="lead-form" novalidate>
+  <label>
+    <span>Name (optional)</span>
+    <input id="lead-name" type="text" autocomplete="name" />
+  </label>
+  <label>
+    <span>WhatsApp number</span>
+    <input id="lead-phone" type="tel" autocomplete="tel" required />
+  </label>
+  <!-- The wording of this consent statement is yours to write: it is what the visitor is
+       agreeing to, and only you know what you will message them and why. -->
+  <label>
+    <input id="lead-consent" type="checkbox" required />
+    <span>I agree to be contacted by WhatsApp.</span>
+  </label>
+  <button type="submit">Submit</button>
+</form>
+<script>
+  (function (config) {
+    "use strict";
+    var form = document.getElementById("lead-form");
+    function loadRecaptcha() {
+      return new Promise(function (resolve, reject) {
+        if (window.grecaptcha) {
+          resolve();
+          return;
+        }
+        var tag = document.createElement("script");
+        tag.src = "https://www.google.com/recaptcha/api.js?render=" + config.recaptchaSiteKey;
+        tag.onload = function () {
+          resolve();
+        };
+        tag.onerror = function () {
+          reject(new Error("Could not load reCAPTCHA. Check the site key and the network."));
+        };
+        document.head.appendChild(tag);
+      });
+    }
+    // Mint the token on submit, not on page load: a reCAPTCHA v3 token is only valid for
+    // ~2 minutes, so minting it earlier means it can already be expired by the time the
+    // visitor actually submits the form.
+    function mintToken() {
+      return loadRecaptcha().then(function () {
+        return new Promise(function (resolve, reject) {
+          window.grecaptcha.ready(function () {
+            window.grecaptcha
+              .execute(config.recaptchaSiteKey, { action: config.recaptchaAction })
+              .then(resolve, reject);
+          });
+        });
+      });
+    }
+    // Allowlist, not a denylist: only utm_* params and the names you seeded in
+    // trackedParams are collected. The rest of the query string can carry ad-network
+    // click ids or session tokens that were never meant to be stored -- over-collection
+    // here is irreversible, so when in doubt leave a param out.
+    function readCampaignParams() {
+      var params = new URLSearchParams(window.location.search);
+      var collected = {};
+      params.forEach(function (value, key) {
+        if (key.indexOf("utm_") === 0 || config.trackedParams.indexOf(key) !== -1) {
+          collected[key] = value;
+        }
+      });
+      return collected;
+    }
+    function buildPayload(token) {
+      return {
+        workspaceId: config.workspaceId,
+        captureKey: config.captureKey,
+        cellphone: document.getElementById("lead-phone").value.trim(),
+        name: document.getElementById("lead-name").value.trim() || null,
+        brandId: config.brandId,
+        // origin + pathname only, never the full URL: the query string can carry
+        // click ids or session tokens, and UTMs already travel separately in "utm" above.
+        landingUri: window.location.origin + window.location.pathname,
+        utm: readCampaignParams(),
+        consent: { status: "GRANTED", capturedAt: new Date().toISOString() },
+        recaptchaToken: token,
+      };
+    }
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      if (!document.getElementById("lead-consent").checked) {
+        return;
+      }
+      // A token verifies once; a retry that reuses the same token is indistinguishable
+      // from a replay attack and comes back as the same CAPTCHA_REJECTED error as a low
+      // score, so mint a fresh token on every submit attempt, including retries.
+      mintToken()
+        .then(function (token) {
+          var payload = buildPayload(token);
+          // workspaceId must be on the POST URL itself, not only in the body: a CORS
+          // preflight carries no body, so the endpoint cannot resolve the tenant --
+          // and therefore cannot echo Access-Control-Allow-Origin -- without it.
+          var url = config.endpoint + "?workspaceId=" + encodeURIComponent(config.workspaceId);
+          return fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+        })
+        .then(function (response) {
+          if (response.status === 202) {
+            // Accepted and queued, not sent -- a separate service transmits the first
+            // WhatsApp message later. Tell the visitor "we'll message you shortly", not
+            // "message sent".
+            return;
+          }
+          return response.json().then(function (body) {
+            // RFC 9457 problem details: { type, title, status }, sometimes "detail".
+            // Error responses carry no request id, so if you need support, report the page
+            // URL and the approximate time. A 422 is a transient failure on our side and
+            // retrying it is safe; a 403 CAPTCHA_REJECTED usually means the token expired
+            // or was reused, so mint a fresh one before retrying.
+            throw new Error(body.type + ": " + (body.detail || body.title));
+          });
+        })
+        .catch(function (error) {
+          // eslint-disable-next-line no-console
+          console.error("Campaign lead submission failed", error);
+        });
+    });
+  })(window.__CAMPAIGN_LEADS__);
+</script>
+```
+
+## Your capture key is not an API key
+
+<Note>
+  If you have read the [Authentication](/credentials) page, it tells you never to put a key
+  in frontend code. That rule is about the Integrations API key, and it still holds. Your
+  `captureKey` is a different kind of value.
+</Note>
+
+Unlike the `x-api-key` used by the Integrations API, your `captureKey` is designed to live
+in your page's HTML where anyone can read it. It grants no read access to anything: it only
+identifies which workspace a submission belongs to. Abuse is bounded by two other checks —
+the reCAPTCHA token, and the fact that submissions are only accepted from the domains
+registered for your workspace.
+
+Never use your Integrations API key here, and never put one in a page.
+
+## Put the workspace id on the URL
+
+The workspace id goes in the request body **and** on the URL as `?workspaceId=...`. It has
+to be in both places: a browser sends a CORS preflight before the real request, and that
+preflight carries no body — so without the id on the URL we cannot tell which workspace you
+are, cannot return the header that authorises your domain, and the browser blocks the
+request before it is ever sent.
+
+The failure this causes is confusing, which is why it is worth getting right the first
+time: you will see a CORS error in the browser console and no request in our logs at all,
+because the real request never left the page.
+
+## Mint the captcha token when the form is submitted
+
+A reCAPTCHA v3 token is valid for about two minutes. Minting it when the page loads means
+it is often already expired by the time somebody finishes typing, and it comes back
+rejected — as a `403`, which looks like a permissions problem rather than a timing one.
+
+## Mint a new token for every attempt
+
+A token verifies exactly once. If a submission fails and you retry with the same token, the
+replay is indistinguishable from an attack and returns the same error a bot would get.
+Always call `grecaptcha.execute` again before retrying.
+
+## What to send
+
+The [endpoint reference](/api-reference/campaign-leads/register-a-campaign-lead) carries the full contract.
+These are the fields whose meaning is not obvious from the schema alone:
+
+<ResponseField name="brandId" type="string">
+  The brand your landing page sells — not a line, channel or phone number id. Required only
+  if your workspace has brands enabled. **A line id is never required.**
+</ResponseField>
+
+<ResponseField name="landingUri" type="string">
+  The page's origin and path, without the query string. Your UTMs travel separately in
+  `utm`, and a raw query string often carries click ids or session tokens that should not be
+  stored. Send `https://example.com/offer`, not `https://example.com/offer?gclid=...`.
+</ResponseField>
+
+<ResponseField name="consent" type="object">
+  Your attestation that the visitor opted in, and when. See
+  [Consent requirements](/lead-capture/consent) — the wording on your form is not optional.
+</ResponseField>
+
+<ResponseField name="utm" type="object">
+  Collected from the query string against an allowlist: `utm_*` parameters plus any extra
+  names you configure in the console. This is an allowlist rather than a denylist on
+  purpose — over-collecting here is not reversible.
+</ResponseField>
+
+## After you submit
+
+A `202` means the lead was accepted and queued. It does **not** mean a message was sent —
+that happens later, in a separate service. Tell the visitor you will message them shortly.
+
+Anything else is an error. See the [error reference](/lead-capture/errors) for what each one
+means and whether it is yours to fix.
