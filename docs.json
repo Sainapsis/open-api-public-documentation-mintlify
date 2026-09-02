@@ -72,8 +72,8 @@
     ]
   },
   "logo": {
-    "light": "/logo/bridge_full_logo.svg",
-    "dark": "/logo/bridge_full_logo.svg"
+    "light": "/logo/bridge_full_logo_light.png",
+    "dark": "/logo/bridge_full_logo_dark.png"
   },
   "navbar": {
     "links": [
