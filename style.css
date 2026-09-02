@@ -1,0 +1,6 @@
+/* The PNG logo lockup (icon container + wordmark) is proportionally taller than
+   the old SVG, so at Mintlify's default 28px logo height its wordmark reads too
+   small. Bump the navbar logo height to compensate. */
+.nav-logo {
+  height: 2.5rem;
+}
