@@ -1,54 +1,48 @@
 ---
 title: "Template requirements"
 sidebarTitle: "Templates"
-description: "Why the message that opens the conversation must stay strictly transactional."
-keywords: ["template", "utility", "marketing", "131049", "WhatsApp"]
+description: "Supported template categories and guidelines for opening lead capture conversations."
+keywords: ["template", "utility", "marketing", "WhatsApp", "lead capture"]
 ---
 
-## The rule
+## Supported template categories
 
-The template that opens the conversation must be a **utility** template: strictly
-transactional, echoing what the visitor just submitted. No offers, no discounts, no
-promotional language, and no purchase call to action.
+The template that opens the conversation can be either a **utility** or a **marketing** template:
 
-You configure and submit this template yourself, and getting it approved is a prerequisite
-for going live.
+- **Utility templates**: Strictly transactional, echoing what the visitor just submitted (such as confirming receipt of an enquiry). These qualify for lower WhatsApp conversation rates.
+- **Marketing templates**: May include promotional language, discounts, special offers, or direct sales pitches. These are billed at standard WhatsApp marketing conversation rates.
 
-## Why, and why it is not a style preference
+<Note>
+  **Authentication** templates cannot be used for lead capture. Any template configured with the `AUTHENTICATION` category will be rejected.
+</Note>
+
+You configure and submit your templates directly in Meta WhatsApp Manager, and getting them approved is a prerequisite for going live.
+
+## Meta classification and deliverability
 
 <Warning>
-  Meta classifies templates by their content, not by the category you select. A template it
-  reclassifies as MARKETING stops being deliverable under the same conditions — it begins
-  failing with error `131049`, which does not announce itself. Your sends simply stop
-  arriving.
+  Meta classifies templates by their content, not strictly by the category you select during submission. If a template submitted as UTILITY contains promotional language, Meta may reclassify it as MARKETING or reject it.
 </Warning>
 
-That silence is the whole problem. A rejected template is obvious; a reclassified one is
-not. Keeping the first message strictly transactional is what keeps it working, which is
-why this reads as protection rather than paperwork.
+Choosing the right category upfront prevents unintended classification issues and ensures expected deliverability and billing.
 
-## The line, shown rather than described
+## Category examples
 
-**Compliant** — it acknowledges an action the person just took and offers nothing:
+**Utility (Transactional)** — acknowledges an enquiry without promotional offers:
 
 ```text
 Hi {{1}}, thanks for your enquiry about the {{2}}. A member of our team will follow up here shortly.
 ```
 
-**Not compliant** — same opening, but the second sentence turns it into an advertisement:
+**Marketing (Promotional)** — includes promotional language, discounts, or sales offers:
 
 ```text
 Hi {{1}}, thanks for your enquiry about the {{2}}. Book this week and get 15% off — reply YES to claim.
 ```
 
-The difference is not tone or length. It is whether the message exists to confirm something
-the person did, or to sell them something they did not ask for.
-
 ## Practical guidance
 
-- Echo the specifics the visitor gave you. A message that repeats their enquiry reads as
-  transactional because it is.
-- Do not include prices, promotions, urgency, or a call to action to buy.
-- Do not use the first message to introduce products they did not ask about.
-- Once the person replies, you are in a normal conversation and these constraints no longer
-  apply. The restriction is on the message that opens it.
+- **Choose Utility** when your primary goal is rapid transactional follow-up confirming the visitor's request. Keep it strictly focused on echoing their submission without promotional hooks to maintain the utility category and lower messaging rate.
+- **Choose Marketing** when you want to immediately provide introductory discounts, promotional incentives, or catalog offers upon capture.
+- **Avoid Authentication templates**: Authentication templates are intended exclusively for one-time passwords and verification codes, and are rejected for campaign lead dispatches.
+- Once the person replies, you are in a normal conversation session and template category constraints no longer apply to incoming or agent responses.
