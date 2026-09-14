@@ -158,21 +158,11 @@ async function get(path) {
 
 ---
 
-## Built on open standards
+## Standards
 
-Each part of this contract implements an open specification. A client you already wrote against another API's rate limits should work here with little or no change.
+These fields are not Bridge-specific: `RateLimit-Policy` and `RateLimit` follow the IETF [RateLimit header fields](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/) specification, `Retry-After` is [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#field.retry-after), and the `429` body is [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html). If you already handle `X-RateLimit-*` headers from another API, these are the standardised equivalents.
 
-| What | Standard | Status |
-| ---- | -------- | ------ |
-| `RateLimit-Policy` and `RateLimit` | [RateLimit header fields for HTTP](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/) (IETF) | Standards-Track Internet-Draft, still in progress |
-| `Retry-After` | [RFC 9110 §10.2.3](https://www.rfc-editor.org/rfc/rfc9110.html#field.retry-after) | Published standard |
-| The `429` body | [RFC 9457 — Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc9457.html) | Published standard |
-
-<Note>
-  **Which one to trust.** `Retry-After` is the authoritative retry signal, and the specification is explicit that it takes precedence when both are present. Treat `RateLimit` as pacing information — what you use to stay under the limit, not what decides when you retry. That split is also the safer one while the header-fields document is still a draft.
-</Note>
-
-If you have integrated with APIs that send `X-RateLimit-Limit` or `X-RateLimit-Remaining`, the headers above are the standardised equivalents of those. Bridge does not use the `X-` prefix because [RFC 6648](https://www.rfc-editor.org/rfc/rfc6648.html) deprecated that convention.
+When the two disagree, **`Retry-After` wins** — it is the authoritative retry signal, and `RateLimit` is pacing information.
 
 ---
 
