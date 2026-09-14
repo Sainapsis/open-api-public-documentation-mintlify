@@ -42,6 +42,18 @@ paths:
                 additionalProperties: true
                 type: object
                 title: Response Health Bridge Api Health Get
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
       security:
       - x-api-key: []
   /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}:
@@ -84,6 +96,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -173,6 +197,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -383,6 +419,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationListResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '400':
           description: Bad Request
           content:
@@ -500,6 +548,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConversationResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '400':
           description: Bad Request
           content:
@@ -619,6 +679,18 @@ paths:
       responses:
         '204':
           description: Successful Response
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -724,6 +796,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -815,6 +899,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -895,6 +991,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '400':
           description: Bad Request
           content:
@@ -1032,6 +1140,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactsResponseList'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1113,6 +1233,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1197,6 +1329,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1301,6 +1445,18 @@ paths:
                   $ref: '#/components/schemas/PreloadedFileResponse'
                 title: Response Create Preloaded Files Bridge Api V1 Workspaces  Workspaceid  Files
                   Post
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1391,6 +1547,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CustomAttributesResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1426,6 +1594,8 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
       responses:
@@ -1435,6 +1605,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProviderChannelResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1470,6 +1652,8 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
       - name: messageProviderType
@@ -1500,6 +1684,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProviderChannelResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1587,6 +1783,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LeadscoutOutboundResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '400':
           description: Bad Request
           content:
@@ -1728,6 +1936,8 @@ paths:
           type: string
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
       - name: conversationId
@@ -1735,9 +1945,11 @@ paths:
         required: true
         schema:
           type: string
-          description: Identifier of the conversation to hand off.
+          description: Unique identifier of the conversation (UUID v4).
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
           title: Conversationid
-        description: Identifier of the conversation to hand off.
+        description: Unique identifier of the conversation (UUID v4).
       requestBody:
         required: true
         content:
@@ -1752,6 +1964,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HandoffResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Validation Error
           content:
@@ -1791,7 +2015,7 @@ paths:
           format: uuid
           description: Unique identifier of the workspace (UUID v4).
           examples:
-          - 5b1e3b8a-9e0a-4b7d-9d2a-3d2f1a5c8e11
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
       - name: templateId
@@ -1812,6 +2036,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TemplateDiscoveryResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1882,6 +2118,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalUserResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -1989,6 +2237,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalUsersResponseList'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Forbidden
           content:
@@ -2405,6 +2665,18 @@ components:
             with internalParticipants).
           examples:
           - 9fd1468d-e5ca-4ba3-98d1-13017e6f3808
+        onboardingTemplates:
+          items:
+            $ref: '#/components/schemas/OnboardingTemplateRequest'
+          type: array
+          title: Onboarding Templates
+          description: Ordered templates to open the conversation with, replacing
+            the workspace's configured onboarding sequence for this conversation only.
+            Position implies order. Omit to keep the workspace default. Each template
+            must exist, belong to your workspace or the platform scope, and — for
+            WhatsApp provider templates — be approved by Meta for the WhatsApp Business
+            Account behind the line each participant is reached on; otherwise the
+            request is rejected and no conversation is created.
       additionalProperties: false
       type: object
       required:
@@ -4046,6 +4318,11 @@ components:
         type:
           type: string
           title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
       type: object
       required:
       - loc

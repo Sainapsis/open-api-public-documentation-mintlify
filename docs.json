@@ -26,6 +26,7 @@
           "index",
           "credentials",
           "connect-your-agent",
+          "rate-limits",
           "error-codes"
         ]
       },
