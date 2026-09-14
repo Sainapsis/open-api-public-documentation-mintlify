@@ -1,0 +1,165 @@
+---
+title: "Rate limits"
+sidebarTitle: "Rate limits"
+description: "How many requests the Bridge API accepts, the headers that tell you where you stand, and how to handle a 429 correctly."
+keywords: ["rate limit", "rate limits", "429", "throttling", "Retry-After", "RateLimit", "quota", "backoff"]
+---
+
+## Overview
+
+The Bridge API accepts **50 requests every 5 seconds**. The limit applies to every endpoint, is enabled by default, and needs no configuration.
+
+<Note>
+  The budget belongs to the **workspace**, not to the API Key. If you issue several keys for the same workspace — one per application, as recommended — they all draw from the same 50 requests.
+</Note>
+
+---
+
+## Knowing where you stand
+
+Every response to an authenticated request carries two headers, so you never have to guess how much budget is left:
+
+```http
+RateLimit-Policy: "default";q=50;w=5
+RateLimit: "default";r=43;t=3
+```
+
+| Field | Meaning |
+| ----- | ------- |
+| `q` | Requests allowed per window |
+| `w` | Window length, in seconds |
+| `r` | Requests **remaining** in the current window |
+| `t` | Seconds until the window resets and `r` returns to `q` |
+
+A client that watches `r` and pauses as it approaches zero is never rejected at all.
+
+<Note>
+  A request rejected **before** authentication — a missing or invalid API Key — carries neither header. See [Authentication](/credentials) for those responses.
+</Note>
+
+---
+
+## When you go over
+
+Requests beyond the budget are answered with `429 Too Many Requests`. Nothing is processed, so the request is safe to repeat.
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/problem+json
+Retry-After: 3
+RateLimit-Policy: "default";q=50;w=5
+RateLimit: "default";r=0;t=3
+```
+
+```json
+{
+  "title": "Too Many Requests",
+  "status": 429,
+  "detail": "The workspace has exhausted its request budget for the current window",
+  "code": "BRIDGE_RATE_LIMIT_0001"
+}
+```
+
+`Retry-After` is expressed in **seconds from now**, not as a date. Wait that long and the next request is served.
+
+<Warning>
+  **A `429` is not an authentication problem.** `401` and `403` mean the API Key is missing, invalid, expired or not authorized, and **retrying them on a schedule will never succeed** — it only burns your budget. Only `429` should be retried automatically, and only after the delay it gives you.
+</Warning>
+
+---
+
+## What consumes budget
+
+Every HTTP request counts as one, including requests that end in a validation error or a `404`. What matters is how many calls your client makes, not how much data comes back.
+
+That distinction shows up when you read:
+
+- **A single resource by id** — `GET .../contacts/{contactId}` — costs **one request**, whatever the size of the response.
+- **A list** — `GET .../contacts` — costs **one request per page**. Reading a list in full costs as many requests as it has pages.
+
+So page size decides the cost of a full sweep. Walking 500 contacts costs 5 requests at 100 per page, and 25 requests at 20 per page — same data, five times the budget.
+
+<Note>
+  Prefer the largest page size an endpoint accepts when you are reading a list in full, and read a single resource by its id when you already know which one you need.
+</Note>
+
+---
+
+## Backing off in practice
+
+A client that paces itself from `RateLimit` and honours `Retry-After` on the rare miss needs no other logic:
+
+```python
+import time
+
+import requests
+
+BASE = "https://api-connect-us.bridge.new"
+HEADERS = {"x-api-key": "YOUR_API_KEY"}
+
+
+def rate_limit_state(response):
+    header = response.headers.get("RateLimit", "")
+    fields = dict(part.split("=", 1) for part in header.split(";") if "=" in part)
+    return int(fields.get("r", 1)), int(fields.get("t", 1))
+
+
+def get(path):
+    while True:
+        response = requests.get(f"{BASE}{path}", headers=HEADERS)
+
+        if response.status_code == 429:
+            time.sleep(int(response.headers["Retry-After"]))
+            continue
+
+        remaining, reset_in = rate_limit_state(response)
+        if remaining == 0:
+            time.sleep(reset_in)
+
+        return response
+```
+
+```javascript
+const BASE = "https://api-connect-us.bridge.new";
+const HEADERS = { "x-api-key": "YOUR_API_KEY" };
+
+const sleep = (seconds) => new Promise((done) => setTimeout(done, seconds * 1000));
+
+function rateLimitState(response) {
+  const fields = Object.fromEntries(
+    (response.headers.get("RateLimit") ?? "")
+      .split(";")
+      .filter((part) => part.includes("="))
+      .map((part) => part.split("="))
+  );
+  return { remaining: Number(fields.r ?? 1), resetIn: Number(fields.t ?? 1) };
+}
+
+async function get(path) {
+  while (true) {
+    const response = await fetch(`${BASE}${path}`, { headers: HEADERS });
+
+    if (response.status === 429) {
+      await sleep(Number(response.headers.get("Retry-After")));
+      continue;
+    }
+
+    const { remaining, resetIn } = rateLimitState(response);
+    if (remaining === 0) await sleep(resetIn);
+
+    return response;
+  }
+}
+```
+
+<Warning>
+  Do not retry a `429` immediately or on a fixed timer of your own. Retrying before `Retry-After` elapses is rejected again, and a tight retry loop keeps the workspace at zero budget for every other application sharing it.
+</Warning>
+
+---
+
+## Related Topics
+
+- [Authentication](/credentials) — API Keys, and the `401` / `403` responses that must not be retried
+- [Error Codes](/error-codes) — Full reference, including `BRIDGE_RATE_LIMIT_0001`
+- [REST API Reference](/api-reference) — Every endpoint documents its `429` response

@@ -67,6 +67,16 @@ Error codes for provider channel operations.
 | ---- | -------------- | ------- |
 | `BRIDGE_PROVIDER_CHANNEL_0001` | Provider Channel Not Found | The provider channel was not found; verify the workspace has channels configured |
 
+## Rate Limit Error Codes
+
+Error codes returned when a workspace exceeds its request budget. See [Rate limits](/rate-limits) for the budget, the headers and a client that paces itself.
+
+| Code | Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_RATE_LIMIT_0001` | Too Many Requests | The workspace has exhausted its request budget for the current window |
+
+This is the only code that should be retried automatically, and only after the delay given in the `Retry-After` header. Authentication failures are not rate-limit errors and retrying them on a schedule will never succeed.
+
 ## Workspace Error Codes
 
 Error codes for workspace operations.
