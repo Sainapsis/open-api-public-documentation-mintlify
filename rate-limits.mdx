@@ -158,6 +158,14 @@ async function get(path) {
 
 ---
 
+## Standards
+
+These fields are not Bridge-specific: `RateLimit-Policy` and `RateLimit` follow the IETF [RateLimit header fields](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/) specification, `Retry-After` is [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#field.retry-after), and the `429` body is [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html). If you already handle `X-RateLimit-*` headers from another API, these are the standardised equivalents.
+
+When the two disagree, **`Retry-After` wins** — it is the authoritative retry signal, and `RateLimit` is pacing information.
+
+---
+
 ## Related Topics
 
 - [Authentication](/credentials) — API Keys, and the `401` / `403` responses that must not be retried
