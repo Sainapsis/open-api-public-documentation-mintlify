@@ -1,0 +1,73 @@
+---
+title: "Changelog"
+sidebarTitle: "Changelog"
+description: "Changes to the Bridge API that affect your integration, newest first."
+keywords: ["changelog", "breaking change", "deprecation", "migration", "lookup", "list filters"]
+---
+
+## Overview
+
+Changes that affect the calls you already make, newest first. Additive changes — a new endpoint, a new optional field — are not listed here; they appear in the [REST API](/api-reference) reference when they ship.
+
+---
+
+## Finding a contact or a user by an identifier
+
+<Warning>
+  **This removes query parameters that exist today.** The replacements are described below. The date the parameters stop being accepted will be published here before the change ships.
+</Warning>
+
+### What changes
+
+The list endpoints stop filtering. `GET /contacts` and `GET /users` keep `limit` and `cursor` and nothing else.
+
+| Removed | Replacement |
+| ------- | ----------- |
+| `GET /contacts?search=` — a cellphone | `GET /contacts/lookup?type=cellphone&value=…` |
+| `GET /contacts?search=` — an email | `GET /contacts/lookup?type=email&value=…` |
+| `GET /contacts?search=` — a name | **none** |
+| `GET /contacts?ownerEmail=` | **none** |
+| `GET /users?email=` | `GET /users/lookup?type=email&value=…` |
+| `GET /users?status=` | **none** — every row already carries `status` |
+
+A removed parameter is **refused**, not ignored. Sending one returns `400` with `BRIDGE_CORE_0103` and names the parameter in the response. We chose this deliberately: a call that silently ignored your filter would hand you the first page of your whole workspace and let you treat it as a match.
+
+### What to do
+
+**If you search by cellphone or email**, move to the matching lookup endpoint. It answers with the same object the list used to return for a single match, and returns `404` when nothing matches.
+
+```bash
+# Before
+curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?search=%2B14084029292" \
+  -H "x-api-key: $BRIDGE_API_KEY"
+
+# After
+curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts/lookup?type=cellphone&value=%2B14084029292" \
+  -H "x-api-key: $BRIDGE_API_KEY"
+```
+
+<Note>
+  A cellphone begins with `+`, which must be percent-encoded as `%2B` in a query string. Most HTTP clients do this for you when you pass parameters as a map rather than building the URL by hand.
+</Note>
+
+A `value` that is not a well-formed cellphone or email is rejected with `422` and `BRIDGE_CORE_0101` before any lookup happens — worth handling separately from `404` if you pass user input straight through, because the two mean different things: one says *you sent something that is not an identifier*, the other says *nobody here holds it*.
+
+**If you filter internal users by status**, read `status` off each row instead. It was never a stored field you were filtering on — it is derived, and it is already in every response.
+
+**If you search contacts by name**, there is no replacement, and it is worth knowing what you are losing. The parameter only ever matched the **exact full name** — first name, one space, last name. It never matched a prefix, a partial, or a surname on its own. If it worked for you, you were passing the complete name already.
+
+**If you filter contacts by owner**, there is no replacement. List the page and filter on `ownerId` in your own code.
+
+### Why
+
+Filtering on those parameters made the cost of the call depend on the size of your workspace rather than the size of the answer. Looking up one contact by phone number in a large workspace read tens of thousands of records to return one — and asking for a bigger page made it slower, not faster. The lookup endpoints read one record.
+
+This is also why the filters are being removed rather than fixed: for the cases that have a replacement, the replacement is strictly better, and for the cases that do not, the capability never behaved the way its name suggested.
+
+---
+
+## Related Topics
+
+- [Error Codes](/error-codes) — Full reference, including `BRIDGE_CORE_0103` and `BRIDGE_CORE_0101`
+- [REST API Reference](/api-reference) — The lookup endpoints, their parameters and their responses
+- [Rate limits](/rate-limits) — What the API accepts per workspace, and how to back off correctly

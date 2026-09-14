@@ -860,6 +860,108 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/contacts/lookup:
+    get:
+      tags:
+      - Contacts API
+      summary: Retrieve a contact by cellphone or email
+      description: Get a specific contact by an identifier other than its id, within
+        the workspace.
+      operationId: retrieve_contact_by_identifier_bridge_api_v1_workspaces__workspaceId__contacts_lookup_get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: type
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/ContactLookupIdentifierType'
+          description: Identifier the value is given as.
+        description: Identifier the value is given as.
+      - name: value
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 320
+          description: The identifier itself. A cellphone is accepted in any dialable
+            form and is matched in E.164.
+          example: '+14084029292'
+          title: Value
+        description: The identifier itself. A cellphone is accepted in any dialable
+          form and is matched in E.164.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              examples:
+                INVALID_FIELD_FORMAT:
+                  value:
+                    title: Invalid Field Format
+                    status: 422
+                    code: BRIDGE_CORE_0101
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/contacts/{contactId}:
     get:
       tags:
@@ -1075,7 +1177,7 @@ paths:
       description: 'Retrieve a paginated list of contacts within the workspace.
 
 
-        Support optional filtering by owner, search terms, and custom attributes.'
+        Ordered by creation date. To find one contact by an identifier, use /contacts/lookup.'
       operationId: get_contacts_bridge_api_v1_workspaces__workspaceId__contacts_get
       security:
       - x-api-key: []
@@ -1091,27 +1193,6 @@ paths:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-      - name: ownerEmail
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Filter contacts by owner email address
-          title: Owneremail
-        description: Filter contacts by owner email address
-      - name: search
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Search contacts by name, email, or cellphone
-          example: John Doe
-          title: Search
-        description: Search contacts by name, email, or cellphone
       - name: limit
         in: query
         required: false
@@ -2078,6 +2159,108 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/users/lookup:
+    get:
+      tags:
+      - Internal Users API
+      summary: Retrieve an internal user by email
+      description: Get a specific internal user (human agent) by an identifier other
+        than its id.
+      operationId: retrieve_internal_user_by_identifier_bridge_api_v1_workspaces__workspaceId__users_lookup_get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: type
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/InternalUserLookupIdentifierType'
+          description: Identifier the value is given as. Internal users are addressable
+            by email only.
+        description: Identifier the value is given as. Internal users are addressable
+          by email only.
+      - name: value
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 320
+          description: The identifier itself.
+          example: john.doe@example.com
+          title: Value
+        description: The identifier itself.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalUserResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              examples:
+                INVALID_FIELD_FORMAT:
+                  value:
+                    title: Invalid Field Format
+                    status: 422
+                    code: BRIDGE_CORE_0101
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/users/{userId}:
     get:
       tags:
@@ -2174,7 +2357,10 @@ paths:
         the workspace.
 
 
-        Supports optional filtering by exact email and by status (active/disabled/all).'
+        Ordered by creation date, active and disabled alike. To find one internal
+        user
+
+        by an identifier, use /users/lookup.'
       operationId: get_internal_users_bridge_api_v1_workspaces__workspaceId__users_get
       security:
       - x-api-key: []
@@ -2190,25 +2376,6 @@ paths:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
-      - name: email
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Filter internal users by exact email address.
-          example: john.doe@example.com
-          title: Email
-        description: Filter internal users by exact email address.
-      - name: status
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/UserStatusFilter'
-          description: 'Filter by status: ''active'' (default), ''disabled'', or ''all''.'
-          default: active
-        description: 'Filter by status: ''active'' (default), ''disabled'', or ''all''.'
       - name: limit
         in: query
         required: false
@@ -2341,6 +2508,12 @@ components:
       - GRANTED
       - NOT_PROVIDED
       title: ConsentStatus
+    ContactLookupIdentifierType:
+      type: string
+      enum:
+      - cellphone
+      - email
+      title: ContactLookupIdentifierType
     ContactResponse:
       properties:
         id:
@@ -3221,6 +3394,11 @@ components:
       - identifierType
       title: InternalUserIdentifierRequest
       description: Body to identify an internal user in Bridge System.
+    InternalUserLookupIdentifierType:
+      type: string
+      enum:
+      - email
+      title: InternalUserLookupIdentifierType
     InternalUserResponse:
       properties:
         id:
@@ -3679,6 +3857,21 @@ components:
       - messageId
       title: MessageResponse
       description: Response body for message-related operations.
+    OnboardingTemplateRequest:
+      properties:
+        templateId:
+          type: string
+          title: Template Identifier
+          description: Identifier of the system template to send.
+          examples:
+          - 4061e74e-f6fe-4072-a760-3aec0b64f7a6
+      additionalProperties: false
+      type: object
+      required:
+      - templateId
+      title: OnboardingTemplateRequest
+      description: One entry of the onboarding override, its position in the list
+        implying order.
     OpenAttributeRequest:
       properties:
         customAttributeId:
@@ -4289,13 +4482,6 @@ components:
       type: object
       title: UpdateConversation
       description: Request body for updating an existing conversation.
-    UserStatusFilter:
-      type: string
-      enum:
-      - active
-      - disabled
-      - all
-      title: UserStatusFilter
     UserType:
       type: string
       enum:

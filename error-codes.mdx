@@ -77,6 +77,19 @@ Error codes returned when a workspace exceeds its request budget. See [Rate limi
 
 This is the only code that should be retried automatically, and only after the delay given in the `Retry-After` header. Authentication failures are not rate-limit errors and retrying them on a schedule will never succeed.
 
+## Request Error Codes
+
+Error codes returned before an operation runs, when the request itself cannot be processed. See [Changelog](/changelog) for parameters an endpoint no longer accepts.
+
+| Code | Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_CORE_0101` | Invalid Field Format | The field format is invalid; provide a valid value for the field |
+| `BRIDGE_CORE_0102` | Missing Required Field | The request is missing required fields; review the operation |
+| `BRIDGE_CORE_0103` | Bad Request | The request is invalid; review the body and parameters |
+| `BRIDGE_CORE_0104` | Invalid Cursor | The provided cursor is invalid; use a cursor obtained from a previous response |
+
+None of these should be retried unchanged. The response names the field or parameter at fault, and the same request will fail the same way until you change it.
+
 ## Workspace Error Codes
 
 Error codes for workspace operations.
