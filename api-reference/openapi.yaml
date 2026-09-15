@@ -864,9 +864,14 @@ paths:
     get:
       tags:
       - Contacts API
-      summary: Retrieve a contact by cellphone or email
-      description: Get a specific contact by an identifier other than its id, within
-        the workspace.
+      summary: Retrieve a contact by an identifier
+      description: 'Get a specific contact by any of its identifiers within the workspace.
+
+
+        `type=ID` returns the same contact as GET /contacts/{contactId}, which is
+        the canonical
+
+        URL for a contact and the one to prefer when the id is what you hold.'
       operationId: retrieve_contact_by_identifier_bridge_api_v1_workspaces__workspaceId__contacts_lookup_get
       security:
       - x-api-key: []
@@ -886,7 +891,7 @@ paths:
         in: query
         required: true
         schema:
-          $ref: '#/components/schemas/ContactLookupIdentifierType'
+          $ref: '#/components/schemas/ParticipantIdentifierType'
           description: Identifier the value is given as.
         description: Identifier the value is given as.
       - name: value
@@ -2163,9 +2168,15 @@ paths:
     get:
       tags:
       - Internal Users API
-      summary: Retrieve an internal user by email
-      description: Get a specific internal user (human agent) by an identifier other
-        than its id.
+      summary: Retrieve an internal user by an identifier
+      description: 'Get a specific internal user (human agent) by any of its identifiers
+        within the workspace.
+
+
+        `type=ID` returns the same user as GET /users/{userId}, which is the canonical
+        URL for an
+
+        internal user and the one to prefer when the id is what you hold.'
       operationId: retrieve_internal_user_by_identifier_bridge_api_v1_workspaces__workspaceId__users_lookup_get
       security:
       - x-api-key: []
@@ -2185,11 +2196,11 @@ paths:
         in: query
         required: true
         schema:
-          $ref: '#/components/schemas/InternalUserLookupIdentifierType'
-          description: Identifier the value is given as. Internal users are addressable
-            by email only.
-        description: Identifier the value is given as. Internal users are addressable
-          by email only.
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
+          description: Identifier the value is given as. An internal user's cellphone
+            is not one.
+        description: Identifier the value is given as. An internal user's cellphone
+          is not one.
       - name: value
         in: query
         required: true
@@ -2508,12 +2519,6 @@ components:
       - GRANTED
       - NOT_PROVIDED
       title: ConsentStatus
-    ContactLookupIdentifierType:
-      type: string
-      enum:
-      - cellphone
-      - email
-      title: ContactLookupIdentifierType
     ContactResponse:
       properties:
         id:
@@ -3394,11 +3399,6 @@ components:
       - identifierType
       title: InternalUserIdentifierRequest
       description: Body to identify an internal user in Bridge System.
-    InternalUserLookupIdentifierType:
-      type: string
-      enum:
-      - email
-      title: InternalUserLookupIdentifierType
     InternalUserResponse:
       properties:
         id:

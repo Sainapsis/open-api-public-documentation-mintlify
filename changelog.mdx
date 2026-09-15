@@ -23,11 +23,11 @@ The list endpoints stop filtering. `GET /contacts` and `GET /users` keep `limit`
 
 | Removed | Replacement |
 | ------- | ----------- |
-| `GET /contacts?search=` — a cellphone | `GET /contacts/lookup?type=cellphone&value=…` |
-| `GET /contacts?search=` — an email | `GET /contacts/lookup?type=email&value=…` |
+| `GET /contacts?search=` — a cellphone | `GET /contacts/lookup?type=PHONE&value=…` |
+| `GET /contacts?search=` — an email | `GET /contacts/lookup?type=EMAIL&value=…` |
 | `GET /contacts?search=` — a name | **none** |
 | `GET /contacts?ownerEmail=` | **none** |
-| `GET /users?email=` | `GET /users/lookup?type=email&value=…` |
+| `GET /users?email=` | `GET /users/lookup?type=EMAIL&value=…` |
 | `GET /users?status=` | **none** — every row already carries `status` |
 
 A removed parameter is **refused**, not ignored. Sending one returns `400` with `BRIDGE_CORE_0103` and names the parameter in the response. We chose this deliberately: a call that silently ignored your filter would hand you the first page of your whole workspace and let you treat it as a match.
@@ -36,13 +36,17 @@ A removed parameter is **refused**, not ignored. Sending one returns `400` with 
 
 **If you search by cellphone or email**, move to the matching lookup endpoint. It answers with the same object the list used to return for a single match, and returns `404` when nothing matches.
 
+`type` takes the identifier types the API already uses elsewhere — the same values as `identifierType` on a conversation participant. Contacts accept `ID`, `EMAIL` and `PHONE`; internal users accept `ID` and `EMAIL`, since an internal user's cellphone is not an addressable identifier in Bridge.
+
+`ID` is accepted for the same reason: code that already carries an `{identifierType, identifier}` pair should not have to branch on one of the values to build a different URL. It returns exactly what `GET /contacts/{contactId}` returns, and that remains the canonical URL for a contact — prefer it when the id is what you hold.
+
 ```bash
 # Before
 curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?search=%2B14084029292" \
   -H "x-api-key: $BRIDGE_API_KEY"
 
 # After
-curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts/lookup?type=cellphone&value=%2B14084029292" \
+curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts/lookup?type=PHONE&value=%2B14084029292" \
   -H "x-api-key: $BRIDGE_API_KEY"
 ```
 
@@ -50,7 +54,7 @@ curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/cont
   A cellphone begins with `+`, which must be percent-encoded as `%2B` in a query string. Most HTTP clients do this for you when you pass parameters as a map rather than building the URL by hand.
 </Note>
 
-A `value` that is not a well-formed cellphone or email is rejected with `422` and `BRIDGE_CORE_0101` before any lookup happens — worth handling separately from `404` if you pass user input straight through, because the two mean different things: one says *you sent something that is not an identifier*, the other says *nobody here holds it*.
+A `value` that does not match its `type` — not a well-formed email, cellphone or UUID — is rejected with `422` and `BRIDGE_CORE_0101` before any lookup happens. Handle it separately from `404` if you pass user input straight through: one says *you sent something that is not an identifier*, the other says *nobody here holds it*.
 
 **If you filter internal users by status**, read `status` off each row instead. It was never a stored field you were filtering on — it is derived, and it is already in every response.
 
