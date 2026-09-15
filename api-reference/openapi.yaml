@@ -901,12 +901,16 @@ paths:
           type: string
           minLength: 1
           maxLength: 320
-          description: The identifier itself. A cellphone is accepted in any dialable
-            form and is matched in E.164.
+          description: 'The identifier itself. A `PHONE` must be given in international
+            form: a leading `+` and the country code. Spacing and separators are ignored.
+            A number that is not reachable on a mobile network, such as a toll-free
+            line, is refused.'
           example: '+14084029292'
           title: Value
-        description: The identifier itself. A cellphone is accepted in any dialable
-          form and is matched in E.164.
+        description: 'The identifier itself. A `PHONE` must be given in international
+          form: a leading `+` and the country code. Spacing and separators are ignored.
+          A number that is not reachable on a mobile network, such as a toll-free
+          line, is refused.'
       responses:
         '200':
           description: Successful Response
