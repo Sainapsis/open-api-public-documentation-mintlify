@@ -901,16 +901,34 @@ paths:
           type: string
           minLength: 1
           maxLength: 320
-          description: 'The identifier itself. A `PHONE` must be given in international
-            form: a leading `+` and the country code. Spacing and separators are ignored.
-            A number that is not reachable on a mobile network, such as a toll-free
-            line, is refused.'
-          example: '+14084029292'
+          description: The identifier itself, in the form named by `type`. A `PHONE`
+            must be given in international form — a leading `+` and the country code
+            — and must be reachable on a mobile network; spacing and separators are
+            ignored. An `EMAIL` has its domain lowercased, but its local part is matched
+            exactly as sent.
           title: Value
-        description: 'The identifier itself. A `PHONE` must be given in international
-          form: a leading `+` and the country code. Spacing and separators are ignored.
-          A number that is not reachable on a mobile network, such as a toll-free
-          line, is refused.'
+        description: The identifier itself, in the form named by `type`. A `PHONE`
+          must be given in international form — a leading `+` and the country code
+          — and must be reachable on a mobile network; spacing and separators are
+          ignored. An `EMAIL` has its domain lowercased, but its local part is matched
+          exactly as sent.
+        examples:
+          cellphone:
+            summary: A cellphone
+            description: Send with `type=PHONE`. A number without a country code,
+              or one that no mobile network reaches, is refused before any lookup
+              happens.
+            value: '+14084029292'
+          email:
+            summary: An email address
+            description: Send with `type=EMAIL`. `John.Doe@example.com` and `john.doe@example.com`
+              are different identifiers and do not resolve to the same contact.
+            value: john.doe@example.com
+          id:
+            summary: The contact id
+            description: Send with `type=ID`. Returns exactly what `GET /contacts/{contactId}`
+              returns, which stays the canonical URL for a contact.
+            value: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
       responses:
         '200':
           description: Successful Response
@@ -2212,10 +2230,22 @@ paths:
           type: string
           minLength: 1
           maxLength: 320
-          description: The identifier itself.
-          example: john.doe@example.com
+          description: The identifier itself, in the form named by `type`. An `EMAIL`
+            has its domain lowercased, but its local part is matched exactly as sent.
           title: Value
-        description: The identifier itself.
+        description: The identifier itself, in the form named by `type`. An `EMAIL`
+          has its domain lowercased, but its local part is matched exactly as sent.
+        examples:
+          email:
+            summary: An email address
+            description: Send with `type=EMAIL`. `John.Doe@example.com` and `john.doe@example.com`
+              are different identifiers and do not resolve to the same internal user.
+            value: john.doe@example.com
+          id:
+            summary: The internal user id
+            description: Send with `type=ID`. Returns exactly what `GET /users/{userId}`
+              returns, which stays the canonical URL for an internal user.
+            value: 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
       responses:
         '200':
           description: Successful Response
