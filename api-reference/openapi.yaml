@@ -1200,7 +1200,7 @@ paths:
     get:
       tags:
       - Contacts API
-      summary: List contacts with filtering and pagination
+      summary: List contacts
       description: 'Retrieve a paginated list of contacts within the workspace.
 
 
@@ -2397,7 +2397,7 @@ paths:
     get:
       tags:
       - Internal Users API
-      summary: List internal users with filtering and pagination
+      summary: List internal users
       description: 'Retrieve a paginated list of internal users (human agents) within
         the workspace.
 
