@@ -1049,11 +1049,16 @@ paths:
           content:
             application/json:
               examples:
-                EXTERNAL_USER_ALREADY_EXISTS:
+                EMAIL_OWNED_BY_ANOTHER_CONTACT:
                   value:
-                    title: External User Already Exists
+                    title: Email Owned By Another Contact
                     status: 409
-                    code: BRIDGE_EXTERNAL_0002
+                    code: BRIDGE_EXTERNAL_0013
+                CELLPHONE_OWNED_BY_ANOTHER_CONTACT:
+                  value:
+                    title: Cellphone Owned By Another Contact
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0007
                 EXTERNAL_USER_NOT_IN_WORKSPACE:
                   value:
                     title: External User Not In Workspace
@@ -1279,11 +1284,16 @@ paths:
           content:
             application/json:
               examples:
-                EXTERNAL_USER_ALREADY_EXISTS:
+                EMAIL_OWNED_BY_ANOTHER_CONTACT:
                   value:
-                    title: External User Already Exists
+                    title: Email Owned By Another Contact
                     status: 409
-                    code: BRIDGE_EXTERNAL_0002
+                    code: BRIDGE_EXTERNAL_0013
+                CELLPHONE_OWNED_BY_ANOTHER_CONTACT:
+                  value:
+                    title: Cellphone Owned By Another Contact
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0007
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
@@ -1368,6 +1378,18 @@ paths:
                     title: Internal User Not Found
                     status: 404
                     code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                EMAIL_OWNED_BY_ANOTHER_CONTACT:
+                  value:
+                    title: Email Owned By Another Contact
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0013
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
