@@ -34,6 +34,14 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0211` | Max Participants Exceeded | The conversation must have a maximum number of participants |
 | `BRIDGE_CONVERSATION_0212` | Max Initial Messages Exceeded | The maximum number of initial messages has been exceeded |
 | `BRIDGE_CONVERSATION_0213` | Messages Not In Conversation | The messages must belong to the same conversation |
+| `BRIDGE_CONVERSATION_0601` | Onboarding Template Not Found | A template named in the onboarding override does not exist |
+| `BRIDGE_CONVERSATION_0602` | Onboarding Template Not In Workspace | A template named in the onboarding override belongs to another workspace |
+| `BRIDGE_CONVERSATION_0603` | Onboarding Template Not Approved | A template named in the onboarding override is not approved for the line a participant will be reached on |
+| `BRIDGE_CONVERSATION_0604` | Onboarding Template Missing Parameters | A template named in the onboarding override is missing values only the caller can provide |
+| `BRIDGE_CONVERSATION_0605` | Onboarding Template Unknown Parameters | The onboarding override names parameters the template does not declare |
+| `BRIDGE_CONVERSATION_0606` | Onboarding Template Parameters Not Supported | Parameters were sent for an onboarding template that is not a WhatsApp provider template |
+| `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent |
+| `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | A template in the workspace's onboarding sequence needs values only the caller can provide; a workspace admin must change the onboarding sequence |
 
 ## External User Error Codes
 
@@ -45,6 +53,8 @@ Error codes for external user (contact) operations.
 | `BRIDGE_EXTERNAL_0002` | External User Already Exists | An external user with the same identification data already exists |
 | `BRIDGE_EXTERNAL_0004` | External User Not In Workspace | One or more external users do not belong to the specified workspace |
 | `BRIDGE_EXTERNAL_0005` | External User Without Configured Field | External user does not have configured field; check the workspace or external information settings |
+| `BRIDGE_EXTERNAL_0007` | Cellphone Owned By Another Contact | The phone number is already an active identity of a different external user |
+| `BRIDGE_EXTERNAL_0013` | Email Owned By Another Contact | The email address is already an active identity of a different external user |
 | `BRIDGE_EXTERNAL_0101` | External User Operation Failed | An error occurred while operating on the external user |
 
 ## Internal User Error Codes
