@@ -6,6 +6,49 @@ keywords: ["error", "error codes", "troubleshooting", "404", "422", "validation"
 ---
 # Bridge Error Codes
 
+## Response format
+
+Errors are returned as `application/problem+json`:
+
+```json
+{
+  "title": "A template named in the onboarding override is missing values only the caller can provide",
+  "status": 422,
+  "detail": "A template named in the onboarding override is missing values only the caller can provide",
+  "code": "BRIDGE_CONVERSATION_0604",
+  "extra": {
+    "templateId": "f0000040-0000-4000-8000-000000000040",
+    "missingVariables": [{ "key": "delivery_date", "label": "Delivery date" }]
+  },
+  "instance": "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/{workspaceId}/conversations",
+  "traceId": "Root=1-6702b8c4-3f1a2b4c5d6e7f8091a2b3c4"
+}
+```
+
+| Field | Meaning |
+| ----- | ------- |
+| `code` | The stable error code listed on this page. **Branch on this field.** |
+| `title` | A human-readable message. It may be longer than the title shown in the tables below, so never match on it |
+| `status` | The HTTP status code |
+| `detail` | More detail about this occurrence, when available |
+| `extra` | Machine-readable context for the error, such as the ids or keys involved, when available |
+| `instance` | The request URL |
+| `traceId` | Include it when you contact support |
+
+<Note>
+  A request that does not match the request schema — a missing or unknown field, a wrong type, or a value over its length limit — returns `422` **without a `code`**. Its `errors` list holds one entry per problem, each with `loc` (where), `msg` (what) and `type`.
+</Note>
+
+## Brand Error Codes
+
+Error codes for brand checks when creating a conversation.
+
+| Code | Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_BRAND_0101` | Brand Required | The workspace has brands enabled; each external participant must resolve to a brand or a line |
+
+Returned as `400`. Send a `brandId` or a `providerChannelId` for every external participant; `extra.resources` lists the participants that had neither.
+
 ## Conversation Error Codes
 
 Error codes for conversation operations.
@@ -43,6 +86,8 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent |
 | `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | A template in the workspace's onboarding sequence needs values only the caller can provide; a workspace admin must change the onboarding sequence |
 
+`BRIDGE_CONVERSATION_0601` returns `404`, `0602` and `0603` return `400`, and `0604` to `0608` return `422`. See [Onboarding template parameters](/templates-and-parameters) for what each one carries in `extra` and how to fix it.
+
 ## External User Error Codes
 
 Error codes for external user (contact) operations.
@@ -77,6 +122,8 @@ Error codes for provider channel operations.
 | ---- | -------------- | ------- |
 | `BRIDGE_PROVIDER_CHANNEL_0001` | Provider Channel Not Found | The provider channel was not found; verify the workspace has channels configured |
 
+When creating a conversation, this code is returned as `409` when no WhatsApp line is available for a Contact — for example, because the Contact's line is still bound to another conversation — or when the `providerChannelId` you named is not available for that Contact.
+
 ## Rate Limit Error Codes
 
 Error codes returned when a workspace exceeds its request budget. See [Rate limits](/rate-limits) for the budget, the headers and a client that paces itself.
@@ -86,6 +133,16 @@ Error codes returned when a workspace exceeds its request budget. See [Rate limi
 | `BRIDGE_RATE_LIMIT_0001` | Too Many Requests | The workspace has exhausted its request budget for the current window |
 
 This is the only code that should be retried automatically, and only after the delay given in the `Retry-After` header. Authentication failures are not rate-limit errors and retrying them on a schedule will never succeed.
+
+## Template Error Codes
+
+Error codes for template operations.
+
+| Code | Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_TEMPLATE_0001` | Provider Template Not Found | No provider template found for the given workspace and name |
+
+Returned as `404` by `GET .../templates/{templateId}` when the id or name does not match a WhatsApp template in your workspace.
 
 ## Workspace Error Codes
 
