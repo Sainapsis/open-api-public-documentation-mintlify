@@ -95,12 +95,13 @@ Error codes for external user (contact) operations.
 | Code | Title | Message |
 | ---- | -------------- | ------- |
 | `BRIDGE_EXTERNAL_0001` | External User Not Found | The requested external user was not found |
-| `BRIDGE_EXTERNAL_0002` | External User Already Exists | An external user with the same identification data already exists |
 | `BRIDGE_EXTERNAL_0004` | External User Not In Workspace | One or more external users do not belong to the specified workspace |
 | `BRIDGE_EXTERNAL_0005` | External User Without Configured Field | External user does not have configured field; check the workspace or external information settings |
 | `BRIDGE_EXTERNAL_0007` | Cellphone Owned By Another Contact | The phone number is already an active identity of a different external user |
 | `BRIDGE_EXTERNAL_0013` | Email Owned By Another Contact | The email address is already an active identity of a different external user |
 | `BRIDGE_EXTERNAL_0101` | External User Operation Failed | An error occurred while operating on the external user |
+
+A `409` with `BRIDGE_EXTERNAL_0007` or `BRIDGE_EXTERNAL_0013` carries `conflictingExternalUserId`: the contact in the workspace that already holds the value.
 
 ## Internal User Error Codes
 
