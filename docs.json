@@ -26,6 +26,7 @@
           "index",
           "credentials",
           "connect-your-agent",
+          "templates-and-parameters",
           "rate-limits",
           "error-codes"
         ]

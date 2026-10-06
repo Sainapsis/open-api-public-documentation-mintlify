@@ -570,6 +570,16 @@ paths:
                     title: Min Participants Required
                     status: 400
                     code: BRIDGE_CONVERSATION_0210
+                ONBOARDING_TEMPLATE_NOT_IN_WORKSPACE:
+                  value:
+                    title: Onboarding Template Not In Workspace
+                    status: 400
+                    code: BRIDGE_CONVERSATION_0602
+                ONBOARDING_TEMPLATE_NOT_APPROVED:
+                  value:
+                    title: Onboarding Template Not Approved
+                    status: 400
+                    code: BRIDGE_CONVERSATION_0603
               schema:
                 $ref: '#/components/schemas/Problem'
         '403':
@@ -604,6 +614,11 @@ paths:
                     title: Internal User Not Found
                     status: 404
                     code: BRIDGE_INTERNAL_0001
+                ONBOARDING_TEMPLATE_NOT_FOUND:
+                  value:
+                    title: Onboarding Template Not Found
+                    status: 404
+                    code: BRIDGE_CONVERSATION_0601
               schema:
                 $ref: '#/components/schemas/Problem'
         '409':
@@ -629,11 +644,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: Validation Error
+          description: Unprocessable Content
           content:
             application/json:
+              examples:
+                ONBOARDING_TEMPLATE_MISSING_PARAMETERS:
+                  value:
+                    title: Onboarding Template Missing Parameters
+                    status: 422
+                    code: BRIDGE_CONVERSATION_0604
+                ONBOARDING_TEMPLATE_UNKNOWN_PARAMETERS:
+                  value:
+                    title: Onboarding Template Unknown Parameters
+                    status: 422
+                    code: BRIDGE_CONVERSATION_0605
+                ONBOARDING_TEMPLATE_PARAMETERS_NOT_SUPPORTED:
+                  value:
+                    title: Onboarding Template Parameters Not Supported
+                    status: 422
+                    code: BRIDGE_CONVERSATION_0606
+                ONBOARDING_TEMPLATE_INVALID_PARAMETER_VALUES:
+                  value:
+                    title: Onboarding Template Invalid Parameter Values
+                    status: 422
+                    code: BRIDGE_CONVERSATION_0607
+                ONBOARDING_CONFIGURED_TEMPLATE_REQUIRES_CALLER_INPUT:
+                  value:
+                    title: Onboarding Configured Template Requires Caller Input
+                    status: 422
+                    code: BRIDGE_CONVERSATION_0608
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/release:
     post:
       tags:
@@ -1049,11 +1090,16 @@ paths:
           content:
             application/json:
               examples:
-                EXTERNAL_USER_ALREADY_EXISTS:
+                EMAIL_OWNED_BY_ANOTHER_CONTACT:
                   value:
-                    title: External User Already Exists
+                    title: Email Owned By Another Contact
                     status: 409
-                    code: BRIDGE_EXTERNAL_0002
+                    code: BRIDGE_EXTERNAL_0013
+                CELLPHONE_OWNED_BY_ANOTHER_CONTACT:
+                  value:
+                    title: Cellphone Owned By Another Contact
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0007
                 EXTERNAL_USER_NOT_IN_WORKSPACE:
                   value:
                     title: External User Not In Workspace
@@ -1279,11 +1325,16 @@ paths:
           content:
             application/json:
               examples:
-                EXTERNAL_USER_ALREADY_EXISTS:
+                EMAIL_OWNED_BY_ANOTHER_CONTACT:
                   value:
-                    title: External User Already Exists
+                    title: Email Owned By Another Contact
                     status: 409
-                    code: BRIDGE_EXTERNAL_0002
+                    code: BRIDGE_EXTERNAL_0013
+                CELLPHONE_OWNED_BY_ANOTHER_CONTACT:
+                  value:
+                    title: Cellphone Owned By Another Contact
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0007
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
@@ -1368,6 +1419,18 @@ paths:
                     title: Internal User Not Found
                     status: 404
                     code: BRIDGE_INTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                EMAIL_OWNED_BY_ANOTHER_CONTACT:
+                  value:
+                    title: Email Owned By Another Contact
+                    status: 409
+                    code: BRIDGE_EXTERNAL_0013
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
@@ -2670,13 +2733,21 @@ components:
             $ref: '#/components/schemas/OnboardingTemplateRequest'
           type: array
           title: Onboarding Templates
-          description: Ordered templates to open the conversation with, replacing
-            the workspace's configured onboarding sequence for this conversation only.
-            Position implies order. Omit to keep the workspace default. Each template
-            must exist, belong to your workspace or the platform scope, and — for
-            WhatsApp provider templates — be approved by Meta for the WhatsApp Business
-            Account behind the line each participant is reached on; otherwise the
-            request is rejected and no conversation is created.
+          description: 'Ordered templates to open the conversation with. They replace
+            the workspace''s configured onboarding sequence for this conversation,
+            either entirely or only its first template, depending on how the workspace
+            is set up; in the second case the rest of the configured sequence is still
+            sent after yours. Position implies order. Omit to keep the workspace default.
+            Each template must exist, belong to your workspace or the platform scope,
+            and — for WhatsApp provider templates — be approved by Meta for the WhatsApp
+            Business Account behind the line each participant is reached on; otherwise
+            the request is rejected and no conversation is created. A template whose
+            variables need values only you can provide takes them in the entry''s
+            `parameters`. If one of the configured templates sent after yours needs
+            values only the caller can provide, the request is rejected with 422 `BRIDGE_CONVERSATION_0608`,
+            with `extra.templateId` naming that template and `extra.origin` set to
+            `WORKSPACE_CONFIGURATION`. Changing the request will not help: ask a workspace
+            admin to change the onboarding sequence.'
       additionalProperties: false
       type: object
       required:
@@ -3679,6 +3750,57 @@ components:
       - messageId
       title: MessageResponse
       description: Response body for message-related operations.
+    OnboardingTemplateRequest:
+      properties:
+        templateId:
+          type: string
+          title: Template Identifier
+          description: Identifier of the system template to send.
+          examples:
+          - 4061e74e-f6fe-4072-a760-3aec0b64f7a6
+        parameters:
+          additionalProperties:
+            type: string
+            maxLength: 1024
+          propertyNames:
+            maxLength: 128
+          type: object
+          maxProperties: 50
+          title: Template Parameters
+          description: 'Values for this template''s variables, keyed by the variable
+            `key` returned by `GET /templates/{templateId}`. Variables marked `callerMustSupply:
+            true` are required: Bridge has no other source for them. The other variables
+            are optional; a value sent for one (such as the Contact''s first name)
+            replaces the per-Contact value and is used for every Contact in the conversation.
+            Only WhatsApp provider templates accept parameters. If a required value
+            is missing or blank, a key is not one of the template''s variables, or
+            the template takes no parameters, the request is rejected with 422 and
+            no conversation is created: `BRIDGE_CONVERSATION_0604` lists the missing
+            variables in `extra.missingVariables` as `[{key, label}]`, `0605` lists
+            the unknown keys in `extra.unknownKeys`, and `0606` names the template
+            in `extra.templateId`. Values must also pass WhatsApp''s rules: no line
+            breaks or tabs, no more than four consecutive spaces, the header with
+            your value within 60 characters, a URL button''s link with your value
+            within 2,000, and the body''s text plus your values within 1,024. Bridge
+            refuses values it can already see break these rules with `BRIDGE_CONVERSATION_0607`,
+            naming the template in `extra.templateId` and listing each offending value
+            in `extra.invalidVariables` as `[{key, label, reason}]`. `reason` is the
+            first rule the value breaks: `NEWLINE`, `TAB`, `CONSECUTIVE_SPACES`, `TOO_LONG`
+            (header or URL button) or `BODY_TOO_LONG` (the body overflows, so every
+            body value you sent is listed). Values Bridge fills in later, such as
+            the Contact''s first name, also count toward the body limit, so leave
+            room for them. At most 50 parameters per template, with keys up to 128
+            characters and each value up to 1,024.'
+          examples:
+          - delivery_date: 3 de octubre
+            order_number: A-10492
+      additionalProperties: false
+      type: object
+      required:
+      - templateId
+      title: OnboardingTemplateRequest
+      description: One entry of the onboarding override, its position in the list
+        implying order.
     OpenAttributeRequest:
       properties:
         customAttributeId:
