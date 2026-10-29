@@ -942,23 +942,22 @@ paths:
           type: string
           minLength: 1
           maxLength: 320
-          description: The identifier itself, in the form named by `type`. A `PHONE`
-            must be given in international form — a leading `+` and the country code
-            — and must be reachable on a mobile network; spacing and separators are
-            ignored. An `EMAIL` has its domain lowercased, but its local part is matched
-            exactly as sent.
+          description: 'The identifier itself, in the form named by `type`. A `PHONE`
+            is read like the cellphone of a contact write: a number without a country
+            code is read in the workspace''s default country, and spacing and separators
+            are ignored. An `EMAIL` has its domain lowercased, but its local part
+            is matched exactly as sent.'
           title: Value
-        description: The identifier itself, in the form named by `type`. A `PHONE`
-          must be given in international form — a leading `+` and the country code
-          — and must be reachable on a mobile network; spacing and separators are
-          ignored. An `EMAIL` has its domain lowercased, but its local part is matched
-          exactly as sent.
+        description: 'The identifier itself, in the form named by `type`. A `PHONE`
+          is read like the cellphone of a contact write: a number without a country
+          code is read in the workspace''s default country, and spacing and separators
+          are ignored. An `EMAIL` has its domain lowercased, but its local part is
+          matched exactly as sent.'
         examples:
           cellphone:
             summary: A cellphone
-            description: Send with `type=PHONE`. A number without a country code,
-              or one that no mobile network reaches, is refused before any lookup
-              happens.
+            description: Send with `type=PHONE`. A value that cannot be read as a
+              cellphone is refused before any lookup happens.
             value: '+14084029292'
           email:
             summary: An email address
@@ -1250,7 +1249,8 @@ paths:
       description: 'Retrieve a paginated list of contacts within the workspace.
 
 
-        Ordered by creation date. To find one contact by an identifier, use /contacts/lookup.'
+        Ordered by creation date. The `ownerEmail` and `search` filters are deprecated
+        and will be removed; to find one contact by an identifier, use /contacts/lookup.'
       operationId: get_contacts_bridge_api_v1_workspaces__workspaceId__contacts_get
       security:
       - x-api-key: []
@@ -1266,6 +1266,29 @@ paths:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
+      - name: ownerEmail
+        in: query
+        required: false
+        deprecated: true
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter contacts by owner email address
+          title: Owneremail
+        description: 'Filter contacts by owner email address. Deprecated: will be removed. No replacement; filter on `ownerId` in your own code. See the Changelog.'
+      - name: search
+        in: query
+        required: false
+        deprecated: true
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search contacts by name, email, or cellphone
+          example: John Doe
+          title: Search
+        description: 'Search contacts by name, email, or cellphone. Deprecated: will be removed. To find one contact by cellphone or email, use `GET /contacts/lookup`. See the Changelog.'
       - name: limit
         in: query
         required: false
@@ -2254,8 +2277,8 @@ paths:
       tags:
       - Internal Users API
       summary: Retrieve an internal user by an identifier
-      description: 'Get a specific internal user (human agent) by any of its identifiers
-        within the workspace.
+      description: 'Get a specific Bridge User by any of its identifiers within the
+        workspace.
 
 
         `type=ID` returns the same user as GET /users/{userId}, which is the canonical
@@ -2461,14 +2484,11 @@ paths:
       tags:
       - Internal Users API
       summary: List internal users
-      description: 'Retrieve a paginated list of internal users (human agents) within
-        the workspace.
+      description: 'Retrieve a paginated list of internal users within the workspace.
 
 
-        Ordered by creation date, active and disabled alike. To find one internal
-        user
-
-        by an identifier, use /users/lookup.'
+        Ordered by creation date. The `email` and `status` filters are deprecated and
+        will be removed; to find one internal user by an identifier, use /users/lookup.'
       operationId: get_internal_users_bridge_api_v1_workspaces__workspaceId__users_get
       security:
       - x-api-key: []
@@ -2484,6 +2504,27 @@ paths:
           - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
           title: Workspaceid
         description: Unique identifier of the workspace (UUID v4).
+      - name: email
+        in: query
+        required: false
+        deprecated: true
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter internal users by exact email address.
+          example: john.doe@example.com
+          title: Email
+        description: 'Filter internal users by exact email address. Deprecated: will be removed. Use `GET /users/lookup?type=EMAIL`. See the Changelog.'
+      - name: status
+        in: query
+        required: false
+        deprecated: true
+        schema:
+          $ref: '#/components/schemas/UserStatusFilter'
+          description: 'Filter by status: ''active'' (default), ''disabled'', or ''all''.'
+          default: active
+        description: 'Filter by status: ''active'' (default), ''disabled'', or ''all''. Deprecated: will be removed. Read `status` off each row instead. See the Changelog.'
       - name: limit
         in: query
         required: false
@@ -4656,6 +4697,13 @@ components:
       - msg
       - type
       title: ValidationError
+    UserStatusFilter:
+      type: string
+      enum:
+      - active
+      - disabled
+      - all
+      title: UserStatusFilter
   securitySchemes:
     x-api-key:
       type: apiKey
