@@ -1,0 +1,232 @@
+---
+title: "Onboarding template parameters"
+sidebarTitle: "Onboarding template parameters"
+description: "Open a conversation with your own WhatsApp templates, fill their variables, and handle every error the request can return."
+keywords: ["onboarding", "onboardingTemplates", "template", "parameters", "variables", "callerMustSupply", "WhatsApp", "422"]
+---
+
+## Overview
+
+When you create a conversation, `onboardingTemplates` lets you choose the WhatsApp templates it opens with, in order. A template can contain variables — an order number, a delivery date, the Contact's first name. Some of them Bridge fills on its own for each Contact; others only you can provide, and you send them in the entry's `parameters`.
+
+The flow has three steps:
+
+1. Look up the template's variables.
+2. Decide which values to send.
+3. Send them with `POST .../conversations`.
+
+<Note>
+  Every check described on this page runs before anything is created. If the request is rejected, **no conversation is created and no message is sent**, so you can correct it and send it again.
+</Note>
+
+---
+
+## 1. Find the template's variables
+
+```http
+GET /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}
+x-api-key: YOUR_API_KEY
+```
+
+`templateId` accepts either the template's `id` or its `name`. The response lists its variables:
+
+```json
+{
+  "id": "f0000040-0000-4000-8000-000000000040",
+  "name": "order_shipped_promo",
+  "language": "es",
+  "variables": [
+    { "key": "first_name", "label": "Contact first name", "callerMustSupply": false },
+    { "key": "order_number", "label": "Order number", "callerMustSupply": true },
+    { "key": "delivery_date", "label": "Delivery date", "callerMustSupply": true }
+  ]
+}
+```
+
+| Field | Meaning |
+| ----- | ------- |
+| `key` | The name to use in `parameters` |
+| `label` | A human-readable description of the variable |
+| `callerMustSupply` | Whether Bridge has a value of its own for this variable |
+
+A template that is not in your workspace returns `404` with `BRIDGE_TEMPLATE_0001`.
+
+---
+
+## 2. Decide which values to send
+
+| `callerMustSupply` | What it means | What to do |
+| ------------------ | ------------- | ---------- |
+| `true` | Bridge has no source for this value | **Required.** Send a non-blank value for its `key` |
+| `false` | Bridge fills it for each Contact, such as the Contact's first name | **Optional.** Omit it to keep Bridge's value |
+
+A value you send for a `callerMustSupply: false` variable replaces Bridge's value and is used **for every Contact** in the conversation.
+
+<Warning>
+  To keep Bridge's value, **omit the key**. A blank value is not treated as "use the default": it is sent as you wrote it. A required variable with a blank or whitespace-only value is rejected as missing.
+</Warning>
+
+---
+
+## 3. Send the parameters
+
+Each entry in `onboardingTemplates` takes the template's `id` (as returned in step 1) and its `parameters`, keyed by variable `key`. Position in the list sets the sending order.
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/conversations
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+```
+
+```json
+{
+  "participants": {
+    "externals": [
+      {
+        "identifier": "+13802098869",
+        "identifierType": "PHONE",
+        "messageProviderType": "WHATSAPP",
+        "brandId": "YOUR_BRAND_ID"
+      }
+    ]
+  },
+  "onboardingTemplates": [
+    {
+      "templateId": "f0000040-0000-4000-8000-000000000040",
+      "parameters": {
+        "order_number": "A-10492",
+        "delivery_date": "3 de octubre"
+      }
+    }
+  ]
+}
+```
+
+In this example `first_name` is omitted, so each Contact receives their own first name.
+
+Limits per template: at most **50** parameters, keys up to **128** characters, values up to **1,024** characters. Requests beyond these limits are rejected as malformed (see [Errors](#errors)).
+
+Depending on how the workspace is set up, your templates replace its whole onboarding sequence or only its first template. In the second case, the rest of the configured sequence is still sent after yours.
+
+---
+
+## WhatsApp value rules
+
+WhatsApp rejects some values when the message is sent. Bridge checks them up front so the request fails while you can still fix it:
+
+| Rule | Limit |
+| ---- | ----- |
+| Line breaks and tabs | Not allowed — no `\n`, `\r` or `\t` |
+| Consecutive spaces | At most 4 in a row |
+| Header | The header text with your value in place fits in **60** characters |
+| URL button | The button's link with your value in place fits in **2,000** characters |
+| Body | The body text plus all its values fits in **1,024** characters |
+
+<Warning>
+  The body limit includes the values Bridge fills in for each Contact, such as their first name. Bridge can only check the values it can see when you make the request, so leave room for them.
+</Warning>
+
+Bridge never trims or rewrites your values: what you send is what the Contact receives.
+
+---
+
+## Errors
+
+All errors use the `application/problem+json` format described in [Error codes](/error-codes). Branch on `code`, never on `title`.
+
+| Code | Status | When | `extra` |
+| ---- | ------ | ---- | ------- |
+| `BRIDGE_CONVERSATION_0601` | 404 | The template does not exist | `templateId`, `workspaceId` |
+| `BRIDGE_CONVERSATION_0602` | 400 | The template belongs to another workspace | `templateId`, `workspaceId` |
+| `BRIDGE_CONVERSATION_0603` | 400 | The template is not approved for the line a participant will be reached on | `templateId`, `workspaceId`, `userIds` (the Contacts whose line it is not approved for, when known) |
+| `BRIDGE_CONVERSATION_0604` | 422 | A required variable is missing or blank | `templateId`, `missingVariables: [{key, label}]` |
+| `BRIDGE_CONVERSATION_0605` | 422 | A key in `parameters` is not one of the template's variables | `templateId`, `unknownKeys: [key]` |
+| `BRIDGE_CONVERSATION_0606` | 422 | `parameters` was sent for a template that is not a WhatsApp template | `templateId` |
+| `BRIDGE_CONVERSATION_0607` | 422 | A value breaks a [WhatsApp rule](#whatsapp-value-rules) | `templateId`, `invalidVariables: [{key, label, reason}]` |
+| `BRIDGE_CONVERSATION_0608` | 422 | A template the workspace sends after yours needs values only the caller can provide | `templateId`, `origin: "WORKSPACE_CONFIGURATION"` |
+
+### Missing values — `0604`
+
+```json
+{
+  "title": "A template named in the onboarding override is missing values only the caller can provide",
+  "status": 422,
+  "detail": "A template named in the onboarding override is missing values only the caller can provide",
+  "code": "BRIDGE_CONVERSATION_0604",
+  "extra": {
+    "templateId": "f0000040-0000-4000-8000-000000000040",
+    "missingVariables": [
+      { "key": "delivery_date", "label": "Delivery date" }
+    ]
+  }
+}
+```
+
+### Invalid values — `0607`
+
+```json
+{
+  "title": "Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent",
+  "status": 422,
+  "detail": "Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent",
+  "code": "BRIDGE_CONVERSATION_0607",
+  "extra": {
+    "templateId": "f0000040-0000-4000-8000-000000000040",
+    "invalidVariables": [
+      { "key": "order_number", "label": "Order number", "reason": "NEWLINE" }
+    ]
+  }
+}
+```
+
+`reason` is the first rule the value breaks:
+
+| `reason` | Meaning |
+| -------- | ------- |
+| `NEWLINE` | The value contains `\n` or `\r` |
+| `TAB` | The value contains `\t` |
+| `CONSECUTIVE_SPACES` | The value has more than 4 spaces in a row |
+| `TOO_LONG` | The header or URL button exceeds its limit with the value in place |
+| `BODY_TOO_LONG` | The body exceeds 1,024 characters; every body value you sent is listed |
+
+### `0608` is not fixed by changing the request
+
+`BRIDGE_CONVERSATION_0608` only occurs in workspaces where your templates replace just the first template of the onboarding sequence. It means a template the workspace sends after yours needs values that only the caller can provide, and the API cannot supply them. Ask a workspace admin to change the onboarding sequence.
+
+### Malformed requests
+
+A request that does not match the schema — more than 50 parameters, a key over 128 characters, a value over 1,024, or an unknown field — is rejected with `422` **without a `code`**. It carries an `errors` list pointing at each problem instead:
+
+```json
+{
+  "title": "Unprocessable content",
+  "status": 422,
+  "errors": [
+    {
+      "loc": ["body", "onboardingTemplates", 0, "parameters", "order_number"],
+      "msg": "String should have at most 1024 characters",
+      "type": "string_too_long"
+    }
+  ]
+}
+```
+
+### Evaluation order
+
+Checks run in this order, and **the first error wins**:
+
+1. Rate limit — `429`
+2. Request shape — `422` without `code`
+3. Participants, brand and line — `400` / `409`, for example `BRIDGE_BRAND_0101` or `BRIDGE_PROVIDER_CHANNEL_0001`
+4. Each template, in list order: `0601` / `0602` → `0603` → `0606` → `0605` → `0604` → `0607`
+5. `0608`, only in workspaces where your templates replace just the first template
+
+So fixing one error can reveal the next. Values for a later template are not checked until every earlier template passes.
+
+---
+
+## Related Topics
+
+- [Create a conversation](/api-reference/conversations-api/creates-a-new-conversation-with-flexible-user-identification) — Full request and response reference
+- [Error Codes](/error-codes) — Every code, including brand and line errors
+- [Rate limits](/rate-limits) — Handling `429`
