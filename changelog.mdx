@@ -7,7 +7,7 @@ keywords: ["changelog", "breaking change", "deprecation", "migration", "lookup",
 
 ## Overview
 
-Changes that affect the calls you already make, newest first. Additive changes — a new endpoint, a new optional field — are not listed here; they appear in the [REST API](/api-reference) reference when they ship.
+Changes that affect the calls you already make, newest first. Additive changes — a new endpoint, a new optional field — are not listed here unless they replace something being removed; they appear in the [REST API](/api-reference) reference when they ship.
 
 ---
 
@@ -32,11 +32,11 @@ Changes that affect the calls you already make, newest first. Additive changes �
 | `GET /users?email=` | `GET /users/lookup?type=EMAIL&value=…` |
 | `GET /users?status=` | **none** — every row already carries `status` |
 
-Once removed, a parameter will be **refused**, not ignored. Sending one will return `400` with `BRIDGE_CORE_0103` and names the parameter in the response. We chose this deliberately: a call that silently ignored your filter would hand you the first page of your whole workspace and let you treat it as a match.
+Once removed, a parameter will be **refused**, not ignored. Sending one will return `400` with `BRIDGE_CORE_0103`, and the response will name the parameter. We chose this deliberately: a call that silently ignored your filter would hand you the first page of your whole workspace and let you treat it as a match.
 
 ### What to do
 
-**If you search by cellphone or email**, move to the matching lookup endpoint. It answers with the same object the list returns for a single match, and returns `404` when nothing matches.
+**If you search by cellphone or email**, move to the matching lookup endpoint. It answers with the same object the list returns for each row, and returns `404` when nothing matches.
 
 `type` takes the identifier types the API already uses elsewhere — the same values as `identifierType` on a conversation participant. Contacts accept `ID`, `EMAIL` and `PHONE`; internal users accept `ID` and `EMAIL`, since an internal user's cellphone is not an addressable identifier in Bridge.
 
@@ -62,6 +62,8 @@ A `value` that does not match its `type` — not a well-formed email, cellphone 
 
 **If you filter internal users by status**, read `status` off each row instead. It is derived rather than stored, and it is already in every response. Note that today the list returns only active users unless you pass `status`; once the parameter is removed it will return active and disabled users alike.
 
+The same applies to `GET /users/lookup`: it returns the internal user whether active or disabled, preferring the active one when an email matches both. `GET /users?email=` returns nothing for a disabled user today, so check `status` on the response if you only act on active users.
+
 **If you search contacts by name**, there will be no replacement, and it is worth knowing what you would lose. The parameter only matches the **exact full name** — first name, one space, last name. It never matches a prefix, a partial, or a surname on its own. If it works for you, you are passing the complete name already.
 
 **If you filter contacts by owner**, there will be no replacement. List the page and filter on `ownerId` in your own code.
@@ -70,7 +72,7 @@ A `value` that does not match its `type` — not a well-formed email, cellphone 
 
 Filtering on those parameters makes the cost of the call depend on the size of your workspace rather than the size of the answer. Looking up one contact by phone number in a large workspace reads tens of thousands of records to return one — and asking for a bigger page makes it slower, not faster. The lookup endpoints read one record.
 
-This is also why the filters are being removed rather than fixed: for the cases that have a replacement, the replacement is strictly better, and for the cases that do not, the capability never behaved the way its name suggested.
+This is also why the filters are being removed rather than fixed: where a replacement exists it is strictly better, and the name search, which has none, never matched anything but the exact full name.
 
 ---
 

@@ -145,7 +145,7 @@ Error codes returned before an operation runs, when the request itself cannot be
 | `BRIDGE_CORE_0103` | Bad Request | The request is invalid; review the body and parameters |
 | `BRIDGE_CORE_0104` | Invalid Cursor | The provided cursor is invalid; use a cursor obtained from a previous response |
 
-None of these should be retried unchanged. The response names the field or parameter at fault, and the same request will fail the same way until you change it.
+None of these should be retried unchanged. `detail` describes what is wrong and, when it can, names the field or parameter at fault; the same request will fail the same way until you change it.
 
 ## Template Error Codes
 
