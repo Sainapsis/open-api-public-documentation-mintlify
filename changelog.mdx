@@ -1,0 +1,83 @@
+---
+title: "Changelog"
+sidebarTitle: "Changelog"
+description: "Changes to the Bridge API that affect your integration, newest first."
+keywords: ["changelog", "breaking change", "deprecation", "migration", "lookup", "list filters"]
+---
+
+## Overview
+
+Changes that affect the calls you already make, newest first. Additive changes — a new endpoint, a new optional field — are not listed here unless they replace something being removed; they appear in the [REST API](/api-reference) reference when they ship.
+
+---
+
+## Finding a contact or a user by an identifier
+
+<Warning>
+  **This will remove query parameters that exist today.** They still work and are marked deprecated in the [REST API](/api-reference) reference. The date they stop being accepted will be published here before that happens; the lookup endpoints that replace them are available now.
+</Warning>
+
+### What changes
+
+**Available now:** `GET /contacts/lookup` and `GET /users/lookup` return one contact or one internal user by an identifier.
+
+**Deprecated, to be removed:** the list endpoints will stop filtering. `GET /contacts` and `GET /users` will keep `limit` and `cursor` and nothing else.
+
+| Deprecated | Replacement |
+| ------- | ----------- |
+| `GET /contacts?search=` — a cellphone | `GET /contacts/lookup?type=PHONE&value=…` |
+| `GET /contacts?search=` — an email | `GET /contacts/lookup?type=EMAIL&value=…` |
+| `GET /contacts?search=` — a name | **none** |
+| `GET /contacts?ownerEmail=` | **none** |
+| `GET /users?email=` | `GET /users/lookup?type=EMAIL&value=…` |
+| `GET /users?status=` | **none** — every row already carries `status` |
+
+Once removed, a parameter will be **refused**, not ignored. Sending one will return `400` with `BRIDGE_CORE_0103`, and the response will name the parameter. We chose this deliberately: a call that silently ignored your filter would hand you the first page of your whole workspace and let you treat it as a match.
+
+### What to do
+
+**If you search by cellphone or email**, move to the matching lookup endpoint. It answers with the same object the list returns for each row, and returns `404` when nothing matches.
+
+`type` takes the identifier types the API already uses elsewhere — the same values as `identifierType` on a conversation participant. Contacts accept `ID`, `EMAIL` and `PHONE`; internal users accept `ID` and `EMAIL`, since an internal user's cellphone is not an addressable identifier in Bridge.
+
+`ID` is accepted for the same reason: code that already carries an `{identifierType, identifier}` pair should not have to branch on one of the values to build a different URL. It returns exactly what `GET /contacts/{contactId}` returns, and that remains the canonical URL for a contact — prefer it when the id is what you hold.
+
+```bash
+# Before
+curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?search=%2B14084029292" \
+  -H "x-api-key: $BRIDGE_API_KEY"
+
+# After
+curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts/lookup?type=PHONE&value=%2B14084029292" \
+  -H "x-api-key: $BRIDGE_API_KEY"
+```
+
+A `PHONE` is read the same way as the cellphone you send when you create a contact: a number without a country code is read in your workspace's default country, and spaces and separators are ignored. An `EMAIL` has its domain lowercased, but its local part is matched exactly as sent.
+
+<Note>
+  A cellphone in international form begins with `+`, which must be percent-encoded as `%2B` in a query string. Most HTTP clients do this for you when you pass parameters as a map rather than building the URL by hand.
+</Note>
+
+A `value` that does not match its `type` — not a well-formed email, cellphone or UUID — is rejected with `422` and `BRIDGE_CORE_0101` before any lookup happens. Handle it separately from `404` if you pass user input straight through: one says *you sent something that is not an identifier*, the other says *nobody here holds it*.
+
+**If you filter internal users by status**, read `status` off each row instead. It is derived rather than stored, and it is already in every response. Note that today the list returns only active users unless you pass `status`; once the parameter is removed it will return active and disabled users alike.
+
+The same applies to `GET /users/lookup`: it returns the internal user whether active or disabled, preferring the active one when an email matches both. `GET /users?email=` returns nothing for a disabled user today, so check `status` on the response if you only act on active users.
+
+**If you search contacts by name**, there will be no replacement, and it is worth knowing what you would lose. The parameter only matches the **exact full name** — first name, one space, last name. It never matches a prefix, a partial, or a surname on its own. If it works for you, you are passing the complete name already.
+
+**If you filter contacts by owner**, there will be no replacement. List the page and filter on `ownerId` in your own code.
+
+### Why
+
+Filtering on those parameters makes the cost of the call depend on the size of your workspace rather than the size of the answer. Looking up one contact by phone number in a large workspace reads tens of thousands of records to return one — and asking for a bigger page makes it slower, not faster. The lookup endpoints read one record.
+
+This is also why the filters are being removed rather than fixed: where a replacement exists it is strictly better, and the name search, which has none, never matched anything but the exact full name.
+
+---
+
+## Related Topics
+
+- [Error Codes](/error-codes) — Full reference, including `BRIDGE_CORE_0103` and `BRIDGE_CORE_0101`
+- [REST API Reference](/api-reference) — The lookup endpoints, their parameters and their responses
+- [Rate limits](/rate-limits) — What the API accepts per workspace, and how to back off correctly
