@@ -39,6 +39,16 @@ Errors are returned as `application/problem+json`:
   A request that does not match the request schema — a missing or unknown field, a wrong type, or a value over its length limit — returns `422` **without a `code`**. Its `errors` list holds one entry per problem, each with `loc` (where), `msg` (what) and `type`.
 </Note>
 
+## Agent Error Codes
+
+Error codes for Agent operations.
+
+| Code | Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_AI_AGENT_OUTBOUND_0007` | Invalid Cursor | Pagination cursor is malformed or belongs to another workspace |
+
+Returned as `400` by `GET .../agents` when the `cursor` was not issued by a previous page of the same workspace and `type` filter. Start again without a cursor.
+
 ## Brand Error Codes
 
 Error codes for brand checks when creating a conversation.

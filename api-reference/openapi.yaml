@@ -2354,6 +2354,115 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/agents:
+    get:
+      tags:
+      - Agents API
+      summary: List the Agents of a workspace
+      description: 'List the workspace''s Agents with their status, availability and
+        lines.
+
+
+        Every Agent is listed whatever its status; `available` tells whether it can
+        start conversations.
+
+        A page can hold fewer than `limit` items; keep paging while `cursor` is not
+        null.'
+      operationId: list_agents_bridge_api_v1_workspaces__workspaceId__agents_get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/AgentType'
+          - type: 'null'
+          description: Only return Agents of this type.
+          title: Type
+        description: Only return Agents of this type.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Number of Agents per page
+          default: 20
+          title: Limit
+        description: Number of Agents per page
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Cursor provided on a previous request to get the next page
+          title: Cursor
+        description: Cursor provided on a previous request to get the next page
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentsResponseList'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                INVALID_CURSOR:
+                  value:
+                    title: Invalid Cursor
+                    status: 400
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0007
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
     ClosedAttribute:
@@ -4451,6 +4560,117 @@ components:
       - msg
       - type
       title: ValidationError
+    AgentConfigStatus:
+      type: string
+      enum:
+      - DRAFT
+      - COMPLETE
+      title: AgentConfigStatus
+    AgentLine:
+      properties:
+        providerChannelId:
+          type: string
+          title: Provider Channel Identifier
+          description: Identifier of the line (the same value `providerChannelId`
+            takes on outbound operations).
+      type: object
+      required:
+      - providerChannelId
+      title: AgentLine
+      description: Messaging line an Agent answers on.
+    AgentType:
+      type: string
+      enum:
+      - LEADSCOUT
+      - SERVICE_AGENT
+      title: AgentType
+      description: Kinds of Agent exposed by the public API.
+    AgentsResponseList:
+      properties:
+        agents:
+          items:
+            $ref: '#/components/schemas/AgentResponse'
+          type: array
+          title: Agents
+          description: Array of Agents.
+        cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cursor
+          description: Cursor to be sent on the next page request. Null on the last
+            page.
+      type: object
+      required:
+      - agents
+      title: AgentsResponseList
+      description: Response body for listing the Agents of a workspace.
+    AgentResponse:
+      properties:
+        id:
+          type: string
+          title: Agent Identifier
+          description: Unique identifier of the Agent.
+        name:
+          type: string
+          title: Name
+          description: Name of the Agent.
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+          description: Description of the Agent.
+        type:
+          $ref: '#/components/schemas/AgentType'
+          title: Type
+          description: Kind of Agent.
+          examples:
+          - LEADSCOUT
+          - SERVICE_AGENT
+        brandId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Brand Identifier
+          description: Brand the Agent belongs to, when it is scoped to one.
+        status:
+          $ref: '#/components/schemas/AgentConfigStatus'
+          title: Status
+          description: Configuration status of the Agent.
+          examples:
+          - DRAFT
+          - COMPLETE
+        available:
+          type: boolean
+          title: Available
+          description: 'Whether the Agent can start conversations: its configuration
+            is complete and it has a line.'
+        unavailableReason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Unavailable Reason
+          description: 'Why the Agent is not available: `DRAFT` or `NO_LINES`. Null
+            when it is available.'
+          examples:
+          - DRAFT
+          - NO_LINES
+        lines:
+          items:
+            $ref: '#/components/schemas/AgentLine'
+          type: array
+          title: Lines
+          description: Active messaging lines the Agent answers on.
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - status
+      - available
+      title: AgentResponse
+      description: An Agent of the workspace with its status and availability.
   securitySchemes:
     x-api-key:
       type: apiKey
