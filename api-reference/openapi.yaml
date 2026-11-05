@@ -1967,11 +1967,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: Validation Error
+          description: Unprocessable Content
           content:
             application/json:
+              examples:
+                MISSING_TEMPLATE_VARIABLES:
+                  value:
+                    title: Missing Template Variables
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0019
+                CONFLICTING_TEMPLATE_PARAMETERS:
+                  value:
+                    title: Conflicting Template Parameters
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0020
+                UNKNOWN_TEMPLATE_PARAMETER_KEY:
+                  value:
+                    title: Unknown Template Parameter Key
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0021
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/leadscout/conversations/{conversationId}/handoff:
     post:
       tags:
@@ -2050,8 +2066,8 @@ paths:
       tags:
       - Templates API
       summary: Discover a template's agnostic variable inventory
-      description: "Return a template's variables — agnostic `key`/`label`/`callerMustSupply`,\
-        \ never a Meta slot address or index.\n\n`templateId` accepts either the template's\
+      description: "Return a template's variables — agnostic `key`/`label`/`callerMustSupply`/`isCustom`/`default`.\n\
+        \nNever a Meta slot address or index.\n\n`templateId` accepts either the template's\
         \ `id` or its `name` — the send contract\n(`POST .../leadscout/outbound`)\
         \ identifies a template by `name`; this discovery endpoint\nalso accepts `id`,\
         \ so a caller who only has one of the two can still look it up.\n\nA variable\
@@ -2059,13 +2075,15 @@ paths:
         its `key` in `parameters` when sending, or the send fails with a 422 naming\
         \ that same `key`.\nA variable with `callerMustSupply: false` is either resolved\
         \ by Bridge on its own (e.g. the\nrecipient's first name) or already has a\
-        \ value the caller may optionally override.\n\nError codes:\n- BRIDGE_CORE_0301:\
-        \ workspace in the path does not match the caller's own workspace (403)\n\
-        - BRIDGE_TEMPLATE_0001: no PROVIDER_TEMPLATE found for this workspace and\
-        \ identifier — covers\n  an unknown id/name, a template that belongs to another\
-        \ workspace, and a template that is\n  not a PROVIDER_TEMPLATE, identically\
-        \ (404); this endpoint never confirms the existence of\n  a template outside\
-        \ the caller's own workspace"
+        \ value the caller may optionally override.\nA variable with `isCustom: true`\
+        \ is a value only the caller knows, with a `default`: send it in\n`parameters`\
+        \ to use your own value, or leave it out (or blank) and `default` goes out.\n\
+        \nError codes:\n- BRIDGE_CORE_0301: workspace in the path does not match the\
+        \ caller's own workspace (403)\n- BRIDGE_TEMPLATE_0001: no PROVIDER_TEMPLATE\
+        \ found for this workspace and identifier — covers\n  an unknown id/name,\
+        \ a template that belongs to another workspace, and a template that is\n \
+        \ not a PROVIDER_TEMPLATE, identically (404); this endpoint never confirms\
+        \ the existence of\n  a template outside the caller's own workspace"
       operationId: get_template_discovery_bridge_api_v1_workspaces__workspaceId__templates__templateId__get
       security:
       - x-api-key: []
@@ -4301,6 +4319,26 @@ components:
           examples:
           - true
           - false
+        isCustom:
+          type: boolean
+          title: Is custom
+          description: 'Whether this is a custom variable: a value only the caller
+            knows, with a default text. The caller may send it in `parameters`; when
+            it is left out or sent blank, `default` goes out.'
+          default: false
+          examples:
+          - true
+          - false
+        default:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Default
+          description: For a custom variable, the text sent when the caller sends
+            no value for it; null otherwise.
+          examples:
+          - pending
+          - null
       type: object
       required:
       - key
@@ -4311,12 +4349,16 @@ components:
         slot address ever appears here.
       examples:
       - callerMustSupply: false
+        isCustom: false
         key: first_name
         label: Contact first name
       - callerMustSupply: false
+        default: pending
+        isCustom: true
         key: tracking_code
         label: Tracking code
       - callerMustSupply: true
+        isCustom: false
         key: promo_code
         label: Promo code
     UpdateContactBody:
