@@ -2493,13 +2493,15 @@ paths:
         \ line is occupied by an active conversation the call fails with 409 `BRIDGE_AI_LEADSCOUT_0008`\
         \ even\n  with `forceSend=true`.\n\n`contact.providerChannelId` is a preference:\
         \ the pinned line is used when it is free or recoverable;\notherwise the same\
-        \ order applies over the Agent's lines.\n\nReusing a conversation depends\
-        \ on the Agent type:\n- LeadScout: if its LeadScout session is still open\
-        \ and not expired, the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra`\
-        \ carries `conversationId`, `sessionId` and `stage`). If an expired\n  session\
-        \ cannot be finalized, it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service\
-        \ Agent: an open, unexpired service session is continued; an expired one is\
-        \ closed as abandoned and a\n  new one opens."
+        \ order applies over all the Agent's lines. Among occupied lines, one this\
+        \ Agent controls\ncomes first; if none does, the pinned line is the one reused\
+        \ (and may fail with 0006).\n\nReusing a conversation depends on the Agent\
+        \ type:\n- LeadScout: if its LeadScout session is still open and not expired,\
+        \ the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra` carries `conversationId`,\
+        \ `sessionId` and `stage`). If an expired\n  session cannot be finalized,\
+        \ it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: an open,\
+        \ unexpired service session is continued; an expired one is closed as abandoned\
+        \ and a\n  new one opens."
       operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
       security:
       - x-api-key: []
@@ -5044,8 +5046,9 @@ components:
             lines can be used. When given, it must be an active line of the Agent,
             otherwise the request fails with 422. It is a preference, not a guarantee:
             if that line is neither free nor recoverable, the same order applies over
-            the Agent''s other lines, and the response does not say which line was
-            used.'
+            all the Agent''s lines (with `forceSend=true`, an occupied line this Agent
+            controls comes first, then the pinned one), and the response does not
+            say which line was used.'
           examples:
           - c4f2a1e0-9b8d-4e7c-a6f5-1d2e3f4a5b6c
           - null

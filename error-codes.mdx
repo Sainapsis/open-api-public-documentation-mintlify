@@ -66,15 +66,15 @@ Error codes for Agent operations.
 | ---- | ------ | ------- |
 | `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, or `template.media` does not carry exactly one of `mediaId` or `url` |
 | `BRIDGE_CORE_0301` | 403 | The workspace in the path differs from the one of the API key |
-| `BRIDGE_AI_LEADSCOUT_0001` | 404 | External user not found |
-| `BRIDGE_AI_LEADSCOUT_0002` | 404 | Internal user not found |
-| `BRIDGE_AI_LEADSCOUT_0003` | 409 | Internal user is deleted |
+| `BRIDGE_AI_LEADSCOUT_0001` | 404 | The Contact does not exist in the workspace |
+| `BRIDGE_AI_LEADSCOUT_0002` | 404 | The `handoffOverride` Bridge User does not exist in the workspace |
+| `BRIDGE_AI_LEADSCOUT_0003` | 409 | The `handoffOverride` Bridge User was deleted |
 | `BRIDGE_AI_LEADSCOUT_0004` | 404 | Template not found |
 | `BRIDGE_AI_LEADSCOUT_0005` | 409 | Template not approved |
 | `BRIDGE_AI_LEADSCOUT_0006` | 400 | Template ordered params mismatch |
-| `BRIDGE_AI_LEADSCOUT_0007` | 409 | Active conversation already exists |
-| `BRIDGE_AI_LEADSCOUT_0008` | 409 | All provider channels are occupied |
-| `BRIDGE_AI_LEADSCOUT_0009` | 404 | No channels configured for brand |
+| `BRIDGE_AI_LEADSCOUT_0007` | 409 | Active conversation already exists: another request took the released conversation first. Retry |
+| `BRIDGE_AI_LEADSCOUT_0008` | 409 | No line of the Agent is free or recoverable for this Contact (see `forceSend`) |
+| `BRIDGE_AI_LEADSCOUT_0009` | 404 | No line configured for the requested `brandId` |
 | `BRIDGE_AI_LEADSCOUT_0016` | 400 | Outbound validation error |
 | `BRIDGE_AI_LEADSCOUT_0017` | 409 | Latest session is not finalized |
 | `BRIDGE_AI_LEADSCOUT_0018` | 409 | Could not finalize the expired session before starting a new one |
