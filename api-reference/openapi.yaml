@@ -2469,17 +2469,37 @@ paths:
       - Agents API
       summary: Start an outbound conversation with a Contact as a given Agent
       description: "Start an outbound conversation with a known Contact, answered\
-        \ by the given Agent.\n\nWorks for LeadScout and Service Agents. Pre-flight\
-        \ checks run before any write: the Agent exists in the\nworkspace and is available\
-        \ (see `GET /agents`), the template exists and is APPROVED, the Contact exists,\
-        \ a\nline of the Agent resolves, and any `handoffOverride` user is valid.\
-        \ The conversation is opened controlled by\nthat Agent, with the template\
-        \ as its first message.\n\nIf the Contact already has an active conversation\
-        \ on the line:\n- `forceSend=false` (default) → `409` (`ACTIVE_CONVERSATION_ALREADY_EXISTS`).\n\
-        - `forceSend=true` → the conversation is reused only when this same Agent\
-        \ controls it; when a Bridge User\n  or another Agent holds it, the call fails\
-        \ with `409` (`ACTIVE_CONVERSATION_CONTROLLED_BY_OTHER_AGENT`) and\n  nothing\
-        \ is written. Release that conversation first, then retry."
+        \ by the given Agent.\n\nWorks for LeadScout and Service Agents. The Contact\
+        \ is resolved first, then the Agent, which must exist in\nthe workspace and\
+        \ be available (see `GET /agents`). The template must exist and be APPROVED,\
+        \ and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId`\
+        \ is unknown, the request fails\nwith 400 `BRIDGE_AI_LEADSCOUT_0016` only\
+        \ after the conversation was created or recovered, so a retry after\nthat\
+        \ error may answer differently. Body rules (`consent.status=GRANTED` without\
+        \ `capturedAt`, `template.media`\nwithout exactly one of `mediaId` or `url`)\
+        \ fail with 400 `BRIDGE_CORE_0103`.\n\nThe conversation opens on one of the\
+        \ Agent's active WhatsApp lines, controlled by the Agent, with the template\n\
+        as its first message. A line is picked in this order:\n- A free line.\n- Otherwise,\
+        \ a line holding a released conversation with this Contact that can be recovered.\
+        \ Recovering\n  returns `recovered=true` and replaces the previous outbound\
+        \ context and `agentContext`. This happens even\n  with `forceSend=false`.\n\
+        - Otherwise, when no line is free or recoverable: `forceSend=false` (default)\
+        \ fails with 409\n  `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reuses a\
+        \ line occupied by an active conversation with this\n  Contact, preferring\
+        \ one this Agent controls. If the chosen conversation is held by another Agent\
+        \ or a\n  Bridge User, the call fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006`\
+        \ and nothing is written. Release it\n  first, then retry. Lines whose conversation\
+        \ is blocked or was released without recovery are never used, so\n  if no\
+        \ line is occupied by an active conversation the call fails with 409 `BRIDGE_AI_LEADSCOUT_0008`\
+        \ even\n  with `forceSend=true`.\n\n`contact.providerChannelId` is a preference:\
+        \ the pinned line is used when it is free or recoverable;\notherwise the same\
+        \ order applies over the Agent's lines.\n\nReusing a conversation depends\
+        \ on the Agent type:\n- LeadScout: if its LeadScout session is still open\
+        \ and not expired, the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra`\
+        \ carries `conversationId`, `sessionId` and `stage`). If an expired\n  session\
+        \ cannot be finalized, it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service\
+        \ Agent: an open, unexpired service session is continued; an expired one is\
+        \ closed as abandoned and a\n  new one opens."
       operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
       security:
       - x-api-key: []
@@ -2521,7 +2541,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LeadscoutOutboundResponse'
+                $ref: '#/components/schemas/AgentOutboundResponse'
         '429':
           description: Too Many Requests
           content:
@@ -2581,11 +2601,6 @@ paths:
                     title: No Channels For Brand
                     status: 404
                     code: BRIDGE_AI_LEADSCOUT_0009
-                WORKSPACE_HAS_NO_PROVIDER_CHANNELS:
-                  value:
-                    title: No Provider Channels
-                    status: 404
-                    code: BRIDGE_AI_LEADSCOUT_0011
               schema:
                 $ref: '#/components/schemas/Problem'
         '409':
@@ -2623,6 +2638,16 @@ paths:
                     title: All Channels Occupied
                     status: 409
                     code: BRIDGE_AI_LEADSCOUT_0008
+                LATEST_SESSION_NOT_FINAL:
+                  value:
+                    title: Latest Session Not Final
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0017
+                SESSION_FINALIZATION_FAILED:
+                  value:
+                    title: Session Finalization Failed
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0018
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
@@ -2662,6 +2687,11 @@ paths:
           content:
             application/json:
               examples:
+                BAD_REQUEST:
+                  value:
+                    title: Bad Request
+                    status: 400
+                    code: BRIDGE_CORE_0103
                 OUTBOUND_VALIDATION_ERROR:
                   value:
                     title: Outbound Validation Error
@@ -2672,18 +2702,6 @@ paths:
                     title: Template Params Mismatch
                     status: 400
                     code: BRIDGE_AI_LEADSCOUT_0006
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              examples:
-                CONVERSATION_OPERATION_FAILED:
-                  value:
-                    title: Conversation Operation Failed
-                    status: 500
-                    code: BRIDGE_AI_LEADSCOUT_0015
               schema:
                 $ref: '#/components/schemas/Problem'
 components:
@@ -4809,11 +4827,11 @@ components:
       required:
       - providerChannelId
       title: AgentLine
-      description: Messaging line an Agent answers on.
+      description: WhatsApp line an Agent answers on.
     AgentOutboundRequest:
       properties:
         contact:
-          $ref: '#/components/schemas/LeadscoutOutboundContactRef'
+          $ref: '#/components/schemas/AgentOutboundContactRef'
           title: Contact
           description: The Contact this outbound conversation targets. Must already
             exist in the workspace.
@@ -4823,20 +4841,20 @@ components:
           description: The opening template to send.
         additionalMessages:
           items:
-            $ref: '#/components/schemas/OutboundFollowUpRequest'
+            $ref: '#/components/schemas/AgentOutboundFollowUp'
           type: array
           maxItems: 5
           title: Additional Messages
-          description: Up to five follow-up messages persisted on the conversation.
-            They are not delivered immediately; the agent decides when to send them
-            once the lead replies.
+          description: Up to five text follow-ups stored on the conversation right
+            after the opening template, in the order given, and sent like the template.
+            Attachments (`mediaIds`) are not sent yet.
         agentContext:
           anyOf:
-          - $ref: '#/components/schemas/OutboundAgentContextRequest'
+          - $ref: '#/components/schemas/AgentOutboundContext'
           - type: 'null'
           title: Agent Context
           description: Optional notes and media stored on the conversation as context
-            for the agent.
+            for the Agent.
         consent:
           anyOf:
           - $ref: '#/components/schemas/OutboundConsentRequest'
@@ -4845,19 +4863,21 @@ components:
           description: Optional tenant-affirmed opt-in evidence recorded on the conversation.
         handoffOverride:
           anyOf:
-          - $ref: '#/components/schemas/LeadscoutOutboundHandoffOverride'
+          - $ref: '#/components/schemas/AgentOutboundHandoffOverride'
           - type: 'null'
           title: Handoff Override
-          description: Optional override to pre-assign a specific internal user as
-            the handoff advisor. Validated at request time; conversation creation
-            is aborted if validation fails.
+          description: 'Optional. Pre-assigns a specific Bridge User as the advisor
+            for the handoff. The Bridge User is validated before anything is written:
+            the request is rejected if the user does not exist, belongs to another
+            workspace, or has been deleted.'
         brandId:
           anyOf:
           - type: string
           - type: 'null'
           title: Brand Identifier
-          description: Optional brand id. When provided, only channels linked to this
-            brand are eligible. Omit to consider every channel in the workspace.
+          description: Optional brand id. When given, only the Agent's lines linked
+            to this brand are eligible; if none is, the request fails with 404. Omit
+            to consider every line of the Agent.
           examples:
           - null
           - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
@@ -4874,13 +4894,17 @@ components:
         forceSend:
           type: boolean
           title: Force Send
-          description: When true and the Contact already has an active conversation
-            on the chosen line, that conversation is reused only if this same Agent
-            controls it. If a Bridge User or another Agent controls it, the request
-            fails with 409 and nothing is written; release that conversation first.
-            When no providerChannelId is supplied and every line of the Agent is occupied,
-            the first candidate is used. When false (default), an existing active
-            conversation on the chosen line returns 409.
+          description: 'Controls what happens when no line of the Agent is free or
+            recoverable. A free line always wins, then a line holding a released conversation
+            with this Contact that can be recovered, whatever this flag says. When
+            neither exists: with false (default) the request fails with 409 `BRIDGE_AI_LEADSCOUT_0008`;
+            with true, a line occupied by an active conversation with this Contact
+            is reused, preferring one this Agent controls. If the chosen conversation
+            is held by another Agent or a Bridge User the request fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006`
+            and nothing is written; release it first, then retry. Lines whose conversation
+            is blocked or was released without recovery are never used, so with no
+            line occupied by an active conversation the request fails with 409 `BRIDGE_AI_LEADSCOUT_0008`
+            even with true.'
           default: false
           examples:
           - false
@@ -4934,7 +4958,8 @@ components:
           - type: string
           - type: 'null'
           title: Description
-          description: Description of the Agent.
+          description: Description of the Agent. Always present; null when it has
+            none.
         type:
           $ref: '#/components/schemas/AgentType'
           title: Type
@@ -4947,7 +4972,8 @@ components:
           - type: string
           - type: 'null'
           title: Brand Identifier
-          description: Brand the Agent belongs to, when it is scoped to one.
+          description: Brand the Agent belongs to. Always present; null when it is
+            not scoped to a brand.
         status:
           $ref: '#/components/schemas/AgentConfigStatus'
           title: Status
@@ -4965,8 +4991,8 @@ components:
           - type: string
           - type: 'null'
           title: Unavailable Reason
-          description: 'Why the Agent is not available: `DRAFT` or `NO_LINES`. Null
-            when it is available.'
+          description: 'Why the Agent is not available: `DRAFT` (configuration incomplete)
+            or `NO_LINES` (no active line). Always present; null when it is available.'
           examples:
           - DRAFT
           - NO_LINES
@@ -4975,7 +5001,8 @@ components:
             $ref: '#/components/schemas/AgentLine'
           type: array
           title: Lines
-          description: Active messaging lines the Agent answers on.
+          description: Active WhatsApp lines the Agent answers on. Empty when it has
+            none.
       type: object
       required:
       - id
@@ -4985,6 +5012,219 @@ components:
       - available
       title: AgentResponse
       description: An Agent of the workspace with its status and availability.
+    AgentOutboundContactRef:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Phone number in E.164 format identifying the contact.
+          examples:
+          - '+573001234567'
+        identifierType:
+          $ref: '#/components/schemas/ParticipantIdentifierType'
+          title: Identifier Type
+          description: Type of identifier.
+          examples:
+          - PHONE
+          - EMAIL
+          - ID
+        messageProviderType:
+          $ref: '#/components/schemas/MessageProviderType'
+          title: Message Provider Type
+          description: Provider used to deliver the template.
+          examples:
+          - WHATSAPP
+        providerChannelId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider Channel Identifier
+          description: 'Optional. A line of the Agent to prefer (the `providerChannelId`
+            of one of its `lines` in `GET /agents`). When omitted, any of the Agent''s
+            lines can be used. When given, it must be an active line of the Agent,
+            otherwise the request fails with 422. It is a preference, not a guarantee:
+            if that line is neither free nor recoverable, the same order applies over
+            the Agent''s other lines, and the response does not say which line was
+            used.'
+          examples:
+          - c4f2a1e0-9b8d-4e7c-a6f5-1d2e3f4a5b6c
+          - null
+      type: object
+      required:
+      - identifier
+      - identifierType
+      - messageProviderType
+      title: AgentOutboundContactRef
+      description: Identifies the Contact the outbound conversation will target.
+    AgentOutboundContext:
+      properties:
+        notes:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Notes
+          description: Free-text notes for the Agent, capped at 2000 characters.
+          examples:
+          - The Contact asked about pricing tiers last week.
+          - null
+        mediaIds:
+          items:
+            type: string
+          type: array
+          title: Media Identifiers
+          description: Optional preloaded-file identifiers persisted on the conversation
+            as context for the Agent.
+          examples:
+          - []
+          - - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+      type: object
+      title: AgentOutboundContext
+      description: Notes and media stored on the conversation as context for the Agent
+        and for Bridge Users.
+    AgentOutboundFollowUp:
+      properties:
+        messageBody:
+          type: string
+          title: Message Body
+          description: Plain-text body for the follow-up message.
+          examples:
+          - Just confirming we're still on for tomorrow at 10am.
+        mediaIds:
+          items:
+            type: string
+          type: array
+          title: Media Identifiers
+          description: 'Accepted but not used yet: follow-ups are stored as text only,
+            so attachments are not sent.'
+          examples:
+          - []
+          - - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+      type: object
+      required:
+      - messageBody
+      title: AgentOutboundFollowUp
+      description: A text follow-up stored on the conversation right after the opening
+        template.
+    AgentOutboundHandoffOverride:
+      properties:
+        preAssignedUser:
+          $ref: '#/components/schemas/AgentOutboundPreAssignedUser'
+          title: Pre-assigned User
+          description: 'The Bridge User to assign as advisor when the Agent hands
+            off the conversation. Validated at request time: the request is rejected
+            if the user does not exist, belongs to another workspace, or has been
+            deleted.'
+          examples:
+          - identifier: advisor@acme.com
+            identifierType: EMAIL
+      additionalProperties: false
+      type: object
+      required:
+      - preAssignedUser
+      title: AgentOutboundHandoffOverride
+      description: Pre-assigns the Bridge User who receives the handoff of the outbound
+        conversation.
+    AgentOutboundPreAssignedUser:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Value that identifies the Bridge User, interpreted according
+            to identifierType.
+          examples:
+          - advisor@acme.com
+          - usr_01HZ2K3J4M5N6P7Q8R9S0T1UV2
+        identifierType:
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
+          title: Identifier Type
+          description: How to resolve the identifier. ID looks up by Bridge User ID;
+            EMAIL looks up by email address.
+          examples:
+          - EMAIL
+          - ID
+      additionalProperties: false
+      type: object
+      required:
+      - identifier
+      - identifierType
+      title: AgentOutboundPreAssignedUser
+      description: Identifies the Bridge User who should receive the handoff.
+    AgentOutboundResponse:
+      properties:
+        conversation:
+          $ref: '#/components/schemas/ConversationResponse'
+          title: Conversation
+          description: 'The conversation the Agent now controls: newly created, reused
+            (`alreadyInitiated`) or recovered (`recovered`).'
+        contact:
+          $ref: '#/components/schemas/ContactResponse'
+          title: Contact
+          description: The contact the conversation was initiated with.
+        templateSent:
+          anyOf:
+          - $ref: '#/components/schemas/AgentTemplateSent'
+          - type: 'null'
+          title: Template Sent
+          description: Summary of the template stored to open the conversation.
+        additionalMessagesPersisted:
+          type: integer
+          title: Additional Messages Persisted
+          description: Count of follow-up messages persisted on the conversation.
+          default: 0
+          examples:
+          - 0
+          - 3
+        alreadyInitiated:
+          type: boolean
+          title: Already Initiated
+          description: True when this request landed on a pre-existing conversation
+            (forceSend=true reuse path); false when a fresh conversation was created.
+            Informational only — the new template and follow-ups are persisted either
+            way.
+          default: false
+          examples:
+          - false
+          - true
+        recovered:
+          type: boolean
+          title: Recovered
+          description: True when a released conversation the Contact had on the line
+            was recovered instead of creating a new one. Recovery replaces the previous
+            outbound context and `agentContext`. Recoverable lines are used even with
+            `forceSend=false`.
+          default: false
+          examples:
+          - false
+          - true
+      type: object
+      required:
+      - conversation
+      - contact
+      title: AgentOutboundResponse
+      description: Response body for a successful Agent outbound initiation.
+    AgentTemplateSent:
+      properties:
+        name:
+          type: string
+          title: Template Name
+          description: Name of the template that was dispatched.
+          examples:
+          - leadscout_outbound_fb_v1
+        messageId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message Identifier
+          description: Bridge message id of the template. Always present; it is not
+            a WhatsApp `wamid`.
+          examples:
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+      type: object
+      required:
+      - name
+      title: AgentTemplateSent
+      description: Summary of the template stored to open the conversation.
   securitySchemes:
     x-api-key:
       type: apiKey
