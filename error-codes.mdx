@@ -45,9 +45,20 @@ Error codes for Agent operations.
 
 | Code | Title | Message |
 | ---- | -------------- | ------- |
+| `BRIDGE_AI_AGENT_OUTBOUND_0001` | Agent Not Found | Agent not found in the workspace |
+| `BRIDGE_AI_AGENT_OUTBOUND_0002` | Agent Not Available | Agent is not available for outbound |
+| `BRIDGE_AI_AGENT_OUTBOUND_0003` | Agent Type Not Supported | Agent type is not supported for outbound |
+| `BRIDGE_AI_AGENT_OUTBOUND_0004` | No Channels For Agent | No active messaging line is bound to the agent |
+| `BRIDGE_AI_AGENT_OUTBOUND_0005` | Agent Not Assigned To Channel | Agent is not assigned to the requested channel |
+| `BRIDGE_AI_AGENT_OUTBOUND_0006` | Conversation Controlled By Other Agent | Active conversation is controlled by another agent |
 | `BRIDGE_AI_AGENT_OUTBOUND_0007` | Invalid Cursor | Pagination cursor is malformed or belongs to another workspace |
 
-Returned as `400` by `GET .../agents` when the `cursor` was not issued by a previous page of the same workspace and `type` filter. Start again without a cursor.
+`POST .../agents/{agentId}/outbound` returns `0001` and `0004` as `404`, `0002` and `0006` as `409`, and `0003` and `0005` as `422`.
+
+- `0002`: the Agent is a draft or has no line. `extra.reason` says which; the same reason appears as `unavailableReason` in `GET .../agents`.
+- `0006`: the Contact's conversation on that line is held by another Agent or by a Bridge User. Nothing was sent. Release it with `POST .../conversations/{conversationId}/release`, using `extra.conversationId`, then retry. `extra.controllingAgentId` is the Agent holding it, or `null` when a Bridge User does.
+
+`GET .../agents` returns `0007` as `400` when the `cursor` was not issued by a previous page of the same workspace and `type` filter. Start again without a cursor.
 
 ## Brand Error Codes
 

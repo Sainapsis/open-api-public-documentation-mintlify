@@ -2463,6 +2463,229 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound:
+    post:
+      tags:
+      - Agents API
+      summary: Start an outbound conversation with a Contact as a given Agent
+      description: "Start an outbound conversation with a known Contact, answered\
+        \ by the given Agent.\n\nWorks for LeadScout and Service Agents. Pre-flight\
+        \ checks run before any write: the Agent exists in the\nworkspace and is available\
+        \ (see `GET /agents`), the template exists and is APPROVED, the Contact exists,\
+        \ a\nline of the Agent resolves, and any `handoffOverride` user is valid.\
+        \ The conversation is opened controlled by\nthat Agent, with the template\
+        \ as its first message.\n\nIf the Contact already has an active conversation\
+        \ on the line:\n- `forceSend=false` (default) → `409` (`ACTIVE_CONVERSATION_ALREADY_EXISTS`).\n\
+        - `forceSend=true` → the conversation is reused only when this same Agent\
+        \ controls it; when a Bridge User\n  or another Agent holds it, the call fails\
+        \ with `409` (`ACTIVE_CONVERSATION_CONTROLLED_BY_OTHER_AGENT`) and\n  nothing\
+        \ is written. Release that conversation first, then retry."
+      operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: agentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the Agent (UUID v4), as listed by `GET
+            /agents`.
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+          title: Agentid
+        description: Unique identifier of the Agent (UUID v4), as listed by `GET /agents`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentOutboundRequest'
+              description: Request body for starting an outbound conversation answered
+                by a given Agent.
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeadscoutOutboundResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                AGENT_NOT_FOUND:
+                  value:
+                    title: Agent Not Found
+                    status: 404
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0001
+                NO_CHANNELS_FOR_AGENT:
+                  value:
+                    title: No Channels For Agent
+                    status: 404
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0004
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0002
+                TEMPLATE_NOT_FOUND:
+                  value:
+                    title: Template Not Found
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0004
+                NO_CHANNELS_FOR_BRAND:
+                  value:
+                    title: No Channels For Brand
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0009
+                WORKSPACE_HAS_NO_PROVIDER_CHANNELS:
+                  value:
+                    title: No Provider Channels
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0011
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                AGENT_NOT_AVAILABLE:
+                  value:
+                    title: Agent Not Available
+                    status: 409
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0002
+                ACTIVE_CONVERSATION_CONTROLLED_BY_OTHER_AGENT:
+                  value:
+                    title: Conversation Controlled By Other Agent
+                    status: 409
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0006
+                INTERNAL_USER_DELETED:
+                  value:
+                    title: Internal User Deleted
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0003
+                TEMPLATE_NOT_APPROVED:
+                  value:
+                    title: Template Not Approved
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0005
+                ACTIVE_CONVERSATION_ALREADY_EXISTS:
+                  value:
+                    title: Active Conversation Exists
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0007
+                ALL_PROVIDER_CHANNELS_OCCUPIED:
+                  value:
+                    title: All Channels Occupied
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0008
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              examples:
+                AGENT_TYPE_NOT_SUPPORTED:
+                  value:
+                    title: Agent Type Not Supported
+                    status: 422
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0003
+                AGENT_NOT_ASSIGNED_TO_CHANNEL:
+                  value:
+                    title: Agent Not Assigned To Channel
+                    status: 422
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0005
+                MISSING_TEMPLATE_VARIABLES:
+                  value:
+                    title: Missing Template Variables
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0019
+                CONFLICTING_TEMPLATE_PARAMETERS:
+                  value:
+                    title: Conflicting Template Parameters
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0020
+                UNKNOWN_TEMPLATE_PARAMETER_KEY:
+                  value:
+                    title: Unknown Template Parameter Key
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0021
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                OUTBOUND_VALIDATION_ERROR:
+                  value:
+                    title: Outbound Validation Error
+                    status: 400
+                    code: BRIDGE_AI_LEADSCOUT_0016
+                TEMPLATE_ORDERED_PARAMS_MISMATCH:
+                  value:
+                    title: Template Params Mismatch
+                    status: 400
+                    code: BRIDGE_AI_LEADSCOUT_0006
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              examples:
+                CONVERSATION_OPERATION_FAILED:
+                  value:
+                    title: Conversation Operation Failed
+                    status: 500
+                    code: BRIDGE_AI_LEADSCOUT_0015
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
   schemas:
     ClosedAttribute:
@@ -3708,6 +3931,15 @@ components:
           examples:
           - false
           - true
+        recovered:
+          type: boolean
+          title: Recovered
+          description: True when this request recovered a released conversation the
+            contact had on the chosen channel instead of creating a fresh one.
+          default: false
+          examples:
+          - false
+          - true
       type: object
       required:
       - conversation
@@ -4578,6 +4810,88 @@ components:
       - providerChannelId
       title: AgentLine
       description: Messaging line an Agent answers on.
+    AgentOutboundRequest:
+      properties:
+        contact:
+          $ref: '#/components/schemas/LeadscoutOutboundContactRef'
+          title: Contact
+          description: The Contact this outbound conversation targets. Must already
+            exist in the workspace.
+        template:
+          $ref: '#/components/schemas/LeadscoutOutboundTemplateRef'
+          title: Template
+          description: The opening template to send.
+        additionalMessages:
+          items:
+            $ref: '#/components/schemas/OutboundFollowUpRequest'
+          type: array
+          maxItems: 5
+          title: Additional Messages
+          description: Up to five follow-up messages persisted on the conversation.
+            They are not delivered immediately; the agent decides when to send them
+            once the lead replies.
+        agentContext:
+          anyOf:
+          - $ref: '#/components/schemas/OutboundAgentContextRequest'
+          - type: 'null'
+          title: Agent Context
+          description: Optional notes and media stored on the conversation as context
+            for the agent.
+        consent:
+          anyOf:
+          - $ref: '#/components/schemas/OutboundConsentRequest'
+          - type: 'null'
+          title: Consent
+          description: Optional tenant-affirmed opt-in evidence recorded on the conversation.
+        handoffOverride:
+          anyOf:
+          - $ref: '#/components/schemas/LeadscoutOutboundHandoffOverride'
+          - type: 'null'
+          title: Handoff Override
+          description: Optional override to pre-assign a specific internal user as
+            the handoff advisor. Validated at request time; conversation creation
+            is aborted if validation fails.
+        brandId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Brand Identifier
+          description: Optional brand id. When provided, only channels linked to this
+            brand are eligible. Omit to consider every channel in the workspace.
+          examples:
+          - null
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+        campaignId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Campaign Identifier
+          description: Optional campaign reference stored on the conversation for
+            audit and reporting.
+          examples:
+          - null
+          - spring_promo_2026
+        forceSend:
+          type: boolean
+          title: Force Send
+          description: When true and the Contact already has an active conversation
+            on the chosen line, that conversation is reused only if this same Agent
+            controls it. If a Bridge User or another Agent controls it, the request
+            fails with 409 and nothing is written; release that conversation first.
+            When no providerChannelId is supplied and every line of the Agent is occupied,
+            the first candidate is used. When false (default), an existing active
+            conversation on the chosen line returns 409.
+          default: false
+          examples:
+          - false
+          - true
+      type: object
+      required:
+      - contact
+      - template
+      title: AgentOutboundRequest
+      description: Request body for starting an outbound conversation answered by
+        a given Agent.
     AgentType:
       type: string
       enum:
