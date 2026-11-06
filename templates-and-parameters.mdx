@@ -2,7 +2,7 @@
 title: "Onboarding template parameters"
 sidebarTitle: "Onboarding template parameters"
 description: "Open a conversation with your own WhatsApp templates, fill their variables, and handle every error the request can return."
-keywords: ["onboarding", "onboardingTemplates", "template", "parameters", "variables", "callerMustSupply", "WhatsApp", "422"]
+keywords: ["onboarding", "onboardingTemplates", "template", "parameters", "variables", "callerMustSupply", "isCustom", "default", "WhatsApp", "422"]
 ---
 
 ## Overview
@@ -36,9 +36,10 @@ x-api-key: YOUR_API_KEY
   "name": "order_shipped_promo",
   "language": "es",
   "variables": [
-    { "key": "first_name", "label": "Contact first name", "callerMustSupply": false },
-    { "key": "order_number", "label": "Order number", "callerMustSupply": true },
-    { "key": "delivery_date", "label": "Delivery date", "callerMustSupply": true }
+    { "key": "first_name", "label": "Contact first name", "callerMustSupply": false, "isCustom": false, "default": null },
+    { "key": "order_number", "label": "Order number", "callerMustSupply": true, "isCustom": false, "default": null },
+    { "key": "delivery_date", "label": "Delivery date", "callerMustSupply": true, "isCustom": false, "default": null },
+    { "key": "tracking_code", "label": "Tracking code", "callerMustSupply": false, "isCustom": true, "default": "pending" }
   ]
 }
 ```
@@ -48,6 +49,8 @@ x-api-key: YOUR_API_KEY
 | `key` | The name to use in `parameters` |
 | `label` | A human-readable description of the variable |
 | `callerMustSupply` | Whether Bridge has a value of its own for this variable |
+| `isCustom` | Whether this is a custom variable: a value only you know, with a default text |
+| `default` | For a custom variable, the text sent when you send no value for it; `null` otherwise |
 
 A template that is not in your workspace returns `404` with `BRIDGE_TEMPLATE_0001`.
 
@@ -55,15 +58,16 @@ A template that is not in your workspace returns `404` with `BRIDGE_TEMPLATE_000
 
 ## 2. Decide which values to send
 
-| `callerMustSupply` | What it means | What to do |
-| ------------------ | ------------- | ---------- |
-| `true` | Bridge has no source for this value | **Required.** Send a non-blank value for its `key` |
-| `false` | Bridge fills it for each Contact, such as the Contact's first name | **Optional.** Omit it to keep Bridge's value |
+| Variable | What it means | What to do |
+| -------- | ------------- | ---------- |
+| `callerMustSupply: true` | Bridge has no source for this value | **Required.** Send a non-blank value for its `key` |
+| `callerMustSupply: false`, `isCustom: false` | Bridge fills it for each Contact, such as the Contact's first name | **Optional.** Omit it to keep Bridge's value |
+| `isCustom: true` | A value only you know, with a `default` | **Optional.** Send your value, or omit it (or send it blank) and its `default` is sent |
 
 A value you send for a `callerMustSupply: false` variable replaces Bridge's value and is used **for every Contact** in the conversation.
 
 <Warning>
-  To keep Bridge's value, **omit the key**. A blank value is not treated as "use the default": it is sent as you wrote it. A required variable with a blank or whitespace-only value is rejected as missing.
+  For a variable that is not custom, keep Bridge's value by **omitting the key**. A blank value is not treated as "use the default": it is sent as you wrote it. A required variable with a blank or whitespace-only value is rejected as missing. Only custom variables (`isCustom: true`) treat a blank value as not sent and fall back to their `default`.
 </Warning>
 
 ---
@@ -102,7 +106,7 @@ Content-Type: application/json
 }
 ```
 
-In this example `first_name` is omitted, so each Contact receives their own first name.
+In this example `first_name` and `tracking_code` are omitted, so each Contact receives their own first name and `tracking_code` is sent as its default, `pending`.
 
 Limits per template: at most **50** parameters, keys up to **128** characters, values up to **1,024** characters. Requests beyond these limits are rejected as malformed (see [Errors](#errors)).
 
