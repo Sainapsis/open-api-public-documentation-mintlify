@@ -39,6 +39,51 @@ Errors are returned as `application/problem+json`:
   A request that does not match the request schema — a missing or unknown field, a wrong type, or a value over its length limit — returns `422` **without a `code`**. Its `errors` list holds one entry per problem, each with `loc` (where), `msg` (what) and `type`.
 </Note>
 
+## Agent Error Codes
+
+Error codes for Agent operations.
+
+| Code | Title | Message |
+| ---- | -------------- | ------- |
+| `BRIDGE_AI_AGENT_OUTBOUND_0001` | Agent Not Found | Agent not found in the workspace |
+| `BRIDGE_AI_AGENT_OUTBOUND_0002` | Agent Not Available | Agent is not available for outbound |
+| `BRIDGE_AI_AGENT_OUTBOUND_0003` | Agent Type Not Supported | Agent type is not supported for outbound |
+| `BRIDGE_AI_AGENT_OUTBOUND_0004` | No Channels For Agent | No active messaging line is bound to the agent |
+| `BRIDGE_AI_AGENT_OUTBOUND_0005` | Agent Not Assigned To Channel | Agent is not assigned to the requested channel |
+| `BRIDGE_AI_AGENT_OUTBOUND_0006` | Conversation Controlled By Other Agent | Active conversation is controlled by another agent |
+| `BRIDGE_AI_AGENT_OUTBOUND_0007` | Invalid Cursor | Pagination cursor is malformed or belongs to another workspace |
+
+`POST .../agents/{agentId}/outbound` returns `0001` and `0004` as `404`, `0002` and `0006` as `409`, and `0003` and `0005` as `422`.
+
+- `0002`: the Agent is a draft or has no line. `extra.reason` says which; the same reason appears as `unavailableReason` in `GET .../agents`.
+- `0006`: the Contact's conversation on the line the request resolved is held by another Agent or by a Bridge User. Nothing was sent. Release it with `POST .../conversations/{conversationId}/release`, using `extra.conversationId`, then retry. `extra` also carries `channelId`, and `controllingAgentId` (the Agent holding it) only when an Agent holds it: when a Bridge User does, the key is absent, not `null`.
+
+`GET .../agents` returns `0007` as `400` when the `cursor` is malformed or was issued for another workspace. Start again without a cursor. Keep the same `type` filter while paging: a cursor issued under one `type` filter is rejected if the request carries a different `type`.
+
+### Other codes returned by `POST .../agents/{agentId}/outbound`
+
+| Code | Status | Meaning |
+| ---- | ------ | ------- |
+| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, or `template.media` does not carry exactly one of `mediaId` or `url` |
+| `BRIDGE_CORE_0301` | 403 | The workspace in the path differs from the one of the API key |
+| `BRIDGE_AI_LEADSCOUT_0001` | 404 | The Contact does not exist in the workspace |
+| `BRIDGE_AI_LEADSCOUT_0002` | 404 | The `handoffOverride` Bridge User does not exist in the workspace |
+| `BRIDGE_AI_LEADSCOUT_0003` | 409 | The `handoffOverride` Bridge User was deleted |
+| `BRIDGE_AI_LEADSCOUT_0004` | 404 | Template not found |
+| `BRIDGE_AI_LEADSCOUT_0005` | 409 | Template not approved |
+| `BRIDGE_AI_LEADSCOUT_0006` | 400 | Template ordered params mismatch |
+| `BRIDGE_AI_LEADSCOUT_0007` | 409 | Active conversation already exists: another request took the released conversation first. Retry |
+| `BRIDGE_AI_LEADSCOUT_0008` | 409 | No line of the Agent is free or recoverable for this Contact (see `forceSend`) |
+| `BRIDGE_AI_LEADSCOUT_0009` | 404 | No line configured for the requested `brandId` |
+| `BRIDGE_AI_LEADSCOUT_0016` | 400 | Outbound validation error |
+| `BRIDGE_AI_LEADSCOUT_0017` | 409 | Latest session is not finalized |
+| `BRIDGE_AI_LEADSCOUT_0018` | 409 | Could not finalize the expired session before starting a new one |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Missing required template variable(s) |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | Conflicting template parameter sources for the same slot |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Unknown template parameter key |
+
+`5xx` errors carry no `code` or `extra`.
+
 ## Brand Error Codes
 
 Error codes for brand checks when creating a conversation.
