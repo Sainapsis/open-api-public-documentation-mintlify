@@ -64,12 +64,12 @@ Error codes for Agent operations.
 
 | Code | Status | Meaning |
 | ---- | ------ | ------- |
-| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, or `template.media` does not carry exactly one of `mediaId` or `url` |
+| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, `template` carries neither `id` nor `name`, or `template.media` does not carry exactly one of `mediaId` or `url` |
 | `BRIDGE_CORE_0301` | 403 | The workspace in the path differs from the one of the API key |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | The Contact does not exist in the workspace |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | The `handoffOverride` Bridge User does not exist in the workspace |
 | `BRIDGE_AI_LEADSCOUT_0003` | 409 | The `handoffOverride` Bridge User was deleted |
-| `BRIDGE_AI_LEADSCOUT_0004` | 404 | Template not found |
+| `BRIDGE_AI_LEADSCOUT_0004` | 404 | No template of the workspace matches `template.id` (or `template.name` when no id is sent) |
 | `BRIDGE_AI_LEADSCOUT_0005` | 409 | Template not approved |
 | `BRIDGE_AI_LEADSCOUT_0006` | 400 | Template ordered params mismatch |
 | `BRIDGE_AI_LEADSCOUT_0007` | 409 | Active conversation already exists: another request took the released conversation first. Retry |
