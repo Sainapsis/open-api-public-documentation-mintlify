@@ -1795,12 +1795,13 @@ paths:
       - LeadScout API
       summary: Initiate a LeadScout outbound conversation with a known lead
       description: "Start an AI-controlled outbound conversation with a known lead.\n\
-        \nPre-flight checks run before any write: template exists and is APPROVED,\
-        \ contact\nexists, a WhatsApp channel resolves, a prospection agent owns it,\
-        \ and any\n`handoffOverride` user is valid.\n\nIf an active conversation is\
-        \ already running on the chosen channel:\n- `forceSend=false` (default) →\
-        \ `409` with error code BRIDGE_AI_LEADSCOUT_0007.\n- `forceSend=true` → that\
-        \ conversation is reused; the new template and follow-ups\n  are appended\
+        \nThe template is referenced by `template.id` or `template.name`; when both\
+        \ are sent, the id is used.\n\nPre-flight checks run before any write: template\
+        \ exists and is APPROVED, contact\nexists, a WhatsApp channel resolves, a\
+        \ prospection agent owns it, and any\n`handoffOverride` user is valid.\n\n\
+        If an active conversation is already running on the chosen channel:\n- `forceSend=false`\
+        \ (default) → `409` with error code BRIDGE_AI_LEADSCOUT_0007.\n- `forceSend=true`\
+        \ → that conversation is reused; the new template and follow-ups\n  are appended\
         \ to it and the response sets `alreadyInitiated=true`.\n\nOtherwise a fresh\
         \ conversation is opened (controlled by the prospection agent) with\nthe template\
         \ as its first message; `additionalMessages` are persisted for the agent\n\
@@ -2489,8 +2490,9 @@ paths:
       description: "Start an outbound conversation with a known Contact, answered\
         \ by the given Agent.\n\nWorks for LeadScout and Service Agents. The Contact\
         \ is resolved first, then the Agent, which must exist in\nthe workspace and\
-        \ be available (see `GET /agents`). The template must exist and be APPROVED,\
-        \ and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId`\
+        \ be available (see `GET /agents`). The template is referenced by `template.id`\
+        \ or\n`template.name` (the id wins when both are sent), must exist and be\
+        \ APPROVED, and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId`\
         \ is unknown, the request fails\nwith 400 `BRIDGE_AI_LEADSCOUT_0016` only\
         \ after the conversation was created or recovered, so a retry after\nthat\
         \ error may answer differently. Body rules (`consent.status=GRANTED` without\
@@ -3986,12 +3988,26 @@ components:
       description: Response body for a successful LeadScout outbound initiation.
     LeadscoutOutboundTemplateRef:
       properties:
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Identifier
+          description: Id of the registered template (from GET /templates). When both
+            id and name are sent, the id is used.
+          examples:
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+          - null
         name:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Template Name
-          description: Name of the registered Meta-approved template to send.
+          description: Name of the registered Meta-approved template to send. Required
+            when id is not sent; ignored when id is sent.
           examples:
           - leadscout_outbound_fb_v1
+          - null
         orderedParams:
           items:
             type: string
@@ -4023,12 +4039,18 @@ components:
           description: Optional header media (image/video) to attach to the template
             message. Accepts either a preloaded mediaId or a public url.
       type: object
-      required:
-      - name
       title: LeadscoutOutboundTemplateRef
       description: References the Meta-approved template that will open the conversation.
     LeadscoutTemplateSent:
       properties:
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Identifier
+          description: Id of the template that was sent.
+          examples:
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
         name:
           type: string
           title: Template Name
@@ -5250,6 +5272,14 @@ components:
       description: Response body for a successful Agent outbound initiation.
     AgentTemplateSent:
       properties:
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Identifier
+          description: Id of the template that was sent.
+          examples:
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
         name:
           type: string
           title: Template Name
