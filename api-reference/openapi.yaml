@@ -3539,7 +3539,7 @@ components:
           - type: string
           - type: 'null'
           title: Owner Identifier
-          description: Email address of the salesperson or user who owns this contact.
+          description: Id of the Bridge User who owns this contact. Resolve it with `GET /users/{userId}`.
           examples:
           - 37673840-6259-40f9-bbe5-a7db40f8e3cf
           - null
