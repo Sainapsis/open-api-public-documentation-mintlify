@@ -243,6 +243,8 @@ Bridge fills a variable for a send when it can. Otherwise you must send it, and 
 | Sender, such as the sender's first or last name | Its default only. A call through the Integrations API has no person as sender | With no default, you must send it |
 | Custom (`isCustom: true`) | Its default, when not blank | You must send it |
 
+`callerMustSupply: false` on a recipient variable assumes the Contact has that value. When the Contact has none and the variable has no default, the send answers `422` `BRIDGE_AI_LEADSCOUT_0019` listing it, and you can retry with the value in `parameters`.
+
 ### Rules for `parameters`
 
 - Send the variables with `callerMustSupply: true`. Omit the ones Bridge fills.
