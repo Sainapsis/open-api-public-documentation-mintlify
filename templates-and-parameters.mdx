@@ -286,6 +286,7 @@ Content-Type: application/json
 | `BRIDGE_AI_LEADSCOUT_0019` | 422 | A variable you must send is missing or blank | `missingVariables: [{key, label}]`, only the keys you must send |
 | `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` and `parameters` both supply the same slot | `conflictingParameters` |
 | `BRIDGE_AI_LEADSCOUT_0021` | 422 | A key in `parameters` is not a variable of the template | `unknownKeys: [key]` |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | A value breaks WhatsApp's rules for a parameter: a line break, a tab, five or more consecutive spaces, or too long | `invalidVariables: [{key, label, reason}]`, sorted by key |
 
 ```json
 {

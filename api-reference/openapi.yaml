@@ -1822,7 +1822,10 @@ paths:
         \ lists them as `[{key, label}]`\n- BRIDGE_AI_LEADSCOUT_0020: `orderedParams`\
         \ and `parameters` both supply the same slot (422); `extra.conflictingParameters`\
         \ lists them\n- BRIDGE_AI_LEADSCOUT_0021: `parameters` has a key that is not\
-        \ a variable of the template (422); `extra.unknownKeys` lists it"
+        \ a variable of the template (422); `extra.unknownKeys` lists it\n- BRIDGE_AI_LEADSCOUT_0025:\
+        \ a template variable value breaks WhatsApp's rules for a parameter: a line\
+        \ break, a tab, five or more consecutive spaces, or too long (422); `extra.invalidVariables`\
+        \ lists each offending variable as `[{key, label, reason}]`, sorted by key"
       operationId: initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post
       security:
       - x-api-key: []
@@ -1992,6 +1995,11 @@ paths:
                     title: Unknown Template Parameter Key
                     status: 422
                     code: BRIDGE_AI_LEADSCOUT_0021
+                INVALID_TEMPLATE_VARIABLE_VALUES:
+                  value:
+                    title: Invalid Template Variable Values
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0025
               schema:
                 $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/leadscout/conversations/{conversationId}/handoff:
@@ -2535,7 +2543,10 @@ paths:
         \ Variables Bridge fills are never listed.\n- `BRIDGE_AI_LEADSCOUT_0020`:\
         \ `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters`\
         \ lists them.\n- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not\
-        \ a variable of the template. `extra.unknownKeys` lists it."
+        \ a variable of the template. `extra.unknownKeys` lists it.\n- `BRIDGE_AI_LEADSCOUT_0025`:\
+        \ a value breaks WhatsApp's rules for a parameter (a line break, a tab, five\
+        \ or more consecutive spaces, or too long). `extra.invalidVariables` lists\
+        \ each offending variable as `[{key, label, reason}]`, sorted by key."
       operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
       security:
       - x-api-key: []
@@ -2716,6 +2727,11 @@ paths:
                     title: Unknown Template Parameter Key
                     status: 422
                     code: BRIDGE_AI_LEADSCOUT_0021
+                INVALID_TEMPLATE_VARIABLE_VALUES:
+                  value:
+                    title: Invalid Template Variable Values
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0025
               schema:
                 $ref: '#/components/schemas/Problem'
         '400':
@@ -4048,7 +4064,9 @@ components:
             Prefer this over orderedParams for any template that has a dynamic button.
             An unknown key (`BRIDGE_AI_LEADSCOUT_0021`), or a key that overlaps a
             slot already covered by orderedParams (`BRIDGE_AI_LEADSCOUT_0020`), is
-            rejected with 422.
+            rejected with 422. A value that breaks WhatsApp's rules for a parameter
+            (a line break, a tab, five or more consecutive spaces, or too long) is
+            rejected with 422 `BRIDGE_AI_LEADSCOUT_0025`.
           examples:
           - recipient_first_name: Maria
             tracking_code: TRK123
