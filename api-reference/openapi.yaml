@@ -11,8 +11,8 @@ info:
     \ management\n                    4. Messages API - for sending messages and files\
     \ to a conversation\n                    5. Files API - for managing files in\
     \ a message\n                    6. Custom attributes API - for consult custom\
-    \ attributes of an specific workspace\n                \n                    **Multi-Tenant\
-    \ Architecture**: All operations are scoped to a specific workspace using workspaceId."
+    \ attributes of an specific workspace\n\n                    **Multi-Tenant Architecture**:\
+    \ All operations are scoped to a specific workspace using workspaceId."
   termsOfService: https://www.sainapsis.com/legal/terms-of-service
   contact:
     name: Bridge Support
@@ -1276,7 +1276,8 @@ paths:
           - type: 'null'
           description: Filter contacts by owner email address
           title: Owneremail
-        description: 'Filter contacts by owner email address. Deprecated: will be removed. No replacement; filter on `ownerId` in your own code. See the Changelog.'
+        description: 'Filter contacts by owner email address. Deprecated: will be
+          removed. No replacement; filter on `ownerId` in your own code. See the Changelog.'
       - name: search
         in: query
         required: false
@@ -1288,7 +1289,9 @@ paths:
           description: Search contacts by name, email, or cellphone
           example: John Doe
           title: Search
-        description: 'Search contacts by name, email, or cellphone. Deprecated: will be removed. To find one contact by cellphone or email, use `GET /contacts/lookup`. See the Changelog.'
+        description: 'Search contacts by name, email, or cellphone. Deprecated: will
+          be removed. To find one contact by cellphone or email, use `GET /contacts/lookup`.
+          See the Changelog.'
       - name: limit
         in: query
         required: false
@@ -1926,12 +1929,13 @@ paths:
       - LeadScout API
       summary: Initiate a LeadScout outbound conversation with a known lead
       description: "Start an AI-controlled outbound conversation with a known lead.\n\
-        \nPre-flight checks run before any write: template exists and is APPROVED,\
-        \ contact\nexists, a WhatsApp channel resolves, a prospection agent owns it,\
-        \ and any\n`handoffOverride` user is valid.\n\nIf an active conversation is\
-        \ already running on the chosen channel:\n- `forceSend=false` (default) →\
-        \ `409` with error code BRIDGE_AI_LEADSCOUT_0007.\n- `forceSend=true` → that\
-        \ conversation is reused; the new template and follow-ups\n  are appended\
+        \nThe template is referenced by `template.id` or `template.name`; when both\
+        \ are sent, the id is used.\n\nPre-flight checks run before any write: template\
+        \ exists and is APPROVED, contact\nexists, a WhatsApp channel resolves, a\
+        \ prospection agent owns it, and any\n`handoffOverride` user is valid.\n\n\
+        If an active conversation is already running on the chosen channel:\n- `forceSend=false`\
+        \ (default) → `409` with error code BRIDGE_AI_LEADSCOUT_0007.\n- `forceSend=true`\
+        \ → that conversation is reused; the new template and follow-ups\n  are appended\
         \ to it and the response sets `alreadyInitiated=true`.\n\nOtherwise a fresh\
         \ conversation is opened (controlled by the prospection agent) with\nthe template\
         \ as its first message; `additionalMessages` are persisted for the agent\n\
@@ -2098,11 +2102,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: Validation Error
+          description: Unprocessable Content
           content:
             application/json:
+              examples:
+                MISSING_TEMPLATE_VARIABLES:
+                  value:
+                    title: Missing Template Variables
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0019
+                CONFLICTING_TEMPLATE_PARAMETERS:
+                  value:
+                    title: Conflicting Template Parameters
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0020
+                UNKNOWN_TEMPLATE_PARAMETER_KEY:
+                  value:
+                    title: Unknown Template Parameter Key
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0021
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/leadscout/conversations/{conversationId}/handoff:
     post:
       tags:
@@ -2181,8 +2201,8 @@ paths:
       tags:
       - Templates API
       summary: Discover a template's agnostic variable inventory
-      description: "Return a template's variables — agnostic `key`/`label`/`callerMustSupply`,\
-        \ never a Meta slot address or index.\n\n`templateId` accepts either the template's\
+      description: "Return a template's variables — agnostic `key`/`label`/`callerMustSupply`/`isCustom`/`default`.\n\
+        \nNever a Meta slot address or index.\n\n`templateId` accepts either the template's\
         \ `id` or its `name` — the send contract\n(`POST .../leadscout/outbound`)\
         \ identifies a template by `name`; this discovery endpoint\nalso accepts `id`,\
         \ so a caller who only has one of the two can still look it up.\n\nA variable\
@@ -2190,13 +2210,15 @@ paths:
         its `key` in `parameters` when sending, or the send fails with a 422 naming\
         \ that same `key`.\nA variable with `callerMustSupply: false` is either resolved\
         \ by Bridge on its own (e.g. the\nrecipient's first name) or already has a\
-        \ value the caller may optionally override.\n\nError codes:\n- BRIDGE_CORE_0301:\
-        \ workspace in the path does not match the caller's own workspace (403)\n\
-        - BRIDGE_TEMPLATE_0001: no PROVIDER_TEMPLATE found for this workspace and\
-        \ identifier — covers\n  an unknown id/name, a template that belongs to another\
-        \ workspace, and a template that is\n  not a PROVIDER_TEMPLATE, identically\
-        \ (404); this endpoint never confirms the existence of\n  a template outside\
-        \ the caller's own workspace"
+        \ value the caller may optionally override.\nA variable with `isCustom: true`\
+        \ is a value only the caller knows, with a `default`: send it in\n`parameters`\
+        \ to use your own value, or leave it out (or blank) and `default` goes out.\n\
+        \nError codes:\n- BRIDGE_CORE_0301: workspace in the path does not match the\
+        \ caller's own workspace (403)\n- BRIDGE_TEMPLATE_0001: no PROVIDER_TEMPLATE\
+        \ found for this workspace and identifier — covers\n  an unknown id/name,\
+        \ a template that belongs to another workspace, and a template that is\n \
+        \ not a PROVIDER_TEMPLATE, identically (404); this endpoint never confirms\
+        \ the existence of\n  a template outside the caller's own workspace"
       operationId: get_template_discovery_bridge_api_v1_workspaces__workspaceId__templates__templateId__get
       security:
       - x-api-key: []
@@ -2487,8 +2509,8 @@ paths:
       description: 'Retrieve a paginated list of internal users within the workspace.
 
 
-        Ordered by creation date. The `email` and `status` filters are deprecated and
-        will be removed; to find one internal user by an identifier, use /users/lookup.'
+        Ordered by creation date. The `email` and `status` filters are deprecated
+        and will be removed; to find one internal user by an identifier, use /users/lookup.'
       operationId: get_internal_users_bridge_api_v1_workspaces__workspaceId__users_get
       security:
       - x-api-key: []
@@ -2515,7 +2537,8 @@ paths:
           description: Filter internal users by exact email address.
           example: john.doe@example.com
           title: Email
-        description: 'Filter internal users by exact email address. Deprecated: will be removed. Use `GET /users/lookup?type=EMAIL`. See the Changelog.'
+        description: 'Filter internal users by exact email address. Deprecated: will
+          be removed. Use `GET /users/lookup?type=EMAIL`. See the Changelog.'
       - name: status
         in: query
         required: false
@@ -2524,7 +2547,9 @@ paths:
           $ref: '#/components/schemas/UserStatusFilter'
           description: 'Filter by status: ''active'' (default), ''disabled'', or ''all''.'
           default: active
-        description: 'Filter by status: ''active'' (default), ''disabled'', or ''all''. Deprecated: will be removed. Read `status` off each row instead. See the Changelog.'
+        description: 'Filter by status: ''active'' (default), ''disabled'', or ''all''.
+          Deprecated: will be removed. Read `status` off each row instead. See the
+          Changelog.'
       - name: limit
         in: query
         required: false
@@ -2607,8 +2632,785 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/agents:
+    get:
+      tags:
+      - Agents API
+      summary: List the Agents of a workspace
+      description: 'List the workspace''s Agents with their status, availability and
+        lines.
+
+
+        Every Agent is listed whatever its status; `available` tells whether it can
+        start conversations.
+
+        A page can hold fewer than `limit` items; keep paging while `cursor` is not
+        null.'
+      operationId: list_agents_bridge_api_v1_workspaces__workspaceId__agents_get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/AgentType'
+          - type: 'null'
+          description: Only return Agents of this type.
+          title: Type
+        description: Only return Agents of this type.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Number of Agents per page
+          default: 20
+          title: Limit
+        description: Number of Agents per page
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Cursor provided on a previous request to get the next page
+          title: Cursor
+        description: Cursor provided on a previous request to get the next page
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentsResponseList'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                INVALID_CURSOR:
+                  value:
+                    title: Invalid Cursor
+                    status: 400
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0007
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound:
+    post:
+      tags:
+      - Agents API
+      summary: Start an outbound conversation with a Contact as a given Agent
+      description: "Start an outbound conversation with a known Contact, answered\
+        \ by the given Agent.\n\nWorks for LeadScout and Service Agents. The Contact\
+        \ is resolved first, then the Agent, which must exist in\nthe workspace and\
+        \ be available (see `GET /agents`). The template is referenced by `template.id`\
+        \ or\n`template.name` (the id wins when both are sent), must exist and be\
+        \ APPROVED, and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId`\
+        \ is unknown, the request fails\nwith 400 `BRIDGE_AI_LEADSCOUT_0016` only\
+        \ after the conversation was created or recovered, so a retry after\nthat\
+        \ error may answer differently. Body rules (`consent.status=GRANTED` without\
+        \ `capturedAt`, `template.media`\nwithout exactly one of `mediaId` or `url`)\
+        \ fail with 400 `BRIDGE_CORE_0103`.\n\nThe conversation opens on one of the\
+        \ Agent's active WhatsApp lines, controlled by the Agent, with the template\n\
+        as its first message. A line is picked in this order:\n- A free line.\n- Otherwise,\
+        \ a line holding a released conversation with this Contact that can be recovered.\
+        \ Recovering\n  returns `recovered=true` and replaces the previous outbound\
+        \ context and `agentContext`. This happens even\n  with `forceSend=false`.\n\
+        - Otherwise, when no line is free or recoverable: `forceSend=false` (default)\
+        \ fails with 409\n  `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reuses a\
+        \ line occupied by an active conversation with this\n  Contact, preferring\
+        \ one this Agent controls. If the chosen conversation is held by another Agent\
+        \ or a\n  Bridge User, the call fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006`\
+        \ and nothing is written. Release it\n  first, then retry. Lines whose conversation\
+        \ is blocked or was released without recovery are never used, so\n  if no\
+        \ line is occupied by an active conversation the call fails with 409 `BRIDGE_AI_LEADSCOUT_0008`\
+        \ even\n  with `forceSend=true`.\n\n`contact.providerChannelId` is a preference:\
+        \ the pinned line is used when it is free or recoverable;\notherwise the same\
+        \ order applies over all the Agent's lines. Among occupied lines, one this\
+        \ Agent controls\ncomes first; if none does, the pinned line is the one reused\
+        \ (and may fail with 0006).\n\nReusing a conversation depends on the Agent\
+        \ type:\n- LeadScout: if its LeadScout session is still open and not expired,\
+        \ the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra` carries `conversationId`,\
+        \ `sessionId` and `stage`). If an expired\n  session cannot be finalized,\
+        \ it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: an open,\
+        \ unexpired service session is continued; an expired one is closed as abandoned\
+        \ and a\n  new one opens."
+      operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Unique identifier of the workspace (UUID v4).
+      - name: agentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier of the Agent (UUID v4), as listed by `GET
+            /agents`.
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+          title: Agentid
+        description: Unique identifier of the Agent (UUID v4), as listed by `GET /agents`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentOutboundRequest'
+              description: Request body for starting an outbound conversation answered
+                by a given Agent.
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentOutboundResponse'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              examples:
+                AGENT_NOT_FOUND:
+                  value:
+                    title: Agent Not Found
+                    status: 404
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0001
+                NO_CHANNELS_FOR_AGENT:
+                  value:
+                    title: No Channels For Agent
+                    status: 404
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0004
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0001
+                INTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: Internal User Not Found
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0002
+                TEMPLATE_NOT_FOUND:
+                  value:
+                    title: Template Not Found
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0004
+                NO_CHANNELS_FOR_BRAND:
+                  value:
+                    title: No Channels For Brand
+                    status: 404
+                    code: BRIDGE_AI_LEADSCOUT_0009
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                AGENT_NOT_AVAILABLE:
+                  value:
+                    title: Agent Not Available
+                    status: 409
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0002
+                ACTIVE_CONVERSATION_CONTROLLED_BY_OTHER_AGENT:
+                  value:
+                    title: Conversation Controlled By Other Agent
+                    status: 409
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0006
+                INTERNAL_USER_DELETED:
+                  value:
+                    title: Internal User Deleted
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0003
+                TEMPLATE_NOT_APPROVED:
+                  value:
+                    title: Template Not Approved
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0005
+                ACTIVE_CONVERSATION_ALREADY_EXISTS:
+                  value:
+                    title: Active Conversation Exists
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0007
+                ALL_PROVIDER_CHANNELS_OCCUPIED:
+                  value:
+                    title: All Channels Occupied
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0008
+                LATEST_SESSION_NOT_FINAL:
+                  value:
+                    title: Latest Session Not Final
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0017
+                SESSION_FINALIZATION_FAILED:
+                  value:
+                    title: Session Finalization Failed
+                    status: 409
+                    code: BRIDGE_AI_LEADSCOUT_0018
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Unprocessable Content
+          content:
+            application/json:
+              examples:
+                AGENT_TYPE_NOT_SUPPORTED:
+                  value:
+                    title: Agent Type Not Supported
+                    status: 422
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0003
+                AGENT_NOT_ASSIGNED_TO_CHANNEL:
+                  value:
+                    title: Agent Not Assigned To Channel
+                    status: 422
+                    code: BRIDGE_AI_AGENT_OUTBOUND_0005
+                MISSING_TEMPLATE_VARIABLES:
+                  value:
+                    title: Missing Template Variables
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0019
+                CONFLICTING_TEMPLATE_PARAMETERS:
+                  value:
+                    title: Conflicting Template Parameters
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0020
+                UNKNOWN_TEMPLATE_PARAMETER_KEY:
+                  value:
+                    title: Unknown Template Parameter Key
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0021
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              examples:
+                BAD_REQUEST:
+                  value:
+                    title: Bad Request
+                    status: 400
+                    code: BRIDGE_CORE_0103
+                OUTBOUND_VALIDATION_ERROR:
+                  value:
+                    title: Outbound Validation Error
+                    status: 400
+                    code: BRIDGE_AI_LEADSCOUT_0016
+                TEMPLATE_ORDERED_PARAMS_MISMATCH:
+                  value:
+                    title: Template Params Mismatch
+                    status: 400
+                    code: BRIDGE_AI_LEADSCOUT_0006
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
   schemas:
+    AgentConfigStatus:
+      type: string
+      enum:
+      - DRAFT
+      - COMPLETE
+      title: AgentConfigStatus
+    AgentLine:
+      properties:
+        providerChannelId:
+          type: string
+          title: Provider Channel Identifier
+          description: Identifier of the line (the same value `providerChannelId`
+            takes on outbound operations).
+      type: object
+      required:
+      - providerChannelId
+      title: AgentLine
+      description: WhatsApp line an Agent answers on.
+    AgentOutboundContactRef:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Phone number in E.164 format identifying the contact.
+          examples:
+          - '+573001234567'
+        identifierType:
+          $ref: '#/components/schemas/ParticipantIdentifierType'
+          title: Identifier Type
+          description: Type of identifier.
+          examples:
+          - PHONE
+          - EMAIL
+          - ID
+        messageProviderType:
+          $ref: '#/components/schemas/MessageProviderType'
+          title: Message Provider Type
+          description: Provider used to deliver the template.
+          examples:
+          - WHATSAPP
+        providerChannelId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provider Channel Identifier
+          description: 'Optional. A line of the Agent to prefer (the `providerChannelId`
+            of one of its `lines` in `GET /agents`). When omitted, any of the Agent''s
+            lines can be used. When given, it must be an active line of the Agent,
+            otherwise the request fails with 422. It is a preference, not a guarantee:
+            if that line is neither free nor recoverable, the same order applies over
+            all the Agent''s lines (with `forceSend=true`, an occupied line this Agent
+            controls comes first, then the pinned one), and the response does not
+            say which line was used.'
+          examples:
+          - c4f2a1e0-9b8d-4e7c-a6f5-1d2e3f4a5b6c
+          - null
+      type: object
+      required:
+      - identifier
+      - identifierType
+      - messageProviderType
+      title: AgentOutboundContactRef
+      description: Identifies the Contact the outbound conversation will target.
+    AgentOutboundContext:
+      properties:
+        notes:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Notes
+          description: Free-text notes for the Agent, capped at 2000 characters.
+          examples:
+          - The Contact asked about pricing tiers last week.
+          - null
+        mediaIds:
+          items:
+            type: string
+          type: array
+          title: Media Identifiers
+          description: Optional preloaded-file identifiers persisted on the conversation
+            as context for the Agent.
+          examples:
+          - []
+          - - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+      type: object
+      title: AgentOutboundContext
+      description: Notes and media stored on the conversation as context for the Agent
+        and for Bridge Users.
+    AgentOutboundFollowUp:
+      properties:
+        messageBody:
+          type: string
+          title: Message Body
+          description: Plain-text body for the follow-up message.
+          examples:
+          - Just confirming we're still on for tomorrow at 10am.
+        mediaIds:
+          items:
+            type: string
+          type: array
+          title: Media Identifiers
+          description: 'Accepted but not used yet: follow-ups are stored as text only,
+            so attachments are not sent.'
+          examples:
+          - []
+          - - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+      type: object
+      required:
+      - messageBody
+      title: AgentOutboundFollowUp
+      description: A text follow-up stored on the conversation right after the opening
+        template.
+    AgentOutboundHandoffOverride:
+      properties:
+        preAssignedUser:
+          $ref: '#/components/schemas/AgentOutboundPreAssignedUser'
+          title: Pre-assigned User
+          description: 'The Bridge User to assign as advisor when the Agent hands
+            off the conversation. Validated at request time: the request is rejected
+            if the user does not exist, belongs to another workspace, or has been
+            deleted.'
+          examples:
+          - identifier: advisor@acme.com
+            identifierType: EMAIL
+      additionalProperties: false
+      type: object
+      required:
+      - preAssignedUser
+      title: AgentOutboundHandoffOverride
+      description: Pre-assigns the Bridge User who receives the handoff of the outbound
+        conversation.
+    AgentOutboundPreAssignedUser:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Value that identifies the Bridge User, interpreted according
+            to identifierType.
+          examples:
+          - advisor@acme.com
+          - usr_01HZ2K3J4M5N6P7Q8R9S0T1UV2
+        identifierType:
+          $ref: '#/components/schemas/InternalParticipantIdentifierType'
+          title: Identifier Type
+          description: How to resolve the identifier. ID looks up by Bridge User ID;
+            EMAIL looks up by email address.
+          examples:
+          - EMAIL
+          - ID
+      additionalProperties: false
+      type: object
+      required:
+      - identifier
+      - identifierType
+      title: AgentOutboundPreAssignedUser
+      description: Identifies the Bridge User who should receive the handoff.
+    AgentOutboundRequest:
+      properties:
+        contact:
+          $ref: '#/components/schemas/AgentOutboundContactRef'
+          title: Contact
+          description: The Contact this outbound conversation targets. Must already
+            exist in the workspace.
+        template:
+          $ref: '#/components/schemas/LeadscoutOutboundTemplateRef'
+          title: Template
+          description: The opening template to send.
+        additionalMessages:
+          items:
+            $ref: '#/components/schemas/AgentOutboundFollowUp'
+          type: array
+          maxItems: 5
+          title: Additional Messages
+          description: Up to five text follow-ups stored on the conversation right
+            after the opening template, in the order given, and sent like the template.
+            Attachments (`mediaIds`) are not sent yet.
+        agentContext:
+          anyOf:
+          - $ref: '#/components/schemas/AgentOutboundContext'
+          - type: 'null'
+          title: Agent Context
+          description: Optional notes and media stored on the conversation as context
+            for the Agent.
+        consent:
+          anyOf:
+          - $ref: '#/components/schemas/OutboundConsentRequest'
+          - type: 'null'
+          title: Consent
+          description: Optional tenant-affirmed opt-in evidence recorded on the conversation.
+        handoffOverride:
+          anyOf:
+          - $ref: '#/components/schemas/AgentOutboundHandoffOverride'
+          - type: 'null'
+          title: Handoff Override
+          description: 'Optional. Pre-assigns a specific Bridge User as the advisor
+            for the handoff. The Bridge User is validated before anything is written:
+            the request is rejected if the user does not exist, belongs to another
+            workspace, or has been deleted.'
+        brandId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Brand Identifier
+          description: Optional brand id. When given, only the Agent's lines linked
+            to this brand are eligible; if none is, the request fails with 404. Omit
+            to consider every line of the Agent.
+          examples:
+          - null
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+        campaignId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Campaign Identifier
+          description: Optional campaign reference stored on the conversation for
+            audit and reporting.
+          examples:
+          - null
+          - spring_promo_2026
+        forceSend:
+          type: boolean
+          title: Force Send
+          description: 'Controls what happens when no line of the Agent is free or
+            recoverable. A free line always wins, then a line holding a released conversation
+            with this Contact that can be recovered, whatever this flag says. When
+            neither exists: with false (default) the request fails with 409 `BRIDGE_AI_LEADSCOUT_0008`;
+            with true, a line occupied by an active conversation with this Contact
+            is reused, preferring one this Agent controls. If the chosen conversation
+            is held by another Agent or a Bridge User the request fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006`
+            and nothing is written; release it first, then retry. Lines whose conversation
+            is blocked or was released without recovery are never used, so with no
+            line occupied by an active conversation the request fails with 409 `BRIDGE_AI_LEADSCOUT_0008`
+            even with true.'
+          default: false
+          examples:
+          - false
+          - true
+      type: object
+      required:
+      - contact
+      - template
+      title: AgentOutboundRequest
+      description: Request body for starting an outbound conversation answered by
+        a given Agent.
+    AgentOutboundResponse:
+      properties:
+        conversation:
+          $ref: '#/components/schemas/ConversationResponse'
+          title: Conversation
+          description: 'The conversation the Agent now controls: newly created, reused
+            (`alreadyInitiated`) or recovered (`recovered`).'
+        contact:
+          $ref: '#/components/schemas/ContactResponse'
+          title: Contact
+          description: The contact the conversation was initiated with.
+        templateSent:
+          anyOf:
+          - $ref: '#/components/schemas/AgentTemplateSent'
+          - type: 'null'
+          title: Template Sent
+          description: Summary of the template stored to open the conversation.
+        additionalMessagesPersisted:
+          type: integer
+          title: Additional Messages Persisted
+          description: Count of follow-up messages persisted on the conversation.
+          default: 0
+          examples:
+          - 0
+          - 3
+        alreadyInitiated:
+          type: boolean
+          title: Already Initiated
+          description: True when this request landed on a pre-existing conversation
+            (forceSend=true reuse path); false when a fresh conversation was created.
+            Informational only — the new template and follow-ups are persisted either
+            way.
+          default: false
+          examples:
+          - false
+          - true
+        recovered:
+          type: boolean
+          title: Recovered
+          description: True when a released conversation the Contact had on the line
+            was recovered instead of creating a new one. Recovery replaces the previous
+            outbound context and `agentContext`. Recoverable lines are used even with
+            `forceSend=false`.
+          default: false
+          examples:
+          - false
+          - true
+      type: object
+      required:
+      - conversation
+      - contact
+      title: AgentOutboundResponse
+      description: Response body for a successful Agent outbound initiation.
+    AgentResponse:
+      properties:
+        id:
+          type: string
+          title: Agent Identifier
+          description: Unique identifier of the Agent.
+        name:
+          type: string
+          title: Name
+          description: Name of the Agent.
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+          description: Description of the Agent. Always present; null when it has
+            none.
+        type:
+          $ref: '#/components/schemas/AgentType'
+          title: Type
+          description: Kind of Agent.
+          examples:
+          - LEADSCOUT
+          - SERVICE_AGENT
+        brandId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Brand Identifier
+          description: Brand the Agent belongs to. Always present; null when it is
+            not scoped to a brand.
+        status:
+          $ref: '#/components/schemas/AgentConfigStatus'
+          title: Status
+          description: Configuration status of the Agent.
+          examples:
+          - DRAFT
+          - COMPLETE
+        available:
+          type: boolean
+          title: Available
+          description: 'Whether the Agent can start conversations: its configuration
+            is complete and it has a line.'
+        unavailableReason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Unavailable Reason
+          description: 'Why the Agent is not available: `DRAFT` (configuration incomplete)
+            or `NO_LINES` (no active line). Always present; null when it is available.'
+          examples:
+          - DRAFT
+          - NO_LINES
+        lines:
+          items:
+            $ref: '#/components/schemas/AgentLine'
+          type: array
+          title: Lines
+          description: Active WhatsApp lines the Agent answers on. Empty when it has
+            none.
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - status
+      - available
+      title: AgentResponse
+      description: An Agent of the workspace with its status and availability.
+    AgentTemplateSent:
+      properties:
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Identifier
+          description: Id of the template that was sent.
+          examples:
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+        name:
+          type: string
+          title: Template Name
+          description: Name of the template that was dispatched.
+          examples:
+          - leadscout_outbound_fb_v1
+        messageId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message Identifier
+          description: Bridge message id of the template. Always present; it is not
+            a WhatsApp `wamid`.
+          examples:
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+      type: object
+      required:
+      - name
+      title: AgentTemplateSent
+      description: Summary of the template stored to open the conversation.
+    AgentType:
+      type: string
+      enum:
+      - LEADSCOUT
+      - SERVICE_AGENT
+      title: AgentType
+      description: Kinds of Agent exposed by the public API.
+    AgentsResponseList:
+      properties:
+        agents:
+          items:
+            $ref: '#/components/schemas/AgentResponse'
+          type: array
+          title: Agents
+          description: Array of Agents.
+        cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cursor
+          description: Cursor to be sent on the next page request. Null on the last
+            page.
+      type: object
+      required:
+      - agents
+      title: AgentsResponseList
+      description: Response body for listing the Agents of a workspace.
     ClosedAttribute:
       properties:
         id:
@@ -2924,9 +3726,9 @@ components:
           - EN
         cellphone:
           type: string
-          format: phone
           title: Cellphone
-          description: Contact's cellphone number.
+          description: Contact's cellphone number. Without a country code it is read
+            in the workspace's country.
           examples:
           - '+14084029292'
         ownerIdentifier:
@@ -3011,10 +3813,9 @@ components:
       properties:
         cellphone:
           type: string
-          format: phone
           title: Cellphone
-          description: Contact's cellphone number in E.164 format. Used to identify
-            the contact for upsert.
+          description: Contact's cellphone number. Without a country code it is read
+            in the workspace's country. Used to identify the contact for upsert.
           examples:
           - '+14084029292'
         firstName:
@@ -3353,6 +4154,7 @@ components:
       - DOCUMENT
       - STICKER
       - GIF
+      - WEBSITE
       title: FileType
     HTTPValidationError:
       properties:
@@ -3653,6 +4455,67 @@ components:
       enum:
       - ES
       - EN
+      - AF
+      - SQ
+      - AR
+      - AZ
+      - BN
+      - BG
+      - CA
+      - ZH_CN
+      - HR
+      - CS
+      - DA
+      - NL
+      - ET
+      - FIL
+      - FI
+      - FR
+      - KA
+      - DE
+      - EL
+      - GU
+      - HA
+      - HE
+      - HI
+      - HU
+      - ID
+      - GA
+      - IT
+      - JA
+      - KN
+      - KK
+      - RW_RW
+      - KO
+      - KY_KG
+      - LO
+      - LV
+      - LT
+      - MK
+      - MS
+      - ML
+      - MR
+      - NB
+      - FA
+      - PL
+      - PT_BR
+      - PA
+      - RO
+      - RU
+      - SR
+      - SK
+      - SL
+      - SW
+      - SV
+      - TA
+      - TE
+      - TH
+      - TR
+      - UK
+      - UR
+      - UZ
+      - VI
+      - ZU
       title: LanguageCode
     LeadscoutOutboundContactRef:
       properties:
@@ -3852,6 +4715,15 @@ components:
           examples:
           - false
           - true
+        recovered:
+          type: boolean
+          title: Recovered
+          description: True when this request recovered a released conversation the
+            contact had on the chosen channel instead of creating a fresh one.
+          default: false
+          examples:
+          - false
+          - true
       type: object
       required:
       - conversation
@@ -3860,12 +4732,26 @@ components:
       description: Response body for a successful LeadScout outbound initiation.
     LeadscoutOutboundTemplateRef:
       properties:
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Identifier
+          description: Id of the registered template (from GET /templates). When both
+            id and name are sent, the id is used.
+          examples:
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
+          - null
         name:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Template Name
-          description: Name of the registered Meta-approved template to send.
+          description: Name of the registered Meta-approved template to send. Required
+            when id is not sent; ignored when id is sent.
           examples:
           - leadscout_outbound_fb_v1
+          - null
         orderedParams:
           items:
             type: string
@@ -3897,12 +4783,18 @@ components:
           description: Optional header media (image/video) to attach to the template
             message. Accepts either a preloaded mediaId or a public url.
       type: object
-      required:
-      - name
       title: LeadscoutOutboundTemplateRef
       description: References the Meta-approved template that will open the conversation.
     LeadscoutTemplateSent:
       properties:
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Identifier
+          description: Id of the template that was sent.
+          examples:
+          - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
         name:
           type: string
           title: Template Name
@@ -4439,9 +5331,11 @@ components:
         language:
           type: string
           title: Language
-          description: Language of the resolved pivot (the template's default language).
+          description: 'Language of the resolved pivot (the template''s default language),
+            as Meta''s code: es, en, pt_BR.'
           examples:
           - es
+          - pt_BR
         variables:
           items:
             $ref: '#/components/schemas/TemplateVariableResponse'
@@ -4554,6 +5448,26 @@ components:
           examples:
           - true
           - false
+        isCustom:
+          type: boolean
+          title: Is custom
+          description: 'Whether this is a custom variable: a value only the caller
+            knows, with a default text. The caller may send it in `parameters`; when
+            it is left out or sent blank, `default` goes out.'
+          default: false
+          examples:
+          - true
+          - false
+        default:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Default
+          description: For a custom variable, the text sent when the caller sends
+            no value for it; null otherwise.
+          examples:
+          - pending
+          - null
       type: object
       required:
       - key
@@ -4564,12 +5478,16 @@ components:
         slot address ever appears here.
       examples:
       - callerMustSupply: false
+        isCustom: false
         key: first_name
         label: Contact first name
       - callerMustSupply: false
+        default: pending
+        isCustom: true
         key: tracking_code
         label: Tracking code
       - callerMustSupply: true
+        isCustom: false
         key: promo_code
         label: Promo code
     UpdateContactBody:
@@ -4613,10 +5531,10 @@ components:
         cellphone:
           anyOf:
           - type: string
-            format: phone
           - type: 'null'
           title: Cellphone
-          description: Contact's cellphone number in E.164 format.
+          description: Contact's cellphone number. Without a country code it is read
+            in the workspace's country.
           examples:
           - '+14084029292'
           - null
@@ -4664,6 +5582,13 @@ components:
       type: object
       title: UpdateConversation
       description: Request body for updating an existing conversation.
+    UserStatusFilter:
+      type: string
+      enum:
+      - active
+      - disabled
+      - all
+      title: UserStatusFilter
     UserType:
       type: string
       enum:
@@ -4697,13 +5622,6 @@ components:
       - msg
       - type
       title: ValidationError
-    UserStatusFilter:
-      type: string
-      enum:
-      - active
-      - disabled
-      - all
-      title: UserStatusFilter
   securitySchemes:
     x-api-key:
       type: apiKey
