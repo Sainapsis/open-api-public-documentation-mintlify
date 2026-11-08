@@ -28,7 +28,8 @@
           "connect-your-agent",
           "templates-and-parameters",
           "rate-limits",
-          "error-codes"
+          "error-codes",
+          "changelog"
         ]
       },
       {
