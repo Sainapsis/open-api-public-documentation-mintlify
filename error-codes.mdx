@@ -78,7 +78,7 @@ Error codes for Agent operations.
 | `BRIDGE_AI_LEADSCOUT_0016` | 400 | Outbound validation error |
 | `BRIDGE_AI_LEADSCOUT_0017` | 409 | Latest session is not finalized |
 | `BRIDGE_AI_LEADSCOUT_0018` | 409 | Could not finalize the expired session before starting a new one |
-| `BRIDGE_AI_LEADSCOUT_0019` | 422 | A template variable the caller must supply is missing or blank. `extra.missingVariables`: `[{key, label}]` |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | A template variable the caller must supply is missing or blank. `extra.missingVariables`: `[{key, label}]`. It also lists a variable Bridge fills when its value turns out empty for the send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.). Retry with that key in `parameters` |
 | `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters` lists them |
 | `BRIDGE_AI_LEADSCOUT_0021` | 422 | A key in `parameters` is not a variable of the template. `extra.unknownKeys` lists it |
 | `BRIDGE_AI_LEADSCOUT_0025` | 422 | A template variable value breaks WhatsApp's rules for a parameter: a line break, a tab, five or more consecutive spaces, or too long. `extra.invalidVariables`: `[{key, label, reason}]`, sorted by key |

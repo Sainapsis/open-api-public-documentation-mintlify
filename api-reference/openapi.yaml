@@ -1819,7 +1819,10 @@ paths:
         - BRIDGE_AI_LEADSCOUT_0015: conversation operation failed\n- BRIDGE_AI_LEADSCOUT_0016:\
         \ outbound validation error\n- BRIDGE_AI_LEADSCOUT_0019: a template variable\
         \ the caller must supply is missing or blank (422); `extra.missingVariables`\
-        \ lists them as `[{key, label}]`\n- BRIDGE_AI_LEADSCOUT_0020: `orderedParams`\
+        \ lists them as `[{key, label}]`; it also lists a variable Bridge fills when\
+        \ its value turns out empty for this send (a Contact with no value and no\
+        \ default, or a computed value WhatsApp would reject), which you can then\
+        \ send in `parameters`\n- BRIDGE_AI_LEADSCOUT_0020: `orderedParams`\
         \ and `parameters` both supply the same slot (422); `extra.conflictingParameters`\
         \ lists them\n- BRIDGE_AI_LEADSCOUT_0021: `parameters` has a key that is not\
         \ a variable of the template (422); `extra.unknownKeys` lists it\n- BRIDGE_AI_LEADSCOUT_0025:\
@@ -2540,7 +2543,10 @@ paths:
         \ is written:\n- `BRIDGE_AI_LEADSCOUT_0019`: a variable the caller must supply\
         \ (`callerMustSupply: true` in `GET /templates/{templateId}`) is missing\
         \ or blank. `extra.missingVariables` lists the keys as `[{key, label}]`.\
-        \ Variables Bridge fills are never listed.\n- `BRIDGE_AI_LEADSCOUT_0020`:\
+        \ It also lists a variable Bridge fills when its value turns out empty for\
+        \ this send: a recipient variable whose Contact has no value and no default,\
+        \ or a value Bridge computed that WhatsApp would reject (line break, tab,\
+        \ etc.). Retry with that key in `parameters`.\n- `BRIDGE_AI_LEADSCOUT_0020`:\
         \ `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters`\
         \ lists them.\n- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not\
         \ a variable of the template. `extra.unknownKeys` lists it.\n- `BRIDGE_AI_LEADSCOUT_0025`:\
