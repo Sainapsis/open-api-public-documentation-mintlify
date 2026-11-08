@@ -1817,7 +1817,18 @@ paths:
         \ agent for channel\n- BRIDGE_AI_LEADSCOUT_0013: multiple prospecting agents\
         \ for brand\n- BRIDGE_AI_LEADSCOUT_0014: multiple prospecting agents for channel\n\
         - BRIDGE_AI_LEADSCOUT_0015: conversation operation failed\n- BRIDGE_AI_LEADSCOUT_0016:\
-        \ outbound validation error"
+        \ outbound validation error\n- BRIDGE_AI_LEADSCOUT_0019: a template variable\
+        \ the caller must supply is missing or blank (422); `extra.missingVariables`\
+        \ lists them as `[{key, label}]`; it also lists a variable Bridge fills when\
+        \ its value turns out empty for this send (a Contact with no value and no\
+        \ default, or a computed value WhatsApp would reject), which you can then\
+        \ send in `parameters`\n- BRIDGE_AI_LEADSCOUT_0020: `orderedParams`\
+        \ and `parameters` both supply the same slot (422); `extra.conflictingParameters`\
+        \ lists them\n- BRIDGE_AI_LEADSCOUT_0021: `parameters` has a key that is not\
+        \ a variable of the template (422); `extra.unknownKeys` lists it\n- BRIDGE_AI_LEADSCOUT_0025:\
+        \ a template variable value breaks WhatsApp's rules for a parameter: a line\
+        \ break, a tab, five or more consecutive spaces, or too long (422); `extra.invalidVariables`\
+        \ lists each offending variable as `[{key, label, reason}]`, sorted by key"
       operationId: initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post
       security:
       - x-api-key: []
@@ -1987,6 +1998,11 @@ paths:
                     title: Unknown Template Parameter Key
                     status: 422
                     code: BRIDGE_AI_LEADSCOUT_0021
+                INVALID_TEMPLATE_VARIABLE_VALUES:
+                  value:
+                    title: Invalid Template Variable Values
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0025
               schema:
                 $ref: '#/components/schemas/Problem'
   /bridge/api/v1/workspaces/{workspaceId}/leadscout/conversations/{conversationId}/handoff:
@@ -2072,11 +2088,13 @@ paths:
         \ `id` or its `name` — the send contract\n(`POST .../leadscout/outbound`)\
         \ identifies a template by `name`; this discovery endpoint\nalso accepts `id`,\
         \ so a caller who only has one of the two can still look it up.\n\nA variable\
-        \ with `callerMustSupply: true` has no declared source — the caller must include\n\
+        \ with `callerMustSupply: true` is one Bridge cannot fill for the send — the caller must include\n\
         its `key` in `parameters` when sending, or the send fails with a 422 naming\
-        \ that same `key`.\nA variable with `callerMustSupply: false` is either resolved\
-        \ by Bridge on its own (e.g. the\nrecipient's first name) or already has a\
-        \ value the caller may optionally override.\nA variable with `isCustom: true`\
+        \ that same `key`.\nA variable with `callerMustSupply: false` is filled by Bridge\
+        \ for the send (e.g. the Contact's first name, or a variable with a default);\
+        \ the caller may optionally override it.\nSender variables are filled only\
+        \ from their default: calls through the integrations API have no person as\
+        \ sender.\nA variable with `isCustom: true`\
         \ is a value only the caller knows, with a `default`: send it in\n`parameters`\
         \ to use your own value, or leave it out (or blank) and `default` goes out.\n\
         \nError codes:\n- BRIDGE_CORE_0301: workspace in the path does not match the\
@@ -2521,7 +2539,20 @@ paths:
         \ `sessionId` and `stage`). If an expired\n  session cannot be finalized,\
         \ it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: an open,\
         \ unexpired service session is continued; an expired one is closed as abandoned\
-        \ and a\n  new one opens."
+        \ and a\n  new one opens.\n\nTemplate parameter errors, all 422 and raised before anything\
+        \ is written:\n- `BRIDGE_AI_LEADSCOUT_0019`: a variable the caller must supply\
+        \ (`callerMustSupply: true` in `GET /templates/{templateId}`) is missing\
+        \ or blank. `extra.missingVariables` lists the keys as `[{key, label}]`.\
+        \ It also lists a variable Bridge fills when its value turns out empty for\
+        \ this send: a recipient variable whose Contact has no value and no default,\
+        \ or a value Bridge computed that WhatsApp would reject (line break, tab,\
+        \ etc.). Retry with that key in `parameters`.\n- `BRIDGE_AI_LEADSCOUT_0020`:\
+        \ `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters`\
+        \ lists them.\n- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not\
+        \ a variable of the template. `extra.unknownKeys` lists it.\n- `BRIDGE_AI_LEADSCOUT_0025`:\
+        \ a value breaks WhatsApp's rules for a parameter (a line break, a tab, five\
+        \ or more consecutive spaces, or too long). `extra.invalidVariables` lists\
+        \ each offending variable as `[{key, label, reason}]`, sorted by key."
       operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
       security:
       - x-api-key: []
@@ -2702,6 +2733,11 @@ paths:
                     title: Unknown Template Parameter Key
                     status: 422
                     code: BRIDGE_AI_LEADSCOUT_0021
+                INVALID_TEMPLATE_VARIABLE_VALUES:
+                  value:
+                    title: Invalid Template Variable Values
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0025
               schema:
                 $ref: '#/components/schemas/Problem'
         '400':
@@ -4013,8 +4049,10 @@ components:
             type: string
           type: array
           title: Ordered Parameters
-          description: Caller-supplied values for the template's CALLER-source parameter
-            slots, in position order.
+          description: Values for the template's variable slots by absolute position
+            (body slots first, then button slots), in order. Send a value for every
+            position, because Bridge does not skip positions it could fill. Use `parameters`
+            instead to send only the variables Bridge cannot fill.
           examples:
           - - Maria
             - ACME
@@ -4023,11 +4061,18 @@ components:
             type: string
           type: object
           title: Parameters
-          description: Caller-supplied values keyed by the template's variable key
-            (see GET /templates/{id} for the key inventory), covering both body and
-            button slots. Prefer this over orderedParams for any template that has
-            a dynamic button. An unknown key, or a key that overlaps a slot already
-            covered by orderedParams, is rejected with 422.
+          description: Values keyed by the template's variable key (see GET /templates/{id}
+            for the key inventory), covering both body and button slots. Send the
+            variables that `GET /templates/{id}` marks as caller-must-supply; omit the ones Bridge fills. For
+            a variable Bridge fills, a blank or whitespace-only value counts as omitted;
+            a value you send replaces Bridge's. For a variable you must supply, a
+            blank value is rejected like a missing one (422 `BRIDGE_AI_LEADSCOUT_0019`).
+            Prefer this over orderedParams for any template that has a dynamic button.
+            An unknown key (`BRIDGE_AI_LEADSCOUT_0021`), or a key that overlaps a
+            slot already covered by orderedParams (`BRIDGE_AI_LEADSCOUT_0020`), is
+            rejected with 422. A value that breaks WhatsApp's rules for a parameter
+            (a line break, a tab, five or more consecutive spaces, or too long) is
+            rejected with 422 `BRIDGE_AI_LEADSCOUT_0025`.
           examples:
           - recipient_first_name: Maria
             tracking_code: TRK123
@@ -4696,9 +4741,12 @@ components:
           type: boolean
           title: Caller must supply
           description: Whether the caller must supply a value for this variable when
-            sending the template (true when the template has no declared source for
-            it — e.g. a promo code only the caller knows; false when Bridge resolves
-            it on its own, e.g. from the recipient's profile).
+            sending the template. False when Bridge fills it for the send, as follows. A recipient
+            variable (e.g. the Contact's first name) is filled when the Contact has a value or
+            the variable has a default; a sender variable or a custom variable only
+            when it has a non-blank default. True otherwise, e.g. a promo code only
+            the caller knows, or a sender name with no default (calls through the
+            integrations API have no person as sender).
           examples:
           - true
           - false
