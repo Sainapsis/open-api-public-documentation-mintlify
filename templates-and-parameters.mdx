@@ -229,6 +229,79 @@ So fixing one error can reveal the next. Values for a later template are not che
 
 ---
 
+## Outbound templates
+
+`POST .../agents/{agentId}/outbound` and `POST .../leadscout/outbound` send a template with `template.parameters` (keyed by variable `key`) or `template.orderedParams`. The variables come from the same `GET .../templates/{templateId}` lookup as above, and the same `callerMustSupply` flag applies.
+
+### What Bridge fills
+
+Bridge fills a variable for a send when it can. Otherwise you must send it, and `callerMustSupply` says which case applies to that variable.
+
+| Variable | Bridge fills it from | Otherwise |
+| -------- | -------------------- | --------- |
+| Recipient, such as the Contact's first name | The Contact | The variable's default; with no default, you must send it |
+| Sender, such as the sender's first or last name | Its default only. A call through the Integrations API has no person as sender | With no default, you must send it |
+| Custom (`isCustom: true`) | Its default, when not blank | You must send it |
+
+### Rules for `parameters`
+
+- Send the variables with `callerMustSupply: true`. Omit the ones Bridge fills.
+- A value you send for a variable Bridge could fill replaces Bridge's value.
+- For a variable Bridge fills, a blank or whitespace-only value counts as omitted.
+- For a variable you must send, a blank value is rejected like a missing one, with `422` `BRIDGE_AI_LEADSCOUT_0019`.
+
+`orderedParams` maps absolute positions in the template: send a value for every position, including the ones Bridge could fill. Use `parameters` to send only what Bridge cannot fill. Do not send the same slot in both (`0020`).
+
+### Example
+
+`order_shipped_promo` has `first_name`, filled from the Contact, and `order_number` and `delivery_date`, which you must send. `parameters` carries only those two:
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+```
+
+```json
+{
+  "contact": {
+    "identifier": "+13802098869",
+    "identifierType": "PHONE",
+    "messageProviderType": "WHATSAPP"
+  },
+  "template": {
+    "id": "f0000040-0000-4000-8000-000000000040",
+    "parameters": {
+      "order_number": "A-10492",
+      "delivery_date": "3 de octubre"
+    }
+  }
+}
+```
+
+### Errors
+
+| Code | Status | When | `extra` |
+| ---- | ------ | ---- | ------- |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | A variable you must send is missing or blank | `missingVariables: [{key, label}]`, only the keys you must send |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` and `parameters` both supply the same slot | `conflictingParameters` |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | A key in `parameters` is not a variable of the template | `unknownKeys: [key]` |
+
+```json
+{
+  "title": "Missing Template Variables",
+  "status": 422,
+  "code": "BRIDGE_AI_LEADSCOUT_0019",
+  "extra": {
+    "missingVariables": [
+      { "key": "delivery_date", "label": "Delivery date" }
+    ]
+  }
+}
+```
+
+---
+
 ## Related Topics
 
 - [Create a conversation](/api-reference/conversations-api/creates-a-new-conversation-with-flexible-user-identification) — Full request and response reference
