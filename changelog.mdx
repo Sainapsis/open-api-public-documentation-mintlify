@@ -11,6 +11,27 @@ Changes that affect the calls you already make, newest first. Additive changes â
 
 ---
 
+## Creating a conversation recovers a released one
+
+<Info>
+  **A call that returned `409` can now return `201`.** No action is needed, but check how your integration reads the response.
+</Info>
+
+### What changes
+
+`POST /conversations` used to fail with `409 BRIDGE_PROVIDER_CHANNEL_0001` when no line was free for the requested Contacts. Now, if one of their lines holds a conversation released with recovery, and its Contacts are exactly the requested ones, that conversation is recovered and returned with `201`.
+
+The response is the recovered conversation: same `id`, history, Contacts and lines. The request's `name` and `status` are not applied, and only the `onboardingTemplates` you send are delivered. See the [REST API](/api-reference) reference for the full rules.
+
+When a released conversation holds the line but with other Contacts or lines, the request fails with a new `409`: `BRIDGE_CONVERSATION_0105` with `extra.reason` set to `PARTICIPANTS_MISMATCH`. When nothing can be recovered, the `409 BRIDGE_PROVIDER_CHANNEL_0001` is returned as before.
+
+### What to do
+
+- **If you store the conversation `id`**, expect it may be one you already know. Update the existing record instead of adding a new one.
+- **If you handle `409`**, read `code` to tell the cases apart, as listed in [Error codes](/error-codes).
+
+---
+
 ## Finding a contact or a user by an identifier
 
 <Warning>
