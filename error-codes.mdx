@@ -132,7 +132,7 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent |
 | `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | A template in the workspace's onboarding sequence needs values only the caller can provide; a workspace admin must change the onboarding sequence |
 
-When creating a conversation, `BRIDGE_CONVERSATION_0105` is returned as `409` with `extra.reason` set to `PARTICIPANTS_MISMATCH` when a released conversation holds the Contact's line but its Contacts or lines differ from the requested ones, so it cannot be recovered. Request the same Contacts and lines as that conversation, or use another line.
+When creating a conversation, `BRIDGE_CONVERSATION_0105` returns `409` with `extra.reason` set to `PARTICIPANTS_MISMATCH`: a released conversation holds the Contact's line with other Contacts or lines. Request the same Contacts and lines, or use another line.
 
 `BRIDGE_CONVERSATION_0601` returns `404`, `0602` and `0603` return `400`, and `0604` to `0608` return `422`. See [Onboarding template parameters](/templates-and-parameters) for what each one carries in `extra` and how to fix it.
 
@@ -170,7 +170,7 @@ Error codes for provider channel operations.
 | ---- | -------------- | ------- |
 | `BRIDGE_PROVIDER_CHANNEL_0001` | Provider Channel Not Found | The provider channel was not found; verify the workspace has channels configured |
 
-When creating a conversation, this code is returned as `409` when no WhatsApp line is available for a Contact and no released conversation can be recovered for it — for example, because the Contact's line is still bound to an active conversation — or when the `providerChannelId` you named is not available for that Contact. The lines in use are listed in `extra.resources`.
+When creating a conversation, this code is returned as `409` when no WhatsApp line is free for a Contact and there is no released conversation to recover, or when the `providerChannelId` you named is not available for that Contact.
 
 ## Rate Limit Error Codes
 

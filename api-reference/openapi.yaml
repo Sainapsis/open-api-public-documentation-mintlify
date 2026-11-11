@@ -509,34 +509,35 @@ paths:
       tags:
       - Conversations API
       summary: Creates a new conversation with flexible user identification.
-      description: "Create a new conversation with flexible user identification.\n\
-        \nExternal users can be identified by ID, email, or phone.\nInternal users\
-        \ are only assigned when explicitly specified; otherwise, conversations are\n\
-        auto-assigned by round-robin through a team or left open for any available\
-        \ internal user.\n\n**Recovering a released conversation.** When no line is\
-        \ free for the requested Contacts and one of their\nlines holds a conversation\
-        \ released with recovery, that conversation is recovered instead of returning\
-        \ an\nerror. It is recovered only when its Contacts are exactly the requested\
-        \ ones (on the requested lines, when\ngiven). If more than one matches, the\
-        \ most recently released one is recovered. The response is that\nconversation,\
-        \ with the same id, history, Contacts and lines it had before it was released.\n\
-        \n- Internal users: the requested ones, or the next one in the round robin\
-        \ when none are given. When `teamId`\n  is sent, no conversation is recovered.\n\
-        - The request's `name` and `status` are not applied: the conversation keeps\
-        \ its name and becomes active.\n- Only the `onboardingTemplates` in the request\
-        \ are sent. When your templates replace only the first template\n  of the\
-        \ workspace's onboarding sequence, the rest of that sequence is sent after\
-        \ them, as on a creation.\n  Without `onboardingTemplates`, nothing is sent.\
-        \ The templates are validated first, so an invalid template\n  leaves the\
-        \ conversation released.\n- The checks of a creation apply: the lines must\
-        \ be eligible for the request (brand and line type), the\n  Contacts must\
-        \ not have rejected consent and the internal users must be active in the workspace.\
-        \ The\n  conversation gets the workspace's access policy.\n\nWhen nothing\
-        \ can be recovered, the request fails with `409 BRIDGE_PROVIDER_CHANNEL_0001`\
-        \ and the lines in use\nin `extra.resources`. When a released conversation\
-        \ holds the line but its Contacts or lines differ from the\nrequested ones,\
-        \ it fails with `409 BRIDGE_CONVERSATION_0105` and `extra.reason` set to `PARTICIPANTS_MISMATCH`;\n\
-        request the same Contacts and lines as that conversation, or use another line."
+      description: 'Create a new conversation with flexible user identification.
+
+
+        External users can be identified by ID, email, or phone.
+
+        Internal users are only assigned when explicitly specified; otherwise, conversations
+        are
+
+        auto-assigned by round-robin through a team or left open for any available
+        internal user.
+
+
+        **Recovering a released conversation.** When no line is free and the requested
+        Contacts have a conversation
+
+        released with recovery, with exactly those Contacts (and lines, when given),
+        that conversation is recovered
+
+        and returned with its `id` and history. It gets the requested internal users,
+        or the next one in the round
+
+        robin. The request''s `name` and `status` are not applied, and only the `onboardingTemplates`
+        you send are
+
+        delivered. Not available with `teamId`.
+
+
+        If that conversation has other Contacts or lines, the request fails with `409
+        BRIDGE_CONVERSATION_0105`.'
       operationId: create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post
       security:
       - x-api-key: []
