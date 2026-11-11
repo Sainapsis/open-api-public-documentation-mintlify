@@ -110,6 +110,7 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0102` | Internal User Not In Conversation | The internal user is not a participant in this conversation |
 | `BRIDGE_CONVERSATION_0103` | External User Already In Conversation | The external user is already a participant in this conversation |
 | `BRIDGE_CONVERSATION_0104` | External User Not In Conversation | The external user is not a participant in this conversation |
+| `BRIDGE_CONVERSATION_0105` | External User Already Use This Channel | The external user is already using this messaging channel in some conversation |
 | `BRIDGE_CONVERSATION_0201` | External Participants Required | At least one external participant is required to operate in a conversation |
 | `BRIDGE_CONVERSATION_0202` | Internal Participants Required | At least one internal participant is required to operate in a conversation |
 | `BRIDGE_CONVERSATION_0203` | User Is Not Admin | The user is not an administrator of this conversation |
@@ -130,6 +131,8 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0606` | Onboarding Template Parameters Not Supported | Parameters were sent for an onboarding template that is not a WhatsApp provider template |
 | `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent |
 | `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | A template in the workspace's onboarding sequence needs values only the caller can provide; a workspace admin must change the onboarding sequence |
+
+When creating a conversation, `BRIDGE_CONVERSATION_0105` returns `409` with `extra.reason` set to `PARTICIPANTS_MISMATCH`: a released conversation holds the Contact's line with other Contacts or lines. Request the same Contacts and lines, or use another line.
 
 `BRIDGE_CONVERSATION_0601` returns `404`, `0602` and `0603` return `400`, and `0604` to `0608` return `422`. See [Onboarding template parameters](/templates-and-parameters) for what each one carries in `extra` and how to fix it.
 
@@ -167,7 +170,7 @@ Error codes for provider channel operations.
 | ---- | -------------- | ------- |
 | `BRIDGE_PROVIDER_CHANNEL_0001` | Provider Channel Not Found | The provider channel was not found; verify the workspace has channels configured |
 
-When creating a conversation, this code is returned as `409` when no WhatsApp line is available for a Contact — for example, because the Contact's line is still bound to another conversation — or when the `providerChannelId` you named is not available for that Contact.
+When creating a conversation, this code is returned as `409` when no WhatsApp line is free for a Contact and there is no released conversation to recover, or when the `providerChannelId` you named is not available for that Contact.
 
 ## Rate Limit Error Codes
 

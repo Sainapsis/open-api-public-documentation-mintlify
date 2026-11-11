@@ -11,6 +11,12 @@ Changes that affect the calls you already make, newest first. Additive changes â
 
 ---
 
+## Creating a conversation recovers a released one
+
+`POST /conversations` used to return `409 BRIDGE_PROVIDER_CHANNEL_0001` when no line was free. Now, if the requested Contacts have a conversation released with recovery, it is recovered and returned with `201` and its existing `id`, so you may receive an `id` you already stored. If that conversation has other Contacts or lines, the request returns `409 BRIDGE_CONVERSATION_0105`. See the [REST API](/api-reference) reference for details.
+
+---
+
 ## Finding a contact or a user by an identifier
 
 <Warning>

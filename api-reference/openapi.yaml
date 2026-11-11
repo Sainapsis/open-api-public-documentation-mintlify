@@ -518,7 +518,16 @@ paths:
         are
 
         auto-assigned by round-robin through a team or left open for any available
-        internal user.'
+        internal user.
+
+
+        When no line is free and the Contacts have a released conversation with exactly
+        the requested participants,
+
+        that conversation is recovered and returned instead, keeping its `id` and
+        history. The request''s `name` and
+
+        `status` are not applied to it.'
       operationId: create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post
       security:
       - x-api-key: []
@@ -641,6 +650,16 @@ paths:
                     title: Internal Users Not In Workspace
                     status: 409
                     code: BRIDGE_INTERNAL_0002
+                PROVIDER_CHANNEL_NOT_FOUND:
+                  value:
+                    title: Provider Channel Not Found
+                    status: 409
+                    code: BRIDGE_PROVIDER_CHANNEL_0001
+                EXTERNAL_USER_ALREADY_USE_THIS_CHANNEL:
+                  value:
+                    title: External User Already Use This Channel
+                    status: 409
+                    code: BRIDGE_CONVERSATION_0105
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
