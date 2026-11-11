@@ -521,23 +521,13 @@ paths:
         internal user.
 
 
-        **Recovering a released conversation.** When no line is free and the requested
-        Contacts have a conversation
+        When no line is free and the Contacts have a released conversation with exactly
+        the requested participants,
 
-        released with recovery, with exactly those Contacts (and lines, when given),
-        that conversation is recovered
+        that conversation is recovered and returned instead, keeping its `id` and
+        history. The request''s `name` and
 
-        and returned with its `id` and history. It gets the requested internal users,
-        or the next one in the round
-
-        robin. The request''s `name` and `status` are not applied, and only the `onboardingTemplates`
-        you send are
-
-        delivered. Not available with `teamId`.
-
-
-        If that conversation has other Contacts or lines, the request fails with `409
-        BRIDGE_CONVERSATION_0105`.'
+        `status` are not applied to it.'
       operationId: create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post
       security:
       - x-api-key: []
