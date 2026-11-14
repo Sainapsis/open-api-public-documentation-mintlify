@@ -1,0 +1,60 @@
+---
+title: "Responses, errors, and retries"
+sidebarTitle: "Responses and retries"
+description: "Interpret creation, acceptance, empty responses, validation errors, and retry signals without confusing the REST and Custom Connections contracts."
+keywords: ["201", "202", "204", "422", "429", "retry", "requestId", "trackingId", "delivery", "HTTPValidationError", "Problem"]
+---
+
+## Read the result for this operation
+
+The HTTP status and response body describe the operation you called. They do not all mean that a person received a message.
+
+| Operation | Published success | What to do with it |
+| --- | --- | --- |
+| Create a message | `201`, with `messageId` | Retain the message ID. The published response does not include a provider delivery receipt; do not label it delivered from this response alone. |
+| Release a conversation | `204`, with no response body | Treat it as success and do not call a JSON parser on the empty body. |
+| Request LeadScout handoff | `202`, with `trackingId`, `conversationId`, `status`, and `assignees` | Retain the correlation ID. Assignment is asynchronous; assignees echo the request and do not prove that downstream resolution or assignment completed. |
+| Submit a Custom Connections lead | `202`, with `requestId` | Retain the request ID. Show that the lead was accepted; the opening WhatsApp message is sent later by a separate service. |
+
+The reference for each operation remains authoritative: [messages](/api-reference/messages-api/create-a-new-message), [release](/api-reference/conversations-api/release-conversation), [handoff](/api-reference/leadscout-api/request-a-manual-handoff-of-a-leadscout-conversation-to-internal-users), and [Custom Connections](/api-reference/campaign-leads/register-a-campaign-lead).
+
+<Note>
+  A correlation ID is not a status URL. The published contract does not define a polling endpoint for `trackingId` or `requestId`. Keep it for correlation and support; do not construct a new endpoint from it.
+</Note>
+
+## Parse the error shape the endpoint publishes
+
+REST Integrations and Custom Connections have separate error contracts.
+
+### REST Integrations
+
+Many responses use `Problem`: `title` and `status` are required; `code`, `detail`, `errors`, `traceId`, `instance`, and `extra` are optional. When a `code` is present, use it to select a documented error handler rather than matching the human-readable `title`. Keep `traceId` when provided for a support request.
+
+Some published validation responses declare `HTTPValidationError`, whose `detail` is an array of entries with `loc`, `msg`, and `type`. The shared API error handler reviewed for this documentation returns request validation details as `Problem.errors[]` instead. The published response definitions are preserved; confirmation against the deployed API is still pending. See the [validation compatibility note](/error-codes#parse-validation-errors-defensively).
+
+Accept JSON errors with either `application/json` or `application/problem+json`. Inspect a `code` when present, then an `errors` array or a `detail` array for field errors. A string `detail` is an explanation, not an array. A `422` status alone does not identify one universal body shape. Keep a fallback for an error without `code`, and use the endpoint reference together with [Error codes](/error-codes) to choose the action.
+
+### Custom Connections
+
+Its error body has required `type`, `title`, and `status`, and may include `detail`. Here **`type` is the machine-readable error identifier**. It is not the REST `code` field. The [Custom Connections error reference](/lead-capture/errors) lists these responses.
+
+Error responses do not carry the submission `requestId`; only a successful `202` does. For an error support request, retain the page URL and approximate time as described in that reference.
+
+## Make retry decisions by operation and cause
+
+| Result | Next action |
+| --- | --- |
+| REST `429` | Follow `Retry-After` in seconds. The rate-limit guide states that the rejected request was not processed. The workspace budget is shared across API Keys. |
+| REST `401` or `403` | Correct the API Key, permissions, or workspace mismatch. A timed retry does not fix those causes. |
+| Validation or configuration error | Correct the documented cause first. Do not repeatedly send the same invalid request. |
+| Custom Connections `422` | The documented cause is CAPTCHA provider unavailability. Its error guide says retrying is safe; mint a fresh CAPTCHA token for the new attempt. |
+| Custom Connections CAPTCHA rejection | Check that the token is present, fresh, and minted for this attempt. The same error also covers a low score, so a new attempt alone does not prove the original cause. |
+| Timeout, connection loss, or an unclassified `5xx` during a mutation | Do not assume nothing happened. Inspect the operation's documented effects and any identifiers already obtained before deciding whether to repeat it. Do not assume a general idempotency guarantee. |
+
+See [Rate limits](/rate-limits) for pacing and [Custom Connections errors](/lead-capture/errors) for its distinct retry rules.
+
+## Some failures can follow a write
+
+The [Agent outbound reference](/api-reference/agents-api/start-an-outbound-conversation-with-a-contact-as-a-given-agent) documents that an unknown `template.media.mediaId` can produce `BRIDGE_AI_LEADSCOUT_0016` after the conversation was created or recovered. A retry may therefore produce a different result.
+
+This is why a failure status alone is not a universal rollback guarantee. Follow the effects and recovery instructions for the specific operation. If those instructions are unclear or conflict, identify the uncertainty and contact [Bridge support](mailto:support@sainapsis.com) before retrying an action with external effects.

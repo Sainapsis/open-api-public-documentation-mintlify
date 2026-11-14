@@ -1,14 +1,12 @@
 ---
 title: "Error codes"
 sidebarTitle: "Error codes"
-description: "Reference of all error codes returned by the Bridge API, their meanings."
+description: "Interpret REST API error codes, validation responses and uncertain write outcomes, and choose the next action."
 keywords: ["error", "error codes", "troubleshooting", "404", "422", "validation"]
 ---
-# Bridge Error Codes
-
 ## Response format
 
-Errors are returned as `application/problem+json`:
+Example of a `Problem` response. Consult the endpoint reference for its HTTP status, media type and response schema:
 
 ```json
 {
@@ -27,7 +25,7 @@ Errors are returned as `application/problem+json`:
 
 | Field | Meaning |
 | ----- | ------- |
-| `code` | The stable error code listed on this page. **Branch on this field.** |
+| `code` | When present, the stable error code listed on this page. **Branch on this field rather than the title.** Validation and server errors may omit it. |
 | `title` | A human-readable message. It may be longer than the title shown in the tables below, so never match on it |
 | `status` | The HTTP status code |
 | `detail` | More detail about this occurrence, when available |
@@ -36,8 +34,34 @@ Errors are returned as `application/problem+json`:
 | `traceId` | Include it when you contact support |
 
 <Note>
-  A request that does not match the request schema — a missing or unknown field, a wrong type, or a value over its length limit — returns `422` **without a `code`**. Its `errors` list holds one entry per problem, each with `loc` (where), `msg` (what) and `type`.
+  Read the response schema for the operation you call. Where it is `HTTPValidationError`, validation details are in a `detail` array; each entry contains `loc` (where), `msg` (what) and `type`. Other documented `422` responses use `Problem` and may include a `code` and `extra`. Do not assume all `422` responses have the same shape.
 </Note>
+
+### Parse validation errors defensively
+
+Accept JSON error bodies with either `application/json` or `application/problem+json`. Check the HTTP status first, then inspect the body:
+
+1. If `code` is present, use the matching entry on this page to choose the action.
+2. If `errors` is an array, read its `loc`, `msg` and `type` entries as validation details.
+3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
+4. Preserve `traceId`, status and the request URL for support. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
+
+<Warning>
+  **Validation compatibility:** some published OpenAPI responses declare `HTTPValidationError.detail[]` and `application/json`, while the shared API error handler reviewed for this documentation returns validation details as `Problem.errors[]` with `application/problem+json`. This editorial update preserves those published response definitions. Handle both forms; confirmation against the deployed API remains pending before choosing one as the only accepted form in a strict generated client.
+</Warning>
+
+### Decide whether to retry
+
+| Result | Action |
+| --- | --- |
+| `400` or `422` | Correct the request using the code and field errors. Repeating unchanged input does not fix validation. |
+| `401` or `403` | Check the credential, workspace and permissions for the correct integration surface. Keep REST API keys on your server. |
+| `404` | Confirm the identifier and workspace. A lookup that finds no Contact is different from malformed input. |
+| `409` | Read the operation's code: an existing conversation, unavailable Agent or unfinished session needs a different resolution. Do not enable `forceSend` automatically. |
+| `429` | Follow the [rate-limit headers and backoff guidance](/rate-limits). |
+| Timeout, disconnected response or `5xx` after a write | Treat the outcome as uncertain. Inspect the affected resource before resubmitting; an error does not prove that no work was persisted. |
+
+The general retry guidance does not add idempotency to an endpoint. For outbound reuse, recovery and partial writes, see [Agent outbound and handoff](/guides/agent-outbound). Custom Connections has its own [error reference](/lead-capture/errors) and no REST API key.
 
 ## Agent Error Codes
 
@@ -82,7 +106,20 @@ Error codes for Agent operations.
 | `BRIDGE_AI_LEADSCOUT_0020` | 422 | Conflicting template parameter sources for the same slot |
 | `BRIDGE_AI_LEADSCOUT_0021` | 422 | Unknown template parameter key |
 
-`5xx` errors carry no `code` or `extra`.
+For `POST .../agents/{agentId}/outbound`, `5xx` errors carry no `code` or `extra`.
+
+## LeadScout Error Codes
+
+Additional codes documented for [starting a LeadScout outbound conversation](/api-reference/leadscout-api/initiate-a-leadscout-outbound-conversation-with-a-known-lead) with `POST .../leadscout/outbound`:
+
+| Code | Status | Title | Meaning |
+| --- | --- | --- | --- |
+| `BRIDGE_AI_LEADSCOUT_0010` | 404 | Channel Not In Workspace | Provider channel not in workspace |
+| `BRIDGE_AI_LEADSCOUT_0011` | 404 | No Provider Channels | Workspace has no provider channels |
+| `BRIDGE_AI_LEADSCOUT_0012` | 404 | No Agent For Channel | No prospecting agent for channel |
+| `BRIDGE_AI_LEADSCOUT_0013` | 409 | Multiple Agents For Brand | Multiple prospecting agents for brand |
+| `BRIDGE_AI_LEADSCOUT_0014` | 409 | Multiple Agents For Channel | Multiple prospecting agents for channel |
+| `BRIDGE_AI_LEADSCOUT_0015` | 500 | Conversation Operation Failed | Conversation operation failed |
 
 ## Brand Error Codes
 
@@ -106,6 +143,7 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0004` | Conversation Not Active | The conversation is inactive; no operations can be performed on it |
 | `BRIDGE_CONVERSATION_0005` | Conversation Operation Failed | An error occurred while operating on the conversation |
 | `BRIDGE_CONVERSATION_0006` | Conversation With Inconsistent State | The conversation is in an inconsistent state; contact support to resolve |
+| `BRIDGE_CONVERSATION_0007` | Conversation Is Released | Conversation is released (`409` from `POST .../messages`) |
 | `BRIDGE_CONVERSATION_0101` | Internal User Already In Conversation | The internal user is already a participant in this conversation |
 | `BRIDGE_CONVERSATION_0102` | Internal User Not In Conversation | The internal user is not a participant in this conversation |
 | `BRIDGE_CONVERSATION_0103` | External User Already In Conversation | The external user is already a participant in this conversation |
@@ -214,3 +252,4 @@ Error codes for workspace operations.
 | `BRIDGE_WORKSPACE_0001` | Workspace Not Found | The requested workspace was not found |
 | `BRIDGE_WORKSPACE_0002` | Workspace Not In Organization | The workspace does not belong to the specified organization |
 | `BRIDGE_WORKSPACE_0003` | Workspace Without Available Provider Channels | The workspace has no provider channels available |
+| `BRIDGE_WORKSPACE_0004` | Workspace Without Configured Field | Workspace without configured field (`409` from `POST .../conversations/{conversationId}/release`) |

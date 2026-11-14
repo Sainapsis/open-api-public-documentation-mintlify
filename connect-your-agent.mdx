@@ -1,20 +1,20 @@
 ---
-title: "Connect your AI agent"
-sidebarTitle: "Connect your agent"
+title: "Connect your AI coding assistant"
+sidebarTitle: "AI coding assistants"
 description: "Connect your AI coding assistant to the Bridge documentation through MCP so it answers from the published contract instead of its training data."
 keywords: ["MCP", "Model Context Protocol", "AI assistant", "Claude Code", "Cursor", "Codex"]
 ---
 
 ## Overview
 
-This documentation site publishes a **search MCP server** at `https://docs.bridge.new/mcp`. Connect it to your AI coding assistant and the assistant reads these pages directly — the REST API reference, the webhook events, the error codes — instead of relying on whatever it learned during training.
+This documentation site publishes a **documentation MCP server** at `https://docs.bridge.new/mcp`. Connect it to your AI coding assistant to search these pages and read the published API schemas, webhook events, and error references.
 
-The server is public and read-only. It needs no API Key and no configuration on your side beyond pointing your assistant at the URL.
+The server is public and needs no Bridge API Key. Its search and reading tools access documentation only. A separate, optional feedback tool sends comments about the documentation to the Bridge team.
 
 <Warning>
   **This server reads documentation. It does not call the Bridge API.**
 
-  It searches and returns the pages of this site. It cannot create a contact, send a message, or read your workspace data. Your assistant still needs an API Key and your own code to call the Bridge API — see [Authentication](/credentials).
+  It cannot create a contact, send a message, or read your workspace data. Calling the REST Integrations API requires your own code and an API Key — see [Authentication](/credentials). The public [Custom Connections](/lead-capture) endpoint uses its own setup and does not take an API Key.
 </Warning>
 
 ---
@@ -92,11 +92,29 @@ Once connected, your assistant has three tools:
 
 | Tool | What it does |
 | :--- | :--- |
-| **Search documentation** | Searches these pages and returns matching content with links back to the source page. |
-| **Read pages** | Reads whole pages, so the assistant can pull a full endpoint definition or event schema rather than a snippet. |
-| **Submit feedback** | Reports a page that is wrong, outdated, or incomplete back to the Bridge team. |
+| **Search documentation** | Finds relevant pages and API definitions, with links to the source. |
+| **Query documentation filesystem** | Reads complete pages and OpenAPI specs in a virtual filesystem containing this site's documentation. It does not run commands on your computer. |
+| **Submit feedback** | Optionally sends a comment about an incorrect, outdated, or incomplete page to the Bridge documentation team. |
 
-Your assistant decides when to use them based on your prompt. You do not need to ask it to search.
+Ask your assistant to check the published contract before writing integration code. Search finds the relevant sources; reading the endpoint or schema supplies the exact fields.
+
+---
+
+## Read the contract before generating code
+
+Use the [documentation index](/llms.txt) to find pages. The [collected documentation](/llms-full.txt) brings guides and endpoint descriptions together, but does **not** embed every request and response schema.
+
+Before generating code, read the relevant contract:
+
+- [REST Integrations OpenAPI](/api-reference/openapi.yaml) — REST methods, paths, authentication, parameters, request bodies, and responses.
+- [Custom Connections OpenAPI](/api-reference/campaign-leads.openapi.yaml) — the separate public Custom Connections endpoint.
+- [Webhook guides](/webhooks) — configuration, event payloads, and verification.
+
+You can also append `.md` to an endpoint's documentation URL to read its Markdown page and embedded OpenAPI definition. Through MCP, use **Query documentation filesystem** to read the relevant page or schema.
+
+Keep the published method, path, header and field names, types, required fields, enums, defaults, limits, and response codes exactly as documented. Do not invent fields or treat similarly named identifiers as interchangeable.
+
+If two published sources disagree, identify the conflicting passages and ask Bridge support to confirm the behavior before relying on it. Do not resolve a contradiction by guessing or changing a signature.
 
 ---
 
@@ -120,4 +138,4 @@ Ask your assistant these in a project where you are integrating with Bridge:
 
 The server is hosted by our documentation provider as part of this site. Treat it as best-effort: it has no separate uptime commitment, and it applies rate limits well above normal use. If a request fails, read the pages directly.
 
-If your assistant returns something that contradicts these pages, the pages are authoritative. Report it to [support@sainapsis.com](mailto:support@sainapsis.com).
+If your assistant's answer conflicts with a published schema, check the linked endpoint and schema before using the code. If the documentation itself is inconsistent or incomplete, contact [support@sainapsis.com](mailto:support@sainapsis.com) or use the optional feedback tool.

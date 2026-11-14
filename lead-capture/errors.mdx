@@ -1,7 +1,7 @@
 ---
 title: "Error reference"
 sidebarTitle: "Errors"
-description: "Every response the campaign-leads endpoint can return, and whether you can fix it."
+description: "Every response the Custom Connections endpoint can return, and whether you can fix it."
 keywords: ["errors", "422", "403", "captcha", "troubleshooting"]
 ---
 
@@ -21,7 +21,7 @@ Error responses are [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem d
 | `400` | `BRIDGE.CAMPAIGN_LEADS.INVALID_PHONE` | The phone number could not be read as a real number. | Yes — validate before submitting |
 | `400` | `BRIDGE.CAMPAIGN_LEADS.CONSENT_NOT_GRANTED` | `consent.status` was not `GRANTED`. | Yes |
 | `400` | `BRIDGE.CAMPAIGN_LEADS.BRAND_OR_LINE_REQUIRED` | Your workspace has brands enabled and no `brandId` was sent. | Yes |
-| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_DISABLED` | Lead capture is not enabled for this workspace. | No — contact Bridge |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_DISABLED` | The Custom Connections feature is not enabled for this workspace. | No — contact Bridge |
 | `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_KEY_MISMATCH` | The capture key is missing or wrong. | Yes |
 | `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTCHA_REJECTED` | The captcha token was missing, expired, already used, or scored too low. | Sometimes — see below |
 | `403` | `BRIDGE.CAMPAIGN_LEADS.ORIGIN_NOT_ALLOWED` | The page's domain is not registered for this workspace. | No — contact Bridge |
@@ -34,17 +34,16 @@ domain. Fixing one error can reveal the next.
 
 ## About the captcha rejection
 
-`CAPTCHA_REJECTED` covers four different situations, and two of them are yours to fix:
+`CAPTCHA_REJECTED` covers four different situations. Check the token handling in your integration before attributing a rejection to the score:
 
 - **The token expired.** It was minted too early. A reCAPTCHA v3 token lasts about two
   minutes; mint it when the form is submitted, not when the page loads.
 - **The token was already used.** A token verifies once. If you retried a failed submission
   without minting a new token, the replay is rejected.
-- **The score was too low**, or **no token was sent at all.** These two are the anti-bot
-  check doing its job. There is nothing to fix in your integration.
+- **No token was sent.** Make sure your client obtains a token and includes it in `recaptchaToken` on every submission.
+- **The score was too low.** The anti-bot check rejected this attempt. Do not bypass it.
 
-Because all four return the same code, the useful diagnostic is whether the same visitor
-succeeds on a second attempt with a fresh token. If they do, it was timing, not a bot.
+All four situations return the same code, so the response alone does not identify the cause. First check that the token is present, minted on submit, and fresh for every attempt.
 
 ## About the 422
 

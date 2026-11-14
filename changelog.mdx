@@ -7,20 +7,28 @@ keywords: ["changelog", "breaking change", "deprecation", "migration", "lookup",
 
 ## Overview
 
-Changes that affect the calls you already make, newest first. Additive changes — a new endpoint, a new optional field — are not listed here unless they replace something being removed; they appear in the [REST API](/api-reference) reference when they ship.
+Changes that affect the calls you already make, newest first. Additive changes — a new endpoint, a new optional field — are not listed here unless they replace something being removed; they appear in the [REST API](/api-reference/health/health-check) reference when they ship.
+
+<Note>
+  The older entries below did not record effective dates. Their deployment dates have not been verified; their order does not establish a release date. The retirement date for deprecated list filters is **not yet announced**. Keep using the documented current contract until an effective change is published, and use the available lookup endpoints for new integrations.
+</Note>
+
+## Documentation improvements
+
+This revision clarifies the existing API contract and introduces task-based integration guides. It renames the landing-page feature to **Custom Connections**, explains outbound conversation reuse and recovery, and improves error and webhook guidance. The existing API signatures and `/lead-capture` documentation URLs are preserved. A documentation revision date is not an API deployment or deprecation date.
 
 ---
 
 ## Creating a conversation recovers a released one
 
-`POST /conversations` used to return `409 BRIDGE_PROVIDER_CHANNEL_0001` when no line was free. Now, if the requested Contacts have a conversation released with recovery, it is recovered and returned with `201` and its existing `id`, so you may receive an `id` you already stored. If that conversation has other Contacts or lines, the request returns `409 BRIDGE_CONVERSATION_0105`. See the [REST API](/api-reference) reference for details.
+`POST /conversations` used to return `409 BRIDGE_PROVIDER_CHANNEL_0001` when no line was free. Now, if the requested Contacts have a conversation released with recovery, it is recovered and returned with `201` and its existing `id`, so you may receive an `id` you already stored. If that conversation has other Contacts or lines, the request returns `409 BRIDGE_CONVERSATION_0105`. See the [REST API](/api-reference/health/health-check) reference for details.
 
 ---
 
 ## Finding a contact or a user by an identifier
 
 <Warning>
-  **This will remove query parameters that exist today.** They still work and are marked deprecated in the [REST API](/api-reference) reference. The date they stop being accepted will be published here before that happens; the lookup endpoints that replace them are available now.
+  **This will remove query parameters that exist today.** They still work and are marked deprecated in the [REST API](/api-reference/health/health-check) reference. The date they stop being accepted will be published here before that happens; the lookup endpoints that replace them are available now.
 </Warning>
 
 ### What changes
@@ -85,5 +93,5 @@ This is also why the filters are being removed rather than fixed: where a replac
 ## Related Topics
 
 - [Error Codes](/error-codes) — Full reference, including `BRIDGE_CORE_0103` and `BRIDGE_CORE_0101`
-- [REST API Reference](/api-reference) — The lookup endpoints, their parameters and their responses
+- [REST API Reference](/api-reference/health/health-check) — The lookup endpoints, their parameters and their responses
 - [Rate limits](/rate-limits) — What the API accepts per workspace, and how to back off correctly
