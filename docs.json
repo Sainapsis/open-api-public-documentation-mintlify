@@ -25,7 +25,7 @@
       "A 201 message response, 202 handoff or 202 Custom Connections response is not a provider delivery receipt. Do not invent a polling endpoint from messageId, trackingId or requestId. REST validation parsing must tolerate the compatibility difference explained in /error-codes.",
       "The documentation is available in English (existing root URLs), Spanish (/es/) and Brazilian Portuguese (/pt-br/). Prefer the reader's language when a localized page exists, but preserve the API's exact field names, enums, routes, authentication and examples. Translations describe the same API; they do not introduce regional API hosts or behaviors.",
       "For coding-assistant setup, use /connect-your-agent, /es/connect-your-agent or /pt-br/connect-your-agent. The Bridge documentation MCP server reads published documentation and has a separate optional feedback tool. Connecting it does not connect the coding assistant to a customer workspace or authorize live business requests.",
-      "For direct HTTP access without MCP, start at https://docs.bridge.new/llms.txt. It lists every published page in English, Spanish and Brazilian Portuguese. Choose /llms-en.txt, /llms-es.txt or /llms-pt-br.txt for a language-specific index, and /llms-full-en.txt, /llms-full-es.txt or /llms-full-pt-br.txt for collected content. /llms-full.txt contains the combined collection. Fetch the original OpenAPI specification for exact schemas.",
+      "For direct HTTP access without MCP, start at https://docs.bridge.new/llms.txt. It lists every published page in English, Spanish and Brazilian Portuguese. Choose /llms-en.json, /llms-es.json or /llms-pt-br.json for a language-specific index, and /llms-full-en.json, /llms-full-es.json or /llms-full-pt-br.json for collected content. /llms-full.txt contains the combined collection. Fetch the original OpenAPI specification for exact schemas.",
       "For HTTP page reads, follow the .md URLs from the index or request Accept: text/markdown at the canonical page URL. The MCP virtual filesystem uses .mdx page paths instead; .mdx is not the public HTTP export extension. With Search MCP, set language to en, es or pt-BR explicitly; its default is en.",
       "For integration capabilities and source-selection rules, read https://docs.bridge.new/skill.md. Documentation access does not authorize business API actions; use the actual user request, workspace, credentials and target identifiers for any live integration."
     ]
@@ -425,5 +425,31 @@
       "mcp",
       "download-spec"
     ]
-  }
+  },
+  "redirects": [
+    {
+      "source": "/llms-en.txt",
+      "destination": "/llms-en.json"
+    },
+    {
+      "source": "/llms-full-en.txt",
+      "destination": "/llms-full-en.json"
+    },
+    {
+      "source": "/llms-es.txt",
+      "destination": "/llms-es.json"
+    },
+    {
+      "source": "/llms-full-es.txt",
+      "destination": "/llms-full-es.json"
+    },
+    {
+      "source": "/llms-pt-br.txt",
+      "destination": "/llms-pt-br.json"
+    },
+    {
+      "source": "/llms-full-pt-br.txt",
+      "destination": "/llms-full-pt-br.json"
+    }
+  ]
 }

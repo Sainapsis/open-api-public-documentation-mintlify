@@ -38,7 +38,15 @@ async function worker() {
           result.canonicalUrls = (value.match(/<loc>/g) ?? []).length;
           result.languageAlternates = (value.match(/<xhtml:link\b/g) ?? []).length;
           result.passed &&= value.startsWith('<?xml ') && value.includes('xmlns:xhtml="http://www.w3.org/1999/xhtml"') && result.canonicalUrls === manifest.sitemap.canonicalCount && result.languageAlternates === manifest.sitemap.canonicalCount * manifest.sitemap.languages.length;
-        } else if (request.path.startsWith('/llms-full')) {
+        } else if (request.path.endsWith('.json')) {
+          const payload = JSON.parse(value), match = request.path.match(/^\/llms(-full)?-(en|es|pt-br)\.json$/), locale = match?.[2], full = !!match?.[1];
+          const expectedPages = manifest.pages.filter((page) => page.locale === locale);
+          result.format = payload.format; result.language = payload.language; result.pageRecords = payload.pages?.length; result.specRecords = payload.specs?.length;
+          result.passed &&= !!locale && payload.formatVersion === 1 && payload.format === (full ? 'bridge-documentation-collection' : 'bridge-documentation-index') && payload.language === (locale === 'pt-br' ? 'pt-BR' : locale) && Array.isArray(payload.pages) && payload.pages.length === expectedPages.length && Array.isArray(payload.specs) && payload.specs.length === manifest.specs.filter((spec) => spec.locale === locale).length;
+          if (Array.isArray(payload.pages)) {
+            result.passed &&= new Set(payload.pages.map((page) => page.markdownUrl)).size === payload.pages.length && expectedPages.every((page) => payload.pages.some((record) => record.markdownUrl === manifest.baseUrl + encodeURI(page.route) + '.md' && typeof record.title === 'string' && typeof record.source === 'string' && (!full || typeof record.contentMarkdown === 'string' && record.contentMarkdown.length > 0)));
+          }
+        } else if (request.path === '/llms-full.txt') {
           result.sources = (value.match(/^Source:/gm) ?? []).length;
           const locale = request.path.match(/^\/llms-full-(.+)\.txt$/)?.[1];
           result.expectedSources = locale ? manifest.byLocale[locale].pages : manifest.totals.pages;
@@ -50,10 +58,10 @@ async function worker() {
           result.expectedPageLinks = locale ? manifest.byLocale[locale].pages : manifest.totals.pages;
           result.passed &&= result.editorialAndOperationLinks === result.expectedPageLinks;
         }
-        if (request.path !== '/sitemap.xml') result.passed &&= /^# /.test(value);
+        if (request.path.endsWith('.txt')) result.passed &&= /^# /.test(value);
       }
       if (request.kind === 'page') result.passed &&= value.length > 50 && !/^\s*<!doctype html/i.test(value);
-      if (request.kind === 'agent-guidance') result.passed &&= value.includes('Bridge integration guidance') && value.includes('/llms-es.txt') && value.includes('/llms-pt-br.txt');
+      if (request.kind === 'agent-guidance') result.passed &&= value.includes('Bridge integration guidance') && value.includes('/llms-es.json') && value.includes('/llms-pt-br.json');
       results.push(result);
     } catch (error) { results.push({ ...request, passed: false, error: error.message }); }
   }

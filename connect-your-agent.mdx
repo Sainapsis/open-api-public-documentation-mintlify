@@ -140,11 +140,13 @@ No MCP connection is required to read Bridge documentation. Give an assistant th
 
 | Language | Page index | Collected documentation |
 | --- | --- | --- |
-| English | [English index](/llms-en.txt) | [English collection](/llms-full-en.txt) |
-| Español | [Índice en español](/llms-es.txt) | [Documentación en español](/llms-full-es.txt) |
-| Português do Brasil | [Índice em português](/llms-pt-br.txt) | [Documentação em português](/llms-full-pt-br.txt) |
+| English | [English index](/llms-en.json) | [English collection](/llms-full-en.json) |
+| Español | [Índice en español](/llms-es.json) | [Documentación en español](/llms-full-es.json) |
+| Português do Brasil | [Índice em português](/llms-pt-br.json) | [Documentação em português](/llms-full-pt-br.json) |
 
 The index points to individual `.md` pages and the exact OpenAPI files. The [combined collection](/llms-full.txt) includes all three languages; a language-specific collection is smaller. Collected endpoint descriptions do not replace the complete schemas in OpenAPI.
+
+The language-specific files use JSON: the index lists page URLs, and each collection provides the page text as Markdown in its `contentMarkdown` field. The general `llms.txt` and `llms-full.txt` remain plain Markdown.
 
 **Example prompt:**
 

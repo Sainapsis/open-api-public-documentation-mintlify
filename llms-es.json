@@ -1,0 +1,377 @@
+{
+  "formatVersion": 1,
+  "language": "es",
+  "instructions": [
+    "Elige el idioma del lector, lee el flujo y el endpoint pertinentes y consulta su contrato OpenAPI exacto. Cita las fuentes utilizadas. Estos exports no autorizan solicitudes de negocio reales.",
+    "Conserva los hosts, métodos, rutas, autenticación, nombres de campos, tipos, campos obligatorios y anulables, enums, valores predeterminados, límites y códigos de respuesta publicados. Las traducciones describen la misma API."
+  ],
+  "schemaScope": "Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.",
+  "specs": [
+    {
+      "title": "Bridge API",
+      "url": "https://docs.bridge.new/es/api-reference/openapi.yaml",
+      "source": "es/api-reference/openapi.yaml"
+    },
+    {
+      "title": "Bridge Campaign Leads API",
+      "url": "https://docs.bridge.new/es/api-reference/campaign-leads.openapi.yaml",
+      "source": "es/api-reference/campaign-leads.openapi.yaml"
+    }
+  ],
+  "format": "bridge-documentation-index",
+  "title": "Bridge Índice de documentación — Español",
+  "description": "Lee la documentación Bridge con cualquier herramienta web o HTTP. No necesitas configurar MCP ni credenciales de un workspace para leer estas fuentes públicas.",
+  "collectionUrl": "https://docs.bridge.new/llms-full-es.json",
+  "pages": [
+    {
+      "title": "Integra tus sistemas con Bridge",
+      "source": "https://docs.bridge.new/es/index",
+      "markdownUrl": "https://docs.bridge.new/es/index.md",
+      "description": "Conecta tu CRM, automatizaciones o landing page mediante la API REST, los webhooks y Custom Connections.",
+      "kind": "page"
+    },
+    {
+      "title": "Conecta tu asistente de programación con IA",
+      "source": "https://docs.bridge.new/es/connect-your-agent",
+      "markdownUrl": "https://docs.bridge.new/es/connect-your-agent.md",
+      "description": "Conecta Codex, Claude Code, Cursor o GitHub Copilot a la documentación actual de Bridge e implementa a partir del contrato exacto de la API.",
+      "kind": "page"
+    },
+    {
+      "title": "Autenticación de la API REST",
+      "source": "https://docs.bridge.new/es/credentials",
+      "markdownUrl": "https://docs.bridge.new/es/credentials.md",
+      "description": "Genera y usa una clave de API desde tu servidor para la API REST de integraciones, sin confundirla con las credenciales de webhooks o Custom Connections.",
+      "kind": "page"
+    },
+    {
+      "title": "Glosario e identificadores",
+      "source": "https://docs.bridge.new/es/guides/identifiers",
+      "markdownUrl": "https://docs.bridge.new/es/guides/identifiers.md",
+      "description": "Encuentra los identificadores correctos de espacios de trabajo, contactos, usuarios de Bridge, agentes, conversaciones, plantillas, líneas y archivos sin confundirlos.",
+      "kind": "page"
+    },
+    {
+      "title": "Crea un contacto y envía un mensaje",
+      "source": "https://docs.bridge.new/es/guides/first-conversation",
+      "markdownUrl": "https://docs.bridge.new/es/guides/first-conversation.md",
+      "description": "Sigue un flujo completo desde el servidor: contacto, conversación y mensaje, conservando los identificadores devueltos.",
+      "kind": "page"
+    },
+    {
+      "title": "Enviar PDF y otros adjuntos",
+      "source": "https://docs.bridge.new/es/guides/send-attachments",
+      "markdownUrl": "https://docs.bridge.new/es/guides/send-attachments.md",
+      "description": "Envía un PDF u otro archivo compatible en una conversación: calcula su checksum, súbelo a la URL prefirmada y adjunta su ID de medios al mensaje.",
+      "kind": "page"
+    },
+    {
+      "title": "Elige y completa una plantilla de WhatsApp",
+      "source": "https://docs.bridge.new/es/guides/send-template",
+      "markdownUrl": "https://docs.bridge.new/es/guides/send-template.md",
+      "description": "Consulta una plantilla por ID o nombre, proporciona sus claves de variables independientes del proveedor y usa el ID devuelto en una solicitud de conversación.",
+      "kind": "page"
+    },
+    {
+      "title": "Inicia una conversación saliente con un agente",
+      "source": "https://docs.bridge.new/es/guides/agent-outbound",
+      "markdownUrl": "https://docs.bridge.new/es/guides/agent-outbound.md",
+      "description": "Elige un agente, envía una plantilla inicial, entiende forceSend y la recuperación, y solicita una transferencia de LeadScout.",
+      "kind": "page"
+    },
+    {
+      "title": "Lee todas las páginas de resultados",
+      "source": "https://docs.bridge.new/es/guides/pagination",
+      "markdownUrl": "https://docs.bridge.new/es/guides/pagination.md",
+      "description": "Recorre los cursores opacos de contactos, conversaciones, usuarios de Bridge y agentes sin detenerte en una página corta.",
+      "kind": "page"
+    },
+    {
+      "title": "Respuestas, errores y reintentos",
+      "source": "https://docs.bridge.new/es/guides/responses",
+      "markdownUrl": "https://docs.bridge.new/es/guides/responses.md",
+      "description": "Interpreta creación, aceptación, respuestas vacías, validación y señales de reintento sin confundir los contratos REST y de Custom Connections.",
+      "kind": "page"
+    },
+    {
+      "title": "Parámetros de plantillas de WhatsApp",
+      "source": "https://docs.bridge.new/es/templates-and-parameters",
+      "markdownUrl": "https://docs.bridge.new/es/templates-and-parameters.md",
+      "description": "Abre una conversación con tus plantillas de WhatsApp, completa sus variables y maneja todos los errores que puede devolver la solicitud.",
+      "kind": "page"
+    },
+    {
+      "title": "Límites de solicitudes",
+      "source": "https://docs.bridge.new/es/rate-limits",
+      "markdownUrl": "https://docs.bridge.new/es/rate-limits.md",
+      "description": "Cuántas solicitudes acepta la API de Bridge, qué encabezados indican el presupuesto disponible y cómo manejar correctamente un 429.",
+      "kind": "page"
+    },
+    {
+      "title": "Códigos de error",
+      "source": "https://docs.bridge.new/es/error-codes",
+      "markdownUrl": "https://docs.bridge.new/es/error-codes.md",
+      "description": "Interpreta los códigos de error REST, las respuestas de validación y los resultados de escritura inciertos para decidir qué hacer.",
+      "kind": "page"
+    },
+    {
+      "title": "Registro de cambios",
+      "source": "https://docs.bridge.new/es/changelog",
+      "markdownUrl": "https://docs.bridge.new/es/changelog.md",
+      "description": "Cambios de la API de Bridge que afectan tu integración, del más reciente al más antiguo.",
+      "kind": "page"
+    },
+    {
+      "title": "Recibe webhooks de Bridge",
+      "source": "https://docs.bridge.new/es/webhooks",
+      "markdownUrl": "https://docs.bridge.new/es/webhooks.md",
+      "description": "Conecta un receptor HTTPS a los eventos de Bridge y entiende la autenticación, la confirmación de recepción y el procesamiento asíncrono.",
+      "kind": "page"
+    },
+    {
+      "title": "Verifica las solicitudes de webhook",
+      "source": "https://docs.bridge.new/es/webhooks/verifying-signatures",
+      "markdownUrl": "https://docs.bridge.new/es/webhooks/verifying-signatures.md",
+      "description": "Verifica la clave de API del webhook y la representación HMAC exacta que usa Bridge; luego deduplica los eventos aceptados.",
+      "kind": "page"
+    },
+    {
+      "title": "Recibe eventos de forma confiable",
+      "source": "https://docs.bridge.new/es/webhooks/receive-events",
+      "markdownUrl": "https://docs.bridge.new/es/webhooks/receive-events.md",
+      "description": "Verifica, guarda y confirma los webhooks; después procesa de forma segura los duplicados y los eventos fuera de orden.",
+      "kind": "page"
+    },
+    {
+      "title": "Configura los webhooks",
+      "source": "https://docs.bridge.new/es/webhooks/configuration",
+      "markdownUrl": "https://docs.bridge.new/es/webhooks/configuration.md",
+      "description": "Configura una URL de recepción, las credenciales del webhook y las suscripciones de eventos en la consola de administración de Bridge.",
+      "kind": "page"
+    },
+    {
+      "title": "Eventos de webhook",
+      "source": "https://docs.bridge.new/es/webhooks/events",
+      "markdownUrl": "https://docs.bridge.new/es/webhooks/events.md",
+      "description": "Familias de eventos, ejemplos de cuerpos y versiones de suscripción de los webhooks de Bridge.",
+      "kind": "page"
+    },
+    {
+      "title": "Custom Connections",
+      "source": "https://docs.bridge.new/es/lead-capture/index",
+      "markdownUrl": "https://docs.bridge.new/es/lead-capture/index.md",
+      "description": "Usa Custom Connections para registrar leads desde tu landing page y encolar un mensaje inicial de WhatsApp.",
+      "kind": "page"
+    },
+    {
+      "title": "Requisitos de consentimiento",
+      "source": "https://docs.bridge.new/es/lead-capture/consent",
+      "markdownUrl": "https://docs.bridge.new/es/lead-capture/consent.md",
+      "description": "Qué debe decir la autorización y qué declaras cuando envías consent.status GRANTED.",
+      "kind": "page"
+    },
+    {
+      "title": "Requisitos de plantillas",
+      "source": "https://docs.bridge.new/es/lead-capture/templates",
+      "markdownUrl": "https://docs.bridge.new/es/lead-capture/templates.md",
+      "description": "Categorías de plantillas admitidas y recomendaciones para abrir conversaciones mediante Custom Connections.",
+      "kind": "page"
+    },
+    {
+      "title": "Guía de integración",
+      "source": "https://docs.bridge.new/es/lead-capture/integration",
+      "markdownUrl": "https://docs.bridge.new/es/lead-capture/integration.md",
+      "description": "Conecta un formulario de landing page con Bridge: ejemplo, CAPTCHA, consentimiento, respuestas y manejo de errores.",
+      "kind": "page"
+    },
+    {
+      "title": "Referencia de errores",
+      "source": "https://docs.bridge.new/es/lead-capture/errors",
+      "markdownUrl": "https://docs.bridge.new/es/lead-capture/errors.md",
+      "description": "Todas las respuestas que puede devolver el endpoint de Custom Connections y cuáles puedes corregir.",
+      "kind": "page"
+    },
+    {
+      "title": "Comprobar estado",
+      "source": "https://docs.bridge.new/es/api-reference/health/comprobar-estado",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/health/comprobar-estado.md",
+      "description": "Endpoint de comprobación de estado para verificar que la API esté en funcionamiento.",
+      "kind": "operation"
+    },
+    {
+      "title": "Obtener conversación por id",
+      "source": "https://docs.bridge.new/es/api-reference/conversations-api/obtener-conversaci%C3%B3n-por-id",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/conversations-api/obtener-conversaci%C3%B3n-por-id.md",
+      "description": "Obtiene una conversación específica por su identificador único dentro del workspace.",
+      "kind": "operation"
+    },
+    {
+      "title": "Actualizar conversación",
+      "source": "https://docs.bridge.new/es/api-reference/conversations-api/actualizar-conversaci%C3%B3n",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/conversations-api/actualizar-conversaci%C3%B3n.md",
+      "description": "Actualiza los detalles de la conversación, incluidos los participantes, el estado y el nombre.\n\nAdmite actualizaciones parciales: incluye solo los campos que quieras cambiar.",
+      "kind": "operation"
+    },
+    {
+      "title": "Consultar conversaciones con filtros flexibles",
+      "source": "https://docs.bridge.new/es/api-reference/conversations-api/consultar-conversaciones-con-filtros-flexibles",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/conversations-api/consultar-conversaciones-con-filtros-flexibles.md",
+      "description": "Consulta conversaciones con opciones de filtrado flexibles.\n\nPermite buscar por identificadores de usuarios externos (ID, correo electrónico o teléfono) o por participantes internos, con paginación y filtrado por estado.",
+      "kind": "operation"
+    },
+    {
+      "title": "Crear conversación con identificación flexible de usuarios",
+      "source": "https://docs.bridge.new/es/api-reference/conversations-api/crear-conversaci%C3%B3n-con-identificaci%C3%B3n-flexible-de-usuarios",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/conversations-api/crear-conversaci%C3%B3n-con-identificaci%C3%B3n-flexible-de-usuarios.md",
+      "description": "Crea una conversación con identificación flexible de usuarios.\n\nLos usuarios externos pueden identificarse por ID, correo electrónico o teléfono. Los usuarios internos solo se asignan cuando se indican explícitamente; de lo contrario, las conversaciones se asignan por turnos mediante un equipo o quedan abiertas para cualquier usuario interno disponible.\n\nCuando no hay una línea libre y los Contacts tienen una conversación liberada con exactamente los participantes solicitados, se recupera y devuelve esa conversación, conservando su `id` e historial. No se le aplican el `name` ni el `status` de la solicitud.",
+      "kind": "operation"
+    },
+    {
+      "title": "Liberar conversación",
+      "source": "https://docs.bridge.new/es/api-reference/conversations-api/liberar-conversaci%C3%B3n",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/conversations-api/liberar-conversaci%C3%B3n.md",
+      "description": "Libera una conversación: la marca como liberada, elimina los participantes externos y la mueve a la sección RELEASED.",
+      "kind": "operation"
+    },
+    {
+      "title": "Crear mensaje",
+      "source": "https://docs.bridge.new/es/api-reference/messages-api/crear-mensaje",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/messages-api/crear-mensaje.md",
+      "description": "Crea un mensaje en una conversación específica.\n\nPara un mensaje de texto o un adjunto cargado, incluye todos los campos obligatorios: `conversationId`, `messageBody` y `enableExternalBroadcast`. Adjunta los archivos cargados mediante los identificadores recibidos en `mediaIds`; consulta [Enviar un adjunto](/es/guides/send-attachments). Una respuesta satisfactoria devuelve `messageId`; no contiene un comprobante de entrega del proveedor. Consulta [Respuestas y reintentos](/es/guides/responses).",
+      "kind": "operation"
+    },
+    {
+      "title": "Obtener contacto por un identificador",
+      "source": "https://docs.bridge.new/es/api-reference/contacts-api/obtener-contacto-por-un-identificador",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/contacts-api/obtener-contacto-por-un-identificador.md",
+      "description": "Obtiene un contacto específico por cualquiera de sus identificadores dentro del workspace.\n\n`type=ID` devuelve el mismo contacto que GET /contacts/{contactId}, la URL canónica de un contacto y la opción preferida cuando ya tienes su ID.",
+      "kind": "operation"
+    },
+    {
+      "title": "Obtener contacto por id",
+      "source": "https://docs.bridge.new/es/api-reference/contacts-api/obtener-contacto-por-id",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/contacts-api/obtener-contacto-por-id.md",
+      "description": "Obtiene un contacto específico por su identificador único dentro del workspace.",
+      "kind": "operation"
+    },
+    {
+      "title": "Actualizar contacto",
+      "source": "https://docs.bridge.new/es/api-reference/contacts-api/actualizar-contacto",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/contacts-api/actualizar-contacto.md",
+      "description": "Actualiza un contacto en el workspace indicado.",
+      "kind": "operation"
+    },
+    {
+      "title": "Listar contactos",
+      "source": "https://docs.bridge.new/es/api-reference/contacts-api/listar-contactos",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/contacts-api/listar-contactos.md",
+      "description": "Consulta una lista paginada de contactos del workspace.\n\nSe ordena por fecha de creación. Los filtros `ownerEmail` y `search` están obsoletos y se eliminarán; para encontrar un contacto por un identificador, usa /contacts/lookup.",
+      "kind": "operation"
+    },
+    {
+      "title": "Crear contacto",
+      "source": "https://docs.bridge.new/es/api-reference/contacts-api/crear-contacto",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/contacts-api/crear-contacto.md",
+      "description": "Crea un contacto en el workspace indicado.",
+      "kind": "operation"
+    },
+    {
+      "title": "Crear o actualizar contacto",
+      "source": "https://docs.bridge.new/es/api-reference/contacts-api/crear-o-actualizar-contacto",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/contacts-api/crear-o-actualizar-contacto.md",
+      "description": "Crea o actualiza un contacto usando solo el celular. Lo clasifica como NORMAL o PARTIAL.",
+      "kind": "operation"
+    },
+    {
+      "title": "Crear cargas prefirmadas de archivos",
+      "source": "https://docs.bridge.new/es/api-reference/files-api/crear-cargas-prefirmadas-de-archivos",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/files-api/crear-cargas-prefirmadas-de-archivos.md",
+      "description": "Carga un archivo adjunto, como un PDF, una imagen o un documento, antes de crear un mensaje. Esta operación devuelve los datos de un PUT prefirmado; los bytes del archivo se cargan por separado. Cuando la carga termine correctamente, utiliza el `mediaId` devuelto en la operación de envío. Sigue [Enviar un archivo adjunto](/es/guides/send-attachments) para los pasos de suma de comprobación, carga y mensaje.\n\nGenera URL prefirmadas para cargar archivos (Presigned PUT). Valida la extensión, contentType y los límites por tipo. La suma de comprobación es obligatoria: envía el resumen SHA-256 en checksumBase64 (Base64). La carga debe incluir la cabecera x-amz-checksum-sha256 con el mismo valor.\n\n---\nPara cargar los archivos, DEBES utilizar la URL prefirmada devuelta con el método HTTP PUT. Carga el archivo exactamente en la URL indicada, sin modificaciones, tal como exige AWS S3 para un PUT con URL prefirmada. Consulta la documentación oficial de AWS S3: [Documentación de AWS S3 sobre Presigned PUT](https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html).\nIncluye todas las cabeceras obligatorias indicadas en la respuesta, por ejemplo, 'x-amz-checksum-sha256' con el valor SHA-256 correcto. AWS rechazará la carga si no utilizas el método HTTP o las cabeceras correctos.\n\n<table><tr><th>Tipo</th><th>Extensión</th><th>Tipo de contenido</th><th>Tamaño máximo</th></tr><tr><td rowspan=\"4\">Imagen</td><td>.jpeg</td><td>image/jpeg</td><td rowspan=\"4\">16 MB</td></tr><tr><td>.jpg</td><td>image/jpeg</td></tr><tr><td>.png</td><td>image/png</td></tr><tr><td>.webp</td><td>image/webp</td></tr><tr><td rowspan=\"2\">GIF</td><td>.gif</td><td>image/gif</td><td rowspan=\"2\">3 MB</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td rowspan=\"3\">Vídeo</td><td>.avi</td><td>video/x-msvideo</td><td rowspan=\"3\">64 MB</td></tr><tr><td>.mov</td><td>video/quicktime</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td rowspan=\"4\">Audio</td><td>.m4a</td><td>audio/mp4</td><td rowspan=\"4\">16 MB</td></tr><tr><td>.mp3</td><td>audio/mpeg</td></tr><tr><td>.ogg</td><td>audio/ogg</td></tr><tr><td>.wav</td><td>audio/wav</td></tr><tr><td rowspan=\"8\">Documento</td><td>.doc</td><td>application/msword</td><td rowspan=\"8\">100 MB</td></tr><tr><td>.docx</td><td>application/vnd.openxmlformats-officedocument.wordprocessingml.document</td></tr><tr><td>.pdf</td><td>application/pdf</td></tr><tr><td>.ppt</td><td>application/vnd.ms-powerpoint</td></tr><tr><td>.pptx</td><td>application/vnd.openxmlformats-officedocument.presentationml.presentation</td></tr><tr><td>.txt</td><td>text/plain</td></tr><tr><td>.xls</td><td>application/vnd.ms-excel</td></tr><tr><td>.xlsx</td><td>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td></tr></table>",
+      "kind": "operation"
+    },
+    {
+      "title": "Consultar atributos personalizados por workspaceid",
+      "source": "https://docs.bridge.new/es/api-reference/custom-attributes-api/consultar-atributos-personalizados-por-workspaceid",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/custom-attributes-api/consultar-atributos-personalizados-por-workspaceid.md",
+      "description": "Devuelve los atributos personalizados del workspace indicado.\n\nDe forma predeterminada, solo devuelve atributos **activos** (sin un `deletedAt` en el pasado).\n\n**Filtros:**\n- `category`: filtra por `OPEN` o `CLOSED`. Omítelo para devolver todas las categorías.\n- `includeArchived`: usa `true` para incluir atributos archivados (con `deletedAt` en el pasado). Predeterminado: `false`.\n- `isRequired`: usa `true` para devolver solo atributos obligatorios y `false` para devolver solo opcionales. Omítelo para devolver todos.",
+      "kind": "operation"
+    },
+    {
+      "title": "Obtener canales de proveedores por workspace",
+      "source": "https://docs.bridge.new/es/api-reference/provider-channels-api/obtener-canales-de-proveedores-por-workspace",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/provider-channels-api/obtener-canales-de-proveedores-por-workspace.md",
+      "description": "Obtiene los canales de proveedores por identificador de workspace.\n\nEsta respuesta expone `provider` e `identifier`, similar a un número telefónico, para cada canal; no devuelve `providerChannelId`. Para las líneas de un Agent, lee `agents[].lines[].providerChannelId` en la lista de Agents. No sustituyas un ID de canal por un número telefónico. Consulta [Conceptos e identificadores](/es/guides/identifiers).",
+      "kind": "operation"
+    },
+    {
+      "title": "Obtener canales por workspace y tipo de proveedor",
+      "source": "https://docs.bridge.new/es/api-reference/provider-channels-api/obtener-canales-por-workspace-y-tipo-de-proveedor",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/provider-channels-api/obtener-canales-por-workspace-y-tipo-de-proveedor.md",
+      "description": "Obtiene los canales de proveedores por identificador de workspace y tipo de proveedor.",
+      "kind": "operation"
+    },
+    {
+      "title": "Iniciar conversación saliente de leadscout con un lead conocido",
+      "source": "https://docs.bridge.new/es/api-reference/leadscout-api/iniciar-conversaci%C3%B3n-saliente-de-leadscout-con-un-lead-conocido",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/leadscout-api/iniciar-conversaci%C3%B3n-saliente-de-leadscout-con-un-lead-conocido.md",
+      "description": "Inicia una conversación saliente de LeadScout con un Contact conocido. El Contact debe existir previamente. Bridge selecciona un Agent de prospección para una línea de WhatsApp apta. La plantilla se referencia mediante template.id o template.name; id tiene prioridad si se proporcionan ambos. Debe existir y estar APPROVED, y cualquier Bridge User de handoffOverride debe ser válido.\n\nSe respeta un contact.providerChannelId explícito. Sin él, la selección automática prefiere una línea libre, después una conversación liberada recuperable con este Contact y, por último, una conversación activa ocupada solo cuando forceSend=true. La disponibilidad se evalúa por Contact en cada línea, no por la ocupación global de la línea.\n\nforceSend=true reutiliza una conversación activa apta; no la ignora ni crea una nueva. Una reutilización exitosa devuelve alreadyInitiated=true y persiste la nueva plantilla y los seguimientos. Una conversación liberada recuperable se puede recuperar con cualquiera de los dos valores, conserva su ID y devuelve recovered=true. Esta opción no habilita las conversaciones bloqueadas ni las liberadas no recuperables. La ruta heredada puede reutilizar una conversación controlada por un humano u otro Agent; a diferencia del envío saliente de Agents, no exige la comprobación de control por el Agent solicitado.\n\nUna sesión abierta de LeadScout que no haya vencido sigue bloqueando una nueva solicitud saliente con 409 BRIDGE_AI_LEADSCOUT_0017; si no se puede finalizar una sesión vencida, devuelve 409 BRIDGE_AI_LEADSCOUT_0018. Las demás validaciones siguen vigentes. Los mensajes adicionales se persisten; persistirlos no demuestra su entrega ni que se espere la respuesta del lead. Una solicitud fallida puede dejar trabajo parcial, por lo que no debes tratar forceSend como idempotencia ni reintentar a ciegas un resultado incierto.\n\nConsulta [la guía completa de envío saliente](/es/guides/agent-outbound) para la matriz false/true, los indicadores de respuesta, las diferencias con el envío saliente de Agents, los errores y la transferencia.",
+      "kind": "operation"
+    },
+    {
+      "title": "Solicitar transferencia manual de leadscout a usuarios internos",
+      "source": "https://docs.bridge.new/es/api-reference/leadscout-api/solicitar-transferencia-manual-de-leadscout-a-usuarios-internos",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/leadscout-api/solicitar-transferencia-manual-de-leadscout-a-usuarios-internos.md",
+      "description": "Solicita la transferencia manual de una conversación controlada por LeadScout a uno o más usuarios internos.\n\nLa solicitud se confirma con `202 Accepted`; la asignación se procesa de forma asíncrona. La respuesta repite los destinatarios solicitados y un ID de seguimiento para correlación. La resolución de usuarios internos (por ID o EMAIL) ocurre después y no se refleja en esta respuesta.",
+      "kind": "operation"
+    },
+    {
+      "title": "Descubrir las variables agnósticas de una plantilla",
+      "source": "https://docs.bridge.new/es/api-reference/templates-api/descubrir-las-variables-agn%C3%B3sticas-de-una-plantilla",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/templates-api/descubrir-las-variables-agn%C3%B3sticas-de-una-plantilla.md",
+      "description": "Devuelve las variables de una plantilla: `key`/`label`/`callerMustSupply`/`isCustom`/`default`, independientes de la ubicación en Meta.\n\nNunca devuelve la dirección o el índice de una posición de Meta.\n\n`templateId` acepta el `id` o el `name` de la plantilla. Las operaciones salientes aceptan `template.id` o `template.name`, con prioridad para un id no vacío. El inicio de conversaciones utiliza `onboardingTemplates[].templateId`. Utiliza el selector que exige la operación de envío. Consulta [la receta de plantillas](/es/guides/send-template).\n\nUna variable con `callerMustSupply: true` no tiene una fuente declarada: quien llama debe incluir su `key` en `parameters` al enviar; de lo contrario, el envío falla con un 422 que identifica ese mismo `key`.\nUna variable con `callerMustSupply: false` la resuelve Bridge por su cuenta, por ejemplo, el nombre del destinatario, o ya tiene un valor que quien llama puede sobrescribir opcionalmente.\nUna variable con `isCustom: true` es un valor que solo conoce quien llama y tiene un `default`: envíala en `parameters` para usar tu propio valor, u omítela o déjala en blanco para enviar `default`.\n\nCódigos de error:\n- BRIDGE_CORE_0301: el workspace de la ruta no coincide con el workspace de quien llama (403)\n- BRIDGE_TEMPLATE_0001: no se encontró una PROVIDER_TEMPLATE para este workspace e identificador. Incluye por igual un id/name desconocido, una plantilla de otro workspace y una plantilla que no es PROVIDER_TEMPLATE (404); este endpoint nunca confirma la existencia de una plantilla fuera del workspace de quien llama",
+      "kind": "operation"
+    },
+    {
+      "title": "Obtener usuario interno por un identificador",
+      "source": "https://docs.bridge.new/es/api-reference/internal-users-api/obtener-usuario-interno-por-un-identificador",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/internal-users-api/obtener-usuario-interno-por-un-identificador.md",
+      "description": "Obtiene un Bridge User específico por cualquiera de sus identificadores dentro del workspace.\n\n`type=ID` devuelve el mismo usuario que GET /users/{userId}, la URL canónica de un usuario interno y la opción preferida cuando ya tienes su ID.",
+      "kind": "operation"
+    },
+    {
+      "title": "Obtener usuario interno por id",
+      "source": "https://docs.bridge.new/es/api-reference/internal-users-api/obtener-usuario-interno-por-id",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/internal-users-api/obtener-usuario-interno-por-id.md",
+      "description": "Obtiene un usuario interno específico (agente humano) por su identificador único dentro del workspace.",
+      "kind": "operation"
+    },
+    {
+      "title": "Listar usuarios internos",
+      "source": "https://docs.bridge.new/es/api-reference/internal-users-api/listar-usuarios-internos",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/internal-users-api/listar-usuarios-internos.md",
+      "description": "Consulta una lista paginada de usuarios internos del workspace.\n\nSe ordena por fecha de creación. Los filtros `email` y `status` están obsoletos y se eliminarán; para encontrar un usuario interno por un identificador, usa /users/lookup.",
+      "kind": "operation"
+    },
+    {
+      "title": "Listar los agents de un workspace",
+      "source": "https://docs.bridge.new/es/api-reference/agents-api/listar-los-agents-de-un-workspace",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/agents-api/listar-los-agents-de-un-workspace.md",
+      "description": "Lista los Agents del workspace con su estado, disponibilidad y líneas.\n\nIncluye todos los Agents, cualquiera que sea su estado; `available` indica si pueden iniciar conversaciones. Una página puede contener menos elementos que `limit`; sigue paginando mientras `cursor` no sea null.",
+      "kind": "operation"
+    },
+    {
+      "title": "Iniciar conversación saliente con un contact como agent específico",
+      "source": "https://docs.bridge.new/es/api-reference/agents-api/iniciar-conversaci%C3%B3n-saliente-con-un-contact-como-agent-espec%C3%ADfico",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/agents-api/iniciar-conversaci%C3%B3n-saliente-con-un-contact-como-agent-espec%C3%ADfico.md",
+      "description": "Inicia una conversación saliente con un Contact conocido, atendida por el Agent indicado.\n\nFunciona con Agents LeadScout y Service. Primero se resuelve el Contact y después el Agent, que debe existir en el workspace y estar disponible (consulta `GET /agents`). La plantilla se referencia mediante `template.id` o `template.name` (id tiene prioridad si se envían ambos), debe existir y estar APPROVED, y cualquier Bridge User de `handoffOverride` debe ser válido. Si `template.media.mediaId` es desconocido, la solicitud falla con 400 `BRIDGE_AI_LEADSCOUT_0016` solo después de crear o recuperar la conversación, por lo que un reintento tras ese error puede responder de otra manera. Las reglas del cuerpo (`consent.status=GRANTED` sin `capturedAt`, o `template.media` sin exactamente uno de `mediaId` o `url`) fallan con 400 `BRIDGE_CORE_0103`.\n\nLa conversación se abre en una de las líneas activas de WhatsApp del Agent, bajo su control, con la plantilla como primer mensaje. Se elige una línea en este orden:\n- Una línea libre.\n- En su defecto, una línea con una conversación liberada recuperable con este Contact. La recuperación devuelve `recovered=true` y reemplaza el contexto saliente anterior y `agentContext`. Esto ocurre incluso con `forceSend=false`.\n- Si ninguna línea está libre o es recuperable: `forceSend=false` (predeterminado) falla con 409 `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reutiliza una línea ocupada por una conversación activa con este Contact, dando preferencia a una que controle este Agent. Si la conversación elegida está controlada por otro Agent o un Bridge User, la llamada falla con 409 `BRIDGE_AI_AGENT_OUTBOUND_0006` y no se escribe nada. Libérala primero y reintenta después. Nunca se usan líneas cuya conversación esté bloqueada o se haya liberado sin recuperación, por lo que, si ninguna línea está ocupada por una conversación activa, la llamada falla con 409 `BRIDGE_AI_LEADSCOUT_0008` incluso con `forceSend=true`.\n\n`contact.providerChannelId` es una preferencia: la línea indicada se usa cuando está libre o es recuperable; de lo contrario, se aplica el mismo orden entre todas las líneas del Agent. Entre las líneas ocupadas, tiene prioridad una que controle este Agent; si no existe, se reutiliza la línea indicada (y puede fallar con 0006).\n\nLa reutilización de una conversación depende del tipo de Agent:\n- LeadScout: si su sesión de LeadScout sigue abierta y no ha vencido, la llamada falla con 409 `BRIDGE_AI_LEADSCOUT_0017` (`extra` incluye `conversationId`, `sessionId` y `stage`). Si no se puede finalizar una sesión vencida, falla con 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: se continúa una sesión de servicio abierta que no haya vencido; una sesión vencida se cierra como abandonada y se abre una nueva.\n\nConsulta [la guía completa de envío saliente](/es/guides/agent-outbound) para los requisitos, la tabla de decisión de forceSend, la recuperación, el trabajo parcial y las decisiones de reintento seguro.",
+      "kind": "operation"
+    },
+    {
+      "title": "Registrar un lead de campaña",
+      "source": "https://docs.bridge.new/es/api-reference/campaign-leads/registrar-un-lead-de-campa%C3%B1a",
+      "markdownUrl": "https://docs.bridge.new/es/api-reference/campaign-leads/registrar-un-lead-de-campa%C3%B1a.md",
+      "description": "Registra un lead captado por la página de destino de un tenant y pone en cola el primer mensaje saliente de WhatsApp. Un 202 significa que el lead fue aceptado, no que se haya enviado un mensaje.",
+      "kind": "operation"
+    }
+  ]
+}

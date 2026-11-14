@@ -3,7 +3,6 @@ title: "Send PDFs and other attachments"
 sidebarTitle: "PDFs and attachments"
 description: "Send a PDF or another supported file in a conversation: calculate its checksum, upload it to the presigned URL, and attach its media ID to a Message."
 keywords: ["send PDF", "upload PDF", "attach a file", "send document", "presigned upload", "checksumBase64", "mediaIds"]
-boost: 2
 ---
 
 To send a PDF or another supported attachment, request an upload from Bridge, upload the file bytes to the returned URL, then create a Message containing the returned `mediaId`. The complete server-side example below sends a PDF.

@@ -215,26 +215,24 @@ export async function buildArtifacts({ sourceRoot, baseUrl = 'https://docs.bridg
   const url = (entry) => base + encodeURI(entry.route) + '.md';
   const indexLine = (entry) => `- ${markdownLink(entry.title, url(entry))}${description(entry.description) ? ': ' + description(entry.description) : ''}`;
   const specsText = (list, label) => `## ${label}\n\n` + list.map((spec) => `- ${markdownLink(spec.title, spec.url)}`).join('\n') + '\n';
-  const header = (locale, full) => {
-    const labels = LABELS[locale];
-    return `# Bridge ${full ? labels.full : labels.index} — ${labels.name}\n\n> ${labels.introduction}\n\n${labels.instruction}\n\n${labels.preserve}\n\n${full ? labels.scope + '\n\n' : ''}`;
-  };
   const generatedEntries = entries.map((entry) => {
     const labels = LABELS[entry.locale];
     const context = { base, route: entry.route, locale: entry.locale, aliases };
     let body = toMarkdown(entry.body, context);
     if (entry.kind === 'operation') body = `**${labels.reference}:** \`${entry.methodPath}\`\n\n${entry.operationId ? '**operationId:** `' + entry.operationId + '`\n\n' : ''}${body}\n${markdownLink(labels.contract, entry.specUrl)}\n\n${labels.scope}\n`;
-    return { ...entry, markdown: `# ${entry.title}\n\nSource: ${base + encodeURI(entry.route)}\n\n${entry.kind === 'page' && entry.description ? entry.description + '\n\n' : ''}${body}` };
+    return { ...entry, contentMarkdown: body, markdown: `# ${entry.title}\n\nSource: ${base + encodeURI(entry.route)}\n\n${entry.kind === 'page' && entry.description ? entry.description + '\n\n' : ''}${body}` };
   });
   for (const locale of locales) {
     const labels = LABELS[locale], own = generatedEntries.filter((entry) => entry.locale === locale), ownSpecs = specs.filter((spec) => spec.locale === locale);
-    artifacts[`llms-${locale}.txt`] = header(locale, false) + `## ${labels.guides}\n\n` + own.filter((entry) => entry.kind === 'page').map(indexLine).join('\n') + `\n\n## ${labels.api}\n\n` + own.filter((entry) => entry.kind === 'operation').map(indexLine).join('\n') + '\n\n' + specsText(ownSpecs, labels.specs);
-    artifacts[`llms-full-${locale}.txt`] = header(locale, true) + specsText(ownSpecs, labels.specs) + '\n---\n\n' + own.map((entry) => entry.markdown).join('\n---\n\n');
+    const records = own.map((entry) => ({ title: entry.title, source: base + encodeURI(entry.route), markdownUrl: url(entry), description: entry.description, kind: entry.kind }));
+    const shared = { formatVersion: 1, language: locale === 'pt-br' ? 'pt-BR' : locale, instructions: [labels.instruction, labels.preserve], schemaScope: labels.scope, specs: ownSpecs.map((spec) => ({ title: spec.title, url: spec.url, source: spec.source })) };
+    artifacts[`llms-${locale}.json`] = JSON.stringify({ ...shared, format: 'bridge-documentation-index', title: `Bridge ${labels.index} — ${labels.name}`, description: labels.introduction, collectionUrl: base + '/llms-full-' + locale + '.json', pages: records }, null, 2) + '\n';
+    artifacts[`llms-full-${locale}.json`] = JSON.stringify({ ...shared, format: 'bridge-documentation-collection', title: `Bridge ${labels.full} — ${labels.name}`, description: labels.scope, indexUrl: base + '/llms-' + locale + '.json', pages: records.map((record, index) => ({ ...record, contentMarkdown: own[index].contentMarkdown })) }, null, 2) + '\n';
   }
   const instructions = config.markdown?.instructions ?? [];
   const globalHeader = `# ${text(config.name || 'Bridge documentation')}\n\n> ${text(config.description)}\n\nRead these public sources directly by HTTP; no MCP configuration or Bridge credentials are required for documentation access. Choose English, Español or Português do Brasil. API hosts and contracts are shared across translations.\n\n## Agent Instructions\n\n${instructions.map((line) => '- ' + line).join('\n')}\n\n`;
   const inventory = locales.map((locale) => `## ${LABELS[locale].name} (${entries.filter((entry) => entry.locale === locale).length} pages)\n\n${generatedEntries.filter((entry) => entry.locale === locale).map(indexLine).join('\n')}\n`).join('\n');
-  const exports = locales.flatMap((locale) => [`- ${markdownLink(LABELS[locale].name + ' — index', base + '/llms-' + locale + '.txt')}`, `- ${markdownLink(LABELS[locale].name + ' — collected documentation', base + '/llms-full-' + locale + '.txt')}`]);
+  const exports = locales.flatMap((locale) => [`- ${markdownLink(LABELS[locale].name + ' — index (JSON)', base + '/llms-' + locale + '.json')}`, `- ${markdownLink(LABELS[locale].name + ' — collected documentation (JSON)', base + '/llms-full-' + locale + '.json')}`]);
   const agentLinks = agentResources.length ? '\n## Agent guidance\n\n' + agentResources.map((resource) => '- ' + markdownLink(resource.title, resource.url)).join('\n') + '\n' : '';
   artifacts['llms.txt'] = globalHeader + agentLinks + '\n' + inventory + '\n' + specsText(specs, 'OpenAPI specifications') + '\n## Language exports\n\n' + exports.join('\n') + '\n';
   artifacts['llms-full.txt'] = globalHeader + 'This combined corpus contains all three languages. It includes guides and operation descriptions, but does not embed every request and response schema. Read the exact OpenAPI contract linked for each surface before generating requests.\n\n' + agentLinks + '\n' + specsText(specs, 'OpenAPI specifications') + '\n' + generatedEntries.map((entry) => entry.markdown).join('\n---\n\n');
@@ -248,8 +246,14 @@ export async function buildArtifacts({ sourceRoot, baseUrl = 'https://docs.bridg
 
 export function applyArtifacts(artifacts, outputRoot, check = false) {
   const changed = [];
+  // Remove only the six superseded, generator-owned locale TXT outputs.
+  if (artifacts['llms-en.json']) for (const locale of ['en', 'es', 'pt-br']) for (const prefix of ['llms-', 'llms-full-']) {
+    const name = prefix + locale + '.txt', target = path.join(outputRoot, name);
+    if (!fs.existsSync(target)) continue;
+    changed.push(name); if (!check) fs.rmSync(target);
+  }
   for (const [name, value] of Object.entries(artifacts)) {
-    ensure(/^(?:llms(?:-full)?(?:-[a-z-]+)?\.txt|llms-manifest\.json|sitemap\.xml)$/.test(name), 'Unexpected output filename: ' + name);
+    ensure(/^(?:llms(?:-full)?\.txt|llms(?:-full)?-(?:en|es|pt-br)\.json|llms-manifest\.json|sitemap\.xml)$/.test(name), 'Unexpected output filename: ' + name);
     const target = path.join(outputRoot, name); const old = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : null;
     if (old === value) continue;
     changed.push(name);

@@ -30,7 +30,7 @@ function fixture(t) {
   write('index.mdx', '---\ntitle: Start\ndescription: First task.\n---\n\n<Note>Keep this note.</Note>\n\n[Credentials](/credentials)\n');
   write('credentials.mdx', '---\ntitle: Credentials\ndescription: Read credentials.\n---\n\nUse `x-api-key`.\n');
   write('api-reference/openapi.yaml', toolchain.yaml.dump(spec));
-  write('skill.md', '# Bridge integration guidance\n\nRead exact contracts. Use /llms-es.txt and /llms-pt-br.txt.\n');
+  write('skill.md', '# Bridge integration guidance\n\nRead exact contracts. Use /llms-es.json and /llms-pt-br.json.\n');
   return { root, write, spec, config, build: () => buildArtifacts({ sourceRoot: root, toolchain }) };
 }
 
@@ -68,11 +68,11 @@ test('generator uses native operation routes and includes exact schema links wit
   const f = fixture(t), result = await f.build();
   assert.equal(result.manifest.totals.pages, 3);
   assert.equal(result.manifest.totals.specs, 1);
-  assert.ok(result.artifacts['llms-en.txt'].includes('/api-reference/check-health.md'));
-  assert.ok(result.artifacts['llms-full-en.txt'].includes('`get /health`'));
-  assert.ok(result.artifacts['llms-full-en.txt'].includes('**operationId:** `check_health`'));
-  assert.ok(result.artifacts['llms-full-en.txt'].includes('https://docs.bridge.new/api-reference/openapi.yaml'));
-  assert.ok(result.artifacts['llms-full-en.txt'].includes('does not embed every request and response schema'));
+  assert.ok(result.artifacts['llms-en.json'].includes('/api-reference/check-health.md'));
+  assert.ok(result.artifacts['llms-full-en.json'].includes('`get /health`'));
+  assert.ok(result.artifacts['llms-full-en.json'].includes('**operationId:** `check_health`'));
+  assert.ok(result.artifacts['llms-full-en.json'].includes('https://docs.bridge.new/api-reference/openapi.yaml'));
+  assert.ok(result.artifacts['llms-full-en.json'].includes('does not embed every request and response schema'));
   assert.ok(result.artifacts['llms.txt'].includes('https://docs.bridge.new/skill.md'));
   assert.equal((result.artifacts['llms-full.txt'].match(/^Source:/gm) ?? []).length, 3);
   assert.equal(result.manifest.agentResources.length, 1);
@@ -148,6 +148,27 @@ test('only allowlisted generated filenames can be written', () => {
   assert.throws(() => applyArtifacts({ '../docs.json': '{}' }, os.tmpdir()), /Unexpected output filename/);
 });
 
+test('JSON exports decode losslessly and migration removes only the six former locale TXT files', async (t) => {
+  const f = fixture(t), code = '```json\n{"description":"literal \\\"quote\\\"","examples":[1],"captureKey":"public"}\n```\n';
+  f.write('index.mdx', '---\ntitle: JSON round trip\n---\n\n<Note>Exact example.</Note>\n\n' + code);
+  const result = await f.build(), index = JSON.parse(result.artifacts['llms-en.json']), full = JSON.parse(result.artifacts['llms-full-en.json']);
+  assert.equal(index.format, 'bridge-documentation-index'); assert.equal(full.format, 'bridge-documentation-collection');
+  assert.equal(index.pages.length, 3); assert.equal(index.specs.length, 1);
+  assert.equal(index.collectionUrl, 'https://docs.bridge.new/llms-full-en.json');
+  assert.deepEqual(fences(full.pages.find((page) => page.title === 'JSON round trip').contentMarkdown), [code]);
+  assert.throws(() => JSON.parse(result.artifacts['llms-full-en.json'].slice(0, -3)), SyntaxError);
+  const output = path.join(f.root, 'generated'); applyArtifacts(result.artifacts, output);
+  const old = ['en', 'es', 'pt-br'].flatMap((locale) => ['llms-' + locale + '.txt', 'llms-full-' + locale + '.txt']);
+  for (const name of [...old, 'unrelated.txt']) fs.writeFileSync(path.join(output, name), 'Old fixture\n');
+  assert.deepEqual(applyArtifacts(result.artifacts, output, true).sort(), [...old].sort());
+  assert.ok(old.every((name) => fs.existsSync(path.join(output, name))));
+  applyArtifacts(result.artifacts, output);
+  assert.ok(old.every((name) => !fs.existsSync(path.join(output, name))));
+  assert.equal(fs.readFileSync(path.join(output, 'unrelated.txt'), 'utf8'), 'Old fixture\n');
+  assert.equal(fs.readFileSync(path.join(output, 'llms.txt'), 'utf8'), result.artifacts['llms.txt']);
+  assert.equal(fs.readFileSync(path.join(output, 'llms-full.txt'), 'utf8'), result.artifacts['llms-full.txt']);
+});
+
 test('sitemap uses exact translation identities, escapes Unicode URLs and omits index aliases and invented lastmod', () => {
   const entries = [];
   const routes = { en: '/api-reference/files/send-pdf-&-document', es: '/es/api-reference/archivos/enviar-documentación', 'pt-br': '/pt-br/api-reference/arquivos/enviar-ações' };
@@ -178,7 +199,7 @@ test('HTTP verifier counts collections separately from indexes and detects a cor
     let body = built.artifacts[key];
     if (body === undefined && ['skill.md', 'api-reference/openapi.yaml'].includes(key)) body = fs.readFileSync(path.join(f.root, key), 'utf8');
     if (body === undefined) { response.writeHead(404); response.end('Not found'); return; }
-    if (corrupt && route === '/llms-full-en.txt') body = body.replace('Source:', 'Removed-source-marker:');
+    if (corrupt && route === '/llms-full-en.json') { const payload = JSON.parse(body); payload.pages.pop(); body = JSON.stringify(payload); }
     response.writeHead(200, { 'Content-Type': 'text/plain' }); response.end(body);
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -187,12 +208,12 @@ test('HTTP verifier counts collections separately from indexes and detects a cor
   const run = () => new Promise((resolve) => { const child = spawn(process.execPath, args, { stdio: 'ignore' }); child.on('close', resolve); });
   assert.equal(await run(), 0);
   const passing = JSON.parse(fs.readFileSync(report, 'utf8'));
-  assert.equal(passing.results.find((item) => item.path === '/llms-en.txt').editorialAndOperationLinks, 3);
-  assert.equal(passing.results.find((item) => item.path === '/llms-full-en.txt').sources, 3);
+  assert.equal(passing.results.find((item) => item.path === '/llms-en.json').pageRecords, 3);
+  assert.equal(passing.results.find((item) => item.path === '/llms-full-en.json').pageRecords, 3);
   corrupt = true; assert.equal(await run(), 1);
   const failing = JSON.parse(fs.readFileSync(report, 'utf8'));
   assert.equal(failing.summary.failed, 1);
-  assert.equal(failing.results.find((item) => item.path === '/llms-full-en.txt').sources, 2);
+  assert.equal(failing.results.find((item) => item.path === '/llms-full-en.json').pageRecords, 2);
 });
 
 const repositoryRoot = path.resolve(HERE, '../..');
@@ -234,7 +255,11 @@ test('real multilingual corpus preserves every source fence and native verified 
         expectedFences.push(...fences(spec.paths[apiPath][method].description ?? ''));
       }
     }
-    assert.deepEqual(fences(artifacts[`llms-full-${locale}.txt`]), expectedFences);
+    const collection = JSON.parse(artifacts[`llms-full-${locale}.json`]);
+    assert.equal(collection.format, 'bridge-documentation-collection');
+    assert.equal(collection.language, locale === 'pt-br' ? 'pt-BR' : locale);
+    assert.equal(collection.pages.length, defaultPageCount);
+    assert.deepEqual(collection.pages.flatMap((page) => fences(page.contentMarkdown)), expectedFences);
   }
   const knownMap = process.env.BRIDGE_LLM_VERIFIED_ROUTES;
   if (knownMap) for (const route of JSON.parse(fs.readFileSync(knownMap, 'utf8')).routes) for (const locale of ['en', 'es', 'pt-br']) {
