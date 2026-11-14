@@ -22,95 +22,341 @@
       "For a complete workflow, start with the task guides: /guides/first-conversation, /guides/send-attachments, /guides/send-template, /guides/agent-outbound, /guides/pagination, /guides/identifiers and /guides/responses. Read the endpoint contract as well as the recipe. Outbound requires an existing Contact, but does not require creating a separate Conversation first.",
       "forceSend=true permits reuse of an existing active conversation; it does not create a fresh one by ignoring it and it is not idempotency. Recovery of a released recoverable conversation can occur even with false. The LeadScout and Agents outbound routes have different line-selection and controller checks; use /guides/agent-outbound.",
       "For webhook HMAC, follow /webhooks/verifying-signatures exactly: the Python JSON serialization with sorted keys is signed; X-Bridge-Timestamp is not included in that signature. Do not claim a signed timestamp, raw-body signing, exactly-once delivery or a global event order. Use /webhooks/receive-events for durable acceptance and duplicates.",
-      "A 201 message response, 202 handoff or 202 Custom Connections response is not a provider delivery receipt. Do not invent a polling endpoint from messageId, trackingId or requestId. REST validation parsing must tolerate the compatibility difference explained in /error-codes."
+      "A 201 message response, 202 handoff or 202 Custom Connections response is not a provider delivery receipt. Do not invent a polling endpoint from messageId, trackingId or requestId. REST validation parsing must tolerate the compatibility difference explained in /error-codes.",
+      "The documentation is available in English (existing root URLs), Spanish (/es/) and Brazilian Portuguese (/pt-br/). Prefer the reader's language when a localized page exists, but preserve the API's exact field names, enums, routes, authentication and examples. Translations describe the same API; they do not introduce regional API hosts or behaviors.",
+      "For coding-assistant setup, use /connect-your-agent, /es/connect-your-agent or /pt-br/connect-your-agent. The Bridge documentation MCP server reads published documentation and has a separate optional feedback tool. Connecting it does not connect the coding assistant to a customer workspace or authorize live business requests."
     ]
   },
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "Getting started",
-        "groups": [
+        "language": "en",
+        "default": true,
+        "tabs": [
           {
-            "group": "Start here",
-            "pages": [
-              "index",
-              "credentials",
-              "guides/identifiers"
+            "tab": "Getting started",
+            "groups": [
+              {
+                "group": "Start here",
+                "pages": [
+                  "index",
+                  "connect-your-agent",
+                  "credentials",
+                  "guides/identifiers"
+                ]
+              },
+              {
+                "group": "Build your integration",
+                "pages": [
+                  "guides/first-conversation",
+                  "guides/send-attachments",
+                  "guides/send-template",
+                  "guides/agent-outbound",
+                  "guides/pagination"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "guides/responses",
+                  "templates-and-parameters",
+                  "rate-limits",
+                  "error-codes",
+                  "changelog"
+                ]
+              }
             ]
           },
           {
-            "group": "Build your integration",
+            "tab": "REST API",
+            "openapi": "api-reference/openapi.yaml"
+          },
+          {
+            "tab": "Webhooks",
             "pages": [
-              "guides/first-conversation",
-              "guides/send-attachments",
-              "guides/send-template",
-              "guides/agent-outbound",
-              "guides/pagination"
+              "webhooks",
+              "webhooks/verifying-signatures",
+              "webhooks/receive-events",
+              "webhooks/configuration",
+              "webhooks/events"
             ]
           },
           {
-            "group": "Reference",
-            "pages": [
-              "guides/responses",
-              "templates-and-parameters",
-              "rate-limits",
-              "error-codes",
-              "changelog"
-            ]
-          },
-          {
-            "group": "Developer tools",
-            "pages": [
-              "connect-your-agent"
+            "tab": "Custom Connections",
+            "groups": [
+              {
+                "group": "Start here",
+                "pages": [
+                  "lead-capture/index",
+                  "lead-capture/consent",
+                  "lead-capture/templates"
+                ]
+              },
+              {
+                "group": "Build your connection",
+                "pages": [
+                  "lead-capture/integration"
+                ]
+              },
+              {
+                "group": "API reference",
+                "openapi": "api-reference/campaign-leads.openapi.yaml",
+                "pages": [
+                  "POST /leadscout/campaign-leads"
+                ]
+              },
+              {
+                "group": "Troubleshooting",
+                "pages": [
+                  "lead-capture/errors"
+                ]
+              }
             ]
           }
-        ]
+        ],
+        "navbar": {
+          "links": [
+            {
+              "label": "Connect AI",
+              "href": "https://docs.bridge.new/connect-your-agent"
+            },
+            {
+              "label": "Help Center",
+              "href": "https://help.bridge.new"
+            },
+            {
+              "label": "Contact Support",
+              "href": "mailto:support@sainapsis.com"
+            }
+          ],
+          "primary": {
+            "type": "button",
+            "label": "Bridge app",
+            "href": "https://app.bridge.new"
+          }
+        }
       },
       {
-        "tab": "REST API",
-        "openapi": "api-reference/openapi.yaml"
-      },
-      {
-        "tab": "Webhooks",
-        "pages": [
-          "webhooks",
-          "webhooks/verifying-signatures",
-          "webhooks/receive-events",
-          "webhooks/configuration",
-          "webhooks/events"
-        ]
-      },
-      {
-        "tab": "Custom Connections",
-        "groups": [
+        "language": "es",
+        "tabs": [
           {
-            "group": "Start here",
-            "pages": [
-              "lead-capture/index",
-              "lead-capture/consent",
-              "lead-capture/templates"
+            "tab": "Primeros pasos",
+            "groups": [
+              {
+                "group": "Empieza aquí",
+                "pages": [
+                  "es/index",
+                  "es/connect-your-agent",
+                  "es/credentials",
+                  "es/guides/identifiers"
+                ]
+              },
+              {
+                "group": "Crea tu integración",
+                "pages": [
+                  "es/guides/first-conversation",
+                  "es/guides/send-attachments",
+                  "es/guides/send-template",
+                  "es/guides/agent-outbound",
+                  "es/guides/pagination"
+                ]
+              },
+              {
+                "group": "Referencia",
+                "pages": [
+                  "es/guides/responses",
+                  "es/templates-and-parameters",
+                  "es/rate-limits",
+                  "es/error-codes",
+                  "es/changelog"
+                ]
+              }
             ]
           },
           {
-            "group": "Build your connection",
+            "tab": "API REST",
+            "openapi": {
+              "source": "es/api-reference/openapi.yaml",
+              "directory": "es/api-reference",
+              "slug": "summary"
+            }
+          },
+          {
+            "tab": "Webhooks",
             "pages": [
-              "lead-capture/integration"
+              "es/webhooks",
+              "es/webhooks/verifying-signatures",
+              "es/webhooks/receive-events",
+              "es/webhooks/configuration",
+              "es/webhooks/events"
             ]
           },
           {
-            "group": "API reference",
-            "openapi": "api-reference/campaign-leads.openapi.yaml",
-            "pages": [
-              "POST /leadscout/campaign-leads"
-            ]
-          },
-          {
-            "group": "Troubleshooting",
-            "pages": [
-              "lead-capture/errors"
+            "tab": "Custom Connections",
+            "groups": [
+              {
+                "group": "Empieza aquí",
+                "pages": [
+                  "es/lead-capture/index",
+                  "es/lead-capture/consent",
+                  "es/lead-capture/templates"
+                ]
+              },
+              {
+                "group": "Crea tu conexión",
+                "pages": [
+                  "es/lead-capture/integration"
+                ]
+              },
+              {
+                "group": "Referencia de la API",
+                "openapi": {
+                  "source": "es/api-reference/campaign-leads.openapi.yaml",
+                  "directory": "es/api-reference",
+                  "slug": "summary"
+                }
+              },
+              {
+                "group": "Solución de problemas",
+                "pages": [
+                  "es/lead-capture/errors"
+                ]
+              }
             ]
           }
-        ]
+        ],
+        "navbar": {
+          "links": [
+            {
+              "label": "Conectar IA",
+              "href": "https://docs.bridge.new/es/connect-your-agent"
+            },
+            {
+              "label": "Centro de ayuda",
+              "href": "https://help.bridge.new"
+            },
+            {
+              "label": "Contactar con soporte",
+              "href": "mailto:support@sainapsis.com"
+            }
+          ],
+          "primary": {
+            "type": "button",
+            "label": "Aplicación Bridge",
+            "href": "https://app.bridge.new"
+          }
+        }
+      },
+      {
+        "language": "pt-BR",
+        "tabs": [
+          {
+            "tab": "Primeiros passos",
+            "groups": [
+              {
+                "group": "Comece aqui",
+                "pages": [
+                  "pt-br/index",
+                  "pt-br/connect-your-agent",
+                  "pt-br/credentials",
+                  "pt-br/guides/identifiers"
+                ]
+              },
+              {
+                "group": "Crie sua integração",
+                "pages": [
+                  "pt-br/guides/first-conversation",
+                  "pt-br/guides/send-attachments",
+                  "pt-br/guides/send-template",
+                  "pt-br/guides/agent-outbound",
+                  "pt-br/guides/pagination"
+                ]
+              },
+              {
+                "group": "Referência",
+                "pages": [
+                  "pt-br/guides/responses",
+                  "pt-br/templates-and-parameters",
+                  "pt-br/rate-limits",
+                  "pt-br/error-codes",
+                  "pt-br/changelog"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API REST",
+            "openapi": {
+              "source": "pt-br/api-reference/openapi.yaml",
+              "directory": "pt-br/api-reference",
+              "slug": "summary"
+            }
+          },
+          {
+            "tab": "Webhooks",
+            "pages": [
+              "pt-br/webhooks",
+              "pt-br/webhooks/verifying-signatures",
+              "pt-br/webhooks/receive-events",
+              "pt-br/webhooks/configuration",
+              "pt-br/webhooks/events"
+            ]
+          },
+          {
+            "tab": "Custom Connections",
+            "groups": [
+              {
+                "group": "Comece aqui",
+                "pages": [
+                  "pt-br/lead-capture/index",
+                  "pt-br/lead-capture/consent",
+                  "pt-br/lead-capture/templates"
+                ]
+              },
+              {
+                "group": "Crie sua conexão",
+                "pages": [
+                  "pt-br/lead-capture/integration"
+                ]
+              },
+              {
+                "group": "Referência da API",
+                "openapi": {
+                  "source": "pt-br/api-reference/campaign-leads.openapi.yaml",
+                  "directory": "pt-br/api-reference",
+                  "slug": "summary"
+                }
+              },
+              {
+                "group": "Solução de problemas",
+                "pages": [
+                  "pt-br/lead-capture/errors"
+                ]
+              }
+            ]
+          }
+        ],
+        "navbar": {
+          "links": [
+            {
+              "label": "Conectar IA",
+              "href": "https://docs.bridge.new/pt-br/connect-your-agent"
+            },
+            {
+              "label": "Central de ajuda",
+              "href": "https://help.bridge.new"
+            },
+            {
+              "label": "Falar com o suporte",
+              "href": "mailto:support@sainapsis.com"
+            }
+          ],
+          "primary": {
+            "type": "button",
+            "label": "Aplicativo Bridge",
+            "href": "https://app.bridge.new"
+          }
+        }
       }
     ]
   },
@@ -121,8 +367,12 @@
   "navbar": {
     "links": [
       {
-        "href": "https://help.bridge.new",
-        "label": "Help Center"
+        "label": "Connect AI",
+        "href": "https://docs.bridge.new/connect-your-agent"
+      },
+      {
+        "label": "Help Center",
+        "href": "https://help.bridge.new"
       },
       {
         "label": "Contact Support",
@@ -152,8 +402,5 @@
   },
   "styling": {
     "eyebrows": "breadcrumbs"
-  },
-  "search": {
-    "prompt": "Search endpoints, guides, and errors..."
   }
 }

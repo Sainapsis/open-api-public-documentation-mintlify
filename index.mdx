@@ -4,28 +4,45 @@ sidebarTitle: "Overview"
 description: "Connect your CRM, automation, or landing page with the REST API, webhooks, and Custom Connections."
 ---
 
+<div className="bridge-ai-start">
+
+<p className="bridge-ai-eyebrow">Build with your preferred coding tool</p>
+
+## Connect your AI coding assistant
+
+Give your coding tool the current Bridge docs. Choose it below for setup, an example prompt and a connection check.
+
+<div className="bridge-ai-providers">
+  <a href="/connect-your-agent#codex">Codex <span aria-hidden="true">→</span></a>
+  <a href="/connect-your-agent#claude-code">Claude Code <span aria-hidden="true">→</span></a>
+  <a href="/connect-your-agent#cursor">Cursor <span aria-hidden="true">→</span></a>
+  <a href="/connect-your-agent#github-copilot">GitHub Copilot <span aria-hidden="true">→</span></a>
+</div>
+
+Docs access needs no Bridge API Key. Workspace access is separate.
+
+</div>
+
 ## Choose your integration
 
 <div className="bridge-surfaces">
-  <CardGroup cols={2}>
-    <Card title="REST Integrations API" icon="code" href="/credentials">
-      Create contacts, manage conversations, send messages, and work with Agents.
+  <CardGroup cols={3}>
+    <Card title="REST API" icon="code" href="/credentials">
+      Create contacts, conversations and messages from your server.
 
       **Access:** server-side `x-api-key`.
     </Card>
-
     <Card title="Webhooks" icon="webhook" href="/webhooks">
       Receive Bridge events at your HTTPS endpoint.
 
-      **Access:** verify the webhook API key, signature, and timestamp.
+      **Access:** verify webhook credentials and freshness.
+    </Card>
+    <Card title="Custom Connections" icon="plug" href="/lead-capture">
+      Capture landing-page leads and queue an opening WhatsApp message.
+
+      **Access:** `captureKey` and reCAPTCHA; no REST API Key.
     </Card>
   </CardGroup>
-
-  <Card title="Custom Connections" icon="plug" href="/lead-capture">
-    Capture leads from a landing page and queue an opening WhatsApp message.
-
-    **Access:** browser-side `captureKey` and reCAPTCHA; no REST API key.
-  </Card>
 </div>
 
 ## Make your first REST API request
@@ -57,11 +74,7 @@ description: "Connect your CRM, automation, or landing page with the REST API, w
 - [WhatsApp template parameters](/templates-and-parameters) — open conversations with WhatsApp templates and supply their variables.
 - [Changelog](/changelog) — review changes that affect integrations.
 
-<div className="bridge-agent">
-  <Card title="Connect your AI coding assistant" icon="bot-message-square" href="/connect-your-agent">
-    Search these docs through MCP. Read the endpoint’s OpenAPI contract before generating code, and preserve its published signatures.
-  </Card>
-</div>
+
 
 Use the [documentation index](/llms.txt), [REST Integrations OpenAPI](/api-reference/openapi.yaml), or [Custom Connections OpenAPI](/api-reference/campaign-leads.openapi.yaml) for direct access.
 

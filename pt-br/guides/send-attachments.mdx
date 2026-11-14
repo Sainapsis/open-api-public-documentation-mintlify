@@ -1,0 +1,140 @@
+---
+title: "Faça upload e envie um anexo"
+sidebarTitle: "Anexos"
+description: "Calcule o hash de um arquivo, obtenha um PUT pré-assinado, envie os bytes e anexe à mensagem o ID de mídia retornado."
+---
+
+O envio de um anexo exige três operações: solicitar um upload ao Bridge, enviar os bytes à URL retornada e criar uma mensagem com o `mediaId` recebido.
+
+<a id="before-you-start"></a>
+
+## Antes de começar
+
+- Tenha uma conversa existente no workspace desejado. Veja [primeira conversa](/pt-br/guides/first-conversation).
+- Escolha um PDF que você tem autorização para compartilhar e confirme se ele atende aos limites da [API de arquivos](/pt-br/api-reference/files-api/criar-uploads-pr%C3%A9-assinados-de-arquivos).
+- Mantenha a chave de API do Bridge no servidor. Não a acrescente à requisição de upload pré-assinada.
+- Escolha explicitamente o sinalizador `enableExternalBroadcast` da mensagem.
+
+<a id="upload-sequence"></a>
+
+## Sequência de upload
+
+| Etapa | O que acontece | O que ela não confirma |
+| --- | --- | --- |
+| `POST .../files` | O Bridge retorna `mediaId` e os dados de `presignUrl`. | Os bytes ainda não foram enviados. |
+| `PUT` pré-assinado | Seu servidor envia exatamente os bytes do arquivo usando a URL de upload e os cabeçalhos retornados. | Essa etapa não cria uma mensagem. |
+| `POST .../messages` | Você anexa o `mediaId` do arquivo enviado por meio de `mediaIds`. | A resposta da API, sozinha, não comprova a entrega pelo provedor. |
+
+O checksum é o **digest SHA-256 de todos os bytes do arquivo, codificado em Base64**. Não é um digest hexadecimal nem o hash do nome do arquivo.
+
+<a id="complete-server-side-example"></a>
+
+## Exemplo completo no servidor
+
+Use Node.js com `fetch` nativo. Salve como `send-attachment.mjs`. Defina `BRIDGE_API_KEY`, `BRIDGE_WORKSPACE_ID`, `BRIDGE_CONVERSATION_ID`, `ATTACHMENT_PATH` e `ENABLE_EXTERNAL_BROADCAST` (`true` ou `false`).
+
+```javascript
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
+import { createHash } from "node:crypto";
+
+const BASE = "https://api-connect-us.bridge.new";
+function required(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Set ${name} before running this example.`);
+  return value;
+}
+const apiKey = required("BRIDGE_API_KEY");
+const workspaceId = required("BRIDGE_WORKSPACE_ID");
+const conversationId = required("BRIDGE_CONVERSATION_ID");
+const filePath = required("ATTACHMENT_PATH");
+const broadcast = required("ENABLE_EXTERNAL_BROADCAST");
+if (!["true", "false"].includes(broadcast)) {
+  throw new Error("ENABLE_EXTERNAL_BROADCAST must be true or false.");
+}
+if (!filePath.toLowerCase().endsWith(".pdf")) {
+  throw new Error("This example is configured for a PDF document.");
+}
+const workspacePath = `/bridge/api/v1/workspaces/${encodeURIComponent(workspaceId)}`;
+const bytes = await readFile(filePath);
+const checksumBase64 = createHash("sha256").update(bytes).digest("base64");
+
+async function bridgePost(path, body) {
+  const response = await fetch(`${BASE}${workspacePath}${path}`, {
+    method: "POST",
+    headers: { "x-api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const result = await response.json().catch(() => null);
+  if (response.status !== 201) {
+    const code = result?.code ? ` (${result.code})` : "";
+    throw new Error(`Bridge ${path}: HTTP ${response.status}${code}`);
+  }
+  return result;
+}
+
+const uploads = await bridgePost("/files", [{
+  name: basename(filePath),
+  fileType: "DOCUMENT",
+  contentType: "application/pdf",
+  checksumBase64,
+}]);
+const upload = uploads?.[0];
+if (!upload?.mediaId || !upload.presignUrl?.url) {
+  throw new Error("The upload response is missing its mediaId or URL.");
+}
+const method = upload.presignUrl.method ?? "PUT";
+if (method !== "PUT") throw new Error("Expected a presigned PUT upload.");
+const uploadHeaders = new Headers(upload.presignUrl.headers ?? {});
+const returnedChecksum = uploadHeaders.get("x-amz-checksum-sha256");
+if (returnedChecksum !== null && returnedChecksum !== checksumBase64) {
+  throw new Error("The returned checksum differs from the file checksum.");
+}
+if (returnedChecksum === null) {
+  uploadHeaders.set("x-amz-checksum-sha256", checksumBase64);
+}
+
+const uploaded = await fetch(upload.presignUrl.url, {
+  method,
+  headers: uploadHeaders,
+  body: bytes,
+});
+if (!uploaded.ok) {
+  throw new Error(`File upload failed: HTTP ${uploaded.status}; no Message was created.`);
+}
+
+const message = await bridgePost("/messages", {
+  conversationId,
+  messageBody: "Here is the document you requested.",
+  enableExternalBroadcast: broadcast === "true",
+  mediaIds: [upload.mediaId],
+});
+if (!message?.messageId) throw new Error("The Message response has no messageId.");
+console.log({ mediaId: upload.mediaId, messageId: message.messageId });
+```
+
+```bash
+node send-attachment.mjs
+```
+
+<a id="keep-the-upload-request-intact"></a>
+
+## Preserve a requisição de upload
+
+Use `presignUrl.url` sem reconstruir o host, o caminho ou a query string. Use o método e os cabeçalhos obrigatórios retornados. O contrato define `PUT` como método padrão quando o campo é omitido, e a API de arquivos exige `x-amz-checksum-sha256` com o mesmo checksum enviado ao Bridge.
+
+O upload envia os mesmos `bytes` usados para calcular o checksum. Não converta o PDF em texto, não o encapsule em JSON e não envie uma cópia diferente após calcular o hash.
+
+Para vários arquivos, preserve a associação entre cada `mediaId` retornado, os dados pré-assinados e o arquivo correspondente. Conclua todos os uploads necessários antes de anexar os IDs a uma mensagem.
+
+<a id="handle-a-failed-stage"></a>
+
+## Trate uma falha em cada etapa
+
+- **O Bridge rejeita a solicitação de arquivo:** confira extensão, `fileType`, tipo de conteúdo, tamanho e checksum na referência.
+- **O upload falha:** pare antes de criar a mensagem. Verifique URL, método, cabeçalhos, checksum e bytes exatos. Não presuma um prazo de validade ou uma política de novas tentativas que a resposta não informe.
+- **A requisição de mensagem falha ou expira:** um arquivo enviado não comprova a existência de uma mensagem. Verifique o resultado antes de repetir a requisição de mensagem.
+
+`STICKER` e `WEBSITE` aparecem no enum `FileType`, mas a tabela pública de upload não especifica suas regras de extensão, MIME e tamanho. Confirme essas regras antes de escolher qualquer um deles para uma integração.
+
+Veja a [API de arquivos](/pt-br/api-reference/files-api/criar-uploads-pr%C3%A9-assinados-de-arquivos), a [API de mensagens](/pt-br/api-reference/messages-api/criar-mensagem) e o guia de [respostas e erros](/pt-br/guides/responses).

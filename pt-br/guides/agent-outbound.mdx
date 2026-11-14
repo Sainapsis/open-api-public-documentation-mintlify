@@ -1,0 +1,132 @@
+---
+title: "Inicie uma conversa outbound com um Agente"
+sidebarTitle: "Outbound e transferência"
+description: "Escolha um Agente, envie um template inicial, entenda forceSend e a recuperação de conversas e solicite uma transferência LeadScout."
+keywords: ["forceSend", "LeadScout", "Service Agent", "outbound", "recuperar conversa", "transferência", "alreadyInitiated"]
+---
+
+Use outbound quando um Contato existente deve receber um template aprovado de WhatsApp e continuar a conversa com um Agente de IA. Para o fluxo geral de conversas, use [criar uma conversa](/pt-br/guides/first-conversation).
+
+<a id="choose-the-operation"></a>
+
+## Escolha a operação
+
+| Objetivo | Operação | Como o Agente é selecionado |
+| --- | --- | --- |
+| Iniciar com um LeadScout ou Service Agent específico | `POST /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound` | Você fornece o ID do Agente obtido em `GET /agents`. |
+| Iniciar com um LeadScout selecionado pelas linhas elegíveis do workspace | `POST /bridge/api/v1/workspaces/{workspaceId}/leadscout/outbound` | O Bridge identifica o Agente de prospecção da linha. |
+
+As duas operações usam o host REST `https://api-connect-us.bridge.new` e `x-api-key` no servidor. Seus esquemas de requisição são separados. Leia a [referência de outbound de Agentes](/pt-br/api-reference/agents-api/iniciar-conversa-de-sa%C3%ADda-com-um-contact-como-agent-espec%C3%ADfico) ou a [referência de outbound de LeadScout](/pt-br/api-reference/leadscout-api/iniciar-conversa-de-sa%C3%ADda-do-leadscout-com-um-lead-conhecido), conforme a operação escolhida.
+
+<a id="before-you-send"></a>
+
+## Antes de enviar
+
+1. [Consulte o Contato](/pt-br/api-reference/contacts-api/obter-contato-por-um-identificador) ou [crie-o](/pt-br/api-reference/contacts-api/criar-contato), se não existir. Outbound exige um Contato já existente no workspace; você não precisa criar antes uma conversa ou mensagem separada.
+2. [Liste os Agentes](/pt-br/api-reference/agents-api/listar-os-agents-de-um-workspace). Escolha um Agente disponível e leia seu `lines[].providerChannelId`. O ID de um Agente de IA é diferente do ID de um usuário humano do Bridge.
+3. Escolha um template aprovado. [Descubra suas variáveis](/pt-br/guides/send-template#1-discover-the-variables), forneça os valores exigidos do integrador e confirme a aprovação para a linha de destino. Use apenas a etapa de descoberta como pré-requisito: a etapa separada de criação de conversa desse guia não é necessária para outbound.
+4. Confirme que sua empresa tem o aceite necessário. Se enviar `consent.status: "GRANTED"`, inclua `capturedAt`; isso registra sua declaração de consentimento.
+
+No outbound de Agentes, `contact.providerChannelId`, quando informado, deve pertencer ao Agente escolhido. Ele expressa uma preferência: outra linha elegível do Agente pode ser selecionada. No outbound de LeadScout, a linha explícita é respeitada. O guia de [identificadores e suas fontes](/pt-br/guides/identifiers) explica quais valores usar.
+
+<a id="send-a-minimal-agent-request"></a>
+
+## Envie uma requisição mínima de Agente
+
+Substitua todos os valores de exemplo. Este caso pressupõe que o template escolhido não tenha variáveis obrigatórias do integrador ainda sem valor. Defina `forceSend` conscientemente; o exemplo mantém explícito o comportamento padrão.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/agents/$AGENT_ID/outbound" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contact": {
+      "identifier": "f0000001-0000-4000-8000-000000000001",
+      "identifierType": "ID",
+      "messageProviderType": "WHATSAPP"
+    },
+    "template": {
+      "id": "f0000040-0000-4000-8000-000000000040"
+    },
+    "forceSend": false
+  }'
+```
+
+Uma requisição bem-sucedida retorna `201`. Guarde `conversation.id` e interprete os campos de resposta:
+
+| Campo | Significado |
+| --- | --- |
+| `alreadyInitiated: true` | Uma conversa ativa existente foi reutilizada. A requisição bem-sucedida ainda acrescenta seu novo template e as mensagens de acompanhamento. |
+| `recovered: true` | Uma conversa liberada e recuperável foi recuperada, mantendo o ID. O contexto outbound anterior e `agentContext` são substituídos. |
+| `additionalMessagesPersisted` | Quantidade de mensagens de acompanhamento armazenadas. Não é um comprovante de entrega. |
+| `templateSent` | Resumo do template inicial armazenado para envio. Não interprete o nome do campo como prova de entrega ao destinatário. |
+
+Em uma criação nova, os indicadores de reutilização e recuperação não são true. A recuperação pode ocorrer com `forceSend: false`. As mensagens adicionais são persistidas na ordem da requisição; não conte com uma promessa de que aguardam a resposta do Contato. O fluxo outbound compartilhado persiste mensagens de acompanhamento em texto e não anexa seus `mediaIds`. Use a opção documentada `template.media` para mídia no template inicial ou o [fluxo de anexos de mensagem](/pt-br/guides/send-attachments) para uma mensagem separada.
+
+<a id="what-forcesend-does"></a>
+
+## O que forceSend faz
+
+A disponibilidade é avaliada para **a conversa desse Contato em cada linha**. Uma linha ocupada, nesse contexto, não significa que a linha corporativa de WhatsApp esteja globalmente reservada a um único Contato.
+
+As regras abaixo continuam sujeitas à disponibilidade do Agente, à validação do template e do consentimento e às verificações de sessão.
+
+Em telas estreitas, role horizontalmente para comparar as quatro opções. Quem usa o teclado pode colocar o foco nessa comparação e usar as teclas de seta.
+
+<div className="bridge-comparison" role="region" aria-label="Comparação de forceSend para LeadScout e Agentes" tabIndex={0}>
+
+| Situação | LeadScout: false | LeadScout: true | Agentes: false | Agentes: true |
+| --- | --- | --- | --- | --- |
+| A linha selecionada está livre | Cria | Cria | Cria | Cria |
+| A linha selecionada contém uma conversa liberada marcada como recuperável | Recupera o mesmo ID | Recupera o mesmo ID | Recupera o mesmo ID | Recupera o mesmo ID |
+| A seleção automática encontra apenas conversas ativas ocupadas | `409 …0008` | Reutiliza a primeira conversa ocupada elegível | `409 …0008` | Prioriza uma conversa controlada pelo Agente solicitado e aplica a verificação de controlador abaixo |
+| A linha explícita está ocupada | `409 …0007` | Reutiliza essa conversa | Tenta outras linhas livres ou recuperáveis do Agente; se não houver, `409 …0008` | Tenta outras linhas livres ou recuperáveis; se não houver, prioriza uma linha ocupada controlada pelo Agente |
+| A conversa ocupada selecionada é controlada por uma pessoa ou outro Agente | Não reutiliza a conversa ativa | A rota legada permite reutilização, sujeita às demais verificações; isso não promete, por si só, transferência de controle | Não reutiliza a conversa ativa | `409 BRIDGE_AI_AGENT_OUTBOUND_0006`; essa rejeição não grava nada |
+| Há apenas conversas bloqueadas ou liberadas não recuperáveis | `409 …0008` | `409 …0008` | `409 …0008` | `409 …0008` |
+
+</div>
+
+Nesta tabela, `…0007` corresponde a `BRIDGE_AI_LEADSCOUT_0007`, e `…0008`, a `BRIDGE_AI_LEADSCOUT_0008`. Uma conversa liberada só é recuperável quando o sinalizador de recuperação armazenado permite; `forceSend` não a torna recuperável.
+
+Nas duas rotas, uma sessão LeadScout ainda aberta e não expirada bloqueia uma nova requisição outbound com `409 BRIDGE_AI_LEADSCOUT_0017`. A falha ao finalizar uma sessão expirada retorna `409 BRIDGE_AI_LEADSCOUT_0018`. Um Service Agent pode continuar sua sessão de serviço aberta e não expirada; uma sessão expirada é encerrada antes de iniciar outra.
+
+<Warning>
+  `forceSend` não é uma chave de idempotência. Repetir uma requisição bem-sucedida pode acrescentar outro template e mais mensagens. O sinalizador não ignora conversas bloqueadas, verificações de sessão, regras de aprovação ou validação. Um timeout deixa o resultado incerto: consulte a conversa antes de decidir reenviar.
+</Warning>
+
+<a id="handle-conflicts-and-partial-work"></a>
+
+## Trate conflitos e trabalho parcial
+
+| Resultado | Próxima etapa |
+| --- | --- |
+| `BRIDGE_AI_LEADSCOUT_0007` / `0008` | Confira a conversa existente do Contato e as linhas elegíveis. Decida se a reutilização é apropriada antes de habilitar `forceSend`. |
+| `BRIDGE_AI_AGENT_OUTBOUND_0006` | Examine `extra.conversationId` e seu controlador. Combine a responsabilidade pelo atendimento antes de liberar a conversa de propósito. Não interrompa automaticamente uma conversa humana. |
+| `BRIDGE_AI_LEADSCOUT_0017` / `0018` | Resolva a sessão existente ou contate o suporte. Mudar `forceSend` para true não corrige a sessão. |
+| `BRIDGE_AI_LEADSCOUT_0019` / `0020` / `0021` | Corrija variáveis obrigatórias ausentes, conflitantes ou desconhecidas usando a descoberta. |
+| `400 BRIDGE_AI_LEADSCOUT_0016` para `mediaId` de template desconhecido no outbound de Agentes | A conversa pode já ter sido criada ou recuperada antes desse erro. Consulte-a antes de tentar novamente. |
+
+[Liberar conversa](/pt-br/api-reference/conversations-api/liberar-conversa) é uma operação separada, com efeitos de negócio. Uma resposta `204` não tem corpo. Libere a conversa somente quando encerrá-la for a ação desejada.
+
+<a id="request-a-leadscout-handoff-to-a-human"></a>
+
+## Solicite a transferência de LeadScout para uma pessoa
+
+Para uma conversa LeadScout, obtenha o [ID ou e-mail do usuário humano do Bridge](/pt-br/guides/identifiers) e chame o [endpoint de transferência manual](/pt-br/api-reference/leadscout-api/solicitar-transfer%C3%AAncia-manual-do-leadscout-para-usu%C3%A1rios-internos). Essa operação é específica de LeadScout; não presuma que também se aplica a um Service Agent.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/leadscout/conversations/$CONVERSATION_ID/handoff" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "assignees": [
+      {"identifier": "f0000002-0000-4000-8000-000000000002", "identifierType": "ID"}
+    ]
+  }'
+```
+
+Uma resposta `202` confirma a aceitação da solicitação. Guarde `trackingId` e `conversationId`; a aceitação não comprova que a atribuição terminou nem que uma pessoa leu ou respondeu à conversa. A referência não publica um endpoint de acompanhamento da transferência, portanto não construa um a partir de `trackingId`.
+
+Continue com o [tratamento de erros](/pt-br/error-codes) e o [recebimento de webhooks](/pt-br/webhooks/receive-events) para conectar esse fluxo ao seu sistema.

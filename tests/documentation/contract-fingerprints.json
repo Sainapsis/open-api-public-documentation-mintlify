@@ -1,8 +1,9 @@
 {
-  "scope": "Public API structure; only prose description/summary strings excluded. Examples/defaults/enums and field/schema names remain protected.",
+  "scope": "Public API structure; only genuine OpenAPI/JSON Schema description/summary strings in known object contexts excluded. Mapping names, examples (including metadata), defaults, enums, extensions and unknown data remain protected.",
+  "projection_version": 2,
   "contracts": {
     "api-reference/openapi.yaml": {
-      "whole_contract": "2daa7aeff08ed3388921df4f7093ffddd214b8ea29a07ceb8d12157fc69e53e8",
+      "whole_contract": "ad2f347f11d591a46307ac6c9ec2b0062967c91c42510d16f269da5d8680de60",
       "operation:GET /bridge/api/health": "90aa8cdfdb920e56a643bedf7bfa526f59c62b792ca1907c337c5116312f4d62",
       "operation:GET /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}": "bc59b0427a905cd8b6a590f1a1def3a7e4b8485460c41f477441c89151184451",
       "operation:PATCH /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}": "e081ca6d9487e6a1382d92254e47e3203f13c19739234d70153f4dabd922ae46",
@@ -86,7 +87,7 @@
       "schema:MessageRequest": "5e2c5551be8ab781e2e1b4cb416075113bc484ec064dc85c8551192cc4e51b4c",
       "schema:MessageResponse": "919689e1678f6661141812f8513ed66b85ae0aff5883c881d27ca91fda10f64c",
       "schema:OnboardingTemplateRequest": "3ec5cebe057f06358c8ce5b4aa6c0c0b49c8cd7de2d46ba5b5ab0459296aa4f4",
-      "schema:OpenAttributeRequest": "899894852f54ddf817b27185586c15597d790cf900c214377d3c8e051e5ce335",
+      "schema:OpenAttributeRequest": "5d5a489c3a8978fd41fff55b8150740fe0c539938cc7836bdb5fe450e6ed4648",
       "schema:OutboundAgentContextRequest": "72bd3317b0ca1f202fbbfe1f4a966af1ff49c5f5503778923d7953c6876d053e",
       "schema:OutboundConsentRequest": "25aa0dc7e1708049deb35c842cba568dac23878e4a196309748e6137e9acd98c",
       "schema:OutboundFollowUpRequest": "bb65ff22d4cf22507be7596cb2c9b89a738c0dcf87a8dd9e907c7969d9d13ae4",
@@ -95,7 +96,7 @@
       "schema:ParticipantOperationsRequest": "b5bc317917bc01696e324ba459d1707b4f4b22e04c81b0996e98d31eb0c60c0d",
       "schema:PreloadedFileRequest": "1936be0ff274dc16db97c326fc3b14fb28b8ac121da2aa8f4804b1a57dc00843",
       "schema:PreloadedFileResponse": "9edc976c9362e2315de76240476bd19aecd6985f98bf41842a3a9c8e39e68b85",
-      "schema:PresignPut": "2826dd3e47f62bef18286ce0025d5dc02809679a70fc7b03f4cf2d11283d60f0",
+      "schema:PresignPut": "7d12c05671f873d8358593674ddee902a0a2b60cee41a4a2d5f2851226cd3551",
       "schema:Problem": "b47be6fae846ffefb4449779f7cbbbfff770a56b456380ee27e2b105fa626667",
       "schema:ProviderChannel": "3aedd3bf6c9cea49177432e3a25421a8014c1557e0718c7b0dbf86de6b3c1eae",
       "schema:ProviderChannelResponse": "b053238923f657af7110d636795fec2bc4ae846758cab7be8145a8f33108bfde",
@@ -103,7 +104,7 @@
       "schema:TemplateDiscoveryResponse": "f0cb4a2507afc1ff4c2057c11354045a3a5a2523d777826c28a453b15a77b889",
       "schema:TemplateDriftWarningResponse": "d5d0521e62e1b7e71ae963de04706158e8db53b1324a86964b60c7cd4a59df36",
       "schema:TemplateVariableRef": "77815b4a3e2e876e04af0d642d2e1965267ae981be657e5f2a6116dbd77144f4",
-      "schema:TemplateVariableResponse": "f1e594d685da17d6edd5e9734dd7ae9e02a1d8a7d14a8c6b78408f21ef1c9c0c",
+      "schema:TemplateVariableResponse": "ec4b18c8cbaad8269b0bb0ebc304364426ef3f1310c6fa7d7b07bbb84526ecbc",
       "schema:UpdateContactBody": "2f91cdef36594722ed872b8cc105a6a094e842fdeffc40fd562090fb4dc6e0bd",
       "schema:UpdateConversation": "16beb9543cd9d04f0bc767f54f31a6a928488096ebee1a83d6971b3777772d47",
       "schema:UserStatusFilter": "18e479415cf6cc678322e894be3c60bcb6f479e92737cf977bdbb17658726ac1",

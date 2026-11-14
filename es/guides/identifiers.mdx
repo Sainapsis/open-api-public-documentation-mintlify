@@ -1,0 +1,73 @@
+---
+title: "Glosario e identificadores"
+sidebarTitle: "Conceptos e IDs"
+description: "Encuentra los identificadores correctos de espacios de trabajo, contactos, usuarios de Bridge, agentes, conversaciones, plantillas, líneas y archivos sin confundirlos."
+keywords: ["identificador", "workspaceId", "contactId", "userId", "agentId", "providerChannelId", "brandId", "templateId", "mediaId"]
+---
+
+<a id="start-with-the-right-integration"></a>
+
+## Empieza con la integración correcta
+
+La **API REST de integraciones** lee o modifica recursos del espacio de trabajo desde tu servidor mediante `x-api-key`. Los **webhooks** envían eventos de Bridge a tu receptor. **Custom Connections** registra leads desde una landing page con su endpoint público independiente, `captureKey` y reCAPTCHA.
+
+Una clave de API es un secreto que se guarda en el servidor. La `captureKey` de Custom Connections está diseñada para aparecer en la landing page. Estos valores no son intercambiables. Consulta [Autenticación](/es/credentials) y [Custom Connections](/es/lead-capture).
+
+<a id="people-agents-and-lines"></a>
+
+## Personas, agentes y líneas
+
+- Un **contacto** es la persona externa con la que se comunica tu negocio. Los endpoints de contactos y los participantes externos de las conversaciones se refieren a esa persona.
+- Un **usuario de Bridge** es un usuario humano interno. Las consultas de usuarios internos y los destinatarios de una transferencia se refieren a estos usuarios.
+- Un **agente** es un agente automatizado expuesto por la API de agentes. Su tipo es `LEADSCOUT` o `SERVICE_AGENT`; tiene su propio identificador, disponibilidad y líneas.
+- Un **proveedor** es un tipo de canal, como `WHATSAPP`. Una **línea** es un canal específico usado para una conversación. El tipo de proveedor, el teléfono y el `providerChannelId` son valores distintos.
+- Un **espacio de trabajo** delimita el alcance de la solicitud. Una **marca** es otro identificador usado cuando la operación lo exige o lo admite; no es un espacio de trabajo ni una línea.
+
+El `ownerId` de un contacto se refiere a un usuario de Bridge, no a un agente automatizado. Puedes resolverlo con el [endpoint de consulta de un usuario interno](/es/api-reference/internal-users-api/obtener-usuario-interno-por-id).
+
+<a id="where-each-identifier-comes-from"></a>
+
+## De dónde sale cada identificador
+
+Usa identificadores del espacio de trabajo correcto. No reutilices un identificador solo porque el mismo teléfono, correo o nombre aparece en otro espacio de trabajo.
+
+| Valor que necesitas | Dónde obtenerlo o verificarlo | Qué debes enviar |
+| --- | --- | --- |
+| `workspaceId` | Usa el identificador proporcionado para tu integración. Si no lo tienes, pídeselo al administrador de Bridge. El contrato REST publicado no ofrece un endpoint global para listar espacios de trabajo. | El ID del espacio de trabajo en la ruta de la operación. Custom Connections también lo exige en el cuerpo y, para solicitudes desde un navegador, en la cadena de consulta. |
+| ID de contacto | [Consulta un contacto](/es/api-reference/contacts-api/obtener-contacto-por-un-identificador) por `PHONE`, `EMAIL` o `ID`; las respuestas de listado, creación y upsert también devuelven el `id` del contacto. | El `id` devuelto para `{contactId}` o un objeto identificador con `identifierType: "ID"`, cuando la operación lo admita. |
+| ID de usuario de Bridge | [Consulta un usuario interno](/es/api-reference/internal-users-api/obtener-usuario-interno-por-un-identificador) por `EMAIL` o `ID`, o usa el listado de usuarios internos. | El `id` devuelto para `{userId}` o un objeto identificador interno. La consulta de usuarios internos no admite `PHONE`. |
+| ID de agente | [Lista los agentes](/es/api-reference/agents-api/listar-los-agents-de-un-workspace). Lee `agents[].id`, `type` y `available`. | `agents[].id` para `{agentId}` en la operación de conversación saliente de agentes. `available` indica si el agente puede iniciar conversaciones. |
+| ID de línea del agente | En la misma respuesta de agentes, lee `lines[].providerChannelId` de ese agente. | Un ID de línea perteneciente al agente cuando la operación admite `contact.providerChannelId`. Consulta las reglas de selección de línea en la referencia de conversaciones salientes. |
+| Canal de proveedor general | [Lista los canales de proveedor](/es/api-reference/provider-channels-api/obtener-canales-de-proveedores-por-workspace). Esta respuesta publica `provider` e `identifier`, no el UUID del canal. | Usa estos campos únicamente para las finalidades documentadas por la operación que los consume. No sustituyas `providerChannelId` por el `identifier` que representa un teléfono. |
+| `brandId` | La respuesta de un agente puede incluir su `brandId`. Para otro flujo, obtén el ID de marca correcto de la configuración de integración o del administrador; el contrato publicado no ofrece un endpoint general de listado de marcas. | El ID de marca que acepta la operación. Un ID de marca no es un ID de línea. |
+| `teamId` | Obtén del administrador de Bridge o de la configuración de integración el ID del equipo interno correcto. El contrato REST publicado no ofrece un endpoint de listado de equipos. | La opción documentada de asignación a un equipo al crear una conversación; no envíes también `participants.internals`. |
+| ID de conversación | Crea o consulta una conversación y conserva el `id` devuelto. Las respuestas de conversaciones salientes incluyen `conversation.id`. | `{conversationId}` o `conversationId`, exactamente donde lo exija la operación. |
+| Plantilla | [Consulta una plantilla](/es/api-reference/templates-api/descubrir-las-variables-agn%C3%B3sticas-de-una-plantilla) por ID o nombre. La respuesta devuelve `id`, `name` y las claves de sus variables. | Usa el selector que espera la operación de envío; consulta la sección siguiente. |
+| `mediaId` | [Solicita las cargas prefirmadas](/es/api-reference/files-api/crear-cargas-prefirmadas-de-archivos). Cada elemento del array de respuesta contiene `mediaId` y `presignUrl`. Completa la carga PUT requerida. | El `mediaId` devuelto en `mediaIds` o en el campo de medios que admita esa operación. No envíes la URL prefirmada como ID de medios. |
+
+<Note>
+  Los listados de agentes exponen IDs de línea en el contexto de cada agente. No son un mecanismo general para descubrir todas las líneas del espacio de trabajo. Si otro flujo requiere un `providerChannelId` que no puedes obtener de la respuesta publicada, pide al administrador de Bridge o a [soporte](mailto:support@sainapsis.com) el ID de línea correcto. No lo generes ni lo deduzcas de un teléfono.
+</Note>
+
+<a id="similar-names-can-require-different-fields"></a>
+
+## Nombres parecidos pueden exigir campos distintos
+
+La **consulta de contactos por identificador** usa parámetros de consulta llamados `type` y `value`. Un participante externo de una conversación usa `identifier` e `identifierType`, además de los otros campos que exija esa operación. No copies los parámetros de una consulta directamente al cuerpo de un participante.
+
+La **consulta de plantillas** acepta un ID o nombre en el parámetro de ruta `{templateId}`. Las **plantillas de inicio de conversación** usan `onboardingTemplates[].templateId`. La **selección de plantilla para conversaciones salientes** usa `id` o `name` dentro del objeto `template`; lee el esquema del endpoint en lugar de renombrar todos los selectores como `templateId`.
+
+Usa la `key` devuelta de cada variable en los `parameters` de la plantilla. Las claves de variables no son índices de posiciones de Meta. La [guía de parámetros de plantillas](/es/templates-and-parameters) explica los valores obligatorios, los predeterminados y la diferencia entre omitir un valor y enviarlo en blanco.
+
+<a id="keep-result-identifiers-separate"></a>
+
+## Mantén separados los identificadores de resultado
+
+| Valor devuelto | Qué identifica | Qué no demuestra por sí solo |
+| --- | --- | --- |
+| `messageId` | Un mensaje creado mediante el endpoint de mensajes | Una confirmación de entrega del proveedor |
+| `trackingId` | Una solicitud aceptada de transferencia de LeadScout | Que haya terminado la asignación de los usuarios solicitados |
+| `requestId` | Un envío aceptado de Custom Connections | Que se haya entregado el mensaje inicial de WhatsApp |
+| `eventId` | Un identificador proporcionado con un evento de webhook; algunas familias de eventos usan valores derivados de la entidad | Una clave de deduplicación globalmente única o una garantía del orden de entrega |
+
+Sigue [Recepción de eventos](/es/webhooks/receive-events) para la identidad de eventos y el manejo de duplicados. Consulta [Respuestas y errores](/es/guides/responses) para los estados HTTP, resultados asíncronos y decisiones de reintento. Para un flujo completo, sigue [Primera conversación](/es/guides/first-conversation) o [Envío de adjuntos](/es/guides/send-attachments).

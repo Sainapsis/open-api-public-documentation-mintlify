@@ -1,0 +1,159 @@
+---
+title: "Escolha e preencha um template de WhatsApp"
+sidebarTitle: "Guia de templates"
+description: "Descubra um template por ID ou nome, forneça os valores por suas chaves de variável agnósticas e use o ID retornado em uma requisição de conversa."
+---
+
+Use este guia quando quiser abrir uma conversa com um template específico de WhatsApp. A [referência detalhada de templates](/pt-br/templates-and-parameters) explica as regras de validação e todos os erros de template documentados.
+
+<a id="before-you-start"></a>
+
+## Antes de começar
+
+- Tenha o **ID ou nome** do template. Ambos são aceitos por `GET .../templates/{templateId}`.
+- Confirme que o template foi aprovado para a conta WhatsApp Business associada à linha desejada.
+- Tenha o ID de um Contato de teste existente, o `providerChannelId` da linha autorizada de WhatsApp e o e-mail de um usuário interno do Bridge. Veja [conceitos e identificadores](/pt-br/guides/identifiers).
+- Revise a sequência inicial do workspace: sua substituição pode trocar toda a sequência ou apenas o primeiro template, conforme a configuração.
+
+<Warning>
+  A requisição final inicia uma conversa e pode enviar os templates iniciais. Use um Contato de teste autorizado e o conteúdo pretendido.
+</Warning>
+
+<a id="1-discover-the-variables"></a>
+
+## 1. Descubra as variáveis
+
+```http
+GET /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}
+x-api-key: YOUR_API_KEY
+```
+
+Codifique o ID ou nome fornecido para uso na URL. Leia `id`, `name`, `variables` e `driftWarning` na resposta.
+
+| Variável | Ação |
+| --- | --- |
+| `callerMustSupply: true` | Forneça uma string não vazia na `key` dessa variável. |
+| `callerMustSupply: false`, não personalizada | Omita-a para manter o valor definido pelo Bridge para cada Contato. Um valor informado substitui esse valor para todos os Contatos. |
+| `isCustom: true` | Forneça seu valor ou omita-o ou envie-o vazio para usar o `default`. |
+
+Use a `key` agnóstica, nunca o `label` de exibição, uma posição da Meta ou um nome de variável inventado. `driftWarning` é diagnóstico e, por si só, não bloqueia o envio.
+
+<a id="2-prepare-your-values"></a>
+
+## 2. Prepare seus valores
+
+Crie um arquivo JSON no servidor contendo somente as chaves retornadas pela descoberta. Para um template que realmente declare `order_number` e `delivery_date`, ele poderia conter:
+
+```json
+{
+  "order_number": "A-10492",
+  "delivery_date": "October 3"
+}
+```
+
+Esses dois nomes são exemplos, não campos universais do Bridge. Consulte seu próprio template antes de usá-los. Mantenha os valores dentro das [regras de valores do WhatsApp](/pt-br/templates-and-parameters#whatsapp-value-rules). Para valores não personalizados que você quer que o Bridge preencha, omita as chaves em vez de enviar strings vazias.
+
+<a id="3-discover-check-and-create-the-conversation"></a>
+
+## 3. Descubra, valide e crie a conversa
+
+Use Node.js com `fetch` nativo. Salve como `send-template.mjs` e defina `BRIDGE_API_KEY`, `BRIDGE_WORKSPACE_ID`, `BRIDGE_TEMPLATE_ID_OR_NAME`, `TEMPLATE_VALUES_PATH`, `BRIDGE_CONTACT_ID`, `BRIDGE_PROVIDER_CHANNEL_ID` e `BRIDGE_USER_EMAIL`.
+
+```javascript
+import { readFile } from "node:fs/promises";
+
+const BASE = "https://api-connect-us.bridge.new";
+function required(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Set ${name} before running this example.`);
+  return value;
+}
+const apiKey = required("BRIDGE_API_KEY");
+const workspaceId = required("BRIDGE_WORKSPACE_ID");
+const templateRef = required("BRIDGE_TEMPLATE_ID_OR_NAME");
+const contactId = required("BRIDGE_CONTACT_ID");
+const providerChannelId = required("BRIDGE_PROVIDER_CHANNEL_ID");
+const internalEmail = required("BRIDGE_USER_EMAIL");
+const parameters = JSON.parse(await readFile(required("TEMPLATE_VALUES_PATH"), "utf8"));
+if (parameters === null || Array.isArray(parameters) || typeof parameters !== "object") {
+  throw new Error("The template values file must contain a JSON object.");
+}
+if (Object.entries(parameters).some(([key, value]) =>
+  Array.from(key).length > 128 || typeof value !== "string" || Array.from(value).length > 1024
+)) {
+  throw new Error("Parameter keys and values must respect the published string limits.");
+}
+if (Object.keys(parameters).length > 50) throw new Error("At most 50 parameters are allowed.");
+const workspacePath = `/bridge/api/v1/workspaces/${encodeURIComponent(workspaceId)}`;
+
+async function request(method, path, body, expectedStatus) {
+  const response = await fetch(`${BASE}${workspacePath}${path}`, {
+    method,
+    headers: {
+      "x-api-key": apiKey,
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const result = await response.json().catch(() => null);
+  if (response.status !== expectedStatus) {
+    const code = result?.code ? ` (${result.code})` : "";
+    throw new Error(`${method} ${path}: HTTP ${response.status}${code}`);
+  }
+  return result;
+}
+
+const template = await request(
+  "GET", `/templates/${encodeURIComponent(templateRef)}`, undefined, 200,
+);
+if (!template?.id) throw new Error("Template discovery returned no id.");
+const variables = template.variables ?? [];
+const known = new Set(variables.map((variable) => variable.key));
+const unknown = Object.keys(parameters).filter((key) => !known.has(key));
+const missing = variables.filter((variable) =>
+  variable.callerMustSupply &&
+  (typeof parameters[variable.key] !== "string" || !parameters[variable.key].trim())
+);
+if (unknown.length || missing.length) {
+  throw new Error(`Check template keys: ${unknown.length} unknown, ${missing.length} missing.`);
+}
+
+const conversation = await request("POST", "/conversations", {
+  participants: {
+    externals: [{
+      identifier: contactId,
+      identifierType: "ID",
+      messageProviderType: "WHATSAPP",
+      providerChannelId,
+    }],
+    internals: [{ identifier: internalEmail, identifierType: "EMAIL" }],
+  },
+  onboardingTemplates: [{ templateId: template.id, parameters }],
+}, 201);
+if (!conversation?.id || conversation.workspaceId !== workspaceId) {
+  throw new Error("The Conversation response does not identify the intended workspace.");
+}
+console.log({ templateId: template.id, conversationId: conversation.id });
+```
+
+```bash
+node send-template.mjs
+```
+
+O exemplo usa o ID retornado pela descoberta em `onboardingTemplates[].templateId`. As duas operações outbound também aceitam ID ou nome do template, com prioridade para o ID quando ambos são informados. Seus formatos de requisição são diferentes de `onboardingTemplates`; leia o contrato da operação antes de reutilizar esse corpo em outro contexto.
+
+As verificações locais detectam chaves desconhecidas ou obrigatórias ausentes. O Bridge ainda realiza sua própria validação, incluindo a aprovação para a linha selecionada e as regras finais de valores do WhatsApp. Não trate a validação local como aprovação ou garantia de entrega.
+
+<a id="recover-from-a-rejected-request"></a>
+
+## Corrija uma requisição rejeitada
+
+| Erro | O que fazer |
+| --- | --- |
+| Descoberta `BRIDGE_TEMPLATE_0001` | Confira o ID ou nome e o workspace. Essa resposta não revela se o identificador pertence a outro workspace. |
+| `BRIDGE_CONVERSATION_0604` | Forneça valores não vazios para as variáveis de `extra.missingVariables`. |
+| `BRIDGE_CONVERSATION_0605` | Remova as chaves de `extra.unknownKeys`; use as chaves agnósticas da descoberta. |
+| `BRIDGE_CONVERSATION_0607` | Corrija os valores de `extra.invalidVariables` conforme o `reason` de cada um. |
+| `BRIDGE_CONVERSATION_0608` | Peça a um administrador do workspace para alterar a sequência inicial configurada. Mudar os valores do seu template não corrige esse erro de configuração. |
+
+Leia a [referência completa de erros de templates](/pt-br/templates-and-parameters#errors) para entender aprovação, titularidade, parâmetros não aceitos e requisições malformadas. Não repita automaticamente uma requisição de conversa que expirou: primeiro verifique o resultado.

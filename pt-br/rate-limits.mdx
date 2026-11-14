@@ -1,0 +1,187 @@
+---
+title: "Limites de requisições"
+sidebarTitle: "Limites de requisições"
+description: "Quantas requisições a API Bridge aceita, quais cabeçalhos mostram a cota disponível e como tratar corretamente uma resposta 429."
+keywords: ["limite de requisições", "limites", "429", "controle de tráfego", "Retry-After", "RateLimit", "cota", "backoff"]
+---
+
+<a id="overview"></a>
+
+## Visão geral
+
+A API Bridge aceita **50 requisições a cada 5 segundos**. O limite se aplica a todos os endpoints, está habilitado por padrão e não exige configuração.
+
+<Note>
+  A cota pertence ao **workspace**, não à chave de API. Se você emitir várias chaves para o mesmo workspace, uma por aplicação, como recomendado, todas compartilharão as mesmas 50 requisições.
+</Note>
+
+---
+
+<a id="knowing-where-you-stand"></a>
+
+## Consulte a cota disponível
+
+Toda resposta a uma requisição autenticada contém dois cabeçalhos, para que você saiba quanto ainda pode usar:
+
+```http
+RateLimit-Policy: "default";q=50;w=5
+RateLimit: "default";r=43;t=3
+```
+
+| Campo | Significado |
+| ----- | ------- |
+| `q` | Requisições permitidas por janela |
+| `w` | Duração da janela em segundos |
+| `r` | Requisições **restantes** na janela atual |
+| `t` | Segundos até a janela reiniciar e `r` voltar a `q` |
+
+Um cliente que monitora `r` e pausa quando o valor se aproxima de zero evita rejeições por limite.
+
+<Note>
+  Uma requisição rejeitada **antes** da autenticação, por chave de API ausente ou inválida, não contém esses cabeçalhos. Veja essas respostas em [autenticação](/pt-br/credentials).
+</Note>
+
+---
+
+<a id="when-you-go-over"></a>
+
+## Quando o limite é excedido
+
+As requisições acima da cota recebem `429 Too Many Requests`. Nada é processado, portanto é seguro repetir a requisição.
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/problem+json
+Retry-After: 3
+RateLimit-Policy: "default";q=50;w=5
+RateLimit: "default";r=0;t=3
+```
+
+```json
+{
+  "title": "Too Many Requests",
+  "status": 429,
+  "detail": "The workspace has exhausted its request budget for the current window",
+  "code": "BRIDGE_RATE_LIMIT_0001"
+}
+```
+
+`Retry-After` é expresso em **segundos a partir de agora**, não como uma data. Aguarde esse intervalo antes de fazer a próxima requisição.
+
+<Warning>
+  **Um `429` não é um problema de autenticação.** `401` e `403` significam que a chave de API está ausente, inválida, expirada ou sem autorização. **Repeti-los em intervalos não resolverá o problema** e apenas consumirá sua cota. Somente `429` deve ser repetido automaticamente, e apenas depois do intervalo informado.
+</Warning>
+
+---
+
+<a id="what-consumes-budget"></a>
+
+## O que consome a cota
+
+Cada requisição HTTP conta como uma, inclusive as que terminam em erro de validação ou `404`. O que importa é quantas chamadas o cliente faz, não a quantidade de dados retornados.
+
+Essa diferença aparece nas leituras:
+
+- **Um único recurso por ID** — `GET .../contacts/{contactId}` — custa **uma requisição**, independentemente do tamanho da resposta.
+- **Uma lista** — `GET .../contacts` — custa **uma requisição por página**. Ler a lista inteira custa tantas requisições quantas forem suas páginas.
+
+Por isso, o tamanho da página determina o custo de uma leitura completa. Percorrer 500 contatos custa cinco requisições com 100 por página e 25 requisições com 20 por página: os mesmos dados, com cinco vezes mais consumo de cota.
+
+<Note>
+  Prefira o maior tamanho de página aceito pelo endpoint quando precisar ler a lista inteira. Se já souber qual recurso procura, leia-o diretamente pelo ID.
+</Note>
+
+---
+
+<a id="backing-off-in-practice"></a>
+
+## Controle o ritmo na prática
+
+Um cliente que ajusta o ritmo com `RateLimit` e respeita `Retry-After` nas eventuais rejeições não precisa de outra lógica:
+
+```python
+import time
+
+import requests
+
+BASE = "https://api-connect-us.bridge.new"
+HEADERS = {"x-api-key": "YOUR_API_KEY"}
+
+
+def rate_limit_state(response):
+    header = response.headers.get("RateLimit", "")
+    fields = dict(part.split("=", 1) for part in header.split(";") if "=" in part)
+    return int(fields.get("r", 1)), int(fields.get("t", 1))
+
+
+def get(path):
+    while True:
+        response = requests.get(f"{BASE}{path}", headers=HEADERS)
+
+        if response.status_code == 429:
+            time.sleep(int(response.headers["Retry-After"]))
+            continue
+
+        remaining, reset_in = rate_limit_state(response)
+        if remaining == 0:
+            time.sleep(reset_in)
+
+        return response
+```
+
+```javascript
+const BASE = "https://api-connect-us.bridge.new";
+const HEADERS = { "x-api-key": "YOUR_API_KEY" };
+
+const sleep = (seconds) => new Promise((done) => setTimeout(done, seconds * 1000));
+
+function rateLimitState(response) {
+  const fields = Object.fromEntries(
+    (response.headers.get("RateLimit") ?? "")
+      .split(";")
+      .filter((part) => part.includes("="))
+      .map((part) => part.split("="))
+  );
+  return { remaining: Number(fields.r ?? 1), resetIn: Number(fields.t ?? 1) };
+}
+
+async function get(path) {
+  while (true) {
+    const response = await fetch(`${BASE}${path}`, { headers: HEADERS });
+
+    if (response.status === 429) {
+      await sleep(Number(response.headers.get("Retry-After")));
+      continue;
+    }
+
+    const { remaining, resetIn } = rateLimitState(response);
+    if (remaining === 0) await sleep(resetIn);
+
+    return response;
+  }
+}
+```
+
+<Warning>
+  Não repita um `429` imediatamente nem use um intervalo fixo definido por conta própria. Repetir antes de `Retry-After` terminar causa nova rejeição, e um loop intenso de tentativas mantém a cota do workspace em zero para todas as outras aplicações que a compartilham.
+</Warning>
+
+---
+
+<a id="standards"></a>
+
+## Padrões
+
+Esses campos não são exclusivos do Bridge: `RateLimit-Policy` e `RateLimit` seguem a especificação IETF de [campos de cabeçalho RateLimit](https://datatracker.ietf.org/doc/draft-ietf-httpapi-ratelimit-headers/); `Retry-After` segue a [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#field.retry-after); e o corpo do `429` segue a [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html). Se você já trata cabeçalhos `X-RateLimit-*` de outra API, esses são os equivalentes padronizados.
+
+Quando os dois divergirem, **`Retry-After` prevalece**: ele é o sinal que determina a nova tentativa, enquanto `RateLimit` orienta o ritmo das chamadas.
+
+---
+
+<a id="related-topics"></a>
+
+## Tópicos relacionados
+
+- [Autenticação](/pt-br/credentials) — Chaves de API e respostas `401` / `403` que não devem ser repetidas automaticamente
+- [Códigos de erro](/pt-br/error-codes) — Referência completa, incluindo `BRIDGE_RATE_LIMIT_0001`
+- [Referência da API REST](/pt-br/api-reference/health/verificar-integridade) — Cada endpoint documenta sua resposta `429`

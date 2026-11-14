@@ -48,3 +48,23 @@ The feature label is **Custom Connections**. Existing `/lead-capture` documentat
 The fixed 30-task set under `tests/documentation/` is a proposed evaluation, not a claim that model or human tests passed. Record source version, retrieval mode, model/version, answers, citations and independent review before assigning scores. Human usability tests require actual readers.
 
 Publish through the repository's normal pull-request and Code Owner review process. After publication, compare HTML, Markdown, OpenAPI, `llms.txt`, `llms-full.txt`, MCP results and task search against the approved revision. Saving a branch or viewing a local preview is not production publication.
+
+
+## Languages and coding-assistant setup
+
+English keeps the existing root URLs. Spanish is under `es/`; Brazilian Portuguese is under `pt-br/` with Mintlify language code `pt-BR`. Each language has the same 24 source pages and 26 API operations. Localized OpenAPI files translate only genuine descriptions and summaries; API identifiers, schemas, types, examples and all wire behavior remain unchanged.
+
+The homepage, first sidebar group and localized navbar link to the four-provider coding-assistant guide. Preserve its distinction between documentation MCP access and customer-workspace API access. Provider interfaces can change: verify commands, configuration formats and links against official documentation when updating the guide.
+
+The contract guard follows OpenAPI object context, including real property names such as `content`, `headers`, `default` and `examples`. Projection version 2 was explicitly migrated from unchanged published English contracts; it does not authorize a contract change. Run it for every language from the repository root:
+
+```bash
+python3 scripts/check-doc-contracts.py --source .
+python3 scripts/check-doc-contracts.py --source es
+python3 scripts/check-doc-contracts.py --source pt-br
+python3 -m unittest discover -s tests/documentation -p 'test_*.py'
+```
+
+Keep translated code examples byte-identical to the English version. Human-readable Mermaid diagram labels may be localized while retaining their graph identifiers, edges, HTTP methods and status identifiers. Preserve English fragment aliases where translated headings change their slug, and route guide links to the matching localized API reference.
+
+Use a current Mintlify CLI for preview. Older versions can discard language-level navbar/footer overrides or generate selected OpenAPI endpoints without their locale prefix. Each translated OpenAPI binding therefore specifies its source and directory; the single-operation Custom Connections reference is generated in bulk. The existing English binding and URLs remain unchanged.

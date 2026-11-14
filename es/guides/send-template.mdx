@@ -1,0 +1,159 @@
+---
+title: "Elige y completa una plantilla de WhatsApp"
+sidebarTitle: "Guía de plantillas"
+description: "Consulta una plantilla por ID o nombre, proporciona sus claves de variables independientes del proveedor y usa el ID devuelto en una solicitud de conversación."
+---
+
+Usa esta guía cuando quieras abrir una conversación con una plantilla específica de WhatsApp. La [referencia detallada de plantillas](/es/templates-and-parameters) explica las reglas de validación y todos los errores de plantilla documentados.
+
+<a id="before-you-start"></a>
+
+## Antes de comenzar
+
+- Debes conocer el **ID o nombre** de la plantilla. `GET .../templates/{templateId}` acepta ambos.
+- Confirma que la plantilla esté aprobada para la cuenta de WhatsApp Business asociada a la línea que usarás.
+- Debes tener el ID de un contacto de prueba existente, el `providerChannelId` de la línea autorizada de WhatsApp y el correo de un usuario interno de Bridge. Consulta [Identificadores y conceptos](/es/guides/identifiers).
+- Revisa la secuencia de plantillas de inicio del espacio de trabajo: según su configuración, tu reemplazo puede sustituir toda la secuencia o solo la primera plantilla.
+
+<Warning>
+  La solicitud final inicia una conversación y puede enviar plantillas de inicio. Usa un contacto de prueba autorizado y el contenido previsto.
+</Warning>
+
+<a id="1-discover-the-variables"></a>
+
+## 1. Consulta las variables
+
+```http
+GET /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}
+x-api-key: YOUR_API_KEY
+```
+
+Codifica para URL el ID o nombre proporcionado. Lee `id`, `name`, `variables` y `driftWarning` en la respuesta.
+
+| Variable | Qué hacer |
+| --- | --- |
+| `callerMustSupply: true` | Proporciona una cadena que no esté en blanco bajo la `key` de esa variable. |
+| `callerMustSupply: false`, no personalizada | Omítela para conservar el valor que Bridge obtiene para cada contacto. Un valor enviado reemplaza ese valor para todos los contactos. |
+| `isCustom: true` | Proporciona tu valor, omítelo o envíalo en blanco para usar su `default`. |
+
+Usa la `key` independiente del proveedor, nunca el `label` visible, una posición de Meta ni un nombre de variable inventado. `driftWarning` es informativo y por sí solo no bloquea el envío.
+
+<a id="2-prepare-your-values"></a>
+
+## 2. Prepara los valores
+
+Crea en tu servidor un archivo JSON que contenga únicamente claves devueltas por la consulta. Si la plantilla realmente declara `order_number` y `delivery_date`, podría contener lo siguiente:
+
+```json
+{
+  "order_number": "A-10492",
+  "delivery_date": "October 3"
+}
+```
+
+Esos dos nombres son ejemplos, no campos universales de Bridge. Consulta tu propia plantilla antes de usarlos. Respeta las [reglas de valores de WhatsApp](/es/templates-and-parameters#whatsapp-value-rules); omite los valores no personalizados que quieras que Bridge complete, en lugar de enviar cadenas en blanco.
+
+<a id="3-discover-check-and-create-the-conversation"></a>
+
+## 3. Consulta, comprueba y crea la conversación
+
+Usa Node.js con `fetch` integrado. Guarda el ejemplo como `send-template.mjs` y configura `BRIDGE_API_KEY`, `BRIDGE_WORKSPACE_ID`, `BRIDGE_TEMPLATE_ID_OR_NAME`, `TEMPLATE_VALUES_PATH`, `BRIDGE_CONTACT_ID`, `BRIDGE_PROVIDER_CHANNEL_ID` y `BRIDGE_USER_EMAIL`.
+
+```javascript
+import { readFile } from "node:fs/promises";
+
+const BASE = "https://api-connect-us.bridge.new";
+function required(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Set ${name} before running this example.`);
+  return value;
+}
+const apiKey = required("BRIDGE_API_KEY");
+const workspaceId = required("BRIDGE_WORKSPACE_ID");
+const templateRef = required("BRIDGE_TEMPLATE_ID_OR_NAME");
+const contactId = required("BRIDGE_CONTACT_ID");
+const providerChannelId = required("BRIDGE_PROVIDER_CHANNEL_ID");
+const internalEmail = required("BRIDGE_USER_EMAIL");
+const parameters = JSON.parse(await readFile(required("TEMPLATE_VALUES_PATH"), "utf8"));
+if (parameters === null || Array.isArray(parameters) || typeof parameters !== "object") {
+  throw new Error("The template values file must contain a JSON object.");
+}
+if (Object.entries(parameters).some(([key, value]) =>
+  Array.from(key).length > 128 || typeof value !== "string" || Array.from(value).length > 1024
+)) {
+  throw new Error("Parameter keys and values must respect the published string limits.");
+}
+if (Object.keys(parameters).length > 50) throw new Error("At most 50 parameters are allowed.");
+const workspacePath = `/bridge/api/v1/workspaces/${encodeURIComponent(workspaceId)}`;
+
+async function request(method, path, body, expectedStatus) {
+  const response = await fetch(`${BASE}${workspacePath}${path}`, {
+    method,
+    headers: {
+      "x-api-key": apiKey,
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const result = await response.json().catch(() => null);
+  if (response.status !== expectedStatus) {
+    const code = result?.code ? ` (${result.code})` : "";
+    throw new Error(`${method} ${path}: HTTP ${response.status}${code}`);
+  }
+  return result;
+}
+
+const template = await request(
+  "GET", `/templates/${encodeURIComponent(templateRef)}`, undefined, 200,
+);
+if (!template?.id) throw new Error("Template discovery returned no id.");
+const variables = template.variables ?? [];
+const known = new Set(variables.map((variable) => variable.key));
+const unknown = Object.keys(parameters).filter((key) => !known.has(key));
+const missing = variables.filter((variable) =>
+  variable.callerMustSupply &&
+  (typeof parameters[variable.key] !== "string" || !parameters[variable.key].trim())
+);
+if (unknown.length || missing.length) {
+  throw new Error(`Check template keys: ${unknown.length} unknown, ${missing.length} missing.`);
+}
+
+const conversation = await request("POST", "/conversations", {
+  participants: {
+    externals: [{
+      identifier: contactId,
+      identifierType: "ID",
+      messageProviderType: "WHATSAPP",
+      providerChannelId,
+    }],
+    internals: [{ identifier: internalEmail, identifierType: "EMAIL" }],
+  },
+  onboardingTemplates: [{ templateId: template.id, parameters }],
+}, 201);
+if (!conversation?.id || conversation.workspaceId !== workspaceId) {
+  throw new Error("The Conversation response does not identify the intended workspace.");
+}
+console.log({ templateId: template.id, conversationId: conversation.id });
+```
+
+```bash
+node send-template.mjs
+```
+
+El ejemplo usa el ID devuelto por la consulta en `onboardingTemplates[].templateId`. Las dos operaciones de conversaciones salientes también aceptan el ID o nombre de una plantilla; si envías ambos, el ID tiene prioridad. Sus cuerpos de solicitud son distintos de `onboardingTemplates`: lee el contrato de la operación antes de reutilizar este cuerpo en otra.
+
+Las comprobaciones locales detectan claves desconocidas o faltantes. Bridge realiza igualmente su propia validación, incluida la aprobación para la línea elegida y las reglas finales de valores de WhatsApp. La validación local no equivale a aprobación ni garantiza la entrega.
+
+<a id="recover-from-a-rejected-request"></a>
+
+## Cómo corregir una solicitud rechazada
+
+| Error | Qué hacer |
+| --- | --- |
+| Consulta `BRIDGE_TEMPLATE_0001` | Comprueba el ID o nombre y el espacio de trabajo. Esta respuesta no revela si el identificador pertenece a otro espacio de trabajo. |
+| `BRIDGE_CONVERSATION_0604` | Proporciona valores que no estén en blanco para las variables de `extra.missingVariables`. |
+| `BRIDGE_CONVERSATION_0605` | Quita las claves de `extra.unknownKeys`; usa las claves independientes del proveedor devueltas por la consulta. |
+| `BRIDGE_CONVERSATION_0607` | Corrige los valores de `extra.invalidVariables` según su `reason`. |
+| `BRIDGE_CONVERSATION_0608` | Pídele a un administrador que cambie la secuencia de plantillas de inicio del espacio de trabajo. Cambiar los valores de tu plantilla no resuelve este error de configuración. |
+
+Consulta la [referencia completa de errores de plantillas](/es/templates-and-parameters#errors) para los errores de aprobación, pertenencia, parámetros no admitidos y solicitudes mal formadas. No reintentes automáticamente una solicitud de conversación que agotó el tiempo de espera: primero determina su resultado.
