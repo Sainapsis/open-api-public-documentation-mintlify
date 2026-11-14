@@ -31,14 +31,14 @@
     "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
     "api-reference/openapi.yaml": "17118b230e17bebf391bfa44f03f097cfb0c3e0ab50a88a997a125634f7a5148",
     "changelog.mdx": "e9084e3294b5d4a359eab45b627c4db6dec026c430818960778d75ae2366eab2",
-    "connect-your-agent.mdx": "470dc3c0c558b380e53c93251ec1600abaf1150a541dd32f50dc7b47ec8f7389",
+    "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
-    "docs.json": "73451fb6a25ad3e213104fdfa428cad1961d74cee8e5f956c83488e6380efe42",
+    "docs.json": "aff67a9522c97ccef60ca582c5574e339a9b0ff346864167710fddbde443465a",
     "error-codes.mdx": "7b70ea1fa9010ed5187137dd9d9ac92c536770392bff3f8ed1a31e1a60ed6152",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
     "es/api-reference/openapi.yaml": "44131c94325ca6c801f47fd974a79946bc4872b5a71e30f132e0d5b884e9020f",
     "es/changelog.mdx": "b2d420cca846e287101c92623dbac4c485f0e11c4198653a80caa50f19d96f28",
-    "es/connect-your-agent.mdx": "1d446da87186a96295afac7b1945f669f62c5802f5e2a465ff3b7bbf93eec237",
+    "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
     "es/error-codes.mdx": "5212545e320a69cf076121748da4505af3b338282948e214440da208a5595298",
     "es/guides/agent-outbound.mdx": "4602116efdc7585fa63ce2cce355122d3c6583c0c542b644af395e08f0dcc45f",
@@ -48,7 +48,7 @@
     "es/guides/responses.mdx": "6cbe950fee4f2e2dbcf0a358c1f8964d48db20a56b274d7354f7626684eaba64",
     "es/guides/send-attachments.mdx": "c7059943794fe00f106a446aec780a795b0064438b9f94dc8182d75bf914181c",
     "es/guides/send-template.mdx": "01ae1692e7264584b783e64c2563ba131e084bd42cbff16c0d09272dee4347af",
-    "es/index.mdx": "7f69ed6672acdb725f2c3e13155f9e6baf0659e652fd6917c6bbcba0a3e1ffb3",
+    "es/index.mdx": "a479ed3fbf7d8a4a5d649659d676a7813b773ddff251485bd9774347b02ff9ab",
     "es/lead-capture/consent.mdx": "54f105a7a5411cf0c792e977821b9873c986ec2b1643ee9eed7d40a75631df2b",
     "es/lead-capture/errors.mdx": "31d3912e2db12220ba890b4e2cf915fe9934c68afcbe41c7862779da6c634354",
     "es/lead-capture/index.mdx": "d6a7271f6680820fb96ab22bf2c0d9653a02ae06b5c8be4e80f913dab979fd7e",
@@ -68,7 +68,7 @@
     "guides/responses.mdx": "bb89ab581d6642f9ce4a3d43d58e4201c061b99b6cb3eebb7de7f52f648d5f67",
     "guides/send-attachments.mdx": "554a6e5886f30847d5e118927b9701f2efcc66d835d8d6b841094e5bda6f04bc",
     "guides/send-template.mdx": "c1368bcefd1f21d26290090e3acf023f81f2b89e12b3dbf9d6d54babf21e036c",
-    "index.mdx": "368aa9d222583cd7d1b947b1dfc147722fdb28f513f64770aa0e735790b5c115",
+    "index.mdx": "c64fc52a224f49562716236aadeabeb57a4eacb972089f8fa4d96d0df1a56996",
     "lead-capture/consent.mdx": "5bda24afe5d4c3d01e5d8c118b22c926339304feac29cba80fb51d25a71a4c30",
     "lead-capture/errors.mdx": "b0897defce7672536ff037b972ae4db7f0611fee0c81c5a43d04457afed36ae5",
     "lead-capture/index.mdx": "abf13b9791519ece27bd2eb9908050afbc2bfc9959874a78aaeb6c08a083f5ab",
@@ -77,7 +77,7 @@
     "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
     "pt-br/api-reference/openapi.yaml": "6127964522812d40fd6f7a11628625ca021adb362dd7310c1d4884c52d1257f2",
     "pt-br/changelog.mdx": "f5ebecd2c3c7ee00801d64520995d86ae544264cd272db0233d32fab4ad9c455",
-    "pt-br/connect-your-agent.mdx": "a73ff7c599fd55db5b053604934956d6e8402b6a3dbad720aca3d6df9e219f6d",
+    "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
     "pt-br/error-codes.mdx": "e8bb34881b4bf943e1bd2698867b97fba3ef0845c3babb966d3aea973813cf1b",
     "pt-br/guides/agent-outbound.mdx": "b43380b51224c6d81fb6b0db9e2e0a9528987498badf91b231e6ab567185c157",
@@ -87,7 +87,7 @@
     "pt-br/guides/responses.mdx": "d1b9b1306d9530b107a0c5b13f6d127a177e912984c08ffd0411c0a3065c2447",
     "pt-br/guides/send-attachments.mdx": "f417d7f9c1d4654d7c49cfea165d84fceab2a3f5e334399e3ca0bad7dbb85496",
     "pt-br/guides/send-template.mdx": "c80473322f9940863989ce43395b7a82b6caa6ec7b516a76b0c720d1298f7f90",
-    "pt-br/index.mdx": "4f44dd484d1fc7c3b7517456627a6599b856e05dd243cda057cf15b2b336828d",
+    "pt-br/index.mdx": "f30f20608635feffa22d1c566c40843d3b29215ecf7875c73fce49e7a621e5a9",
     "pt-br/lead-capture/consent.mdx": "3cbfc6db2c724e435aac01b50eb94bba0e3ad40c012f2ea205fa2c9a6515eaf1",
     "pt-br/lead-capture/errors.mdx": "189a7d4172d2af033d7d211711e15d92d02c5278db066df4bc27c1f8c13890aa",
     "pt-br/lead-capture/index.mdx": "da3b1715a8c5a6c2b5b0d8c713d5d454945aeb164c184e7a51fd734ec0dff80f",
@@ -101,7 +101,7 @@
     "pt-br/webhooks/receive-events.mdx": "6998778bd21da5d3d1ba5877540bcc1cd9f7bd724a8a48347bc571b2c9946e08",
     "pt-br/webhooks/verifying-signatures.mdx": "27e126d6edbe017da7116c4001bafe6e555e3bd7d762eebae303177fedfa0dc0",
     "rate-limits.mdx": "110dfae500b1545c77f8adde168eb3a071c5da58354a14c0078d91eadcfa233d",
-    "skill.md": "c42bce21b5fac2369cf91cf62b9f16dd160f2b0b99b0c6d6be0ce482d6f0c0bd",
+    "skill.md": "b89b5379faf505816aad291a2ddc3ea7b58f249aee4294b1959ee2a05f314746",
     "templates-and-parameters.mdx": "aefdd33cb1660afc4b21aaa98570397534235989695177ed4bfe7808f46d1565",
     "webhooks.mdx": "8203de4edaaf8f317455300f712403850c7bab280d84d34b31fe3cd8ecdb88ab",
     "webhooks/configuration.mdx": "d2788ec46367b9816e5ba94e97bb0b0053b7f5270159575464e49d65e2d2ba5f",
@@ -1372,41 +1372,41 @@
       "source": "skill.md",
       "url": "https://docs.bridge.new/skill.md",
       "title": "Bridge integration guidance for AI agents",
-      "sha256": "c42bce21b5fac2369cf91cf62b9f16dd160f2b0b99b0c6d6be0ce482d6f0c0bd"
+      "sha256": "b89b5379faf505816aad291a2ddc3ea7b58f249aee4294b1959ee2a05f314746"
     }
   ],
   "outputs": {
-    "llms-en.txt": {
-      "bytes": 11146,
-      "sha256": "b0212f6cf0049f07a268d861538b537d936b5ab5085a267f71b15a55a42466ed"
+    "llms-en.json": {
+      "bytes": 31738,
+      "sha256": "482edc321484b6ee26eae70f0f1710cea1c25f77c848a0fa24b0e973023f49c3"
     },
-    "llms-full-en.txt": {
-      "bytes": 218920,
-      "sha256": "b71750a5ab3650701a69bc7ff08f732f83ae4683bf4bd2536229bb597582b068"
+    "llms-full-en.json": {
+      "bytes": 249392,
+      "sha256": "72db1c9627a29cc068469a9a0fb72a5d7a36c77a9dd85f79170deed09079174f"
     },
-    "llms-es.txt": {
-      "bytes": 12311,
-      "sha256": "8a4b8175b9d4bc96a0b1aec32be6367b789b0d2ffb13308566b528214906bd82"
+    "llms-es.json": {
+      "bytes": 34179,
+      "sha256": "5eaf17a880035653b6041966ee66c61ef144850c90f6a3984756df83157b8b61"
     },
-    "llms-full-es.txt": {
-      "bytes": 236844,
-      "sha256": "294914f4001c6a089ac3d1784c3ddf2664e9625a236f7e8922568a5455ea43a9"
+    "llms-full-es.json": {
+      "bytes": 268802,
+      "sha256": "80d89bfe4605e5229e1163aae495f339dd95442308653ce1021288896e724c38"
     },
-    "llms-pt-br.txt": {
-      "bytes": 12213,
-      "sha256": "33e7b73745f50cbc7bf58b5b9ab7006d826b2ab9328325e1d091508df967dd1a"
+    "llms-pt-br.json": {
+      "bytes": 34095,
+      "sha256": "b7d81d6cfbf5949896d7280a44edfb26fdfdbba1828d1a150b8339416db50ce3"
     },
-    "llms-full-pt-br.txt": {
-      "bytes": 235106,
-      "sha256": "360ba1478f45a5ea556f5dd4948ffd3a5191b69ece836851b1b60d85fbd15f76"
+    "llms-full-pt-br.json": {
+      "bytes": 266951,
+      "sha256": "eccf3853e5e45c42df38ffe36b54a00174e6917e80119dab941a5103d78da3ef"
     },
     "llms.txt": {
-      "bytes": 40223,
-      "sha256": "3c438513a91909f9b72c52014a20dab0d8a80536643eb5790a9359a0e6d8657a"
+      "bytes": 40277,
+      "sha256": "62a48193c9bd2f1cf544952ff378daba83821501d01ff631ad22b5725f924231"
     },
     "llms-full.txt": {
-      "bytes": 694750,
-      "sha256": "d6e4332d5ce8ce8abb68ba3381e15ef6765154157515183281c7363063ab29ce"
+      "bytes": 695460,
+      "sha256": "832aecba8fa201d788687e06a32f9373cfbc4cc62d6f99d469f29fe74007e416"
     },
     "sitemap.xml": {
       "bytes": 92257,

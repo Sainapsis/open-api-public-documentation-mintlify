@@ -148,11 +148,13 @@ Não é necessário conectar o MCP para ler a documentação do Bridge. Forneça
 
 | Idioma | Índice de páginas | Documentação reunida |
 | --- | --- | --- |
-| English | [English index](/llms-en.txt) | [English collection](/llms-full-en.txt) |
-| Español | [Índice en español](/llms-es.txt) | [Documentación en español](/llms-full-es.txt) |
-| Português do Brasil | [Índice em português](/llms-pt-br.txt) | [Documentação em português](/llms-full-pt-br.txt) |
+| English | [English index](/llms-en.json) | [English collection](/llms-full-en.json) |
+| Español | [Índice en español](/llms-es.json) | [Documentación en español](/llms-full-es.json) |
+| Português do Brasil | [Índice em português](/llms-pt-br.json) | [Documentação em português](/llms-full-pt-br.json) |
 
 O índice aponta para páginas `.md` individuais e para os arquivos OpenAPI exatos. A [coleção completa](/llms-full.txt) inclui os três idiomas; a coleção de um único idioma é menor. As descrições de endpoints reunidas não substituem os esquemas completos do OpenAPI.
+
+Os arquivos por idioma usam JSON: o índice lista as URLs, e cada coleção contém o texto das páginas em Markdown no campo `contentMarkdown`. Os arquivos gerais `llms.txt` e `llms-full.txt` continuam em Markdown.
 
 **Exemplo de prompt:**
 

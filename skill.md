@@ -17,9 +17,9 @@ MCP is optional. Any HTTP-capable assistant can read the public documentation wi
 
 | Language | Page index | Collected documentation | REST contract | Custom Connections contract |
 | --- | --- | --- | --- | --- |
-| English | [Index](https://docs.bridge.new/llms-en.txt) | [Collection](https://docs.bridge.new/llms-full-en.txt) | [OpenAPI](https://docs.bridge.new/api-reference/openapi.yaml) | [OpenAPI](https://docs.bridge.new/api-reference/campaign-leads.openapi.yaml) |
-| Español | [Índice](https://docs.bridge.new/llms-es.txt) | [Documentación](https://docs.bridge.new/llms-full-es.txt) | [OpenAPI](https://docs.bridge.new/es/api-reference/openapi.yaml) | [OpenAPI](https://docs.bridge.new/es/api-reference/campaign-leads.openapi.yaml) |
-| Português do Brasil | [Índice](https://docs.bridge.new/llms-pt-br.txt) | [Documentação](https://docs.bridge.new/llms-full-pt-br.txt) | [OpenAPI](https://docs.bridge.new/pt-br/api-reference/openapi.yaml) | [OpenAPI](https://docs.bridge.new/pt-br/api-reference/campaign-leads.openapi.yaml) |
+| English | [Index](https://docs.bridge.new/llms-en.json) | [Collection](https://docs.bridge.new/llms-full-en.json) | [OpenAPI](https://docs.bridge.new/api-reference/openapi.yaml) | [OpenAPI](https://docs.bridge.new/api-reference/campaign-leads.openapi.yaml) |
+| Español | [Índice](https://docs.bridge.new/llms-es.json) | [Documentación](https://docs.bridge.new/llms-full-es.json) | [OpenAPI](https://docs.bridge.new/es/api-reference/openapi.yaml) | [OpenAPI](https://docs.bridge.new/es/api-reference/campaign-leads.openapi.yaml) |
+| Português do Brasil | [Índice](https://docs.bridge.new/llms-pt-br.json) | [Documentação](https://docs.bridge.new/llms-full-pt-br.json) | [OpenAPI](https://docs.bridge.new/pt-br/api-reference/openapi.yaml) | [OpenAPI](https://docs.bridge.new/pt-br/api-reference/campaign-leads.openapi.yaml) |
 
 The [trilingual index](https://docs.bridge.new/llms.txt) enumerates all pages. The [combined collection](https://docs.bridge.new/llms-full.txt) gathers all three languages. Collections contain guides and operation descriptions; use the linked OpenAPI specifications for complete schemas. All languages describe the same API, with identical technical identifiers and behavior.
 
