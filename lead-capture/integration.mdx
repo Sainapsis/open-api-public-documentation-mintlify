@@ -10,8 +10,7 @@ keywords: ["integration", "reCAPTCHA", "CORS", "campaign leads", "example"]
 The Bridge admin console generates this block already filled in with your workspace's
 values. The version below uses placeholders so you can read it before you have them.
 
-Replace the form markup and the consent wording with your own. The script underneath only
-needs to change if your field ids differ from the ones used here.
+Replace the form markup and the consent wording with your own. **Acme Motors is a fictional business used in the example below.** Replace it with the business the visitor will hear from, and describe the WhatsApp messages they are agreeing to receive. See [Consent requirements](/lead-capture/consent). The script underneath only needs to change if your field ids differ from the ones used here.
 
 ```html
 <!--
@@ -45,7 +44,7 @@ needs to change if your field ids differ from the ones used here.
        agreeing to, and only you know what you will message them and why. -->
   <label>
     <input id="lead-consent" type="checkbox" required />
-    <span>I agree to be contacted by WhatsApp.</span>
+    <span>I agree to receive WhatsApp messages from Acme Motors about the quote I just requested.</span>
   </label>
   <button type="submit">Submit</button>
 </form>

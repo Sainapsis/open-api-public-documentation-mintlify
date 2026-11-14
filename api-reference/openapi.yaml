@@ -2,17 +2,12 @@ openapi: 3.1.0
 info:
   title: Bridge API
   summary: Bridge API specification for chat system management.
-  description: "Bridge API specification including webhook receiver endpoints, Contact\
-    \ CRUD operations, and comprehensive chat system.\n\n                    This\
-    \ API includes:\n                    1. Webhook Receiver API - for CRM clients\
-    \ to receive event notifications from Bridge\n                    2. Contact CRUD\
-    \ API - for clients to manage contacts in Bridge\n                    3. Conversations\
-    \ API - for managing conversations with flexible user identification and participant\
-    \ management\n                    4. Messages API - for sending messages and files\
-    \ to a conversation\n                    5. Files API - for managing files in\
-    \ a message\n                    6. Custom attributes API - for consult custom\
-    \ attributes of an specific workspace\n\n                    **Multi-Tenant Architecture**:\
-    \ All operations are scoped to a specific workspace using workspaceId."
+  description: "Bridge REST Integrations API specification for managing contacts,\
+    \ conversations, messages, files, custom attributes, provider channels, templates,\
+    \ internal users, and Agents.\n\nWebhooks are documented separately at\
+    \ https://docs.bridge.new/webhooks; this OpenAPI contains REST endpoints only.\n\n\
+    **Multi-Tenant Architecture**: Resource operations are scoped to a specific\
+    \ workspace using workspaceId. The health check does not have a workspace path."
   termsOfService: https://www.sainapsis.com/legal/terms-of-service
   contact:
     name: Bridge Support
@@ -5075,8 +5070,8 @@ components:
           - type: string
           - type: 'null'
           title: Media Identifier
-          description: UUID returned by /preloaded-files. Mutually exclusive with
-            url.
+          description: UUID returned by POST /bridge/api/v1/workspaces/{workspaceId}/files.
+            Mutually exclusive with url.
           examples:
           - null
           - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f
@@ -5097,7 +5092,8 @@ components:
       description: 'Optional header media attached to the opening template message.
 
 
-        Provide exactly one of ``mediaId`` (a UUID returned by ``POST /preloaded-files``)
+        Provide exactly one of ``mediaId`` (a UUID returned by
+        ``POST /bridge/api/v1/workspaces/{workspaceId}/files``)
 
         or ``url`` (a public source URL fetched asynchronously by the URL file fetcher).'
     ParticipantIdentifierType:
@@ -5379,6 +5375,10 @@ components:
       - id: f0000040-0000-4000-8000-000000000040
         language: es
         name: order_shipped_promo
+        driftWarning:
+          hasDrift: false
+          stale: []
+          missingLabels: []
         variables:
         - callerMustSupply: false
           key: first_name
@@ -5566,7 +5566,7 @@ components:
         customAttributes:
           $ref: '#/components/schemas/CustomAttributesBody'
           title: Custom Attributes
-          description: Array of custom key-value attributes.
+          description: Object with openAttributes and closedAttributes arrays.
       additionalProperties: false
       type: object
       title: UpdateContactBody
