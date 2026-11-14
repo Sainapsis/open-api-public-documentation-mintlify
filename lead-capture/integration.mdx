@@ -7,17 +7,16 @@ keywords: ["integration", "reCAPTCHA", "CORS", "campaign leads", "example"]
 
 ## The example
 
-The Bridge admin console generates this block already filled in with your workspace's
-values. The version below uses placeholders so you can read it before you have them.
+The Bridge admin console supplies a generated integration example with your workspace's configuration. The expanded example below adds validation and submission feedback. Copy the configuration values from your generated example into the placeholders before running it.
 
-Replace the form markup and the consent wording with your own. **Acme Motors is a fictional business used in the example below.** Replace it with the business the visitor will hear from, and describe the WhatsApp messages they are agreeing to receive. See [Consent requirements](/lead-capture/consent). The script underneath only needs to change if your field ids differ from the ones used here.
+Replace the form markup and the consent wording with your own. **Acme Motors is a fictional business used in the example below.** Replace it with the business the visitor will hear from, and describe the WhatsApp messages they are agreeing to receive. See [Consent requirements](/lead-capture/consent). The script shows validation, submission feedback, and error handling. Keep the request fields and reCAPTCHA action from your generated configuration unchanged.
 
 ```html
 <!--
   Campaign leads integration example.
   This is a starting point, not a drop-in script: replace the form fields, labels and
-  consent copy below with your own. The integration script does not need to change unless
-  your form's field ids differ from the ones used here.
+  consent copy below with your own. Keep the existing field ids, or update the matching selectors. The API fields and
+  reCAPTCHA action remain the values from your generated configuration.
   What this does: collects a phone number (and optionally a name), mints a reCAPTCHA v3
   token, and POSTs the lead to the campaign-leads endpoint. A 202 response means the lead
   was accepted and queued -- a separate service sends the first WhatsApp message later, so
@@ -47,11 +46,26 @@ Replace the form markup and the consent wording with your own. **Acme Motors is 
     <span>I agree to receive WhatsApp messages from Acme Motors about the quote I just requested.</span>
   </label>
   <button type="submit">Submit</button>
+  <p id="lead-result" role="status" aria-live="polite"></p>
 </form>
 <script>
   (function (config) {
     "use strict";
     var form = document.getElementById("lead-form");
+    var consentBox = document.getElementById("lead-consent");
+    var submitButton = form.querySelector("button[type=submit]");
+    var result = document.getElementById("lead-result");
+    var consentCapturedAt = null;
+    var inFlight = false;
+    var accepted = false;
+    var submissionStarted = false;
+    var responseReceived = false;
+    consentBox.addEventListener("change", function () {
+      consentCapturedAt = consentBox.checked ? new Date().toISOString() : null;
+    });
+    function showResult(message) {
+      result.textContent = message;
+    }
     function loadRecaptcha() {
       return new Promise(function (resolve, reject) {
         if (window.grecaptcha) {
@@ -108,25 +122,34 @@ Replace the form markup and the consent wording with your own. **Acme Motors is 
         // click ids or session tokens, and UTMs already travel separately in "utm" above.
         landingUri: window.location.origin + window.location.pathname,
         utm: readCampaignParams(),
-        consent: { status: "GRANTED", capturedAt: new Date().toISOString() },
+        consent: { status: "GRANTED", capturedAt: consentCapturedAt },
         recaptchaToken: token,
       };
     }
     form.addEventListener("submit", function (event) {
       event.preventDefault();
-      if (!document.getElementById("lead-consent").checked) {
+      if (inFlight || accepted || !form.reportValidity()) return;
+      if (!consentBox.checked || !consentCapturedAt) {
+        // A browser can restore a previously checked control without firing change.
+        // Ask for a new explicit action instead of inventing its consent timestamp.
+        consentBox.checked = false;
+        showResult("Please select the WhatsApp consent checkbox before submitting.");
+        consentBox.focus();
         return;
       }
-      // A token verifies once; a retry that reuses the same token is indistinguishable
-      // from a replay attack and comes back as the same CAPTCHA_REJECTED error as a low
-      // score, so mint a fresh token on every submit attempt, including retries.
+      inFlight = true;
+      submissionStarted = false;
+      responseReceived = false;
+      submitButton.disabled = true;
+      showResult("Submitting your request...");
+      // A token verifies once. Every manual attempt, including a retry after a
+      // rejected request, obtains a new token. This example never retries a POST.
       mintToken()
         .then(function (token) {
           var payload = buildPayload(token);
-          // workspaceId must be on the POST URL itself, not only in the body: a CORS
-          // preflight carries no body, so the endpoint cannot resolve the tenant --
-          // and therefore cannot echo Access-Control-Allow-Origin -- without it.
+          // The URL must identify the workspace for the browser's CORS preflight.
           var url = config.endpoint + "?workspaceId=" + encodeURIComponent(config.workspaceId);
+          submissionStarted = true;
           return fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -134,29 +157,53 @@ Replace the form markup and the consent wording with your own. **Acme Motors is 
           });
         })
         .then(function (response) {
-          if (response.status === 202) {
-            // Accepted and queued, not sent -- a separate service transmits the first
-            // WhatsApp message later. Tell the visitor "we'll message you shortly", not
-            // "message sent".
-            return;
-          }
-          return response.json().then(function (body) {
-            // RFC 9457 problem details: { type, title, status }, sometimes "detail".
-            // Error responses carry no request id, so if you need support, report the page
-            // URL and the approximate time. A 422 is a transient failure on our side and
-            // retrying it is safe; a 403 CAPTCHA_REJECTED usually means the token expired
-            // or was reused, so mint a fresh one before retrying.
-            throw new Error(body.type + ": " + (body.detail || body.title));
+          responseReceived = true;
+          return response.json().catch(function () { return null; }).then(function (body) {
+            if (response.status === 202) {
+              accepted = true;
+              var reference = body && typeof body.requestId === "string"
+                ? " Reference: " + body.requestId
+                : "";
+              showResult("Request accepted. The business will process your request." + reference);
+              return;
+            }
+            var code = body && body.type ? body.type : "HTTP " + response.status;
+            if (response.status === 422 && code === "BRIDGE.CAMPAIGN_LEADS.CAPTCHA_PROVIDER_UNAVAILABLE") {
+              throw new Error("Verification is temporarily unavailable. You can try again; a new CAPTCHA token will be created.");
+            }
+            if (response.status === 403 && code === "BRIDGE.CAMPAIGN_LEADS.CAPTCHA_REJECTED") {
+              throw new Error("The verification was rejected. You can try again with a new CAPTCHA token.");
+            }
+            var detail = body && (body.detail || body.title);
+            throw new Error(code + (detail ? ": " + detail : ". Check the form configuration."));
           });
         })
         .catch(function (error) {
-          // eslint-disable-next-line no-console
-          console.error("Campaign lead submission failed", error);
+          if (submissionStarted && !responseReceived) {
+            showResult("We could not confirm whether your request was accepted. Check with the business before submitting it again.");
+            return;
+          }
+          showResult(error.message || "The request could not be completed.");
+        })
+        .finally(function () {
+          inFlight = false;
+          submitButton.disabled = accepted;
         });
     });
   })(window.__CAMPAIGN_LEADS__);
 </script>
 ```
+
+## What the example does
+
+- Checks the form's required fields before obtaining a CAPTCHA token.
+- Records `consent.capturedAt` when the visitor selects the checkbox. If the browser restores an old checked state, it asks for a fresh consent action.
+- Allows one submission at a time and keeps the button disabled after acceptance to avoid another submission from this form instance.
+- Shows a `202` as accepted and queued, and displays the returned `requestId` as a support reference. It never says a WhatsApp message was delivered.
+- Shows recoverable CAPTCHA failures and creates a fresh token on each manual attempt. It does not retry a POST automatically.
+- Treats a network failure after submission as an uncertain outcome; it does not claim that the lead was rejected or safe to resend.
+
+This is client-side feedback, not a backend deduplication guarantee. Adapt the visible messages to your page and retain the [error reference](/lead-capture/errors) for diagnosis.
 
 ## Your capture key is not an API key
 

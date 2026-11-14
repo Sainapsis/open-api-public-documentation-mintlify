@@ -1,0 +1,120 @@
+---
+title: "Start an Agent outbound conversation"
+sidebarTitle: "Agent outbound & handoff"
+description: "Choose an Agent, send an opening template, understand forceSend and recovery, and request a LeadScout handoff."
+keywords: ["forceSend", "LeadScout", "Service Agent", "outbound", "recover conversation", "handoff", "alreadyInitiated"]
+---
+
+Use outbound when an existing Contact should receive an approved WhatsApp template and continue with an AI Agent. Use [create a conversation](/guides/first-conversation) for the general conversation workflow.
+
+## Choose the operation
+
+| Your goal | Operation | How the Agent is selected |
+| --- | --- | --- |
+| Start with a specific LeadScout or Service Agent | `POST /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound` | You supply the Agent ID from `GET /agents`. |
+| Start with a LeadScout selected through the workspace's eligible lines | `POST /bridge/api/v1/workspaces/{workspaceId}/leadscout/outbound` | Bridge resolves the prospecting Agent for the line. |
+
+Both use the REST API host `https://api-connect-us.bridge.new` and a server-side `x-api-key`. They have separate request schemas. Read the [Agents outbound reference](/api-reference/agents-api/start-an-outbound-conversation-with-a-contact-as-a-given-agent) or [LeadScout outbound reference](/api-reference/leadscout-api/initiate-a-leadscout-outbound-conversation-with-a-known-lead) for the operation you use.
+
+## Before you send
+
+1. [Look up the Contact](/api-reference/contacts-api/retrieve-a-contact-by-an-identifier), or [create it](/api-reference/contacts-api/create-a-new-contact) if missing. Outbound requires a Contact that already exists in the workspace; you do not need to create a separate Conversation or Message first.
+2. [List Agents](/api-reference/agents-api/list-the-agents-of-a-workspace). Choose an available Agent and read its `lines[].providerChannelId`. An AI Agent ID differs from a human Bridge User ID.
+3. Choose an approved template. [Discover its variables](/guides/send-template#1-discover-the-variables), supply caller-required values, and check that it is approved for the destination line. Use only the discovery step as this prerequisite; the separate Conversation-creation step in that recipe is not needed for outbound.
+4. Confirm that your business has the required opt-in. If you send `consent.status: "GRANTED"`, include `capturedAt`; this records your assertion of consent.
+
+For Agents outbound, `contact.providerChannelId` must belong to the chosen Agent when supplied. It is a preference: another eligible Agent line can be selected. For LeadScout outbound, an explicit line is respected. [Identifiers and their sources](/guides/identifiers) explains which values to use.
+
+## Send a minimal Agent request
+
+Replace every placeholder. This example assumes the chosen template has no unresolved caller-required variables. Set `forceSend` deliberately; the example keeps the default behavior explicit.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/agents/$AGENT_ID/outbound" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contact": {
+      "identifier": "f0000001-0000-4000-8000-000000000001",
+      "identifierType": "ID",
+      "messageProviderType": "WHATSAPP"
+    },
+    "template": {
+      "id": "f0000040-0000-4000-8000-000000000040"
+    },
+    "forceSend": false
+  }'
+```
+
+A successful request returns `201`. Store `conversation.id` and interpret these response fields:
+
+| Field | Meaning |
+| --- | --- |
+| `alreadyInitiated: true` | An existing active conversation was reused. The successful request still adds its new template and follow-ups. |
+| `recovered: true` | A released, recoverable conversation was recovered, retaining its ID. Its previous outbound context and `agentContext` are replaced. |
+| `additionalMessagesPersisted` | The number of follow-up messages stored. This is not a delivery receipt. |
+| `templateSent` | A summary of the opening template stored for sending. Do not interpret the field name as proof of recipient delivery. |
+
+New creation has neither reuse nor recovery set to true. Recovery can happen with `forceSend: false`. Additional messages are persisted in request order; do not rely on a promise that they wait for the Contact to reply. The shared outbound flow persists text follow-ups and does not attach their `mediaIds`. Use the documented `template.media` option for media on the opening template, or the [Message attachment workflow](/guides/send-attachments) for a separate message.
+
+## What forceSend does
+
+Availability is evaluated for **this Contact's conversation on each line**. An occupied line here does not mean the corporate WhatsApp line is globally reserved for one Contact.
+
+The following rules remain subject to Agent availability, template validation, consent validation and session checks.
+
+On a narrow screen, scroll horizontally to compare all four choices. Keyboard users can focus this comparison and use the arrow keys.
+
+<div className="bridge-comparison" role="region" aria-label="forceSend comparison for LeadScout and Agents" tabIndex={0}>
+
+| Situation | LeadScout: false | LeadScout: true | Agents: false | Agents: true |
+| --- | --- | --- | --- | --- |
+| Selected line is free | Create | Create | Create | Create |
+| Selected line holds a released conversation marked recoverable | Recover the same ID | Recover the same ID | Recover the same ID | Recover the same ID |
+| Automatic selection finds only occupied, active conversations | `409 …0008` | Reuse the first eligible occupied conversation | `409 …0008` | Prefer one controlled by the requested Agent, then apply the controller check below |
+| Explicit line is occupied | `409 …0007` | Reuse that conversation | Try other free or recoverable Agent lines; otherwise `409 …0008` | Try other free or recoverable Agent lines; otherwise prefer an occupied line the Agent controls |
+| Selected occupied conversation is controlled by a human or another Agent | No active reuse | Legacy route permits reuse, subject to other checks; this does not itself promise a controller transfer | No active reuse | `409 BRIDGE_AI_AGENT_OUTBOUND_0006`; this rejection writes nothing |
+| Only blocked or released, nonrecoverable conversations are available | `409 …0008` | `409 …0008` | `409 …0008` | `409 …0008` |
+
+</div>
+
+In this table, `…0007` is `BRIDGE_AI_LEADSCOUT_0007` and `…0008` is `BRIDGE_AI_LEADSCOUT_0008`. A released conversation is recoverable only when its stored recovery flag permits it; `forceSend` does not make it recoverable.
+
+For both routes, a LeadScout session that is still open and unexpired blocks a new outbound request with `409 BRIDGE_AI_LEADSCOUT_0017`. Failure to finalize an expired session returns `409 BRIDGE_AI_LEADSCOUT_0018`. A Service Agent can continue its open, unexpired service session; an expired session is closed before a new one opens.
+
+<Warning>
+  `forceSend` is not an idempotency key. Repeating a successful request can add another template and more messages. It does not bypass blocked conversations, session checks, approval rules or validation. A timeout leaves the outcome uncertain: inspect the conversation before deciding whether to submit again.
+</Warning>
+
+## Handle conflicts and partial work
+
+| Result | Next step |
+| --- | --- |
+| `BRIDGE_AI_LEADSCOUT_0007` / `0008` | Check the Contact's existing conversation and eligible lines. Decide whether reuse is appropriate before enabling `forceSend`. |
+| `BRIDGE_AI_AGENT_OUTBOUND_0006` | Inspect `extra.conversationId` and its controller. Coordinate ownership before deliberately releasing it. Do not automatically interrupt a human conversation. |
+| `BRIDGE_AI_LEADSCOUT_0017` / `0018` | Resolve the existing session or contact support. Switching `forceSend` to true does not fix the session. |
+| `BRIDGE_AI_LEADSCOUT_0019` / `0020` / `0021` | Correct missing, conflicting or unknown template variables using discovery. |
+| `400 BRIDGE_AI_LEADSCOUT_0016` for an unknown template `mediaId` on Agents outbound | The conversation may already have been created or recovered before this error. Inspect it before retrying. |
+
+[Release conversation](/api-reference/conversations-api/release-conversation) is a separate operation with business effects. A `204` has no response body. Release only when ending that conversation is your intended action.
+
+## Request a LeadScout handoff to a human
+
+For a LeadScout conversation, resolve the human's [Bridge User ID or email](/guides/identifiers), then call the [manual handoff endpoint](/api-reference/leadscout-api/request-a-manual-handoff-of-a-leadscout-conversation-to-internal-users). This operation is specific to LeadScout; do not assume it applies to a Service Agent.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/leadscout/conversations/$CONVERSATION_ID/handoff" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "assignees": [
+      {"identifier": "f0000002-0000-4000-8000-000000000002", "identifierType": "ID"}
+    ]
+  }'
+```
+
+A `202` acknowledges the request. Save its `trackingId` and `conversationId`; acceptance does not prove that assignment has completed or that a human has read or answered the conversation. The reference does not publish a handoff tracking endpoint, so do not construct one from `trackingId`.
+
+Continue with [error handling](/error-codes) and [webhook receiving](/webhooks/receive-events) to connect this workflow to your system.

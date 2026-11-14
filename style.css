@@ -117,3 +117,21 @@ html:not(.dark) .card:hover {
 @media (prefers-reduced-motion: reduce) {
   .card { transition: none; }
 }
+
+/* Subscription version is a label, not an interactive control. */
+.bridge-version-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(62, 110, 229, 0.10);
+  color: #3e6ee5;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.dark .bridge-version-badge { color: #93b5ff; }
+
+/* Keep the outbound decision table legible and keyboard-scrollable. */
+.bridge-comparison { overflow-x: auto; margin: 1.25rem 0; border-radius: 6px; }
+.bridge-comparison table { display: table; min-width: 720px; width: 100%; overflow: visible; margin: 0; }
+.bridge-comparison:focus-visible { outline: 2px solid #3e6ee5; outline-offset: 3px; }

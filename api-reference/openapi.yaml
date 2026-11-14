@@ -820,7 +820,7 @@ paths:
       tags:
       - Messages API
       summary: Create a new message
-      description: Create a new message within a specified conversation.
+      description: "Create a new message within a specified conversation.\n\nFor a text message or an uploaded attachment, include all required fields: `conversationId`, `messageBody`, and `enableExternalBroadcast`. Attach uploaded files with their returned identifiers in `mediaIds`; see [Send an attachment](/guides/send-attachments). A successful response returns `messageId`; it does not contain a provider delivery receipt. See [Responses and retries](/guides/responses)."
       operationId: create_message_bridge_api_v1_workspaces__workspaceId__messages_post
       security:
       - x-api-key: []
@@ -1592,34 +1592,7 @@ paths:
       tags:
       - Files API
       summary: Create presigned uploads for files
-      description: 'Generates presigned URLs to upload files (Presigned PUT). Validates
-        extension, contentType, and type-specific limits. Checksum required: send
-        SHA-256 digest in checksumBase64 (Base64). Upload must include header x-amz-checksum-sha256
-        with the same value.
-
-
-        ---
-
-        To upload your files, you MUST use the returned presigned URL with the HTTP
-        PUT method. Ensure that you upload the file exactly to the URL indicated,
-        without modifications (as required by AWS S3 Presigned URL PUT usage). Refer
-        to the official AWS S3 documentation on Presigned PUT URLs for details: [AWS
-        S3 Presigned PUT Documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html).
-
-        Be sure to include all required headers as specified in the response (e.g.,
-        ''x-amz-checksum-sha256'' with the correct SHA-256 value). If you fail to
-        use the correct HTTP method or headers, AWS will reject the upload request.
-
-
-        <table><tr><th>Type</th><th>Extension</th><th>Content Type</th><th>Max Size</th></tr><tr><td
-        rowspan="4">Image</td><td>.jpeg</td><td>image/jpeg</td><td rowspan="4">16
-        MB</td></tr><tr><td>.jpg</td><td>image/jpeg</td></tr><tr><td>.png</td><td>image/png</td></tr><tr><td>.webp</td><td>image/webp</td></tr><tr><td
-        rowspan="2">GIF</td><td>.gif</td><td>image/gif</td><td rowspan="2">3 MB</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td
-        rowspan="3">Video</td><td>.avi</td><td>video/x-msvideo</td><td rowspan="3">64
-        MB</td></tr><tr><td>.mov</td><td>video/quicktime</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td
-        rowspan="4">Audio</td><td>.m4a</td><td>audio/mp4</td><td rowspan="4">16 MB</td></tr><tr><td>.mp3</td><td>audio/mpeg</td></tr><tr><td>.ogg</td><td>audio/ogg</td></tr><tr><td>.wav</td><td>audio/wav</td></tr><tr><td
-        rowspan="8">Document</td><td>.doc</td><td>application/msword</td><td rowspan="8">100
-        MB</td></tr><tr><td>.docx</td><td>application/vnd.openxmlformats-officedocument.wordprocessingml.document</td></tr><tr><td>.pdf</td><td>application/pdf</td></tr><tr><td>.ppt</td><td>application/vnd.ms-powerpoint</td></tr><tr><td>.pptx</td><td>application/vnd.openxmlformats-officedocument.presentationml.presentation</td></tr><tr><td>.txt</td><td>text/plain</td></tr><tr><td>.xls</td><td>application/vnd.ms-excel</td></tr><tr><td>.xlsx</td><td>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td></tr></table>'
+      description: "Upload an attachment, such as a PDF, image, or document, before creating a message. This operation returns presigned PUT data; the file bytes are uploaded separately. After the upload succeeds, use the returned `mediaId` in the sending operation. Follow [Send an attachment](/guides/send-attachments) for the checksum, upload, and message steps.\n\nGenerates presigned URLs to upload files (Presigned PUT). Validates extension, contentType, and type-specific limits. Checksum required: send SHA-256 digest in checksumBase64 (Base64). Upload must include header x-amz-checksum-sha256 with the same value.\n\n---\nTo upload your files, you MUST use the returned presigned URL with the HTTP PUT method. Ensure that you upload the file exactly to the URL indicated, without modifications (as required by AWS S3 Presigned URL PUT usage). Refer to the official AWS S3 documentation on Presigned PUT URLs for details: [AWS S3 Presigned PUT Documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html).\nBe sure to include all required headers as specified in the response (e.g., 'x-amz-checksum-sha256' with the correct SHA-256 value). If you fail to use the correct HTTP method or headers, AWS will reject the upload request.\n\n<table><tr><th>Type</th><th>Extension</th><th>Content Type</th><th>Max Size</th></tr><tr><td rowspan=\"4\">Image</td><td>.jpeg</td><td>image/jpeg</td><td rowspan=\"4\">16 MB</td></tr><tr><td>.jpg</td><td>image/jpeg</td></tr><tr><td>.png</td><td>image/png</td></tr><tr><td>.webp</td><td>image/webp</td></tr><tr><td rowspan=\"2\">GIF</td><td>.gif</td><td>image/gif</td><td rowspan=\"2\">3 MB</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td rowspan=\"3\">Video</td><td>.avi</td><td>video/x-msvideo</td><td rowspan=\"3\">64 MB</td></tr><tr><td>.mov</td><td>video/quicktime</td></tr><tr><td>.mp4</td><td>video/mp4</td></tr><tr><td rowspan=\"4\">Audio</td><td>.m4a</td><td>audio/mp4</td><td rowspan=\"4\">16 MB</td></tr><tr><td>.mp3</td><td>audio/mpeg</td></tr><tr><td>.ogg</td><td>audio/ogg</td></tr><tr><td>.wav</td><td>audio/wav</td></tr><tr><td rowspan=\"8\">Document</td><td>.doc</td><td>application/msword</td><td rowspan=\"8\">100 MB</td></tr><tr><td>.docx</td><td>application/vnd.openxmlformats-officedocument.wordprocessingml.document</td></tr><tr><td>.pdf</td><td>application/pdf</td></tr><tr><td>.ppt</td><td>application/vnd.ms-powerpoint</td></tr><tr><td>.pptx</td><td>application/vnd.openxmlformats-officedocument.presentationml.presentation</td></tr><tr><td>.txt</td><td>text/plain</td></tr><tr><td>.xls</td><td>application/vnd.ms-excel</td></tr><tr><td>.xlsx</td><td>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td></tr></table>"
       operationId: create_preloaded_files_bridge_api_v1_workspaces__workspaceId__files_post
       security:
       - x-api-key: []
@@ -1793,7 +1766,7 @@ paths:
       tags:
       - Provider channels API
       summary: Get provider channels by workspace id
-      description: Get provider channels by workspace identifier.
+      description: "Get provider channels by workspace identifier.\n\nThis response exposes each channel's `provider` and phone-like `identifier`; it does not return a `providerChannelId`. For an Agent's lines, read `agents[].lines[].providerChannelId` from the Agents list. Do not substitute a phone number for a channel ID. See [Concepts and IDs](/guides/identifiers)."
       operationId: get_provider_channels_by_workspace_id_bridge_api_v1_workspaces__workspaceId__provider_channels_get
       security:
       - x-api-key: []
@@ -1942,30 +1915,7 @@ paths:
       tags:
       - LeadScout API
       summary: Initiate a LeadScout outbound conversation with a known lead
-      description: "Start an AI-controlled outbound conversation with a known lead.\n\
-        \nThe template is referenced by `template.id` or `template.name`; when both\
-        \ are sent, the id is used.\n\nPre-flight checks run before any write: template\
-        \ exists and is APPROVED, contact\nexists, a WhatsApp channel resolves, a\
-        \ prospection agent owns it, and any\n`handoffOverride` user is valid.\n\n\
-        If an active conversation is already running on the chosen channel:\n- `forceSend=false`\
-        \ (default) → `409` with error code BRIDGE_AI_LEADSCOUT_0007.\n- `forceSend=true`\
-        \ → that conversation is reused; the new template and follow-ups\n  are appended\
-        \ to it and the response sets `alreadyInitiated=true`.\n\nOtherwise a fresh\
-        \ conversation is opened (controlled by the prospection agent) with\nthe template\
-        \ as its first message; `additionalMessages` are persisted for the agent\n\
-        to send once the lead replies.\n\nError codes:\n- BRIDGE_AI_LEADSCOUT_0001:\
-        \ external user not found\n- BRIDGE_AI_LEADSCOUT_0002: internal user not found\n\
-        - BRIDGE_AI_LEADSCOUT_0003: internal user deleted\n- BRIDGE_AI_LEADSCOUT_0004:\
-        \ template not found\n- BRIDGE_AI_LEADSCOUT_0005: template not approved\n\
-        - BRIDGE_AI_LEADSCOUT_0006: template ordered params mismatch\n- BRIDGE_AI_LEADSCOUT_0007:\
-        \ active conversation already exists\n- BRIDGE_AI_LEADSCOUT_0008: all provider\
-        \ channels occupied\n- BRIDGE_AI_LEADSCOUT_0009: no channels for brand\n-\
-        \ BRIDGE_AI_LEADSCOUT_0010: provider channel not in workspace\n- BRIDGE_AI_LEADSCOUT_0011:\
-        \ workspace has no provider channels\n- BRIDGE_AI_LEADSCOUT_0012: no prospecting\
-        \ agent for channel\n- BRIDGE_AI_LEADSCOUT_0013: multiple prospecting agents\
-        \ for brand\n- BRIDGE_AI_LEADSCOUT_0014: multiple prospecting agents for channel\n\
-        - BRIDGE_AI_LEADSCOUT_0015: conversation operation failed\n- BRIDGE_AI_LEADSCOUT_0016:\
-        \ outbound validation error"
+      description: "Start a LeadScout outbound conversation with a known Contact. The Contact must already exist. Bridge resolves a prospecting Agent for an eligible WhatsApp line. The template is referenced by template.id or template.name; the id wins when both are supplied. It must exist and be APPROVED, and any handoffOverride Bridge User must be valid.\n\nAn explicit contact.providerChannelId is respected. Without one, automatic selection prefers a free line, then a released recoverable conversation with this Contact, then an occupied active conversation only when forceSend=true. Availability is per Contact on each line, not global line occupancy.\n\nforceSend=true reuses an eligible active conversation; it does not ignore it or create a fresh one. A successful reuse returns alreadyInitiated=true and persists the new template and follow-ups. A recoverable released conversation can be recovered with either value, retains its ID, and returns recovered=true. Blocked and released nonrecoverable conversations are not made usable by this flag. The legacy route can reuse a conversation held by a human or another Agent; unlike Agents outbound, it does not enforce the requested-Agent controller check.\n\nA nonexpired open LeadScout session still blocks a new outbound request with 409 BRIDGE_AI_LEADSCOUT_0017; inability to finalize an expired session returns 409 BRIDGE_AI_LEADSCOUT_0018. Other validation still applies. Additional messages are persisted; persistence does not prove delivery or a wait for the lead to reply. A failed request can leave partial work, so do not treat forceSend as idempotency or blindly retry an uncertain result.\n\nSee [the complete outbound guide](/guides/agent-outbound) for the false/true matrix, response flags, differences from Agents outbound, errors and handoff."
       operationId: initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post
       security:
       - x-api-key: []
@@ -2215,24 +2165,7 @@ paths:
       tags:
       - Templates API
       summary: Discover a template's agnostic variable inventory
-      description: "Return a template's variables — agnostic `key`/`label`/`callerMustSupply`/`isCustom`/`default`.\n\
-        \nNever a Meta slot address or index.\n\n`templateId` accepts either the template's\
-        \ `id` or its `name` — the send contract\n(`POST .../leadscout/outbound`)\
-        \ identifies a template by `name`; this discovery endpoint\nalso accepts `id`,\
-        \ so a caller who only has one of the two can still look it up.\n\nA variable\
-        \ with `callerMustSupply: true` has no declared source — the caller must include\n\
-        its `key` in `parameters` when sending, or the send fails with a 422 naming\
-        \ that same `key`.\nA variable with `callerMustSupply: false` is either resolved\
-        \ by Bridge on its own (e.g. the\nrecipient's first name) or already has a\
-        \ value the caller may optionally override.\nA variable with `isCustom: true`\
-        \ is a value only the caller knows, with a `default`: send it in\n`parameters`\
-        \ to use your own value, or leave it out (or blank) and `default` goes out.\n\
-        \nError codes:\n- BRIDGE_CORE_0301: workspace in the path does not match the\
-        \ caller's own workspace (403)\n- BRIDGE_TEMPLATE_0001: no PROVIDER_TEMPLATE\
-        \ found for this workspace and identifier — covers\n  an unknown id/name,\
-        \ a template that belongs to another workspace, and a template that is\n \
-        \ not a PROVIDER_TEMPLATE, identically (404); this endpoint never confirms\
-        \ the existence of\n  a template outside the caller's own workspace"
+      description: "Return a template's variables — agnostic `key`/`label`/`callerMustSupply`/`isCustom`/`default`.\n\nNever a Meta slot address or index.\n\n`templateId` accepts either the template's `id` or its `name`. Outbound operations accept `template.id` or `template.name`, with a nonblank id taking precedence. Conversation onboarding uses `onboardingTemplates[].templateId`. Use the selector required by the sending operation. See [the template recipe](/guides/send-template).\n\nA variable with `callerMustSupply: true` has no declared source — the caller must include\nits `key` in `parameters` when sending, or the send fails with a 422 naming that same `key`.\nA variable with `callerMustSupply: false` is either resolved by Bridge on its own (e.g. the\nrecipient's first name) or already has a value the caller may optionally override.\nA variable with `isCustom: true` is a value only the caller knows, with a `default`: send it in\n`parameters` to use your own value, or leave it out (or blank) and `default` goes out.\n\nError codes:\n- BRIDGE_CORE_0301: workspace in the path does not match the caller's own workspace (403)\n- BRIDGE_TEMPLATE_0001: no PROVIDER_TEMPLATE found for this workspace and identifier — covers\n  an unknown id/name, a template that belongs to another workspace, and a template that is\n  not a PROVIDER_TEMPLATE, identically (404); this endpoint never confirms the existence of\n  a template outside the caller's own workspace"
       operationId: get_template_discovery_bridge_api_v1_workspaces__workspaceId__templates__templateId__get
       security:
       - x-api-key: []
@@ -2760,41 +2693,7 @@ paths:
       tags:
       - Agents API
       summary: Start an outbound conversation with a Contact as a given Agent
-      description: "Start an outbound conversation with a known Contact, answered\
-        \ by the given Agent.\n\nWorks for LeadScout and Service Agents. The Contact\
-        \ is resolved first, then the Agent, which must exist in\nthe workspace and\
-        \ be available (see `GET /agents`). The template is referenced by `template.id`\
-        \ or\n`template.name` (the id wins when both are sent), must exist and be\
-        \ APPROVED, and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId`\
-        \ is unknown, the request fails\nwith 400 `BRIDGE_AI_LEADSCOUT_0016` only\
-        \ after the conversation was created or recovered, so a retry after\nthat\
-        \ error may answer differently. Body rules (`consent.status=GRANTED` without\
-        \ `capturedAt`, `template.media`\nwithout exactly one of `mediaId` or `url`)\
-        \ fail with 400 `BRIDGE_CORE_0103`.\n\nThe conversation opens on one of the\
-        \ Agent's active WhatsApp lines, controlled by the Agent, with the template\n\
-        as its first message. A line is picked in this order:\n- A free line.\n- Otherwise,\
-        \ a line holding a released conversation with this Contact that can be recovered.\
-        \ Recovering\n  returns `recovered=true` and replaces the previous outbound\
-        \ context and `agentContext`. This happens even\n  with `forceSend=false`.\n\
-        - Otherwise, when no line is free or recoverable: `forceSend=false` (default)\
-        \ fails with 409\n  `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reuses a\
-        \ line occupied by an active conversation with this\n  Contact, preferring\
-        \ one this Agent controls. If the chosen conversation is held by another Agent\
-        \ or a\n  Bridge User, the call fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006`\
-        \ and nothing is written. Release it\n  first, then retry. Lines whose conversation\
-        \ is blocked or was released without recovery are never used, so\n  if no\
-        \ line is occupied by an active conversation the call fails with 409 `BRIDGE_AI_LEADSCOUT_0008`\
-        \ even\n  with `forceSend=true`.\n\n`contact.providerChannelId` is a preference:\
-        \ the pinned line is used when it is free or recoverable;\notherwise the same\
-        \ order applies over all the Agent's lines. Among occupied lines, one this\
-        \ Agent controls\ncomes first; if none does, the pinned line is the one reused\
-        \ (and may fail with 0006).\n\nReusing a conversation depends on the Agent\
-        \ type:\n- LeadScout: if its LeadScout session is still open and not expired,\
-        \ the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra` carries `conversationId`,\
-        \ `sessionId` and `stage`). If an expired\n  session cannot be finalized,\
-        \ it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: an open,\
-        \ unexpired service session is continued; an expired one is closed as abandoned\
-        \ and a\n  new one opens."
+      description: "Start an outbound conversation with a known Contact, answered by the given Agent.\n\nWorks for LeadScout and Service Agents. The Contact is resolved first, then the Agent, which must exist in\nthe workspace and be available (see `GET /agents`). The template is referenced by `template.id` or\n`template.name` (the id wins when both are sent), must exist and be APPROVED, and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId` is unknown, the request fails\nwith 400 `BRIDGE_AI_LEADSCOUT_0016` only after the conversation was created or recovered, so a retry after\nthat error may answer differently. Body rules (`consent.status=GRANTED` without `capturedAt`, `template.media`\nwithout exactly one of `mediaId` or `url`) fail with 400 `BRIDGE_CORE_0103`.\n\nThe conversation opens on one of the Agent's active WhatsApp lines, controlled by the Agent, with the template\nas its first message. A line is picked in this order:\n- A free line.\n- Otherwise, a line holding a released conversation with this Contact that can be recovered. Recovering\n  returns `recovered=true` and replaces the previous outbound context and `agentContext`. This happens even\n  with `forceSend=false`.\n- Otherwise, when no line is free or recoverable: `forceSend=false` (default) fails with 409\n  `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reuses a line occupied by an active conversation with this\n  Contact, preferring one this Agent controls. If the chosen conversation is held by another Agent or a\n  Bridge User, the call fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006` and nothing is written. Release it\n  first, then retry. Lines whose conversation is blocked or was released without recovery are never used, so\n  if no line is occupied by an active conversation the call fails with 409 `BRIDGE_AI_LEADSCOUT_0008` even\n  with `forceSend=true`.\n\n`contact.providerChannelId` is a preference: the pinned line is used when it is free or recoverable;\notherwise the same order applies over all the Agent's lines. Among occupied lines, one this Agent controls\ncomes first; if none does, the pinned line is the one reused (and may fail with 0006).\n\nReusing a conversation depends on the Agent type:\n- LeadScout: if its LeadScout session is still open and not expired, the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra` carries `conversationId`, `sessionId` and `stage`). If an expired\n  session cannot be finalized, it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: an open, unexpired service session is continued; an expired one is closed as abandoned and a\n  new one opens.\n\nSee [the complete outbound guide](/guides/agent-outbound) for prerequisites, the forceSend decision table, recovery, partial work and safe retry decisions."
       operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
       security:
       - x-api-key: []
@@ -3024,7 +2923,7 @@ components:
         identifier:
           type: string
           title: Identifier
-          description: Phone number in E.164 format identifying the contact.
+          description: "Contact identifier matching identifierType: a Contact ID for ID, an email for EMAIL, or a phone number in E.164 format for PHONE. The Contact must already exist in the workspace."
           examples:
           - '+573001234567'
         identifierType:
@@ -3274,10 +3173,7 @@ components:
         alreadyInitiated:
           type: boolean
           title: Already Initiated
-          description: True when this request landed on a pre-existing conversation
-            (forceSend=true reuse path); false when a fresh conversation was created.
-            Informational only — the new template and follow-ups are persisted either
-            way.
+          description: "True when this successful request reused a pre-existing active conversation through forceSend=true. False for new creation or recovery; inspect recovered to distinguish those paths. Informational only: a successful reuse still persists the new template and follow-ups, so repeating the request can add messages."
           default: false
           examples:
           - false
@@ -4536,7 +4432,7 @@ components:
         identifier:
           type: string
           title: Identifier
-          description: Phone number in E.164 format identifying the contact.
+          description: "Contact identifier matching identifierType: a Contact ID for ID, an email for EMAIL, or a phone number in E.164 format for PHONE. The Contact must already exist in the workspace."
           examples:
           - '+573001234567'
         identifierType:
@@ -4558,9 +4454,7 @@ components:
           - type: string
           - type: 'null'
           title: Provider Channel Identifier
-          description: Optional explicit WhatsApp channel id. If omitted, the workspace's
-            single WhatsApp channel is used; in workspaces with multiple channels
-            this field is required.
+          description: "Optional explicit WhatsApp line ID. When supplied, this line is used and must belong to the workspace and resolve to a prospecting Agent. When omitted, eligible lines are selected automatically: free first, then released recoverable, then occupied only when forceSend=true. A brandId narrows the candidates when provided. The line ID is not a phone number. See [identifiers](/guides/identifiers) and [outbound selection](/guides/agent-outbound)."
           examples:
           - c4f2a1e0-9b8d-4e7c-a6f5-1d2e3f4a5b6c
           - null
@@ -4631,9 +4525,7 @@ components:
           type: array
           maxItems: 5
           title: Additional Messages
-          description: Up to five follow-up messages persisted on the conversation.
-            They are not delivered immediately; the agent decides when to send them
-            once the lead replies.
+          description: "Up to five follow-up messages persisted on the conversation in request order. Persistence is not a delivery receipt. Do not rely on these messages waiting for the lead to reply; see the outbound guide for delivery and retry considerations."
         agentContext:
           anyOf:
           - $ref: '#/components/schemas/OutboundAgentContextRequest'
@@ -4678,12 +4570,7 @@ components:
         forceSend:
           type: boolean
           title: Force Send
-          description: 'When true, bypass all blockers on the chosen channel: any
-            active conversation (AI-prospecting or human) is ignored and a fresh outbound
-            is created. When no providerChannelId is supplied and every workspace
-            channel is occupied, the first candidate is used instead of raising AllProviderChannelsOccupied.
-            When false (default), an existing active conversation on the chosen channel
-            returns 409.'
+          description: "Controls reuse of an existing active conversation with this Contact on the chosen line. With false (default), an explicitly selected occupied line returns 409 BRIDGE_AI_LEADSCOUT_0007; automatic selection with only occupied lines returns 409 BRIDGE_AI_LEADSCOUT_0008. With true, an eligible occupied conversation is reused instead of creating a fresh one, and a successful reuse sets alreadyInitiated=true. Automatic selection prefers a free line, then a released recoverable conversation, then an occupied conversation when true. Recovery is possible with either value and returns recovered=true. The legacy LeadScout route can reuse a human-controlled conversation; it does not apply the Agents outbound controller check. This flag does not bypass blocked/nonrecoverable conversations, session checks or other validation and is not an idempotency key. See [Agent outbound and forceSend](/guides/agent-outbound)."
           default: false
           examples:
           - false
@@ -4699,7 +4586,7 @@ components:
         conversation:
           $ref: '#/components/schemas/ConversationResponse'
           title: Conversation
-          description: The newly created AI-controlled conversation.
+          description: "The conversation used for this outbound request: newly created, reused (alreadyInitiated=true), or recovered (recovered=true). A reused conversation keeps its ID; legacy reuse alone does not imply that its controller changed."
         contact:
           $ref: '#/components/schemas/ContactResponse'
           title: Contact
@@ -4721,10 +4608,7 @@ components:
         alreadyInitiated:
           type: boolean
           title: Already Initiated
-          description: True when this request landed on a pre-existing conversation
-            (forceSend=true reuse path); false when a fresh conversation was created.
-            Informational only — the new template and follow-ups are persisted either
-            way.
+          description: "True when this successful request reused a pre-existing active conversation through forceSend=true. False for new creation or recovery; inspect recovered to distinguish those paths. Informational only: a successful reuse still persists the new template and follow-ups, so repeating the request can add messages."
           default: false
           examples:
           - false
@@ -4870,7 +4754,7 @@ components:
         enableExternalBroadcast:
           type: boolean
           title: Enable External Broadcast
-          description: Flag to enable external broadcast.
+          description: "Controls whether an accepted message is eligible for external delivery. With false, the message is still created but external broadcast is skipped. With true, the message enters the normal external-delivery path when the conversation and recipient rules allow it. A successful creation response and messageId are not delivery receipts. This flag does not grant visibility or override permissions. It does not disable onboarding templates triggered by a separate conversation-creation request."
           examples:
           - true
           - false
@@ -5045,7 +4929,7 @@ components:
             type: string
           type: array
           title: Media Identifiers
-          description: Optional preloaded-file identifiers to attach to the follow-up.
+          description: "Accepted by the request schema, but the current shared outbound flow persists follow-ups as text only and does not attach these media IDs. For opening-template media, use template.media; for a separate attachment message, follow the Message attachment workflow."
           examples:
           - []
           - - 7e1d2c3b-4a5f-6e7d-8c9b-0a1b2c3d4e5f

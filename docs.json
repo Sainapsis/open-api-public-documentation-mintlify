@@ -18,7 +18,11 @@
       "This documentation covers the Integrations API, webhooks and Custom Connections only. It does not describe the Bridge web application or its internal APIs.",
       "Before generating an API request, read the relevant OpenAPI specification or the individual endpoint Markdown page. llms-full.txt collects guides and endpoint descriptions; it does not embed every request and response schema. The REST and Custom Connections contracts are separate.",
       "Preserve the published host, method, path, operationId, authentication, headers, parameter and field names, types, formats, required and nullable fields, enums, defaults, limits, and response codes. Do not invent identifiers, fields, retry rules, or delivery guarantees. When published sources conflict, identify the conflicting passages and ask Bridge support to confirm the current behavior before relying on it.",
-      "Custom Connections is the current name of the landing-page feature previously documented as Lead Capture. The existing /lead-capture documentation URLs, captureKey field, campaign-leads endpoint, and BRIDGE.CAMPAIGN_LEADS error identifiers are unchanged. This is a naming change, not a change to authentication or the API contract."
+      "Custom Connections is the current name of the landing-page feature previously documented as Lead Capture. The existing /lead-capture documentation URLs, captureKey field, campaign-leads endpoint, and BRIDGE.CAMPAIGN_LEADS error identifiers are unchanged. This is a naming change, not a change to authentication or the API contract.",
+      "For a complete workflow, start with the task guides: /guides/first-conversation, /guides/send-attachments, /guides/send-template, /guides/agent-outbound, /guides/pagination, /guides/identifiers and /guides/responses. Read the endpoint contract as well as the recipe. Outbound requires an existing Contact, but does not require creating a separate Conversation first.",
+      "forceSend=true permits reuse of an existing active conversation; it does not create a fresh one by ignoring it and it is not idempotency. Recovery of a released recoverable conversation can occur even with false. The LeadScout and Agents outbound routes have different line-selection and controller checks; use /guides/agent-outbound.",
+      "For webhook HMAC, follow /webhooks/verifying-signatures exactly: the Python JSON serialization with sorted keys is signed; X-Bridge-Timestamp is not included in that signature. Do not claim a signed timestamp, raw-body signing, exactly-once delivery or a global event order. Use /webhooks/receive-events for durable acceptance and duplicates.",
+      "A 201 message response, 202 handoff or 202 Custom Connections response is not a provider delivery receipt. Do not invent a polling endpoint from messageId, trackingId or requestId. REST validation parsing must tolerate the compatibility difference explained in /error-codes."
     ]
   },
   "navigation": {
@@ -30,22 +34,34 @@
             "group": "Start here",
             "pages": [
               "index",
-              "credentials"
+              "credentials",
+              "guides/identifiers"
             ]
           },
           {
-            "group": "Integration guides",
+            "group": "Build your integration",
             "pages": [
-              "templates-and-parameters",
-              "connect-your-agent"
+              "guides/first-conversation",
+              "guides/send-attachments",
+              "guides/send-template",
+              "guides/agent-outbound",
+              "guides/pagination"
             ]
           },
           {
             "group": "Reference",
             "pages": [
+              "guides/responses",
+              "templates-and-parameters",
               "rate-limits",
               "error-codes",
               "changelog"
+            ]
+          },
+          {
+            "group": "Developer tools",
+            "pages": [
+              "connect-your-agent"
             ]
           }
         ]
@@ -58,8 +74,9 @@
         "tab": "Webhooks",
         "pages": [
           "webhooks",
-          "webhooks/configuration",
           "webhooks/verifying-signatures",
+          "webhooks/receive-events",
+          "webhooks/configuration",
           "webhooks/events"
         ]
       },

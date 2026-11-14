@@ -1,4 +1,8 @@
-# Console Configuration
+---
+title: "Configure webhooks"
+sidebarTitle: "Configuration"
+description: "Configure a callback URL, webhook credentials and event subscriptions in the Bridge Admin Console."
+---
 
 You can manage all webhook settings directly from the [Bridge Admin Console](https://admin.bridge.new).  
 This includes defining your webhook endpoint, authentication keys, and selecting which event types to subscribe to.
@@ -19,51 +23,13 @@ Follow these steps to configure your webhook in the Bridge Admin Console:
 
 ---
 
-## CRM Integration Behavior
+## Native CRM connectors and custom webhooks
 
-When you have a CRM system connected to your Bridge workspace, **CRM updates happen automatically**:
+A native CRM connector and a custom webhook are separate delivery paths. For a connected CRM, check the connector's active configuration and the features shown in the console. This page does not establish that every event is synchronized, that no setup is required, or that updates have a fixed real-time deadline.
 
-### Automatic CRM Updates
+Configure a custom webhook when your service needs to receive an event and apply its own processing. You can subscribe to an event family that is also used by a native connector. If your receiver writes to the same CRM, coordinate the two paths to avoid applying the same business action twice.
 
-- **CRM-connected features** are **automatically reported** to your CRM system
-- Your CRM is **automatically updated** with new data without any additional configuration
-- This happens in real-time as events occur in your Bridge workspace
-
-### Custom Webhooks (Optional)
-
-- **Custom webhooks** are **optional** and provide additional processing capabilities
-- You can configure custom webhooks for the same events that are already being sent to your CRM
-- This allows you to:
-  - Send data to additional systems beyond your CRM
-  - Apply custom business logic or transformations
-  - Integrate with other third-party services
-
-### Dual Data Flow
-
-```mermaid
-flowchart LR
-    A[Bridge Event] -->|Automatic Updates| B[CRM System]
-    A -->|Your Processing| C[Custom Webhook]
-
-    style A fill:#e3f2fd,stroke:#1976d2,stroke-width:3px
-    style B fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
-    style C fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-```
-
-### Key Points
-
-- **CRM updates are automatic** - no configuration needed
-- **Custom webhooks are optional** - only configure if you need additional processing
-- **Both can work together** - CRM gets updated automatically while custom webhooks provide additional flexibility
-- **No duplication** - the same event can update your CRM and trigger your custom webhook
-
-### CRM Provider Detection
-
-The console automatically detects your connected CRM provider and shows which features are already being reported. You can:
-
-- View which events are currently sent to your CRM automatically
-- Configure additional webhook endpoints for the same events (optional)
-- Customize event versions and processing logic for custom webhooks
+A custom webhook acknowledgement confirms your receiver's acceptance only. Use [durable acceptance and idempotent processing](/webhooks/receive-events); do not assume that two delivery paths provide exactly-once CRM updates.
 
 ---
 
@@ -73,7 +39,7 @@ Bridge currently supports the following event categories:
 
 ### Conversation Summary Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Receive a notification once per day, per conversation, when Bridge AI generates the daily summary.
 
@@ -81,7 +47,7 @@ Receive a notification once per day, per conversation, when Bridge AI generates 
 
 ### Tasks Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Receive notifications when tasks are created or their state changes.
 
@@ -94,7 +60,7 @@ Receive notifications when tasks are created or their state changes.
 
 ### Contact Updates
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Receive notifications when contacts are created, updated, or deleted.
 
@@ -104,7 +70,7 @@ Receive notifications when contacts are created, updated, or deleted.
 
 ### Call Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Receive a single webhook for each lifecycle phase of a call (created, ringing, started, finished) plus the AI transcript once it is ready. Calls are not deleted.
 
@@ -114,7 +80,7 @@ Receive a single webhook for each lifecycle phase of a call (created, ringing, s
 
 ### Meeting Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Receive a notification when a meeting reaches the CREATED state. Meetings are not deleted, so only the `meeting.updated` event is emitted.
 
@@ -122,7 +88,7 @@ Receive a notification when a meeting reaches the CREATED state. Meetings are no
 
 ### Email Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Receive a notification once an email has been processed and the AI summary is available. Emails are not deleted, so only the `email.updated` event is emitted.
 
@@ -138,7 +104,7 @@ Your endpoint must respond with:
 
 - **HTTP Status Code:** `200–299`
 - **Content-Type:** `application/json` (optional)
-- **Response Time:** under **30 seconds**
+- **Response Time:** acknowledge promptly after durable acceptance. The sender uses a default 10-second socket timeout per HTTP attempt; do not rely on a 30-second allowance. See [retry behavior](/webhooks/receive-events#retry-behavior).
 
 ---
 
