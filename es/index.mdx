@@ -1,0 +1,87 @@
+---
+title: "Integra tus sistemas con Bridge"
+sidebarTitle: "Descripción general"
+description: "Conecta tu CRM, automatizaciones o landing page mediante la API REST, los webhooks y Custom Connections."
+---
+
+<div className="bridge-ai-start">
+
+<p className="bridge-ai-eyebrow">Implementa con tu herramienta de programación preferida</p>
+
+<a id="connect-your-ai-coding-assistant"></a>
+
+## Conecta tu asistente de programación con IA
+
+Dale a tu herramienta de programación la documentación actual de Bridge. Elígela abajo para ver la configuración, un ejemplo de prompt y la prueba de conexión.
+
+<div className="bridge-ai-providers">
+  <a href="/es/connect-your-agent#codex">Codex <span aria-hidden="true">→</span></a>
+  <a href="/es/connect-your-agent#claude-code">Claude Code <span aria-hidden="true">→</span></a>
+  <a href="/es/connect-your-agent#cursor">Cursor <span aria-hidden="true">→</span></a>
+  <a href="/es/connect-your-agent#github-copilot">GitHub Copilot <span aria-hidden="true">→</span></a>
+</div>
+
+Leer la documentación no requiere una clave de API de Bridge. El acceso al espacio de trabajo se configura por separado.
+
+</div>
+
+<a id="choose-your-integration"></a>
+
+## Elige tu integración
+
+<div className="bridge-surfaces">
+  <CardGroup cols={3}>
+    <Card title="API REST" icon="code" href="/es/credentials">
+      Crea contactos, conversaciones y mensajes desde tu servidor.
+
+      **Acceso:** `x-api-key` desde el servidor.
+    </Card>
+    <Card title="Webhooks" icon="webhook" href="/es/webhooks">
+      Recibe eventos de Bridge en tu endpoint HTTPS.
+
+      **Acceso:** verifica las credenciales del webhook y su vigencia.
+    </Card>
+    <Card title="Custom Connections" icon="plug" href="/es/lead-capture">
+      Captura leads de landing pages y encola un mensaje inicial de WhatsApp.
+
+      **Acceso:** `captureKey` y reCAPTCHA; sin clave de la API REST.
+    </Card>
+  </CardGroup>
+</div>
+
+<a id="make-your-first-rest-api-request"></a>
+
+## Haz tu primera solicitud a la API REST
+
+<Steps>
+  <Step title="Obtén tus credenciales de API" icon="shield-keyhole">
+    Sigue la guía de [autenticación](/es/credentials) para generar una clave de API en la consola de administración de Bridge. Si necesitas acceso, pídeselo al administrador de Bridge. Guarda la clave en tu servidor.
+  </Step>
+  <Step title="Comprueba la conexión" icon="code">
+    Usa el encabezado `x-api-key` para llamar a la [comprobación de estado](/es/api-reference/health/comprobar-estado) autenticada en `https://api-connect-us.bridge.new/bridge/api/health`.
+
+    Continúa en la pestaña **API REST**. Cada endpoint detalla sus campos, respuestas y ejemplos.
+  </Step>
+</Steps>
+
+<Note>
+  Custom Connections usa otro endpoint y una `captureKey` pública. Sigue su [guía de integración](/es/lead-capture/integration). Un `202` confirma la aceptación de la solicitud, no la entrega del mensaje de WhatsApp.
+</Note>
+
+<a id="build-from-the-published-contract"></a>
+
+## Implementa a partir del contrato publicado
+
+- [Crea un contacto y envía un mensaje](/es/guides/first-conversation): sigue el flujo completo de contacto → conversación → mensaje.
+- [Envía un PDF u otro adjunto](/es/guides/send-attachments): checksum, URL de carga, carga del archivo y mensaje.
+- [Envía una plantilla de WhatsApp](/es/guides/send-template): consulta las variables y proporciona los valores que debe aportar quien hace la solicitud.
+- [Inicia una conversación saliente con un agente y transfiérela](/es/guides/agent-outbound): elige un agente y entiende `forceSend`, la reutilización y la recuperación.
+- [Consulta los identificadores](/es/guides/identifiers) y [recorre los resultados paginados](/es/guides/pagination): usa los IDs y cursores correctos.
+- [Límites de solicitudes](/es/rate-limits): administra el presupuesto compartido y maneja respuestas `429`.
+- [Códigos de error](/es/error-codes): interpreta los errores de la API REST. Custom Connections tiene su propia [referencia de errores](/es/lead-capture/errors).
+- [Parámetros de plantillas de WhatsApp](/es/templates-and-parameters): abre conversaciones con plantillas y proporciona sus variables.
+- [Registro de cambios](/es/changelog): revisa los cambios que afectan las integraciones.
+
+Accede directamente al [índice de documentación](/llms.txt), al [OpenAPI de integraciones REST](/es/api-reference/openapi.yaml) o al [OpenAPI de Custom Connections](/es/api-reference/campaign-leads.openapi.yaml).
+
+Si necesitas ayuda para usar la aplicación Bridge, visita el [Centro de ayuda](https://help.bridge.new).

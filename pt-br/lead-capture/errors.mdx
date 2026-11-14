@@ -1,0 +1,62 @@
+---
+title: "Referência de erros"
+sidebarTitle: "Erros"
+description: "Todas as respostas do endpoint de Custom Connections e quais problemas você pode corrigir."
+keywords: ["erros", "422", "403", "captcha", "solução de problemas"]
+---
+
+As respostas de erro seguem o formato de detalhes de problema da [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457): `type`, `title`, `status` e, em alguns casos, `detail`.
+
+<Note>
+  **As respostas de erro não contêm um ID de requisição.** Somente uma resposta bem-sucedida `202` contém esse identificador. Se precisar de suporte, informe a URL da página e o horário aproximado.
+</Note>
+
+<a id="every-response"></a>
+
+## Todas as respostas
+
+| Status | `type` | O que aconteceu | Você pode corrigir? |
+| --- | --- | --- | --- |
+| `400` | `invalid_payload` | Um campo está ausente ou tem formato inválido. | Sim |
+| `400` | `BRIDGE.CAMPAIGN_LEADS.INVALID_PHONE` | Não foi possível interpretar o telefone como um número válido. | Sim — valide antes de enviar |
+| `400` | `BRIDGE.CAMPAIGN_LEADS.CONSENT_NOT_GRANTED` | `consent.status` não era `GRANTED`. | Sim |
+| `400` | `BRIDGE.CAMPAIGN_LEADS.BRAND_OR_LINE_REQUIRED` | O workspace tem marcas habilitadas, mas nenhum `brandId` foi enviado. | Sim |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_DISABLED` | O recurso Custom Connections não está habilitado para esse workspace. | Não — entre em contato com o Bridge |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_KEY_MISMATCH` | A chave de captura está ausente ou incorreta. | Sim |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTCHA_REJECTED` | O token de CAPTCHA estava ausente, expirado, já havia sido usado ou recebeu uma pontuação muito baixa. | Em alguns casos — veja abaixo |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.ORIGIN_NOT_ALLOWED` | O domínio da página não está cadastrado para esse workspace. | Não — entre em contato com o Bridge |
+| `422` | `BRIDGE.CAMPAIGN_LEADS.CAPTCHA_PROVIDER_UNAVAILABLE` | Não conseguimos acessar o provedor de CAPTCHA. | É seguro tentar novamente |
+| `500` | `unexpected_error` | Ocorreu uma falha do nosso lado. | Não |
+
+Somente a primeira falha é informada. As verificações seguem esta ordem: workspace e chave de captura, telefone, consentimento, marca, CAPTCHA e, por último, domínio. Corrigir um erro pode revelar o próximo.
+
+<a id="about-the-captcha-rejection"></a>
+
+## Sobre a rejeição do CAPTCHA
+
+`CAPTCHA_REJECTED` abrange quatro situações. Verifique como a integração trata o token antes de atribuir a rejeição à pontuação:
+
+- **O token expirou.** Ele foi gerado cedo demais. Um token reCAPTCHA v3 dura cerca de dois minutos; gere-o quando o formulário for enviado, não no carregamento da página.
+- **O token já foi usado.** Cada token pode ser verificado uma única vez. Se você repetiu um envio malsucedido sem gerar outro token, a repetição é rejeitada.
+- **Nenhum token foi enviado.** Verifique se o cliente obtém um token e o inclui em `recaptchaToken` em todos os envios.
+- **A pontuação foi muito baixa.** A verificação contra bots rejeitou essa tentativa. Não contorne essa proteção.
+
+As quatro situações retornam o mesmo código, portanto a resposta sozinha não identifica a causa. Primeiro, confirme que o token foi incluído, gerado no momento do envio e renovado a cada tentativa.
+
+<a id="about-the-422"></a>
+
+## Sobre o erro 422
+
+É uma falha temporária do nosso lado: não conseguimos acessar o provedor de CAPTCHA e, por isso, não foi possível decidir se o envio era legítimo.
+
+**É seguro tentar novamente.** O lead é preservado quando isso acontece, e uma nova tentativa não pode gerar uma mensagem duplicada. Gere um novo token de CAPTCHA para a tentativa, como faria em qualquer outro envio.
+
+<a id="about-the-domain-error"></a>
+
+## Sobre o erro de domínio
+
+A ordem das verificações merece atenção.
+
+O domínio da página é comparado com os domínios cadastrados para o workspace. Porém, o domínio verificado é o **informado pelo provedor de CAPTCHA**, não o que aparece nos cabeçalhos da própria requisição. Essa verificação ocorre *depois* que o token é validado.
+
+Na prática, uma página hospedada em um domínio não cadastrado falha na etapa de CAPTCHA com `ORIGIN_NOT_ALLOWED`, não com um erro de CORS. Se isso acontecer mesmo quando o restante da integração funciona, o domínio não está na configuração do workspace. Entre em contato com o Bridge para cadastrá-lo.

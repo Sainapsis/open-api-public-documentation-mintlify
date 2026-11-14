@@ -1,0 +1,54 @@
+---
+title: "Requisitos de consentimento"
+sidebarTitle: "Consentimento"
+description: "O que o aceite deve informar e o que você declara ao enviar consent.status GRANTED."
+keywords: ["consentimento", "opt-in", "WhatsApp", "conformidade", "Meta"]
+---
+
+<a id="what-your-form-must-carry"></a>
+
+## O que o formulário deve conter
+
+Sua landing page deve solicitar um aceite explícito antes de enviar um lead. Você define o texto, mas ele precisa cumprir dois requisitos da Meta:
+
+- **Identificar a empresa.** Não basta dizer "nós" ou "nossos parceiros": informe qual empresa entrará em contato com a pessoa.
+- **Informar que a pessoa receberá comunicações dessa empresa pelo WhatsApp.** Não basta dizer "podemos entrar em contato": identifique o canal.
+
+A Meta inclui formulários de sites entre as formas aceitas de obter esse consentimento. Por isso, uma caixa de seleção na landing page é suficiente, desde que o texto informe os dois pontos.
+
+<Warning>
+  Uma caixa previamente marcada não representa aceite. O mesmo vale para um texto em letras pequenas sob o botão de envio, sem nenhuma interação do visitante. A pessoa precisa realizar a ação.
+</Warning>
+
+<a id="what-you-are-attesting-to"></a>
+
+## O que você declara
+
+<Note>
+  Ao enviar `consent.status: "GRANTED"`, **você** declara que houve consentimento. Não verificamos, nem podemos verificar, se o visitante marcou a caixa: registramos que você nos informou esse aceite e quando ele ocorreu. Se o envio de WhatsApp da sua empresa sofrer alguma restrição, esse é o registro apresentado em seu nome.
+</Note>
+
+Por isso, `capturedAt` é mais importante do que pode parecer. Ele deve representar o momento em que o visitante realmente consentiu, não o momento em que seu servidor enviou a requisição nem um timestamp gerado em um processamento noturno. Se for necessário comprovar o aceite, a diferença entre esses momentos será um dos primeiros pontos analisados.
+
+Envie o horário como um timestamp ISO 8601:
+
+```json
+{
+  "consent": {
+    "status": "GRANTED",
+    "capturedAt": "2026-08-26T14:32:07.184Z"
+  }
+}
+```
+
+Se não houve consentimento, não envie o lead. Um envio com qualquer status diferente de `GRANTED` é rejeitado com `BRIDGE.CAMPAIGN_LEADS.CONSENT_NOT_GRANTED`.
+
+<a id="an-example-to-adapt"></a>
+
+## Um exemplo para adaptar
+
+Este exemplo é ilustrativo, não um texto padrão para copiar sem adaptações. Só você sabe o que enviará e por quê; o texto precisa refletir essa comunicação.
+
+> ☐ Concordo em receber mensagens de WhatsApp da **Acme Motors** sobre o orçamento que acabei de solicitar.
+
+O que torna o exemplo adequado: ele identifica a empresa, informa o canal e descreve o assunto das mensagens. O que o tornaria inadequado: omitir a empresa, dizer apenas "mensagens" sem mencionar o WhatsApp ou incluir esse aceite em uma caixa genérica de termos e condições que também trate de assuntos não relacionados.

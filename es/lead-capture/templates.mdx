@@ -1,0 +1,56 @@
+---
+title: "Requisitos de plantillas"
+sidebarTitle: "Plantillas"
+description: "Categorías de plantillas admitidas y recomendaciones para abrir conversaciones mediante Custom Connections."
+keywords: ["plantilla", "utility", "marketing", "WhatsApp", "Custom Connections"]
+---
+
+<a id="supported-template-categories"></a>
+
+## Categorías de plantillas admitidas
+
+La plantilla que abre la conversación puede ser de **utilidad** o de **marketing**:
+
+- **Plantillas Utility:** son estrictamente transaccionales y responden a lo que la persona acaba de enviar, por ejemplo, confirmando la recepción de una consulta. Acceden a tarifas de conversación de WhatsApp más bajas.
+- **Plantillas Marketing:** pueden incluir promociones, descuentos, ofertas especiales o mensajes de venta directos. Se facturan con las tarifas estándar de conversaciones de marketing de WhatsApp.
+
+<Note>
+  Las plantillas **Authentication** no se pueden usar con Custom Connections. Se rechaza cualquier plantilla configurada con la categoría `AUTHENTICATION`.
+</Note>
+
+Configuras y envías tus plantillas a aprobación directamente en Meta WhatsApp Manager. Deben estar aprobadas antes de pasar a producción.
+
+<a id="meta-classification-and-deliverability"></a>
+
+## Clasificación de Meta y entrega
+
+<Warning>
+  Meta clasifica las plantillas según su contenido, no solo según la categoría que elijas al enviarlas a aprobación. Si una plantilla enviada como UTILITY contiene texto promocional, Meta puede reclasificarla como MARKETING o rechazarla.
+</Warning>
+
+Elegir la categoría correcta desde el inicio evita problemas de clasificación inesperados y permite anticipar la entrega y la facturación.
+
+<a id="category-examples"></a>
+
+## Ejemplos por categoría
+
+**Utility (transaccional):** confirma una consulta sin incluir ofertas promocionales:
+
+```text
+Hi {{1}}, thanks for your enquiry about the {{2}}. A member of our team will follow up here shortly.
+```
+
+**Marketing (promocional):** incluye texto promocional, descuentos u ofertas:
+
+```text
+Hi {{1}}, thanks for your enquiry about the {{2}}. Book this week and get 15% off — reply YES to claim.
+```
+
+<a id="practical-guidance"></a>
+
+## Recomendaciones prácticas
+
+- **Elige Utility** cuando tu objetivo principal sea confirmar rápidamente la solicitud de la persona con un mensaje transaccional. Limítalo a lo que acaba de enviar y evita recursos promocionales para mantener la categoría de utilidad y su menor tarifa.
+- **Elige Marketing** cuando quieras ofrecer de inmediato descuentos de bienvenida, incentivos promocionales u ofertas del catálogo tras la captura.
+- **Evita las plantillas Authentication:** están destinadas exclusivamente a contraseñas de un solo uso y códigos de verificación; se rechazan en los envíos a leads de campañas.
+- Cuando la persona responde, comienza una sesión de conversación normal y las restricciones de categoría de plantilla dejan de aplicarse a los mensajes entrantes o a las respuestas del agente.

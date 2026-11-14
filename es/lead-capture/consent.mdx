@@ -1,0 +1,54 @@
+---
+title: "Requisitos de consentimiento"
+sidebarTitle: "Consentimiento"
+description: "Qué debe decir la autorización y qué declaras cuando envías consent.status GRANTED."
+keywords: ["consentimiento", "opt-in", "WhatsApp", "cumplimiento", "Meta"]
+---
+
+<a id="what-your-form-must-carry"></a>
+
+## Qué debe incluir tu formulario
+
+Tu landing page debe pedir una autorización explícita antes de enviar un lead. Tú redactas el texto, pero debe cumplir dos requisitos de Meta:
+
+- **Nombrar tu negocio.** No basta con «nosotros» o «nuestros aliados»: debe identificar al negocio que le escribirá a la persona.
+- **Indicar que la persona recibirá comunicaciones de ese negocio por WhatsApp.** No basta con «podemos contactarte»: debes nombrar el canal.
+
+Meta reconoce los formularios de sitios web como un medio válido para obtener esta autorización. Por eso, una casilla en tu landing page es suficiente, siempre que su texto incluya ambos puntos.
+
+<Warning>
+  Una casilla marcada de antemano no es una autorización. Tampoco lo es una línea en letra pequeña debajo del botón de envío con la que la persona nunca interactúa. La persona debe realizar la acción.
+</Warning>
+
+<a id="what-you-are-attesting-to"></a>
+
+## Qué estás declarando
+
+<Note>
+  Enviar `consent.status: "GRANTED"` es una declaración que haces **tú**. No verificamos ni podemos verificar que la persona haya marcado una casilla: registramos que nos dijiste que lo hizo y cuándo. Si alguna vez se restringen tus envíos de WhatsApp, ese registro se presenta en tu nombre.
+</Note>
+
+Por eso `capturedAt` importa más de lo que parece. Debe corresponder al momento en que la persona realmente dio su consentimiento, no al momento en que tu servidor terminó enviando la solicitud ni a una marca de tiempo generada en un proceso nocturno por lotes. Si alguna vez hay que justificar ambos momentos, la diferencia entre ellos será uno de los primeros aspectos que se revisen.
+
+Envíalo como una marca de tiempo ISO 8601:
+
+```json
+{
+  "consent": {
+    "status": "GRANTED",
+    "capturedAt": "2026-08-26T14:32:07.184Z"
+  }
+}
+```
+
+Si no hubo consentimiento, no envíes el lead. Toda solicitud con un estado distinto de `GRANTED` se rechaza con `BRIDGE.CAMPAIGN_LEADS.CONSENT_NOT_GRANTED`.
+
+<a id="an-example-to-adapt"></a>
+
+## Un ejemplo para adaptar
+
+Este texto es ilustrativo, no una fórmula para copiar sin revisar. Solo tú sabes qué enviarás y con qué finalidad; la autorización debe reflejarlo.
+
+> ☐ Acepto recibir mensajes de WhatsApp de **Acme Motors** sobre la cotización que acabo de solicitar.
+
+El ejemplo funciona porque nombra al negocio, identifica el canal y explica de qué tratarán los mensajes. Dejaría de cumplir esas condiciones si quitaras el nombre del negocio, dijeras «mensajes» sin especificar WhatsApp o combinaras esta autorización con una casilla general de términos y condiciones que también abarque asuntos no relacionados.

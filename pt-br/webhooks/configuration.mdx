@@ -1,0 +1,150 @@
+---
+title: "Configure webhooks"
+sidebarTitle: "Configuração"
+description: "Configure a URL de callback, as credenciais de webhook e as assinaturas de eventos no console administrativo do Bridge."
+---
+
+Você pode gerenciar todas as configurações de webhook diretamente no [console administrativo do Bridge](https://admin.bridge.new). Isso inclui definir o endpoint, as chaves de autenticação e os tipos de evento a assinar.
+
+---
+
+<a id="setting-up-webhooks"></a>
+
+## Configure os webhooks
+
+Siga estas etapas no console administrativo do Bridge:
+
+1. **Entre** no console administrativo do Bridge.
+2. Acesse **Developers → Webhooks**.
+3. Preencha os seguintes dados:
+   - **Webhook URL:** a URL HTTPS completa do seu endpoint.
+   - **API Key:** usada para identificar o workspace.
+   - **Client Secret:** usado para gerar e verificar assinaturas de webhook (HMAC-SHA256).
+4. Em **Select Event Types**, selecione os tipos de evento que deseja assinar.
+
+---
+
+<a id="native-crm-connectors-and-custom-webhooks"></a>
+
+## Conectores nativos de CRM e webhooks personalizados
+
+Um conector nativo de CRM e um webhook personalizado são caminhos de entrega separados. Para um CRM conectado, verifique a configuração ativa do conector e os recursos exibidos no console. Esta página não afirma que todos os eventos são sincronizados, que nenhuma configuração é necessária ou que as atualizações têm um prazo fixo em tempo real.
+
+Configure um webhook personalizado quando seu serviço precisar receber um evento e aplicar seu próprio processamento. Você pode assinar uma família de eventos também usada por um conector nativo. Se seu receptor gravar no mesmo CRM, coordene os dois caminhos para evitar executar a mesma ação de negócio duas vezes.
+
+A confirmação de um webhook personalizado comprova apenas que seu receptor o aceitou. Use [aceitação persistente e processamento idempotente](/pt-br/webhooks/receive-events); não presuma que dois caminhos de entrega garantem atualizações do CRM exatamente uma vez.
+
+---
+
+<a id="event-subscription-options"></a>
+
+## Opções de assinatura de eventos
+
+O Bridge oferece atualmente as seguintes categorias:
+
+<a id="conversation-summary-notifications"></a>
+
+### Notificações de resumo de conversa
+
+<span className="bridge-version-badge">v1</span>
+
+Receba uma notificação por dia, por conversa, quando a IA do Bridge gerar o resumo diário.
+
+- `conversation_summary.created`
+
+<a id="tasks-notifications"></a>
+
+### Notificações de tarefas
+
+<span className="bridge-version-badge">v1</span>
+
+Receba notificações quando tarefas forem criadas ou seu estado mudar.
+
+- `task.created`
+- `task.status_changed`
+- `task.assigned`
+- `task.unassigned`
+- `task.remove_reminder`
+- `task.field_updated`
+
+<a id="contact-updates"></a>
+
+### Atualizações de contatos
+
+<span className="bridge-version-badge">v1</span>
+
+Receba notificações quando contatos forem criados, atualizados ou excluídos.
+
+- `contact.created`
+- `contact.updated`
+- `contact.deleted`
+
+<a id="call-notifications"></a>
+
+### Notificações de chamadas
+
+<span className="bridge-version-badge">v1</span>
+
+Receba um webhook para cada fase do ciclo de uma chamada — criada, chamando, iniciada e finalizada — além da transcrição por IA, quando estiver pronta. Chamadas não são excluídas.
+
+- `call.created`
+- `call.updated`
+- `call.transcription.created`
+
+<a id="meeting-notifications"></a>
+
+### Notificações de reuniões
+
+<span className="bridge-version-badge">v1</span>
+
+Receba uma notificação quando uma reunião chegar ao estado CREATED. Reuniões não são excluídas, portanto somente o evento `meeting.updated` é emitido.
+
+- `meeting.updated`
+
+<a id="email-notifications"></a>
+
+### Notificações de e-mail
+
+<span className="bridge-version-badge">v1</span>
+
+Receba uma notificação depois que um e-mail for processado e o resumo por IA estiver disponível. E-mails não são excluídos, portanto somente o evento `email.updated` é emitido.
+
+- `email.updated`
+
+---
+
+<a id="verifying-your-configuration"></a>
+
+## Verifique sua configuração
+
+Depois que você salva a configuração, o Bridge envia automaticamente um **webhook de teste** ao endpoint para confirmar que ele está acessível e respondendo corretamente.
+
+O endpoint deve responder com:
+
+- **Código de status HTTP:** `200–299`
+- **Content-Type:** `application/json` (opcional)
+- **Tempo de resposta:** confirme prontamente após a aceitação persistente. O emissor usa timeout padrão de dez segundos no socket por tentativa HTTP; não conte com uma tolerância de 30 segundos. Veja as [regras de novas tentativas](/pt-br/webhooks/receive-events#retry-behavior).
+
+---
+
+<a id="managing-webhooks"></a>
+
+## Gerencie os webhooks
+
+Você pode gerenciar a configuração a qualquer momento no console:
+
+| Ação | Descrição |
+| ------------------ | ------------------------------------------------------------------- |
+| **Edit** | Atualize a URL, a chave de API ou os eventos assinados |
+| **Disable Events** | Pause temporariamente tipos de evento específicos sem excluir o webhook |
+| **Delete** | Remova permanentemente uma configuração de webhook |
+
+---
+
+<a id="related-topics"></a>
+
+## Tópicos relacionados
+
+- [Visão geral](/pt-br/webhooks)
+- [Verificação de assinaturas](/pt-br/webhooks/verifying-signatures)
+- [Tipos de evento](/pt-br/webhooks/events)

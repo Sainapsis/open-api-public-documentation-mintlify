@@ -1,0 +1,169 @@
+---
+title: "Crea un contacto y envía un mensaje"
+sidebarTitle: "Primera conversación"
+description: "Sigue un flujo completo desde el servidor: contacto, conversación y mensaje, conservando los identificadores devueltos."
+---
+
+Esta guía crea un contacto, inicia una conversación con un usuario interno de Bridge y crea un mensaje. Ejecútala en tu servidor.
+
+<Warning>
+  Usa un contacto de prueba al que tengas autorización para escribir. Crear una conversación puede ejecutar las plantillas de inicio del espacio de trabajo antes de la solicitud independiente que crea el mensaje. Revisa primero esa configuración: establecer en false el indicador de envío externo del mensaje posterior no desactiva las plantillas de inicio de la conversación.
+</Warning>
+
+<a id="before-you-start"></a>
+
+## Antes de comenzar
+
+- Obtén una clave de API para usar desde el servidor en [Autenticación](/es/credentials).
+- Consigue el ID del espacio de trabajo, el `providerChannelId` de una línea activa de WhatsApp y el correo de un usuario interno de Bridge. Consulta [Identificadores y conceptos](/es/guides/identifiers).
+- Usa un número nuevo de prueba en formato internacional. Si el contacto ya existe, usa la [consulta de contactos por identificador](/es/api-reference/contacts-api/obtener-contacto-por-un-identificador) en lugar de crearlo otra vez.
+- Revisa los atributos personalizados obligatorios y la secuencia de plantillas de inicio del espacio de trabajo. Este ejemplo mínimo no proporciona atributos personalizados ni reemplaza las plantillas.
+- Elige `enableExternalBroadcast` explícitamente: `true` solicita el envío externo cuando lo permiten las reglas de la conversación y del destinatario; `false` crea el mensaje, pero omite ese envío externo. Ningún valor confirma la entrega por parte del proveedor. Este indicador no anula reglas de visibilidad ni permisos.
+
+<a id="the-sequence"></a>
+
+## La secuencia
+
+| Paso | Solicitud | Valor que debes conservar |
+| --- | --- | --- |
+| Comprueba el acceso | `GET /bridge/api/health` | Respuesta HTTP exitosa |
+| Crea el contacto | `POST /bridge/api/v1/workspaces/{workspaceId}/contacts` | `id` del contacto |
+| Inicia la conversación | `POST /bridge/api/v1/workspaces/{workspaceId}/conversations` | `id` de la conversación |
+| Crea el mensaje | `POST /bridge/api/v1/workspaces/{workspaceId}/messages` | `messageId` |
+
+El `id` del contacto se convierte en el `identifier` del participante externo, con `identifierType: "ID"`. El `id` de la conversación se convierte en el `conversationId` del mensaje.
+
+<a id="run-the-example"></a>
+
+## Ejecuta el ejemplo
+
+Usa Node.js con `fetch` integrado. Guarda el ejemplo como `first-conversation.mjs`. Proporciona estas variables de entorno mediante la configuración y el sistema de secretos de tu servidor:
+
+| Variable | Valor |
+| --- | --- |
+| `BRIDGE_API_KEY` | Tu clave de API secreta |
+| `BRIDGE_WORKSPACE_ID` | ID del espacio de trabajo correcto |
+| `BRIDGE_PROVIDER_CHANNEL_ID` | ID de la línea de WhatsApp autorizada, no su teléfono |
+| `BRIDGE_USER_EMAIL` | Usuario interno de Bridge del mismo espacio de trabajo |
+| `TEST_CONTACT_PHONE` | Teléfono de un contacto nuevo de prueba al que tienes autorización para escribir |
+| `ENABLE_EXTERNAL_BROADCAST` | Exactamente `true` o `false`; no se asume un valor predeterminado |
+
+Los nombres y el mensaje que aparecen abajo son ejemplos. Reemplázalos con el contenido previsto para tu prueba antes de ejecutarla.
+
+```javascript
+const BASE = "https://api-connect-us.bridge.new";
+
+function required(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Set ${name} before running this example.`);
+  return value;
+}
+
+const apiKey = required("BRIDGE_API_KEY");
+const workspaceId = required("BRIDGE_WORKSPACE_ID");
+const providerChannelId = required("BRIDGE_PROVIDER_CHANNEL_ID");
+const internalEmail = required("BRIDGE_USER_EMAIL");
+const cellphone = required("TEST_CONTACT_PHONE");
+const broadcast = required("ENABLE_EXTERNAL_BROADCAST");
+if (!["true", "false"].includes(broadcast)) {
+  throw new Error("ENABLE_EXTERNAL_BROADCAST must be true or false.");
+}
+const workspacePath = `/bridge/api/v1/workspaces/${encodeURIComponent(workspaceId)}`;
+
+async function request(method, path, body, expectedStatus) {
+  const response = await fetch(`${BASE}${path}`, {
+    method,
+    headers: {
+      "x-api-key": apiKey,
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const result = await response.json().catch(() => null);
+  if (response.status !== expectedStatus) {
+    const code = result?.code ? ` (${result.code})` : "";
+    throw new Error(`${method} ${path}: HTTP ${response.status}${code}`);
+  }
+  return result;
+}
+
+await request("GET", "/bridge/api/health", undefined, 200);
+
+const contact = await request("POST", `${workspacePath}/contacts`, {
+  firstName: "Alex",
+  lastName: "Example",
+  languageCode: "EN",
+  cellphone,
+}, 201);
+if (!contact?.id || contact.workspaceId !== workspaceId) {
+  throw new Error("The Contact response does not identify the intended workspace.");
+}
+
+const conversation = await request("POST", `${workspacePath}/conversations`, {
+  participants: {
+    externals: [{
+      identifier: contact.id,
+      identifierType: "ID",
+      messageProviderType: "WHATSAPP",
+      providerChannelId,
+    }],
+    internals: [{ identifier: internalEmail, identifierType: "EMAIL" }],
+  },
+  name: "Integration test",
+  status: "ACTIVE",
+}, 201);
+if (!conversation?.id || conversation.workspaceId !== workspaceId) {
+  throw new Error("The Conversation response does not identify the intended workspace.");
+}
+
+const message = await request("POST", `${workspacePath}/messages`, {
+  conversationId: conversation.id,
+  messageBody: "Hello from our authorized Bridge integration test.",
+  enableExternalBroadcast: broadcast === "true",
+}, 201);
+if (!message?.messageId) throw new Error("The Message response has no messageId.");
+
+console.log({
+  contactId: contact.id,
+  conversationId: conversation.id,
+  messageId: message.messageId,
+});
+```
+
+```bash
+node first-conversation.mjs
+```
+
+<a id="understand-the-result"></a>
+
+## Entiende el resultado
+
+- Una respuesta `201` al crear el contacto proporciona su identidad y espacio de trabajo. Lee `type` para conocer su clasificación real: `NORMAL` o `PARTIAL`.
+- Una respuesta `201` de conversación proporciona el ID que debes usar en el siguiente paso. Cuando no hay líneas libres, Bridge puede recuperar una conversación liberada que tenga exactamente los participantes solicitados. Se conservan su ID e historial; en ese caso de recuperación no se aplican el `name` ni el `status` solicitados.
+- Una respuesta `201` de mensaje proporciona `messageId`. Por sí sola, no demuestra que WhatsApp haya entregado el mensaje al contacto.
+
+Esta guía asigna explícitamente un usuario interno de Bridge. Para asignar mediante un equipo, usa la opción documentada `teamId` en lugar de `participants.internals`: son mutuamente excluyentes.
+
+<a id="if-a-step-fails"></a>
+
+## Si falla un paso
+
+El ejemplo se detiene en la solicitud que falla y nunca reintenta automáticamente una escritura. Un fallo de red puede dejar el resultado incierto. Comprueba el recurso correspondiente antes de repetir una operación de creación o envío.
+
+| Situación | Qué hacer |
+| --- | --- |
+| El contacto ya existe | Consúltalo por identificador y usa el `id` devuelto; no sigas intentando crear el mismo contacto. |
+| Error de marca o línea | Confirma con el administrador cuál es la línea o marca autorizada; el teléfono de una línea no es su ID. |
+| Plantilla `0604`–`0608` | Sigue [Parámetros de plantillas de WhatsApp](/es/templates-and-parameters), incluidos los errores de configuración del espacio de trabajo. |
+| El mensaje se rechaza porque la conversación está liberada | Revisa el estado de la conversación y la referencia de errores de la operación antes de actuar. |
+| `429` | Sigue [Límites de solicitudes](/es/rate-limits), incluido `Retry-After`. |
+
+Consulta [Respuestas y errores](/es/guides/responses) para conocer los formatos de respuesta y las decisiones de recuperación.
+
+<a id="next-steps"></a>
+
+## Próximos pasos
+
+- [Carga y envía un adjunto](/es/guides/send-attachments).
+- [Elige y completa una plantilla de WhatsApp](/es/guides/send-template).
+- Consulta los contratos completos de solicitud y respuesta de [crear un contacto](/es/api-reference/contacts-api/crear-contacto), [crear una conversación](/es/api-reference/conversations-api/crear-conversaci%C3%B3n-con-identificaci%C3%B3n-flexible-de-usuarios) y [crear un mensaje](/es/api-reference/messages-api/crear-mensaje).

@@ -1,0 +1,47 @@
+---
+title: "Custom Connections"
+sidebarTitle: "Visão geral"
+description: "Use Custom Connections para registrar leads da sua landing page e colocar uma mensagem inicial de WhatsApp na fila de envio."
+keywords: ["Custom Connections", "landing page", "leads de campanha", "WhatsApp", "reCAPTCHA"]
+---
+
+<a id="what-this-does"></a>
+
+## O que essa integração faz
+
+Sua landing page envia um lead ao Bridge. Em seguida, o Bridge abre a conversa no WhatsApp usando um template aprovado. Você não envia a mensagem: o Bridge faz o envio.
+
+<Warning>
+  **Uma resposta `202` significa que o lead foi aceito, não que a mensagem foi enviada.** A primeira mensagem de WhatsApp é transmitida depois por um serviço separado. O texto de confirmação deve dizer algo como "entraremos em contato pelo WhatsApp em breve", nunca "já enviamos uma mensagem".
+</Warning>
+
+<a id="what-you-need-and-where-it-comes-from"></a>
+
+## O que você precisa e onde obter
+
+São quatro valores: a URL do endpoint, sua `captureKey`, a chave do site reCAPTCHA e o nome da ação reCAPTCHA.
+
+Você não precisa montá-los manualmente. No console administrativo do Bridge, em **LeadScout → Capture snippet**, um administrador do workspace gera um exemplo de integração que já contém os quatro valores. Ele entrega esse bloco à pessoa responsável pela página, que não precisa ter acesso ao console.
+
+<Note>
+  O exemplo é um ponto de partida, não um script pronto para publicar sem adaptações. Você é responsável pelo formulário e pelo texto de consentimento. Veja os [requisitos de consentimento](/pt-br/lead-capture/consent).
+</Note>
+
+<a id="where-to-go-next"></a>
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Requisitos de consentimento" icon="clipboard-check" href="/pt-br/lead-capture/consent">
+    O que o aceite deve informar e o que você declara ao enviá-lo.
+  </Card>
+  <Card title="Requisitos de templates" icon="message" href="/pt-br/lead-capture/templates">
+    Escolha um template de Utility ou Marketing compatível e entenda os requisitos de cada categoria.
+  </Card>
+  <Card title="Guia de integração" icon="code" href="/pt-br/lead-capture/integration">
+    Integre o formulário e trate CAPTCHA, consentimento, respostas e erros.
+  </Card>
+  <Card title="Referência de erros" icon="triangle-exclamation" href="/pt-br/lead-capture/errors">
+    Todas as respostas do endpoint e quais problemas você pode corrigir.
+  </Card>
+</CardGroup>

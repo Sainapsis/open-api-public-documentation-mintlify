@@ -1,0 +1,70 @@
+---
+title: "Respostas, erros e novas tentativas"
+sidebarTitle: "Respostas e novas tentativas"
+description: "Interprete criação, aceitação, respostas vazias, erros de validação e sinais de nova tentativa, sem confundir os contratos REST e de Custom Connections."
+keywords: ["201", "202", "204", "422", "429", "nova tentativa", "requestId", "trackingId", "entrega", "HTTPValidationError", "Problem"]
+---
+
+<a id="read-the-result-for-this-operation"></a>
+
+## Interprete o resultado da operação
+
+O status HTTP e o corpo da resposta descrevem a operação chamada. Eles nem sempre significam que uma pessoa recebeu uma mensagem.
+
+| Operação | Sucesso publicado | O que fazer com o resultado |
+| --- | --- | --- |
+| Criar uma mensagem | `201`, com `messageId` | Guarde o ID da mensagem. A resposta publicada não inclui um comprovante de entrega do provedor; não a apresente como entregue com base apenas nessa resposta. |
+| Liberar uma conversa | `204`, sem corpo de resposta | Trate como sucesso e não chame um parser de JSON para o corpo vazio. |
+| Solicitar transferência LeadScout | `202`, com `trackingId`, `conversationId`, `status` e `assignees` | Guarde o ID de correlação. A atribuição é assíncrona; os destinatários repetem o que foi solicitado e não comprovam que a resolução ou atribuição posterior terminou. |
+| Enviar um lead por Custom Connections | `202`, com `requestId` | Guarde o ID da requisição. Informe que o lead foi aceito; a mensagem inicial de WhatsApp é enviada depois por um serviço separado. |
+
+A referência de cada operação continua sendo a fonte do contrato: [mensagens](/pt-br/api-reference/messages-api/criar-mensagem), [liberação](/pt-br/api-reference/conversations-api/liberar-conversa), [transferência](/pt-br/api-reference/leadscout-api/solicitar-transfer%C3%AAncia-manual-do-leadscout-para-usu%C3%A1rios-internos) e [Custom Connections](/pt-br/api-reference/campaign-leads/registrar-um-lead-de-campanha).
+
+<Note>
+  Um ID de correlação não é uma URL de consulta de status. O contrato publicado não define um endpoint de consulta periódica para `trackingId` ou `requestId`. Guarde-o para correlação e suporte; não construa um novo endpoint a partir dele.
+</Note>
+
+<a id="parse-the-error-shape-the-endpoint-publishes"></a>
+
+## Leia o formato de erro publicado pelo endpoint
+
+A API REST de integrações e Custom Connections têm contratos de erro separados.
+
+<a id="rest-integrations"></a>
+
+### API REST de integrações
+
+Muitas respostas usam `Problem`: `title` e `status` são obrigatórios; `code`, `detail`, `errors`, `traceId`, `instance` e `extra` são opcionais. Quando `code` estiver presente, use-o para selecionar o tratamento de erro documentado, em vez de comparar o texto de `title`. Guarde `traceId`, quando fornecido, para pedir suporte.
+
+Algumas respostas de validação publicadas declaram `HTTPValidationError`, cujo `detail` é um array de entradas com `loc`, `msg` e `type`. Já o tratador compartilhado de erros da API revisado para esta documentação retorna os detalhes de validação em `Problem.errors[]`. As definições publicadas de resposta foram preservadas; a confirmação na API implantada ainda está pendente. Veja a [nota de compatibilidade de validação](/pt-br/error-codes#parse-validation-errors-defensively).
+
+Aceite erros JSON tanto com `application/json` quanto com `application/problem+json`. Examine `code`, quando presente, e depois um array `errors` ou `detail` para os erros de campo. Um `detail` do tipo string é uma explicação, não um array. O status `422` sozinho não define um formato universal de corpo. Mantenha um tratamento alternativo para erros sem `code` e use a referência do endpoint junto com [códigos de erro](/pt-br/error-codes) para escolher a ação.
+
+### Custom Connections
+
+Seu corpo de erro contém `type`, `title` e `status` obrigatórios e pode incluir `detail`. Nesse contrato, **`type` é o identificador de erro legível por máquina**. Ele não é o campo REST `code`. A [referência de erros de Custom Connections](/pt-br/lead-capture/errors) lista essas respostas.
+
+As respostas de erro não contêm o `requestId` do envio; somente uma resposta bem-sucedida `202` contém esse valor. Para pedir suporte sobre um erro, guarde a URL da página e o horário aproximado, conforme a referência.
+
+<a id="make-retry-decisions-by-operation-and-cause"></a>
+
+## Decida se deve tentar novamente por operação e causa
+
+| Resultado | Próxima ação |
+| --- | --- |
+| REST `429` | Siga `Retry-After` em segundos. O guia de limites informa que a requisição rejeitada não foi processada. A cota do workspace é compartilhada entre as chaves de API. |
+| REST `401` ou `403` | Corrija a chave de API, as permissões ou a divergência de workspace. Tentar novamente após um intervalo não corrige essas causas. |
+| Erro de validação ou configuração | Corrija primeiro a causa documentada. Não envie repetidamente a mesma requisição inválida. |
+| Custom Connections `422` | A causa documentada é a indisponibilidade do provedor de CAPTCHA. O guia de erros informa que é seguro tentar novamente; gere um novo token de CAPTCHA para a tentativa. |
+| Rejeição de CAPTCHA em Custom Connections | Confira se o token foi enviado, se é recente e se foi gerado para essa tentativa. O mesmo erro também abrange uma pontuação baixa; uma nova tentativa, sozinha, não comprova a causa original. |
+| Timeout, perda de conexão ou `5xx` não classificado durante uma alteração | Não presuma que nada aconteceu. Verifique os efeitos documentados da operação e os identificadores já obtidos antes de decidir repeti-la. Não presuma uma garantia geral de idempotência. |
+
+Veja [limites de requisições](/pt-br/rate-limits) para controlar o ritmo e [erros de Custom Connections](/pt-br/lead-capture/errors) para suas regras específicas de nova tentativa.
+
+<a id="some-failures-can-follow-a-write"></a>
+
+## Algumas falhas podem ocorrer depois de uma gravação
+
+A [referência de outbound de Agente](/pt-br/api-reference/agents-api/iniciar-conversa-de-sa%C3%ADda-com-um-contact-como-agent-espec%C3%ADfico) documenta que um `template.media.mediaId` desconhecido pode produzir `BRIDGE_AI_LEADSCOUT_0016` depois que a conversa já foi criada ou recuperada. Por isso, uma nova tentativa pode produzir um resultado diferente.
+
+Um status de falha, portanto, não é uma garantia universal de rollback. Siga os efeitos e as instruções de recuperação da operação específica. Se essas instruções forem pouco claras ou conflitantes, identifique a incerteza e entre em contato com o [suporte do Bridge](mailto:support@sainapsis.com) antes de repetir uma ação com efeitos externos.
