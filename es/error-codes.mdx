@@ -50,6 +50,12 @@ Acepta cuerpos de error JSON con `application/json` o `application/problem+json`
 3. Si `detail` es un array, interprétalo como el formato `HTTPValidationError`. Un `detail` de tipo cadena es una explicación, no una lista de errores de campos.
 4. Conserva `traceId`, el estado y la URL de solicitud para soporte. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
 
+<a id="legacy-code-strings"></a>
+
+### Códigos heredados con sufijo
+
+Algunos manejadores de errores heredados añaden un nombre simbólico a `code`, por ejemplo, `BRIDGE_PRELOAD_FILE_0002 | PRELOAD_FILE_IS_PENDING`. Conserva el valor recibido completo para registros y soporte. Para consultar el catálogo, acepta un código simple conocido o su forma heredada reconocida explícitamente; no compares `title` o `detail`, no inventes un código desconocido ni reescribas el cuerpo de la respuesta. Esta revisión del código fuente no ha confirmado de forma independiente qué versión del manejador está desplegada.
+
 <Warning>
   **Compatibilidad de validación:** algunas respuestas OpenAPI publicadas declaran `HTTPValidationError.detail[]` y `application/json`, mientras que el manejador compartido de errores de la API revisado para esta documentación devuelve detalles de validación en `Problem.errors[]` con `application/problem+json`. Esta actualización editorial conserva las definiciones de respuesta publicadas. Maneja ambos formatos; sigue pendiente la confirmación contra la API desplegada antes de admitir solo uno en un cliente generado estricto.
 </Warning>
@@ -68,6 +74,19 @@ Acepta cuerpos de error JSON con `application/json` o `application/problem+json`
 | Tiempo de espera agotado, respuesta desconectada o `5xx` después de una escritura | Trata el resultado como incierto. Revisa el recurso afectado antes de reenviar: un error no demuestra que no se haya guardado ningún cambio. |
 
 Esta guía general de reintentos no agrega idempotencia a un endpoint. Para reutilización, recuperación y escrituras parciales, consulta [Conversaciones salientes y transferencias de agentes](/es/guides/agent-outbound). Custom Connections tiene su propia [referencia de errores](/es/lead-capture/errors) y no usa una clave de la API REST.
+
+<a id="file-upload-errors"></a>
+
+## Errores de carga de archivos
+
+El flujo de carga revisado define estos códigos heredados. El sufijo forma parte del `code` recibido, no es un campo de la solicitud. Consulta el contrato de respuesta de la operación y conserva la interpretación compatible anterior.
+
+| `code` heredado | Estado | Acción |
+| --- | --- | --- |
+| `BRIDGE_PRELOAD_FILE_0001 \| PRELOAD_FILE_NOT_FOUND` | 404 | Comprueba el `mediaId` devuelto y la carga a la que hace referencia. |
+| `BRIDGE_PRELOAD_FILE_0002 \| PRELOAD_FILE_IS_PENDING` | 400 | El archivo sigue pendiente. Confirma que el PUT terminó y permite que se procese la carga; no deduzcas que una solicitud de Message fallida no guardó ningún cambio. |
+| `BRIDGE_PRELOAD_FILE_0003 \| PRELOAD_FILE_INVALID_MIME_TYPE` | 400 | Corrige la combinación del tipo MIME y el `fileType` lógico. |
+| `BRIDGE_PRELOAD_FILE_0004 \| PRELOAD_FILE_INVALID_NAME` | 400 | Proporciona un nombre con una extensión admitida para ese `fileType` lógico. |
 
 <a id="agent-error-codes"></a>
 

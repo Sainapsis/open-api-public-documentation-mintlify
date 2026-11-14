@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Bridge REST Integrations API & Webhooks",
-  "description": "Developer documentation for the Bridge REST Integrations API, webhooks, and Custom Connections.",
+  "description": "Official Bridge developer documentation for the REST API, webhooks and Custom Connections: contacts, conversations and messaging. Available in English, Spanish and Brazilian Portuguese.",
   "colors": {
     "primary": "#3E6EE5",
     "light": "#93B5FF",
@@ -14,7 +14,7 @@
       "Bridge exposes three integration surfaces: the REST Integrations API for pushing data into Bridge, webhooks for receiving events from Bridge, and the public Custom Connections endpoint that a tenant's landing page posts to.",
       "The Integrations API host is https://api-connect-us.bridge.new and every request to it must be authenticated with the x-api-key header. Bridge does not use bearer tokens or OAuth.",
       "The Custom Connections endpoint is different and the Integrations API rules do not apply to it: it has its own host, it takes no x-api-key and no authentication header of any kind, and it is called from a visitor's browser. It is identified by a workspace id and a capture key together with a reCAPTCHA token. Never tell a reader to authenticate it with an API key, and never tell them to keep its capture key out of frontend code - it is designed to live in the page.",
-      "Integrations API error codes follow the BRIDGE_<DOMAIN>_<NNNN> format, for example BRIDGE_CONVERSATION_0001, and are listed on the error codes page. Custom Connections error codes follow a different format, BRIDGE.CAMPAIGN_LEADS.<NAME>, and are listed on the Custom Connections error reference. Never invent a code that is not listed on the page for its own surface.",
+      "REST error catalog keys use BRIDGE_<DOMAIN>_<NNNN>, for example BRIDGE_CONVERSATION_0001. Some reviewed legacy handlers return a recognized code plus a symbolic suffix separated by |; preserve the complete received value and use the compatible catalog lookup on /error-codes. Custom Connections uses separate BRIDGE.CAMPAIGN_LEADS.<NAME> identifiers on its own error reference. Never invent an error code or confuse the two integration surfaces.",
       "This documentation covers the Integrations API, webhooks and Custom Connections only. It does not describe the Bridge web application or its internal APIs.",
       "Before generating an API request, read the relevant OpenAPI specification or the individual endpoint Markdown page. llms-full.txt collects guides and endpoint descriptions; it does not embed every request and response schema. The REST and Custom Connections contracts are separate.",
       "Preserve the published host, method, path, operationId, authentication, headers, parameter and field names, types, formats, required and nullable fields, enums, defaults, limits, and response codes. Do not invent identifiers, fields, retry rules, or delivery guarantees. When published sources conflict, identify the conflicting passages and ask Bridge support to confirm the current behavior before relying on it.",
@@ -24,7 +24,10 @@
       "For webhook HMAC, follow /webhooks/verifying-signatures exactly: the Python JSON serialization with sorted keys is signed; X-Bridge-Timestamp is not included in that signature. Do not claim a signed timestamp, raw-body signing, exactly-once delivery or a global event order. Use /webhooks/receive-events for durable acceptance and duplicates.",
       "A 201 message response, 202 handoff or 202 Custom Connections response is not a provider delivery receipt. Do not invent a polling endpoint from messageId, trackingId or requestId. REST validation parsing must tolerate the compatibility difference explained in /error-codes.",
       "The documentation is available in English (existing root URLs), Spanish (/es/) and Brazilian Portuguese (/pt-br/). Prefer the reader's language when a localized page exists, but preserve the API's exact field names, enums, routes, authentication and examples. Translations describe the same API; they do not introduce regional API hosts or behaviors.",
-      "For coding-assistant setup, use /connect-your-agent, /es/connect-your-agent or /pt-br/connect-your-agent. The Bridge documentation MCP server reads published documentation and has a separate optional feedback tool. Connecting it does not connect the coding assistant to a customer workspace or authorize live business requests."
+      "For coding-assistant setup, use /connect-your-agent, /es/connect-your-agent or /pt-br/connect-your-agent. The Bridge documentation MCP server reads published documentation and has a separate optional feedback tool. Connecting it does not connect the coding assistant to a customer workspace or authorize live business requests.",
+      "For direct HTTP access without MCP, start at https://docs.bridge.new/llms.txt. It lists every published page in English, Spanish and Brazilian Portuguese. Choose /llms-en.txt, /llms-es.txt or /llms-pt-br.txt for a language-specific index, and /llms-full-en.txt, /llms-full-es.txt or /llms-full-pt-br.txt for collected content. /llms-full.txt contains the combined collection. Fetch the original OpenAPI specification for exact schemas.",
+      "For HTTP page reads, follow the .md URLs from the index or request Accept: text/markdown at the canonical page URL. The MCP virtual filesystem uses .mdx page paths instead; .mdx is not the public HTTP export extension. With Search MCP, set language to en, es or pt-BR explicitly; its default is en.",
+      "For integration capabilities and source-selection rules, read https://docs.bridge.new/skill.md. Documentation access does not authorize business API actions; use the actual user request, workspace, credentials and target identifiers for any live integration."
     ]
   },
   "navigation": {
@@ -402,5 +405,25 @@
   },
   "styling": {
     "eyebrows": "breadcrumbs"
+  },
+  "seo": {
+    "indexing": "navigable",
+    "organization": {
+      "name": "Bridge",
+      "sameAs": [
+        "https://www.linkedin.com/company/sainapsis-inc"
+      ]
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "download-spec"
+    ]
   }
 }

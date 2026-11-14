@@ -1,0 +1,13 @@
+{
+  "name": "bridge-documentation-llm-tools",
+  "private": true,
+  "description": "Pinned Mintlify route generation and YAML parsing for documentation exports",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@mintlify/scraping": "4.0.433",
+    "js-yaml": "4.1.0"
+  },
+  "overrides": {
+    "@mintlify/mdx": "3.0.0"
+  }
+}

@@ -1,0 +1,1412 @@
+{
+  "formatVersion": 1,
+  "generator": "scripts/generate-llm-files.mjs",
+  "routeGenerator": "@mintlify/scraping processOpenApiPath",
+  "baseUrl": "https://docs.bridge.new",
+  "totals": {
+    "locales": 3,
+    "pages": 150,
+    "editorialPages": 72,
+    "operationPages": 78,
+    "specs": 6
+  },
+  "byLocale": {
+    "en": {
+      "pages": 50,
+      "editorialPages": 24,
+      "operationPages": 26
+    },
+    "es": {
+      "pages": 50,
+      "editorialPages": 24,
+      "operationPages": 26
+    },
+    "pt-br": {
+      "pages": 50,
+      "editorialPages": 24,
+      "operationPages": 26
+    }
+  },
+  "inputs": {
+    "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
+    "api-reference/openapi.yaml": "17118b230e17bebf391bfa44f03f097cfb0c3e0ab50a88a997a125634f7a5148",
+    "changelog.mdx": "e9084e3294b5d4a359eab45b627c4db6dec026c430818960778d75ae2366eab2",
+    "connect-your-agent.mdx": "470dc3c0c558b380e53c93251ec1600abaf1150a541dd32f50dc7b47ec8f7389",
+    "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
+    "docs.json": "73451fb6a25ad3e213104fdfa428cad1961d74cee8e5f956c83488e6380efe42",
+    "error-codes.mdx": "7b70ea1fa9010ed5187137dd9d9ac92c536770392bff3f8ed1a31e1a60ed6152",
+    "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
+    "es/api-reference/openapi.yaml": "44131c94325ca6c801f47fd974a79946bc4872b5a71e30f132e0d5b884e9020f",
+    "es/changelog.mdx": "b2d420cca846e287101c92623dbac4c485f0e11c4198653a80caa50f19d96f28",
+    "es/connect-your-agent.mdx": "1d446da87186a96295afac7b1945f669f62c5802f5e2a465ff3b7bbf93eec237",
+    "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
+    "es/error-codes.mdx": "5212545e320a69cf076121748da4505af3b338282948e214440da208a5595298",
+    "es/guides/agent-outbound.mdx": "4602116efdc7585fa63ce2cce355122d3c6583c0c542b644af395e08f0dcc45f",
+    "es/guides/first-conversation.mdx": "eb152c9a23454466b70b82cba98fa7755a720db6edbed22ab382aac1130af147",
+    "es/guides/identifiers.mdx": "5ecbe5a47e052c83de34391ef8d1fd83c73c561a28fe9777f3ae6ce7b9816442",
+    "es/guides/pagination.mdx": "836fb8501a011883e58b457b9216e71b4056d4353f111143459784c4cbd7c70f",
+    "es/guides/responses.mdx": "6cbe950fee4f2e2dbcf0a358c1f8964d48db20a56b274d7354f7626684eaba64",
+    "es/guides/send-attachments.mdx": "c7059943794fe00f106a446aec780a795b0064438b9f94dc8182d75bf914181c",
+    "es/guides/send-template.mdx": "01ae1692e7264584b783e64c2563ba131e084bd42cbff16c0d09272dee4347af",
+    "es/index.mdx": "7f69ed6672acdb725f2c3e13155f9e6baf0659e652fd6917c6bbcba0a3e1ffb3",
+    "es/lead-capture/consent.mdx": "54f105a7a5411cf0c792e977821b9873c986ec2b1643ee9eed7d40a75631df2b",
+    "es/lead-capture/errors.mdx": "31d3912e2db12220ba890b4e2cf915fe9934c68afcbe41c7862779da6c634354",
+    "es/lead-capture/index.mdx": "d6a7271f6680820fb96ab22bf2c0d9653a02ae06b5c8be4e80f913dab979fd7e",
+    "es/lead-capture/integration.mdx": "ef98f7b0bdf0b46bc0fa39a773788528cd13f841627fefbc4e2ee09b505c5d3d",
+    "es/lead-capture/templates.mdx": "998d557640fef48aaa5fed8cd0eacb0a33eb23cba360a38edca42e3e2adfcc78",
+    "es/rate-limits.mdx": "b04b3550913fcf60ab64e24e0d282d0f1c61837272317b8a4ade9bc8696d1cb3",
+    "es/templates-and-parameters.mdx": "b84d3a81604d3a21781225e3b79c72ee65044d43eb42641eb334356a43f7da3b",
+    "es/webhooks.mdx": "1c793a756a4e3b57244c441718d9e02346c5938a6e6bd0ac2b4a5e1bfe6d7000",
+    "es/webhooks/configuration.mdx": "5d7b1164e4cd3c87991b009ef1da93c42fd66e6bd45a65dfb74017dc3299f629",
+    "es/webhooks/events.mdx": "f260daf3b3bd933ee67784d7693461ce14f32dee5849747c3bf69f0b51c0e53f",
+    "es/webhooks/receive-events.mdx": "b5a296ca26ede4ecad0a9eef3db07d38c3c0e0f3758cd69e7b452af2acd40e0f",
+    "es/webhooks/verifying-signatures.mdx": "d25a001254bb25140355c8b742ff6f154a1ba1b6b0e23359f23327bf043600e8",
+    "guides/agent-outbound.mdx": "cb60fe30743d96163b1b724b4518dfb0a04fe003fc9b6c3bf14132cd9d86f8fe",
+    "guides/first-conversation.mdx": "4682c6cc598460b265e24ca8d0c119863a29736e4fb81bef7cf033ba50ab00a6",
+    "guides/identifiers.mdx": "4d087785aa7a1c61c4d0fa56272940dc43a7c32cb97c91996ed7117e06967125",
+    "guides/pagination.mdx": "03f46cf534aeb21d11c5622224049a1095f6cb86a1815d3a97a1fbfb00bb8051",
+    "guides/responses.mdx": "bb89ab581d6642f9ce4a3d43d58e4201c061b99b6cb3eebb7de7f52f648d5f67",
+    "guides/send-attachments.mdx": "554a6e5886f30847d5e118927b9701f2efcc66d835d8d6b841094e5bda6f04bc",
+    "guides/send-template.mdx": "c1368bcefd1f21d26290090e3acf023f81f2b89e12b3dbf9d6d54babf21e036c",
+    "index.mdx": "368aa9d222583cd7d1b947b1dfc147722fdb28f513f64770aa0e735790b5c115",
+    "lead-capture/consent.mdx": "5bda24afe5d4c3d01e5d8c118b22c926339304feac29cba80fb51d25a71a4c30",
+    "lead-capture/errors.mdx": "b0897defce7672536ff037b972ae4db7f0611fee0c81c5a43d04457afed36ae5",
+    "lead-capture/index.mdx": "abf13b9791519ece27bd2eb9908050afbc2bfc9959874a78aaeb6c08a083f5ab",
+    "lead-capture/integration.mdx": "e41b09302ab3d26dcb1089158f3ef805e6ab5f1d1574bfa877dfbf9630651d03",
+    "lead-capture/templates.mdx": "506d2ef49287c95004fcd43150af114e6ced5f39cc32caaa9e2566fcc101f66f",
+    "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
+    "pt-br/api-reference/openapi.yaml": "6127964522812d40fd6f7a11628625ca021adb362dd7310c1d4884c52d1257f2",
+    "pt-br/changelog.mdx": "f5ebecd2c3c7ee00801d64520995d86ae544264cd272db0233d32fab4ad9c455",
+    "pt-br/connect-your-agent.mdx": "a73ff7c599fd55db5b053604934956d6e8402b6a3dbad720aca3d6df9e219f6d",
+    "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
+    "pt-br/error-codes.mdx": "e8bb34881b4bf943e1bd2698867b97fba3ef0845c3babb966d3aea973813cf1b",
+    "pt-br/guides/agent-outbound.mdx": "b43380b51224c6d81fb6b0db9e2e0a9528987498badf91b231e6ab567185c157",
+    "pt-br/guides/first-conversation.mdx": "d21f83a729a307d4a2d18e2e6c719854da15f222d3d4dc93071d02466340356c",
+    "pt-br/guides/identifiers.mdx": "d6d17a99838659f8a3fe08817fcf54b38c12559b730acb2dd84bc42d166b8b90",
+    "pt-br/guides/pagination.mdx": "394b5c681dd321375e1aacfe0e9ca9b81c5ca3cce900b516324b64372b400992",
+    "pt-br/guides/responses.mdx": "d1b9b1306d9530b107a0c5b13f6d127a177e912984c08ffd0411c0a3065c2447",
+    "pt-br/guides/send-attachments.mdx": "f417d7f9c1d4654d7c49cfea165d84fceab2a3f5e334399e3ca0bad7dbb85496",
+    "pt-br/guides/send-template.mdx": "c80473322f9940863989ce43395b7a82b6caa6ec7b516a76b0c720d1298f7f90",
+    "pt-br/index.mdx": "4f44dd484d1fc7c3b7517456627a6599b856e05dd243cda057cf15b2b336828d",
+    "pt-br/lead-capture/consent.mdx": "3cbfc6db2c724e435aac01b50eb94bba0e3ad40c012f2ea205fa2c9a6515eaf1",
+    "pt-br/lead-capture/errors.mdx": "189a7d4172d2af033d7d211711e15d92d02c5278db066df4bc27c1f8c13890aa",
+    "pt-br/lead-capture/index.mdx": "da3b1715a8c5a6c2b5b0d8c713d5d454945aeb164c184e7a51fd734ec0dff80f",
+    "pt-br/lead-capture/integration.mdx": "8f11e6f732c6b5e68ade245b125ab4095718a999be7b87b8acfc1af4d12612aa",
+    "pt-br/lead-capture/templates.mdx": "782779caa6f93f7c61ddc22742d0e7a4b33788e7bb51bf8a3ab18aa60d3bd899",
+    "pt-br/rate-limits.mdx": "55f5c118aa49db4f2f33b624b468c9cec8f7b1622b7308ebf94f701d8956ab56",
+    "pt-br/templates-and-parameters.mdx": "27b76d089945a1b5312bd925d5a5dd85631d8e55aacaca3cd7018f5f12d9faff",
+    "pt-br/webhooks.mdx": "30c6bdff5c113b29818fb8afd531ee5455969f9b00d08298ddd327d9e12423f9",
+    "pt-br/webhooks/configuration.mdx": "3ddc354af0ed3e886620ed4e0d2cff1c5fe2cd5ab5a8719ba9dd6cb092e27139",
+    "pt-br/webhooks/events.mdx": "c536347e48ea4fca2b110f59995614c71d8c6667e156f40acf22f2b704c32545",
+    "pt-br/webhooks/receive-events.mdx": "6998778bd21da5d3d1ba5877540bcc1cd9f7bd724a8a48347bc571b2c9946e08",
+    "pt-br/webhooks/verifying-signatures.mdx": "27e126d6edbe017da7116c4001bafe6e555e3bd7d762eebae303177fedfa0dc0",
+    "rate-limits.mdx": "110dfae500b1545c77f8adde168eb3a071c5da58354a14c0078d91eadcfa233d",
+    "skill.md": "c42bce21b5fac2369cf91cf62b9f16dd160f2b0b99b0c6d6be0ce482d6f0c0bd",
+    "templates-and-parameters.mdx": "aefdd33cb1660afc4b21aaa98570397534235989695177ed4bfe7808f46d1565",
+    "webhooks.mdx": "8203de4edaaf8f317455300f712403850c7bab280d84d34b31fe3cd8ecdb88ab",
+    "webhooks/configuration.mdx": "d2788ec46367b9816e5ba94e97bb0b0053b7f5270159575464e49d65e2d2ba5f",
+    "webhooks/events.mdx": "054a801f7ee33be7c515cc23dc49545f2ab7ac4bdeddd3cbd4948ec2bbf3e00c",
+    "webhooks/receive-events.mdx": "d5dc25e5a92a13d8e99ea16b8fd4840dcbbab93eda6bc877f31008bac947a9a9",
+    "webhooks/verifying-signatures.mdx": "d4dae049067563b56268f8c231b65136d75c8098b612c5b1184ea97f616392d3"
+  },
+  "pages": [
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/index",
+      "source": "index.mdx",
+      "title": "Integrate with Bridge"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/connect-your-agent",
+      "source": "connect-your-agent.mdx",
+      "title": "Connect your AI coding assistant"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/credentials",
+      "source": "credentials.mdx",
+      "title": "REST API authentication"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/guides/identifiers",
+      "source": "guides/identifiers.mdx",
+      "title": "Glossary and identifiers"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/guides/first-conversation",
+      "source": "guides/first-conversation.mdx",
+      "title": "Create a contact and send a message"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/guides/send-attachments",
+      "source": "guides/send-attachments.mdx",
+      "title": "Send PDFs and other attachments"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/guides/send-template",
+      "source": "guides/send-template.mdx",
+      "title": "Choose and fill a WhatsApp template"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/guides/agent-outbound",
+      "source": "guides/agent-outbound.mdx",
+      "title": "Start an Agent outbound conversation"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/guides/pagination",
+      "source": "guides/pagination.mdx",
+      "title": "Read every page of results"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/guides/responses",
+      "source": "guides/responses.mdx",
+      "title": "Responses, errors, and retries"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/templates-and-parameters",
+      "source": "templates-and-parameters.mdx",
+      "title": "WhatsApp template parameters"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/rate-limits",
+      "source": "rate-limits.mdx",
+      "title": "Rate limits"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/error-codes",
+      "source": "error-codes.mdx",
+      "title": "Error codes"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/changelog",
+      "source": "changelog.mdx",
+      "title": "Changelog"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/webhooks",
+      "source": "webhooks.mdx",
+      "title": "Receive Bridge webhooks"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/webhooks/verifying-signatures",
+      "source": "webhooks/verifying-signatures.mdx",
+      "title": "Verify webhook requests"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/webhooks/receive-events",
+      "source": "webhooks/receive-events.mdx",
+      "title": "Receive events reliably"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/webhooks/configuration",
+      "source": "webhooks/configuration.mdx",
+      "title": "Configure webhooks"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/webhooks/events",
+      "source": "webhooks/events.mdx",
+      "title": "Webhook events"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/lead-capture/index",
+      "source": "lead-capture/index.mdx",
+      "title": "Custom Connections"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/lead-capture/consent",
+      "source": "lead-capture/consent.mdx",
+      "title": "Consent requirements"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/lead-capture/templates",
+      "source": "lead-capture/templates.mdx",
+      "title": "Template requirements"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/lead-capture/integration",
+      "source": "lead-capture/integration.mdx",
+      "title": "Integration guide"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/lead-capture/errors",
+      "source": "lead-capture/errors.mdx",
+      "title": "Error reference"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/health/health-check",
+      "source": "api-reference/openapi.yaml",
+      "title": "Health check",
+      "methodPath": "get /bridge/api/health",
+      "operationId": "health_bridge_api_health_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/conversations-api/get-conversation-by-id",
+      "source": "api-reference/openapi.yaml",
+      "title": "Get conversation by id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}",
+      "operationId": "get_conversation_by_id_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/conversations-api/update-conversation",
+      "source": "api-reference/openapi.yaml",
+      "title": "Update conversation",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}",
+      "operationId": "update_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__patch"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/conversations-api/retrieve-conversations-with-flexible-filtering-options",
+      "source": "api-reference/openapi.yaml",
+      "title": "Retrieve conversations with flexible filtering options",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/conversations",
+      "operationId": "get_conversations_bridge_api_v1_workspaces__workspaceId__conversations_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/conversations-api/creates-a-new-conversation-with-flexible-user-identification",
+      "source": "api-reference/openapi.yaml",
+      "title": "Creates a new conversation with flexible user identification",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/conversations",
+      "operationId": "create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/conversations-api/release-conversation",
+      "source": "api-reference/openapi.yaml",
+      "title": "Release conversation",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/release",
+      "operationId": "release_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__release_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/messages-api/create-a-new-message",
+      "source": "api-reference/openapi.yaml",
+      "title": "Create a new message",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/messages",
+      "operationId": "create_message_bridge_api_v1_workspaces__workspaceId__messages_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/contacts-api/retrieve-a-contact-by-an-identifier",
+      "source": "api-reference/openapi.yaml",
+      "title": "Retrieve a contact by an identifier",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts/lookup",
+      "operationId": "retrieve_contact_by_identifier_bridge_api_v1_workspaces__workspaceId__contacts_lookup_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/contacts-api/retrieve-a-contact-by-id",
+      "source": "api-reference/openapi.yaml",
+      "title": "Retrieve a contact by id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts/{contactId}",
+      "operationId": "retrieve_contact_by_id_bridge_api_v1_workspaces__workspaceId__contacts__contactId__get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/contacts-api/update-contact",
+      "source": "api-reference/openapi.yaml",
+      "title": "Update contact",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/contacts/{contactId}",
+      "operationId": "update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contactId__patch"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/contacts-api/list-contacts",
+      "source": "api-reference/openapi.yaml",
+      "title": "List contacts",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts",
+      "operationId": "get_contacts_bridge_api_v1_workspaces__workspaceId__contacts_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/contacts-api/create-a-new-contact",
+      "source": "api-reference/openapi.yaml",
+      "title": "Create a new contact",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/contacts",
+      "operationId": "create_contact_bridge_api_v1_workspaces__workspaceId__contacts_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/contacts-api/create-or-update-a-contact",
+      "source": "api-reference/openapi.yaml",
+      "title": "Create or update a contact",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/contacts/partial",
+      "operationId": "create_partial_contact_bridge_api_v1_workspaces__workspaceId__contacts_partial_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/files-api/create-presigned-uploads-for-files",
+      "source": "api-reference/openapi.yaml",
+      "title": "Create presigned uploads for files",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/files",
+      "operationId": "create_preloaded_files_bridge_api_v1_workspaces__workspaceId__files_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/custom-attributes-api/retrieve-custom-attributes-by-workspaceid",
+      "source": "api-reference/openapi.yaml",
+      "title": "Retrieve custom attributes by workspaceid",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/settings/attributes",
+      "operationId": "get_custom_attributes_by_workspace_bridge_api_v1_workspaces__workspaceId__settings_attributes_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/provider-channels-api/get-provider-channels-by-workspace-id",
+      "source": "api-reference/openapi.yaml",
+      "title": "Get provider channels by workspace id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/provider-channels",
+      "operationId": "get_provider_channels_by_workspace_id_bridge_api_v1_workspaces__workspaceId__provider_channels_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/provider-channels-api/get-provider-channels-by-workspace-id-and-provider-type",
+      "source": "api-reference/openapi.yaml",
+      "title": "Get provider channels by workspace id and provider type",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/provider-channels/{messageProviderType}",
+      "operationId": "get_provider_channels_by_workspace_id_and_provider_type_bridge_api_v1_workspaces__workspaceId__provider_channels__messageProviderType__get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/leadscout-api/initiate-a-leadscout-outbound-conversation-with-a-known-lead",
+      "source": "api-reference/openapi.yaml",
+      "title": "Initiate a leadscout outbound conversation with a known lead",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/leadscout/outbound",
+      "operationId": "initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/leadscout-api/request-a-manual-handoff-of-a-leadscout-conversation-to-internal-users",
+      "source": "api-reference/openapi.yaml",
+      "title": "Request a manual handoff of a leadscout conversation to internal users",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/leadscout/conversations/{conversationId}/handoff",
+      "operationId": "request_leadscout_handoff_bridge_api_v1_workspaces__workspaceId__leadscout_conversations__conversationId__handoff_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/templates-api/discover-a-templates-agnostic-variable-inventory",
+      "source": "api-reference/openapi.yaml",
+      "title": "Discover a templates agnostic variable inventory",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "get_template_discovery_bridge_api_v1_workspaces__workspaceId__templates__templateId__get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/internal-users-api/retrieve-an-internal-user-by-an-identifier",
+      "source": "api-reference/openapi.yaml",
+      "title": "Retrieve an internal user by an identifier",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users/lookup",
+      "operationId": "retrieve_internal_user_by_identifier_bridge_api_v1_workspaces__workspaceId__users_lookup_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/internal-users-api/retrieve-an-internal-user-by-id",
+      "source": "api-reference/openapi.yaml",
+      "title": "Retrieve an internal user by id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users/{userId}",
+      "operationId": "retrieve_internal_user_by_id_bridge_api_v1_workspaces__workspaceId__users__userId__get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/internal-users-api/list-internal-users",
+      "source": "api-reference/openapi.yaml",
+      "title": "List internal users",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users",
+      "operationId": "get_internal_users_bridge_api_v1_workspaces__workspaceId__users_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/agents-api/list-the-agents-of-a-workspace",
+      "source": "api-reference/openapi.yaml",
+      "title": "List the agents of a workspace",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/agents",
+      "operationId": "list_agents_bridge_api_v1_workspaces__workspaceId__agents_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/agents-api/start-an-outbound-conversation-with-a-contact-as-a-given-agent",
+      "source": "api-reference/openapi.yaml",
+      "title": "Start an outbound conversation with a contact as a given agent",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound",
+      "operationId": "start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/campaign-leads/register-a-campaign-lead",
+      "source": "api-reference/campaign-leads.openapi.yaml",
+      "title": "Register a campaign lead",
+      "methodPath": "post /leadscout/campaign-leads",
+      "operationId": "create_campaign_lead_leadscout_campaign_leads_post"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/index",
+      "source": "es/index.mdx",
+      "title": "Integra tus sistemas con Bridge"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/connect-your-agent",
+      "source": "es/connect-your-agent.mdx",
+      "title": "Conecta tu asistente de programación con IA"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/credentials",
+      "source": "es/credentials.mdx",
+      "title": "Autenticación de la API REST"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/guides/identifiers",
+      "source": "es/guides/identifiers.mdx",
+      "title": "Glosario e identificadores"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/guides/first-conversation",
+      "source": "es/guides/first-conversation.mdx",
+      "title": "Crea un contacto y envía un mensaje"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/guides/send-attachments",
+      "source": "es/guides/send-attachments.mdx",
+      "title": "Enviar PDF y otros adjuntos"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/guides/send-template",
+      "source": "es/guides/send-template.mdx",
+      "title": "Elige y completa una plantilla de WhatsApp"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/guides/agent-outbound",
+      "source": "es/guides/agent-outbound.mdx",
+      "title": "Inicia una conversación saliente con un agente"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/guides/pagination",
+      "source": "es/guides/pagination.mdx",
+      "title": "Lee todas las páginas de resultados"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/guides/responses",
+      "source": "es/guides/responses.mdx",
+      "title": "Respuestas, errores y reintentos"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/templates-and-parameters",
+      "source": "es/templates-and-parameters.mdx",
+      "title": "Parámetros de plantillas de WhatsApp"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/rate-limits",
+      "source": "es/rate-limits.mdx",
+      "title": "Límites de solicitudes"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/error-codes",
+      "source": "es/error-codes.mdx",
+      "title": "Códigos de error"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/changelog",
+      "source": "es/changelog.mdx",
+      "title": "Registro de cambios"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/webhooks",
+      "source": "es/webhooks.mdx",
+      "title": "Recibe webhooks de Bridge"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/webhooks/verifying-signatures",
+      "source": "es/webhooks/verifying-signatures.mdx",
+      "title": "Verifica las solicitudes de webhook"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/webhooks/receive-events",
+      "source": "es/webhooks/receive-events.mdx",
+      "title": "Recibe eventos de forma confiable"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/webhooks/configuration",
+      "source": "es/webhooks/configuration.mdx",
+      "title": "Configura los webhooks"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/webhooks/events",
+      "source": "es/webhooks/events.mdx",
+      "title": "Eventos de webhook"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/lead-capture/index",
+      "source": "es/lead-capture/index.mdx",
+      "title": "Custom Connections"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/lead-capture/consent",
+      "source": "es/lead-capture/consent.mdx",
+      "title": "Requisitos de consentimiento"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/lead-capture/templates",
+      "source": "es/lead-capture/templates.mdx",
+      "title": "Requisitos de plantillas"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/lead-capture/integration",
+      "source": "es/lead-capture/integration.mdx",
+      "title": "Guía de integración"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/lead-capture/errors",
+      "source": "es/lead-capture/errors.mdx",
+      "title": "Referencia de errores"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/health/comprobar-estado",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Comprobar estado",
+      "methodPath": "get /bridge/api/health",
+      "operationId": "health_bridge_api_health_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/conversations-api/obtener-conversación-por-id",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener conversación por id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}",
+      "operationId": "get_conversation_by_id_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/conversations-api/actualizar-conversación",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Actualizar conversación",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}",
+      "operationId": "update_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__patch"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/conversations-api/consultar-conversaciones-con-filtros-flexibles",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Consultar conversaciones con filtros flexibles",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/conversations",
+      "operationId": "get_conversations_bridge_api_v1_workspaces__workspaceId__conversations_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/conversations-api/crear-conversación-con-identificación-flexible-de-usuarios",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Crear conversación con identificación flexible de usuarios",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/conversations",
+      "operationId": "create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/conversations-api/liberar-conversación",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Liberar conversación",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/release",
+      "operationId": "release_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__release_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/messages-api/crear-mensaje",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Crear mensaje",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/messages",
+      "operationId": "create_message_bridge_api_v1_workspaces__workspaceId__messages_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/contacts-api/obtener-contacto-por-un-identificador",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener contacto por un identificador",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts/lookup",
+      "operationId": "retrieve_contact_by_identifier_bridge_api_v1_workspaces__workspaceId__contacts_lookup_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/contacts-api/obtener-contacto-por-id",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener contacto por id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts/{contactId}",
+      "operationId": "retrieve_contact_by_id_bridge_api_v1_workspaces__workspaceId__contacts__contactId__get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/contacts-api/actualizar-contacto",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Actualizar contacto",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/contacts/{contactId}",
+      "operationId": "update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contactId__patch"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/contacts-api/listar-contactos",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Listar contactos",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts",
+      "operationId": "get_contacts_bridge_api_v1_workspaces__workspaceId__contacts_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/contacts-api/crear-contacto",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Crear contacto",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/contacts",
+      "operationId": "create_contact_bridge_api_v1_workspaces__workspaceId__contacts_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/contacts-api/crear-o-actualizar-contacto",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Crear o actualizar contacto",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/contacts/partial",
+      "operationId": "create_partial_contact_bridge_api_v1_workspaces__workspaceId__contacts_partial_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/files-api/crear-cargas-prefirmadas-de-archivos",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Crear cargas prefirmadas de archivos",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/files",
+      "operationId": "create_preloaded_files_bridge_api_v1_workspaces__workspaceId__files_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/custom-attributes-api/consultar-atributos-personalizados-por-workspaceid",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Consultar atributos personalizados por workspaceid",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/settings/attributes",
+      "operationId": "get_custom_attributes_by_workspace_bridge_api_v1_workspaces__workspaceId__settings_attributes_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/provider-channels-api/obtener-canales-de-proveedores-por-workspace",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener canales de proveedores por workspace",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/provider-channels",
+      "operationId": "get_provider_channels_by_workspace_id_bridge_api_v1_workspaces__workspaceId__provider_channels_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/provider-channels-api/obtener-canales-por-workspace-y-tipo-de-proveedor",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener canales por workspace y tipo de proveedor",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/provider-channels/{messageProviderType}",
+      "operationId": "get_provider_channels_by_workspace_id_and_provider_type_bridge_api_v1_workspaces__workspaceId__provider_channels__messageProviderType__get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/leadscout-api/iniciar-conversación-saliente-de-leadscout-con-un-lead-conocido",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Iniciar conversación saliente de leadscout con un lead conocido",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/leadscout/outbound",
+      "operationId": "initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/leadscout-api/solicitar-transferencia-manual-de-leadscout-a-usuarios-internos",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Solicitar transferencia manual de leadscout a usuarios internos",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/leadscout/conversations/{conversationId}/handoff",
+      "operationId": "request_leadscout_handoff_bridge_api_v1_workspaces__workspaceId__leadscout_conversations__conversationId__handoff_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/templates-api/descubrir-las-variables-agnósticas-de-una-plantilla",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Descubrir las variables agnósticas de una plantilla",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "get_template_discovery_bridge_api_v1_workspaces__workspaceId__templates__templateId__get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/internal-users-api/obtener-usuario-interno-por-un-identificador",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener usuario interno por un identificador",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users/lookup",
+      "operationId": "retrieve_internal_user_by_identifier_bridge_api_v1_workspaces__workspaceId__users_lookup_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/internal-users-api/obtener-usuario-interno-por-id",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener usuario interno por id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users/{userId}",
+      "operationId": "retrieve_internal_user_by_id_bridge_api_v1_workspaces__workspaceId__users__userId__get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/internal-users-api/listar-usuarios-internos",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Listar usuarios internos",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users",
+      "operationId": "get_internal_users_bridge_api_v1_workspaces__workspaceId__users_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/agents-api/listar-los-agents-de-un-workspace",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Listar los agents de un workspace",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/agents",
+      "operationId": "list_agents_bridge_api_v1_workspaces__workspaceId__agents_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/agents-api/iniciar-conversación-saliente-con-un-contact-como-agent-específico",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Iniciar conversación saliente con un contact como agent específico",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound",
+      "operationId": "start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/campaign-leads/registrar-un-lead-de-campaña",
+      "source": "es/api-reference/campaign-leads.openapi.yaml",
+      "title": "Registrar un lead de campaña",
+      "methodPath": "post /leadscout/campaign-leads",
+      "operationId": "create_campaign_lead_leadscout_campaign_leads_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/index",
+      "source": "pt-br/index.mdx",
+      "title": "Integre seus sistemas ao Bridge"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/connect-your-agent",
+      "source": "pt-br/connect-your-agent.mdx",
+      "title": "Conecte seu assistente de programação com IA"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/credentials",
+      "source": "pt-br/credentials.mdx",
+      "title": "Autenticação da API REST"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/guides/identifiers",
+      "source": "pt-br/guides/identifiers.mdx",
+      "title": "Glossário e identificadores"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/guides/first-conversation",
+      "source": "pt-br/guides/first-conversation.mdx",
+      "title": "Crie um contato e envie uma mensagem"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/guides/send-attachments",
+      "source": "pt-br/guides/send-attachments.mdx",
+      "title": "Enviar PDF e outros anexos"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/guides/send-template",
+      "source": "pt-br/guides/send-template.mdx",
+      "title": "Escolha e preencha um template de WhatsApp"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/guides/agent-outbound",
+      "source": "pt-br/guides/agent-outbound.mdx",
+      "title": "Inicie uma conversa outbound com um Agente"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/guides/pagination",
+      "source": "pt-br/guides/pagination.mdx",
+      "title": "Leia todas as páginas de resultados"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/guides/responses",
+      "source": "pt-br/guides/responses.mdx",
+      "title": "Respostas, erros e novas tentativas"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/templates-and-parameters",
+      "source": "pt-br/templates-and-parameters.mdx",
+      "title": "Parâmetros de templates de WhatsApp"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/rate-limits",
+      "source": "pt-br/rate-limits.mdx",
+      "title": "Limites de requisições"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/error-codes",
+      "source": "pt-br/error-codes.mdx",
+      "title": "Códigos de erro"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/changelog",
+      "source": "pt-br/changelog.mdx",
+      "title": "Histórico de alterações"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/webhooks",
+      "source": "pt-br/webhooks.mdx",
+      "title": "Receba webhooks do Bridge"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/webhooks/verifying-signatures",
+      "source": "pt-br/webhooks/verifying-signatures.mdx",
+      "title": "Verifique requisições de webhook"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/webhooks/receive-events",
+      "source": "pt-br/webhooks/receive-events.mdx",
+      "title": "Receba eventos de forma confiável"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/webhooks/configuration",
+      "source": "pt-br/webhooks/configuration.mdx",
+      "title": "Configure webhooks"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/webhooks/events",
+      "source": "pt-br/webhooks/events.mdx",
+      "title": "Eventos de webhook"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/lead-capture/index",
+      "source": "pt-br/lead-capture/index.mdx",
+      "title": "Custom Connections"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/lead-capture/consent",
+      "source": "pt-br/lead-capture/consent.mdx",
+      "title": "Requisitos de consentimento"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/lead-capture/templates",
+      "source": "pt-br/lead-capture/templates.mdx",
+      "title": "Requisitos de templates"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/lead-capture/integration",
+      "source": "pt-br/lead-capture/integration.mdx",
+      "title": "Guia de integração"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/lead-capture/errors",
+      "source": "pt-br/lead-capture/errors.mdx",
+      "title": "Referência de erros"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/health/verificar-integridade",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Verificar integridade",
+      "methodPath": "get /bridge/api/health",
+      "operationId": "health_bridge_api_health_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/conversations-api/obter-conversa-por-id",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter conversa por id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}",
+      "operationId": "get_conversation_by_id_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/conversations-api/atualizar-conversa",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Atualizar conversa",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}",
+      "operationId": "update_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__patch"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/conversations-api/consultar-conversas-com-filtros-flexíveis",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Consultar conversas com filtros flexíveis",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/conversations",
+      "operationId": "get_conversations_bridge_api_v1_workspaces__workspaceId__conversations_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/conversations-api/criar-conversa-com-identificação-flexível-de-usuários",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Criar conversa com identificação flexível de usuários",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/conversations",
+      "operationId": "create_conversation_bridge_api_v1_workspaces__workspaceId__conversations_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/conversations-api/liberar-conversa",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Liberar conversa",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/release",
+      "operationId": "release_conversation_bridge_api_v1_workspaces__workspaceId__conversations__conversationId__release_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/messages-api/criar-mensagem",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Criar mensagem",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/messages",
+      "operationId": "create_message_bridge_api_v1_workspaces__workspaceId__messages_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/contacts-api/obter-contato-por-um-identificador",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter contato por um identificador",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts/lookup",
+      "operationId": "retrieve_contact_by_identifier_bridge_api_v1_workspaces__workspaceId__contacts_lookup_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/contacts-api/obter-contato-por-id",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter contato por id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts/{contactId}",
+      "operationId": "retrieve_contact_by_id_bridge_api_v1_workspaces__workspaceId__contacts__contactId__get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/contacts-api/atualizar-contato",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Atualizar contato",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/contacts/{contactId}",
+      "operationId": "update_contact_bridge_api_v1_workspaces__workspaceId__contacts__contactId__patch"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/contacts-api/listar-contatos",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Listar contatos",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/contacts",
+      "operationId": "get_contacts_bridge_api_v1_workspaces__workspaceId__contacts_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/contacts-api/criar-contato",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Criar contato",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/contacts",
+      "operationId": "create_contact_bridge_api_v1_workspaces__workspaceId__contacts_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/contacts-api/criar-ou-atualizar-contato",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Criar ou atualizar contato",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/contacts/partial",
+      "operationId": "create_partial_contact_bridge_api_v1_workspaces__workspaceId__contacts_partial_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/files-api/criar-uploads-pré-assinados-de-arquivos",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Criar uploads pré assinados de arquivos",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/files",
+      "operationId": "create_preloaded_files_bridge_api_v1_workspaces__workspaceId__files_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/custom-attributes-api/consultar-atributos-personalizados-por-workspaceid",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Consultar atributos personalizados por workspaceid",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/settings/attributes",
+      "operationId": "get_custom_attributes_by_workspace_bridge_api_v1_workspaces__workspaceId__settings_attributes_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/provider-channels-api/obter-canais-de-provedores-por-workspace",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter canais de provedores por workspace",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/provider-channels",
+      "operationId": "get_provider_channels_by_workspace_id_bridge_api_v1_workspaces__workspaceId__provider_channels_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/provider-channels-api/obter-canais-por-workspace-e-tipo-de-provedor",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter canais por workspace e tipo de provedor",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/provider-channels/{messageProviderType}",
+      "operationId": "get_provider_channels_by_workspace_id_and_provider_type_bridge_api_v1_workspaces__workspaceId__provider_channels__messageProviderType__get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/leadscout-api/iniciar-conversa-de-saída-do-leadscout-com-um-lead-conhecido",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Iniciar conversa de saída do leadscout com um lead conhecido",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/leadscout/outbound",
+      "operationId": "initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/leadscout-api/solicitar-transferência-manual-do-leadscout-para-usuários-internos",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Solicitar transferência manual do leadscout para usuários internos",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/leadscout/conversations/{conversationId}/handoff",
+      "operationId": "request_leadscout_handoff_bridge_api_v1_workspaces__workspaceId__leadscout_conversations__conversationId__handoff_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/templates-api/descobrir-as-variáveis-agnósticas-de-um-modelo",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Descobrir as variáveis agnósticas de um modelo",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}",
+      "operationId": "get_template_discovery_bridge_api_v1_workspaces__workspaceId__templates__templateId__get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/internal-users-api/obter-usuário-interno-por-um-identificador",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter usuário interno por um identificador",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users/lookup",
+      "operationId": "retrieve_internal_user_by_identifier_bridge_api_v1_workspaces__workspaceId__users_lookup_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/internal-users-api/obter-usuário-interno-por-id",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter usuário interno por id",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users/{userId}",
+      "operationId": "retrieve_internal_user_by_id_bridge_api_v1_workspaces__workspaceId__users__userId__get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/internal-users-api/listar-usuários-internos",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Listar usuários internos",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/users",
+      "operationId": "get_internal_users_bridge_api_v1_workspaces__workspaceId__users_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/agents-api/listar-os-agents-de-um-workspace",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Listar os agents de um workspace",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/agents",
+      "operationId": "list_agents_bridge_api_v1_workspaces__workspaceId__agents_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/agents-api/iniciar-conversa-de-saída-com-um-contact-como-agent-específico",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Iniciar conversa de saída com um contact como agent específico",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound",
+      "operationId": "start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/campaign-leads/registrar-um-lead-de-campanha",
+      "source": "pt-br/api-reference/campaign-leads.openapi.yaml",
+      "title": "Registrar um lead de campanha",
+      "methodPath": "post /leadscout/campaign-leads",
+      "operationId": "create_campaign_lead_leadscout_campaign_leads_post"
+    }
+  ],
+  "specs": [
+    {
+      "locale": "en",
+      "source": "api-reference/openapi.yaml",
+      "url": "https://docs.bridge.new/api-reference/openapi.yaml",
+      "title": "Bridge API",
+      "sha256": "17118b230e17bebf391bfa44f03f097cfb0c3e0ab50a88a997a125634f7a5148",
+      "operationCount": 25
+    },
+    {
+      "locale": "en",
+      "source": "api-reference/campaign-leads.openapi.yaml",
+      "url": "https://docs.bridge.new/api-reference/campaign-leads.openapi.yaml",
+      "title": "Bridge Campaign Leads API",
+      "sha256": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
+      "operationCount": 1
+    },
+    {
+      "locale": "es",
+      "source": "es/api-reference/openapi.yaml",
+      "url": "https://docs.bridge.new/es/api-reference/openapi.yaml",
+      "title": "Bridge API",
+      "sha256": "44131c94325ca6c801f47fd974a79946bc4872b5a71e30f132e0d5b884e9020f",
+      "operationCount": 25
+    },
+    {
+      "locale": "es",
+      "source": "es/api-reference/campaign-leads.openapi.yaml",
+      "url": "https://docs.bridge.new/es/api-reference/campaign-leads.openapi.yaml",
+      "title": "Bridge Campaign Leads API",
+      "sha256": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
+      "operationCount": 1
+    },
+    {
+      "locale": "pt-br",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "url": "https://docs.bridge.new/pt-br/api-reference/openapi.yaml",
+      "title": "Bridge API",
+      "sha256": "6127964522812d40fd6f7a11628625ca021adb362dd7310c1d4884c52d1257f2",
+      "operationCount": 25
+    },
+    {
+      "locale": "pt-br",
+      "source": "pt-br/api-reference/campaign-leads.openapi.yaml",
+      "url": "https://docs.bridge.new/pt-br/api-reference/campaign-leads.openapi.yaml",
+      "title": "Bridge Campaign Leads API",
+      "sha256": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
+      "operationCount": 1
+    }
+  ],
+  "agentResources": [
+    {
+      "source": "skill.md",
+      "url": "https://docs.bridge.new/skill.md",
+      "title": "Bridge integration guidance for AI agents",
+      "sha256": "c42bce21b5fac2369cf91cf62b9f16dd160f2b0b99b0c6d6be0ce482d6f0c0bd"
+    }
+  ],
+  "outputs": {
+    "llms-en.txt": {
+      "bytes": 11146,
+      "sha256": "b0212f6cf0049f07a268d861538b537d936b5ab5085a267f71b15a55a42466ed"
+    },
+    "llms-full-en.txt": {
+      "bytes": 218920,
+      "sha256": "b71750a5ab3650701a69bc7ff08f732f83ae4683bf4bd2536229bb597582b068"
+    },
+    "llms-es.txt": {
+      "bytes": 12311,
+      "sha256": "8a4b8175b9d4bc96a0b1aec32be6367b789b0d2ffb13308566b528214906bd82"
+    },
+    "llms-full-es.txt": {
+      "bytes": 236844,
+      "sha256": "294914f4001c6a089ac3d1784c3ddf2664e9625a236f7e8922568a5455ea43a9"
+    },
+    "llms-pt-br.txt": {
+      "bytes": 12213,
+      "sha256": "33e7b73745f50cbc7bf58b5b9ab7006d826b2ab9328325e1d091508df967dd1a"
+    },
+    "llms-full-pt-br.txt": {
+      "bytes": 235106,
+      "sha256": "360ba1478f45a5ea556f5dd4948ffd3a5191b69ece836851b1b60d85fbd15f76"
+    },
+    "llms.txt": {
+      "bytes": 40223,
+      "sha256": "3c438513a91909f9b72c52014a20dab0d8a80536643eb5790a9359a0e6d8657a"
+    },
+    "llms-full.txt": {
+      "bytes": 694750,
+      "sha256": "d6e4332d5ce8ce8abb68ba3381e15ef6765154157515183281c7363063ab29ce"
+    }
+  }
+}

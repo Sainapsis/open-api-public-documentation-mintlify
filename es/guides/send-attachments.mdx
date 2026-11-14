@@ -1,10 +1,12 @@
 ---
-title: "Carga y envía un adjunto"
-sidebarTitle: "Adjuntos"
-description: "Calcula el hash de un archivo, obtén un PUT prefirmado, carga sus bytes y adjunta el ID de medios devuelto a un mensaje."
+title: "Enviar PDF y otros adjuntos"
+sidebarTitle: "PDF y adjuntos"
+description: "Envía un PDF u otro archivo compatible en una conversación: calcula su checksum, súbelo a la URL prefirmada y adjunta su ID de medios al mensaje."
+keywords: ["enviar PDF", "subir PDF", "adjuntar archivo", "enviar documento", "carga prefirmada", "checksumBase64", "mediaIds"]
+boost: 2
 ---
 
-Enviar un adjunto requiere tres operaciones: solicitar la carga a Bridge, subir los bytes a la URL devuelta y crear un mensaje que incluya el `mediaId` recibido.
+Para enviar un PDF u otro adjunto compatible, solicita la carga a Bridge, sube los bytes del archivo a la URL devuelta y crea un mensaje que incluya el `mediaId` recibido. El ejemplo completo desde el servidor que aparece más abajo envía un PDF.
 
 <a id="before-you-start"></a>
 
@@ -14,6 +16,16 @@ Enviar un adjunto requiere tres operaciones: solicitar la carga a Bridge, subir 
 - Elige un PDF que tengas autorización para compartir y comprueba que cumpla los límites de la [API de archivos](/es/api-reference/files-api/crear-cargas-prefirmadas-de-archivos).
 - Guarda la clave de API de Bridge en tu servidor. No la agregues a la solicitud de carga prefirmada.
 - Elige explícitamente el indicador `enableExternalBroadcast` del mensaje.
+
+<a id="validate-the-file-before-requesting-an-upload"></a>
+
+## Valida el archivo antes de solicitar una carga
+
+Comprueba el archivo real en tu servidor: su extensión, tipo MIME y longitud en bytes deben cumplir las reglas publicadas de la [API de archivos](/es/api-reference/files-api/crear-cargas-prefirmadas-de-archivos). La solicitud de URL prefirmada contiene metadatos y una suma de comprobación, no los bytes del archivo ni un campo de tamaño. Una respuesta `201` prepara una carga; no demuestra que se hayan inspeccionado los bytes reales, que el tamaño cargado cumpla los límites publicados ni que un proveedor de mensajería vaya a aceptar el archivo.
+
+Si omites `contentType`, copia igualmente `presignUrl.headers` en la solicitud PUT: Bridge puede deducir `Content-Type` a partir del nombre del archivo. Si lo proporcionas, usa el tipo MIME del archivo real y mantenlo coherente con `fileType` y la extensión. Cambiar el nombre de un archivo no convierte su contenido.
+
+Después de un PUT exitoso, el procesamiento de la carga puede seguir pendiente. Si una solicitud de Message devuelve un [error de carga de archivos](/es/error-codes#file-upload-errors), conserva el error completo y comprueba qué etapa falló antes de decidir si es seguro realizar otra escritura.
 
 <a id="upload-sequence"></a>
 
