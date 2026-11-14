@@ -1,8 +1,9 @@
-/* The PNG logo lockup (icon container + wordmark) is proportionally taller than
-   the old SVG, so at Mintlify's default 28px logo height its wordmark reads too
-   small. Bump the navbar logo height to compensate. */
+/* Keep the Bridge lockup readable and proportional to the navbar controls. */
 .nav-logo {
-  height: 2.5rem;
+  height: 2rem;
+  width: auto;
+  max-width: 9rem;
+  object-fit: contain;
 }
 
 /* Bridge documentation: visual tokens shared with help.bridge.new.
@@ -81,53 +82,36 @@ html:not(.dark) .card:hover {
   border-radius: 12px;
 }
 
-.bridge-hero {
-  padding: 24px;
-  margin: 8px 0 28px;
-  border: 1px solid #d6e2f4;
-  border-radius: 16px;
-  background-color: #f8faff;
-  background-image: radial-gradient(#d6e2f4 0.7px, transparent 0.7px);
-  background-size: 13px 13px;
+/* Comfortable reading without changing native code typography. */
+#content p,
+#content li {
+  line-height: 1.65;
 }
 
-.bridge-hero .bridge-eyebrow {
-  color: #3865d8;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin: 0 0 10px;
+.bridge-surfaces .card {
+  margin-top: 0;
 }
 
-.bridge-hero h2 {
-  margin: 0 0 12px;
-  padding: 0;
-  font-size: clamp(24px, 3vw, 32px);
-  line-height: 1.2;
+/* Visible focus and a generous logo target retain keyboard and touch access. */
+.card:focus-visible,
+#navbar a:focus-visible,
+#sidebar a:focus-visible,
+#search-bar-entry:focus-visible {
+  outline: 2px solid #3865d8;
+  outline-offset: 3px;
 }
 
-.bridge-hero p:last-child {
-  margin-bottom: 0;
-  color: #53627a;
-}
-
-.dark .bridge-hero {
-  border-color: #2a3f5d;
-  background-color: #10213a;
-  background-image: radial-gradient(#2a3f5d 0.7px, transparent 0.7px);
-}
-
-.dark .bridge-hero .bridge-eyebrow {
-  color: #93b5ff;
-}
-
-.dark .bridge-hero p:last-child {
-  color: #c2cee1;
+#navbar a:has(.nav-logo) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 @media (max-width: 640px) {
-  .bridge-hero { padding: 20px; }
+  .nav-logo {
+    height: 1.75rem;
+    max-width: 8rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

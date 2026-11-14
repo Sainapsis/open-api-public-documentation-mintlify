@@ -1,7 +1,7 @@
 ---
 title: "Error reference"
 sidebarTitle: "Errors"
-description: "Every response the campaign-leads endpoint can return, and whether you can fix it."
+description: "Every response the Custom Connections endpoint can return, and whether you can fix it."
 keywords: ["errors", "422", "403", "captcha", "troubleshooting"]
 ---
 
@@ -21,7 +21,7 @@ Error responses are [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem d
 | `400` | `BRIDGE.CAMPAIGN_LEADS.INVALID_PHONE` | The phone number could not be read as a real number. | Yes — validate before submitting |
 | `400` | `BRIDGE.CAMPAIGN_LEADS.CONSENT_NOT_GRANTED` | `consent.status` was not `GRANTED`. | Yes |
 | `400` | `BRIDGE.CAMPAIGN_LEADS.BRAND_OR_LINE_REQUIRED` | Your workspace has brands enabled and no `brandId` was sent. | Yes |
-| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_DISABLED` | Lead capture is not enabled for this workspace. | No — contact Bridge |
+| `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_DISABLED` | The Custom Connections feature is not enabled for this workspace. | No — contact Bridge |
 | `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTURE_KEY_MISMATCH` | The capture key is missing or wrong. | Yes |
 | `403` | `BRIDGE.CAMPAIGN_LEADS.CAPTCHA_REJECTED` | The captcha token was missing, expired, already used, or scored too low. | Sometimes — see below |
 | `403` | `BRIDGE.CAMPAIGN_LEADS.ORIGIN_NOT_ALLOWED` | The page's domain is not registered for this workspace. | No — contact Bridge |

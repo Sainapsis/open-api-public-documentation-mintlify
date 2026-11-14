@@ -1,6 +1,6 @@
 ---
-title: "Connect your AI agent"
-sidebarTitle: "Connect your agent"
+title: "Connect your AI coding assistant"
+sidebarTitle: "AI coding assistants"
 description: "Connect your AI coding assistant to the Bridge documentation through MCP so it answers from the published contract instead of its training data."
 keywords: ["MCP", "Model Context Protocol", "AI assistant", "Claude Code", "Cursor", "Codex"]
 ---
@@ -14,7 +14,7 @@ The server is public and needs no Bridge API Key. Its search and reading tools a
 <Warning>
   **This server reads documentation. It does not call the Bridge API.**
 
-  It cannot create a contact, send a message, or read your workspace data. Calling the REST Integrations API requires your own code and an API Key — see [Authentication](/credentials). The public [Lead Capture](/lead-capture) endpoint uses its own setup and does not take an API Key.
+  It cannot create a contact, send a message, or read your workspace data. Calling the REST Integrations API requires your own code and an API Key — see [Authentication](/credentials). The public [Custom Connections](/lead-capture) endpoint uses its own setup and does not take an API Key.
 </Warning>
 
 ---
@@ -107,7 +107,7 @@ Use the [documentation index](/llms.txt) to find pages. The [collected documenta
 Before generating code, read the relevant contract:
 
 - [REST Integrations OpenAPI](/api-reference/openapi.yaml) — REST methods, paths, authentication, parameters, request bodies, and responses.
-- [Lead Capture OpenAPI](/api-reference/campaign-leads.openapi.yaml) — the separate public Lead Capture endpoint.
+- [Custom Connections OpenAPI](/api-reference/campaign-leads.openapi.yaml) — the separate public Custom Connections endpoint.
 - [Webhook guides](/webhooks) — configuration, event payloads, and verification.
 
 You can also append `.md` to an endpoint's documentation URL to read its Markdown page and embedded OpenAPI definition. Through MCP, use **Query documentation filesystem** to read the relevant page or schema.

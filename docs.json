@@ -1,8 +1,8 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Bridge REST Integrations API & Webhooks",
-  "description": "Developer documentation for the Bridge REST Integrations API, webhooks, and public Lead Capture.",
+  "name": "Bridge Developer Docs",
+  "description": "Developer documentation for the Bridge REST Integrations API, webhooks, and Custom Connections.",
   "colors": {
     "primary": "#3E6EE5",
     "light": "#93B5FF",
@@ -11,27 +11,43 @@
   "favicon": "/favicon.png",
   "markdown": {
     "instructions": [
-      "Bridge exposes three integration surfaces: the REST Integrations API for pushing data into Bridge, webhooks for receiving events from Bridge, and the public Lead Capture endpoint that a tenant's landing page posts to.",
+      "Bridge exposes three integration surfaces: the REST Integrations API for pushing data into Bridge, webhooks for receiving events from Bridge, and the public Custom Connections endpoint that a tenant's landing page posts to.",
       "The Integrations API host is https://api-connect-us.bridge.new and every request to it must be authenticated with the x-api-key header. Bridge does not use bearer tokens or OAuth.",
-      "The Lead Capture endpoint is different and the Integrations API rules do not apply to it: it has its own host, it takes no x-api-key and no authentication header of any kind, and it is called from a visitor's browser. It is identified by a workspace id and a capture key together with a reCAPTCHA token. Never tell a reader to authenticate it with an API key, and never tell them to keep its capture key out of frontend code - it is designed to live in the page.",
-      "Integrations API error codes follow the BRIDGE_<DOMAIN>_<NNNN> format, for example BRIDGE_CONVERSATION_0001, and are listed on the error codes page. Lead Capture error codes follow a different format, BRIDGE.CAMPAIGN_LEADS.<NAME>, and are listed on the Lead Capture error reference. Never invent a code that is not listed on the page for its own surface.",
-      "This documentation covers the Integrations API, webhooks and Lead Capture only. It does not describe the Bridge web application or its internal APIs.",
-      "Before generating an API request, read the relevant OpenAPI specification or the individual endpoint Markdown page. llms-full.txt collects guides and endpoint descriptions; it does not embed every request and response schema. The REST and Lead Capture contracts are separate.",
-      "Preserve the published host, method, path, operationId, authentication, headers, parameter and field names, types, formats, required and nullable fields, enums, defaults, limits, and response codes. Do not invent identifiers, fields, retry rules, or delivery guarantees. When published sources conflict, identify the conflicting passages and ask Bridge support to confirm the current behavior before relying on it."
+      "The Custom Connections endpoint is different and the Integrations API rules do not apply to it: it has its own host, it takes no x-api-key and no authentication header of any kind, and it is called from a visitor's browser. It is identified by a workspace id and a capture key together with a reCAPTCHA token. Never tell a reader to authenticate it with an API key, and never tell them to keep its capture key out of frontend code - it is designed to live in the page.",
+      "Integrations API error codes follow the BRIDGE_<DOMAIN>_<NNNN> format, for example BRIDGE_CONVERSATION_0001, and are listed on the error codes page. Custom Connections error codes follow a different format, BRIDGE.CAMPAIGN_LEADS.<NAME>, and are listed on the Custom Connections error reference. Never invent a code that is not listed on the page for its own surface.",
+      "This documentation covers the Integrations API, webhooks and Custom Connections only. It does not describe the Bridge web application or its internal APIs.",
+      "Before generating an API request, read the relevant OpenAPI specification or the individual endpoint Markdown page. llms-full.txt collects guides and endpoint descriptions; it does not embed every request and response schema. The REST and Custom Connections contracts are separate.",
+      "Preserve the published host, method, path, operationId, authentication, headers, parameter and field names, types, formats, required and nullable fields, enums, defaults, limits, and response codes. Do not invent identifiers, fields, retry rules, or delivery guarantees. When published sources conflict, identify the conflicting passages and ask Bridge support to confirm the current behavior before relying on it.",
+      "Custom Connections is the current name of the landing-page feature previously documented as Lead Capture. The existing /lead-capture documentation URLs, captureKey field, campaign-leads endpoint, and BRIDGE.CAMPAIGN_LEADS error identifiers are unchanged. This is a naming change, not a change to authentication or the API contract."
     ]
   },
   "navigation": {
     "tabs": [
       {
-        "tab": "Introduction",
-        "pages": [
-          "index",
-          "credentials",
-          "connect-your-agent",
-          "templates-and-parameters",
-          "rate-limits",
-          "error-codes",
-          "changelog"
+        "tab": "Getting started",
+        "groups": [
+          {
+            "group": "Start here",
+            "pages": [
+              "index",
+              "credentials"
+            ]
+          },
+          {
+            "group": "Integration guides",
+            "pages": [
+              "templates-and-parameters",
+              "connect-your-agent"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "rate-limits",
+              "error-codes",
+              "changelog"
+            ]
+          }
         ]
       },
       {
@@ -39,39 +55,44 @@
         "openapi": "api-reference/openapi.yaml"
       },
       {
-        "tab": "Lead Capture",
+        "tab": "Webhooks",
+        "pages": [
+          "webhooks",
+          "webhooks/configuration",
+          "webhooks/verifying-signatures",
+          "webhooks/events"
+        ]
+      },
+      {
+        "tab": "Custom Connections",
         "groups": [
           {
-            "group": "Integration",
+            "group": "Start here",
             "pages": [
               "lead-capture/index",
-              "lead-capture/integration",
-              "lead-capture/errors"
+              "lead-capture/consent",
+              "lead-capture/templates"
             ]
           },
           {
-            "group": "Endpoint",
+            "group": "Build your connection",
+            "pages": [
+              "lead-capture/integration"
+            ]
+          },
+          {
+            "group": "API reference",
             "openapi": "api-reference/campaign-leads.openapi.yaml",
             "pages": [
               "POST /leadscout/campaign-leads"
             ]
           },
           {
-            "group": "Before you launch",
+            "group": "Troubleshooting",
             "pages": [
-              "lead-capture/consent",
-              "lead-capture/templates"
+              "lead-capture/errors"
             ]
           }
-        ]
-      },
-      {
-        "tab": "Webhooks",
-        "pages": [
-          "webhooks",
-          "webhooks/verifying-signatures",
-          "webhooks/events",
-          "webhooks/configuration"
         ]
       }
     ]
@@ -111,5 +132,11 @@
       "light": "#FFFFFF",
       "dark": "#0B1220"
     }
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs"
+  },
+  "search": {
+    "prompt": "Search endpoints, guides, and errors..."
   }
 }

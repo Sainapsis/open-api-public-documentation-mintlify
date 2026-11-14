@@ -1,68 +1,63 @@
 ---
-title: "Bridge API & Webhooks"
-description: "Connect your CRM, automation platform, landing page, or custom application to Bridge with the REST Integrations API, webhooks, and Lead Capture."
+title: "Integrate with Bridge"
+sidebarTitle: "Overview"
+description: "Connect your CRM, automation, or landing page with the REST API, webhooks, and Custom Connections."
 ---
-
-<div className="bridge-hero">
-  <p className="bridge-eyebrow">BRIDGE FOR DEVELOPERS</p>
-  <h2>Connect your systems to Bridge.</h2>
-  <p>Manage contacts and conversations, receive events, or capture leads from your landing page. Choose the integration that matches your task.</p>
-</div>
 
 ## Choose your integration
 
 <div className="bridge-surfaces">
-  <CardGroup cols={3}>
+  <CardGroup cols={2}>
     <Card title="REST Integrations API" icon="code" href="/credentials">
-      Create or update contacts, manage conversations, send messages, and work with Agents.
+      Create contacts, manage conversations, send messages, and work with Agents.
 
-      **Authentication:** `x-api-key`, used from your server.
+      **Access:** server-side `x-api-key`.
     </Card>
 
     <Card title="Webhooks" icon="webhook" href="/webhooks">
-      Receive event notifications from Bridge at your HTTPS endpoint.
+      Receive Bridge events at your HTTPS endpoint.
 
-      **Verification:** check the webhook API key, signature, and timestamp before processing events.
-    </Card>
-
-    <Card title="Lead Capture" icon="bullhorn" href="/lead-capture">
-      Register leads from a landing page and queue an opening WhatsApp message.
-
-      **Setup:** public `captureKey` and reCAPTCHA; no REST API Key.
+      **Access:** verify the webhook API key, signature, and timestamp.
     </Card>
   </CardGroup>
+
+  <Card title="Custom Connections" icon="plug" href="/lead-capture">
+    Capture leads from a landing page and queue an opening WhatsApp message.
+
+    **Access:** browser-side `captureKey` and reCAPTCHA; no REST API key.
+  </Card>
 </div>
 
 ## Make your first REST API request
 
 <Steps>
   <Step title="Get your API credentials" icon="shield-keyhole">
-    Follow [Authentication](/credentials) to generate an API Key in the Bridge Admin Console. Ask your Bridge administrator for access if needed. Keep the key on your server.
+    Follow [Authentication](/credentials) to generate an API key in the Bridge Admin Console. Ask your Bridge administrator for access if needed. Keep the key on your server.
   </Step>
   <Step title="Check the connection" icon="code">
-    Call the authenticated [health check](/api-reference/health/health-check) at `https://api-connect-us.bridge.new/bridge/api/health` with your `x-api-key` header.
+    Use your `x-api-key` header to call the authenticated [health check](/api-reference/health/health-check) at `https://api-connect-us.bridge.new/bridge/api/health`.
 
-    Then choose the endpoint for your task in the **REST API** tab. Each endpoint includes its request fields, responses, and examples.
+    Continue in the **REST API** tab. Each endpoint lists its fields, responses, and examples.
   </Step>
 </Steps>
 
 <Note>
-  Lead Capture uses a separate endpoint and a public `captureKey`. Follow its [integration guide](/lead-capture/integration); a `202` means the lead was accepted and queued, not that a WhatsApp message was sent.
+  Custom Connections uses a separate endpoint and public `captureKey`. Follow its [integration guide](/lead-capture/integration). A `202` confirms acceptance, not WhatsApp delivery.
 </Note>
 
 ## Build from the published contract
 
 - [Rate limits](/rate-limits) — share the request budget and handle `429` responses.
-- [Error codes](/error-codes) — interpret REST API errors. Lead Capture has a separate [error reference](/lead-capture/errors).
-- [Onboarding template parameters](/templates-and-parameters) — open conversations with WhatsApp templates and supply their variables.
+- [Error codes](/error-codes) — interpret REST API errors. Custom Connections has a separate [error reference](/lead-capture/errors).
+- [WhatsApp template parameters](/templates-and-parameters) — open conversations with WhatsApp templates and supply their variables.
 - [Changelog](/changelog) — review changes that affect integrations.
 
 <div className="bridge-agent">
   <Card title="Connect your AI coding assistant" icon="bot-message-square" href="/connect-your-agent">
-    Search this documentation and read the OpenAPI schemas through the public documentation MCP server. Read the endpoint's contract before generating code and preserve its published signatures.
+    Search these docs through MCP. Read the endpoint’s OpenAPI contract before generating code, and preserve its published signatures.
   </Card>
 </div>
 
-Use the [documentation index](/llms.txt), [REST Integrations OpenAPI](/api-reference/openapi.yaml), or [Lead Capture OpenAPI](/api-reference/campaign-leads.openapi.yaml) for direct access.
+Use the [documentation index](/llms.txt), [REST Integrations OpenAPI](/api-reference/openapi.yaml), or [Custom Connections OpenAPI](/api-reference/campaign-leads.openapi.yaml) for direct access.
 
 For help using the Bridge application, visit the [Help Center](https://help.bridge.new).
