@@ -46,6 +46,8 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
 4. Preserve `traceId`, status and the request URL for support. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
 
+An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, or when `template.media` supplies both or neither of `mediaId` and `url`. Invalid field types or UUIDs can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
+
 ### Legacy code strings
 
 Some legacy error handlers append a symbolic name to `code`, for example `BRIDGE_PRELOAD_FILE_0002 | PRELOAD_FILE_IS_PENDING`. Preserve the complete received value for logs and support. For catalog lookup, accept a known bare code or its explicitly recognized legacy form; do not compare human-readable `title` or `detail`, invent an unknown code, or rewrite the response body. The current deployed handler version has not been independently confirmed by this source review.
@@ -67,9 +69,20 @@ Some legacy error handlers append a symbolic name to `code`, for example `BRIDGE
 
 The general retry guidance does not add idempotency to an endpoint. For outbound reuse, recovery and partial writes, see [Agent outbound and handoff](/guides/agent-outbound). Custom Connections has its own [error reference](/lead-capture/errors) and no REST API key.
 
+## Message reply errors
+
+For `POST .../messages`, the reviewed reply checks define these additional legacy forms:
+
+- `BRIDGE_MESSAGE_0001 | MESSAGE_NOT_FOUND` (`404`): the Message named by `replyToMessageId` was not found.
+- `BRIDGE_MESSAGE_0002 | MESSAGE_IS_NOT_ON_CONVERSATION` (`403`): the reply target belongs to another Conversation. Use a target from the Conversation you are sending to.
+
+Preserve the full `code` string, including its symbolic suffix. These checks concern the reply target, not the attached file's `mediaId`.
+
 ## File upload errors
 
 The reviewed upload flow defines these legacy error strings. Their suffix is part of the received `code`, not a request field. Consult the operation response contract and keep the compatibility parsing above.
+
+The operation determines which file errors apply: `POST .../files` checks metadata and can return `0003` or `0004` below. `POST .../messages` can return `0001` or `0002` when an attached `mediaId` is missing or still pending. Outbound template media has its own error handling; do not substitute these codes for `BRIDGE_AI_LEADSCOUT_0016`.
 
 | Legacy `code` | Status | Action |
 | --- | --- | --- |

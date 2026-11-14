@@ -138,6 +138,8 @@ O upload envia os mesmos `bytes` usados para calcular o checksum. Não converta 
 
 Para vários arquivos, preserve a associação entre cada `mediaId` retornado, os dados pré-assinados e o arquivo correspondente. Conclua todos os uploads necessários antes de anexar os IDs a uma mensagem.
 
+Algumas mídias precisam de mais preparação após o upload, como copiar o arquivo, gerar uma prévia, converter ou enviar o arquivo ao provedor de mensagens. Essas etapas podem falhar de forma independente. Um PUT bem-sucedido ou uma resposta 201 ao criar a mensagem não comprovam que o processamento ou a entrega pelo provedor foram concluídos. Mantenha o arquivo original e os identificadores recebidos para correlacionar o resultado antes de repetir uma requisição de mensagem.
+
 <a id="handle-a-failed-stage"></a>
 
 ## Trate uma falha em cada etapa

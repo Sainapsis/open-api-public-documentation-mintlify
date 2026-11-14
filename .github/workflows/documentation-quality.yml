@@ -35,4 +35,4 @@ jobs:
       - name: Verify current public LLM exports
         run: |
           node scripts/generate-llm-files.mjs --check
-          node --test tests/documentation/test-llm-files.mjs
+          node --test tests/documentation/test-*.mjs
