@@ -4,3 +4,7 @@ package.json
 package-lock.json
 .agents
 .vscode
+
+# Reproducible tooling for the public LLM exports
+!scripts/llm-tools/package.json
+!scripts/llm-tools/package-lock.json

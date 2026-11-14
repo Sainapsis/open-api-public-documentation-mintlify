@@ -1,0 +1,68 @@
+# Bridge Índice de documentación — Español
+
+> Lee la documentación Bridge con cualquier herramienta web o HTTP. No necesitas configurar MCP ni credenciales de un workspace para leer estas fuentes públicas.
+
+Elige el idioma del lector, lee el flujo y el endpoint pertinentes y consulta su contrato OpenAPI exacto. Cita las fuentes utilizadas. Estos exports no autorizan solicitudes de negocio reales.
+
+Conserva los hosts, métodos, rutas, autenticación, nombres de campos, tipos, campos obligatorios y anulables, enums, valores predeterminados, límites y códigos de respuesta publicados. Las traducciones describen la misma API.
+
+## Guías y páginas de referencia
+
+- [Integra tus sistemas con Bridge](https://docs.bridge.new/es/index.md): Conecta tu CRM, automatizaciones o landing page mediante la API REST, los webhooks y Custom Connections.
+- [Conecta tu asistente de programación con IA](https://docs.bridge.new/es/connect-your-agent.md): Conecta Codex, Claude Code, Cursor o GitHub Copilot a la documentación actual de Bridge e implementa a partir del contrato exacto de la API.
+- [Autenticación de la API REST](https://docs.bridge.new/es/credentials.md): Genera y usa una clave de API desde tu servidor para la API REST de integraciones, sin confundirla con las credenciales de webhooks o Custom Connections.
+- [Glosario e identificadores](https://docs.bridge.new/es/guides/identifiers.md): Encuentra los identificadores correctos de espacios de trabajo, contactos, usuarios de Bridge, agentes, conversaciones, plantillas, líneas y archivos sin confundirlos.
+- [Crea un contacto y envía un mensaje](https://docs.bridge.new/es/guides/first-conversation.md): Sigue un flujo completo desde el servidor: contacto, conversación y mensaje, conservando los identificadores devueltos.
+- [Enviar PDF y otros adjuntos](https://docs.bridge.new/es/guides/send-attachments.md): Envía un PDF u otro archivo compatible en una conversación: calcula su checksum, súbelo a la URL prefirmada y adjunta su ID de medios al mensaje.
+- [Elige y completa una plantilla de WhatsApp](https://docs.bridge.new/es/guides/send-template.md): Consulta una plantilla por ID o nombre, proporciona sus claves de variables independientes del proveedor y usa el ID devuelto en una solicitud de conversación.
+- [Inicia una conversación saliente con un agente](https://docs.bridge.new/es/guides/agent-outbound.md): Elige un agente, envía una plantilla inicial, entiende forceSend y la recuperación, y solicita una transferencia de LeadScout.
+- [Lee todas las páginas de resultados](https://docs.bridge.new/es/guides/pagination.md): Recorre los cursores opacos de contactos, conversaciones, usuarios de Bridge y agentes sin detenerte en una página corta.
+- [Respuestas, errores y reintentos](https://docs.bridge.new/es/guides/responses.md): Interpreta creación, aceptación, respuestas vacías, validación y señales de reintento sin confundir los contratos REST y de Custom Connections.
+- [Parámetros de plantillas de WhatsApp](https://docs.bridge.new/es/templates-and-parameters.md): Abre una conversación con tus plantillas de WhatsApp, completa sus variables y maneja todos los errores que puede devolver la solicitud.
+- [Límites de solicitudes](https://docs.bridge.new/es/rate-limits.md): Cuántas solicitudes acepta la API de Bridge, qué encabezados indican el presupuesto disponible y cómo manejar correctamente un 429.
+- [Códigos de error](https://docs.bridge.new/es/error-codes.md): Interpreta los códigos de error REST, las respuestas de validación y los resultados de escritura inciertos para decidir qué hacer.
+- [Registro de cambios](https://docs.bridge.new/es/changelog.md): Cambios de la API de Bridge que afectan tu integración, del más reciente al más antiguo.
+- [Recibe webhooks de Bridge](https://docs.bridge.new/es/webhooks.md): Conecta un receptor HTTPS a los eventos de Bridge y entiende la autenticación, la confirmación de recepción y el procesamiento asíncrono.
+- [Verifica las solicitudes de webhook](https://docs.bridge.new/es/webhooks/verifying-signatures.md): Verifica la clave de API del webhook y la representación HMAC exacta que usa Bridge; luego deduplica los eventos aceptados.
+- [Recibe eventos de forma confiable](https://docs.bridge.new/es/webhooks/receive-events.md): Verifica, guarda y confirma los webhooks; después procesa de forma segura los duplicados y los eventos fuera de orden.
+- [Configura los webhooks](https://docs.bridge.new/es/webhooks/configuration.md): Configura una URL de recepción, las credenciales del webhook y las suscripciones de eventos en la consola de administración de Bridge.
+- [Eventos de webhook](https://docs.bridge.new/es/webhooks/events.md): Familias de eventos, ejemplos de cuerpos y versiones de suscripción de los webhooks de Bridge.
+- [Custom Connections](https://docs.bridge.new/es/lead-capture/index.md): Usa Custom Connections para registrar leads desde tu landing page y encolar un mensaje inicial de WhatsApp.
+- [Requisitos de consentimiento](https://docs.bridge.new/es/lead-capture/consent.md): Qué debe decir la autorización y qué declaras cuando envías consent.status GRANTED.
+- [Requisitos de plantillas](https://docs.bridge.new/es/lead-capture/templates.md): Categorías de plantillas admitidas y recomendaciones para abrir conversaciones mediante Custom Connections.
+- [Guía de integración](https://docs.bridge.new/es/lead-capture/integration.md): Conecta un formulario de landing page con Bridge: ejemplo, CAPTCHA, consentimiento, respuestas y manejo de errores.
+- [Referencia de errores](https://docs.bridge.new/es/lead-capture/errors.md): Todas las respuestas que puede devolver el endpoint de Custom Connections y cuáles puedes corregir.
+
+## Páginas de endpoints de la API
+
+- [Comprobar estado](https://docs.bridge.new/es/api-reference/health/comprobar-estado.md): Endpoint de comprobación de estado para verificar que la API esté en funcionamiento.
+- [Obtener conversación por id](https://docs.bridge.new/es/api-reference/conversations-api/obtener-conversaci%C3%B3n-por-id.md): Obtiene una conversación específica por su identificador único dentro del workspace.
+- [Actualizar conversación](https://docs.bridge.new/es/api-reference/conversations-api/actualizar-conversaci%C3%B3n.md): Actualiza los detalles de la conversación, incluidos los participantes, el estado y el nombre.
+- [Consultar conversaciones con filtros flexibles](https://docs.bridge.new/es/api-reference/conversations-api/consultar-conversaciones-con-filtros-flexibles.md): Consulta conversaciones con opciones de filtrado flexibles.
+- [Crear conversación con identificación flexible de usuarios](https://docs.bridge.new/es/api-reference/conversations-api/crear-conversaci%C3%B3n-con-identificaci%C3%B3n-flexible-de-usuarios.md): Crea una conversación con identificación flexible de usuarios.
+- [Liberar conversación](https://docs.bridge.new/es/api-reference/conversations-api/liberar-conversaci%C3%B3n.md): Libera una conversación: la marca como liberada, elimina los participantes externos y la mueve a la sección RELEASED.
+- [Crear mensaje](https://docs.bridge.new/es/api-reference/messages-api/crear-mensaje.md): Crea un mensaje en una conversación específica.
+- [Obtener contacto por un identificador](https://docs.bridge.new/es/api-reference/contacts-api/obtener-contacto-por-un-identificador.md): Obtiene un contacto específico por cualquiera de sus identificadores dentro del workspace.
+- [Obtener contacto por id](https://docs.bridge.new/es/api-reference/contacts-api/obtener-contacto-por-id.md): Obtiene un contacto específico por su identificador único dentro del workspace.
+- [Actualizar contacto](https://docs.bridge.new/es/api-reference/contacts-api/actualizar-contacto.md): Actualiza un contacto en el workspace indicado.
+- [Listar contactos](https://docs.bridge.new/es/api-reference/contacts-api/listar-contactos.md): Consulta una lista paginada de contactos del workspace.
+- [Crear contacto](https://docs.bridge.new/es/api-reference/contacts-api/crear-contacto.md): Crea un contacto en el workspace indicado.
+- [Crear o actualizar contacto](https://docs.bridge.new/es/api-reference/contacts-api/crear-o-actualizar-contacto.md): Crea o actualiza un contacto usando solo el celular. Lo clasifica como NORMAL o PARTIAL.
+- [Crear cargas prefirmadas de archivos](https://docs.bridge.new/es/api-reference/files-api/crear-cargas-prefirmadas-de-archivos.md): Carga un archivo adjunto, como un PDF, una imagen o un documento, antes de crear un mensaje. Esta operación devuelve los datos de un PUT prefirmado; los bytes del archivo se cargan por separado. Cuando la carga termine correctamente, utiliza el `mediaId` devuelto en la operación de envío. Sigue [Env
+- [Consultar atributos personalizados por workspaceid](https://docs.bridge.new/es/api-reference/custom-attributes-api/consultar-atributos-personalizados-por-workspaceid.md): Devuelve los atributos personalizados del workspace indicado.
+- [Obtener canales de proveedores por workspace](https://docs.bridge.new/es/api-reference/provider-channels-api/obtener-canales-de-proveedores-por-workspace.md): Obtiene los canales de proveedores por identificador de workspace.
+- [Obtener canales por workspace y tipo de proveedor](https://docs.bridge.new/es/api-reference/provider-channels-api/obtener-canales-por-workspace-y-tipo-de-proveedor.md): Obtiene los canales de proveedores por identificador de workspace y tipo de proveedor.
+- [Iniciar conversación saliente de leadscout con un lead conocido](https://docs.bridge.new/es/api-reference/leadscout-api/iniciar-conversaci%C3%B3n-saliente-de-leadscout-con-un-lead-conocido.md): Inicia una conversación saliente de LeadScout con un Contact conocido. El Contact debe existir previamente. Bridge selecciona un Agent de prospección para una línea de WhatsApp apta. La plantilla se referencia mediante template.id o template.name; id tiene prioridad si se proporcionan ambos. Debe ex
+- [Solicitar transferencia manual de leadscout a usuarios internos](https://docs.bridge.new/es/api-reference/leadscout-api/solicitar-transferencia-manual-de-leadscout-a-usuarios-internos.md): Solicita la transferencia manual de una conversación controlada por LeadScout a uno o más usuarios internos.
+- [Descubrir las variables agnósticas de una plantilla](https://docs.bridge.new/es/api-reference/templates-api/descubrir-las-variables-agn%C3%B3sticas-de-una-plantilla.md): Devuelve las variables de una plantilla: `key`/`label`/`callerMustSupply`/`isCustom`/`default`, independientes de la ubicación en Meta.
+- [Obtener usuario interno por un identificador](https://docs.bridge.new/es/api-reference/internal-users-api/obtener-usuario-interno-por-un-identificador.md): Obtiene un Bridge User específico por cualquiera de sus identificadores dentro del workspace.
+- [Obtener usuario interno por id](https://docs.bridge.new/es/api-reference/internal-users-api/obtener-usuario-interno-por-id.md): Obtiene un usuario interno específico (agente humano) por su identificador único dentro del workspace.
+- [Listar usuarios internos](https://docs.bridge.new/es/api-reference/internal-users-api/listar-usuarios-internos.md): Consulta una lista paginada de usuarios internos del workspace.
+- [Listar los agents de un workspace](https://docs.bridge.new/es/api-reference/agents-api/listar-los-agents-de-un-workspace.md): Lista los Agents del workspace con su estado, disponibilidad y líneas.
+- [Iniciar conversación saliente con un contact como agent específico](https://docs.bridge.new/es/api-reference/agents-api/iniciar-conversaci%C3%B3n-saliente-con-un-contact-como-agent-espec%C3%ADfico.md): Inicia una conversación saliente con un Contact conocido, atendida por el Agent indicado.
+- [Registrar un lead de campaña](https://docs.bridge.new/es/api-reference/campaign-leads/registrar-un-lead-de-campa%C3%B1a.md): Registra un lead captado por la página de destino de un tenant y pone en cola el primer mensaje saliente de WhatsApp. Un 202 significa que el lead fue aceptado, no que se haya enviado un mensaje.
+
+## Especificaciones OpenAPI
+
+- [Bridge API](https://docs.bridge.new/es/api-reference/openapi.yaml)
+- [Bridge Campaign Leads API](https://docs.bridge.new/es/api-reference/campaign-leads.openapi.yaml)

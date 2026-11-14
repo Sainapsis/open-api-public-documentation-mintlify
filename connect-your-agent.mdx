@@ -134,6 +134,24 @@ Ask this after configuring any of the four clients:
 
 A successful check uses a documentation tool and cites a Bridge page or schema. It should identify `conversationId`, `messageBody` and `enableExternalBroadcast` as required. It should distinguish a created Message from a provider delivery receipt. A plausible answer without a tool call or source is not a connection test.
 
+## Read with any AI tool, without MCP
+
+No MCP connection is required to read Bridge documentation. Give an assistant that can fetch URLs the [trilingual documentation index](/llms.txt), then choose the sources for your task and language:
+
+| Language | Page index | Collected documentation |
+| --- | --- | --- |
+| English | [English index](/llms-en.txt) | [English collection](/llms-full-en.txt) |
+| Español | [Índice en español](/llms-es.txt) | [Documentación en español](/llms-full-es.txt) |
+| Português do Brasil | [Índice em português](/llms-pt-br.txt) | [Documentação em português](/llms-full-pt-br.txt) |
+
+The index points to individual `.md` pages and the exact OpenAPI files. The [combined collection](/llms-full.txt) includes all three languages; a language-specific collection is smaller. Collected endpoint descriptions do not replace the complete schemas in OpenAPI.
+
+**Example prompt:**
+
+> Read https://docs.bridge.new/llms.txt and select the English sources for sending a PDF. Read the full attachment guide and the linked REST OpenAPI before writing code. Explain the upload sequence, required fields and delivery limitations. Preserve the published API signatures and cite the URLs you read. Prepare code only; do not make live requests.
+
+If you use MCP search, specify `language: "en"`, `language: "es"` or `language: "pt-BR"` to retrieve the requested language. HTTP exports use `.md`; MCP filesystem page reads use `.mdx`. For a concise capability and source guide, read [Bridge integration guidance](/skill.md).
+
 ## Build with the right contract
 
 The server provides documentation search, complete page/schema reading in a virtual documentation filesystem, and optional documentation feedback. The filesystem tool does not run commands on your computer. Feedback is separate from searching and reading; use it only when you intend to send a documentation comment.

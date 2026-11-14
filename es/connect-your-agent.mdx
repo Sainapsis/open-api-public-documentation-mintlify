@@ -140,6 +140,26 @@ Una comprobación exitosa usa una herramienta de documentación y cita una pági
 
 <a id="build-with-the-right-contract"></a>
 
+<a id="read-with-any-ai-tool-without-mcp"></a>
+
+## Lee la documentación con cualquier IA, sin MCP
+
+No necesitas conectar MCP para leer la documentación de Bridge. Dale a un asistente que pueda abrir URLs el [índice trilingüe de documentación](/llms.txt) y elige las fuentes para tu tarea e idioma:
+
+| Idioma | Índice de páginas | Documentación reunida |
+| --- | --- | --- |
+| English | [English index](/llms-en.txt) | [English collection](/llms-full-en.txt) |
+| Español | [Índice en español](/llms-es.txt) | [Documentación en español](/llms-full-es.txt) |
+| Português do Brasil | [Índice em português](/llms-pt-br.txt) | [Documentação em português](/llms-full-pt-br.txt) |
+
+El índice enlaza a las páginas `.md` individuales y a los archivos OpenAPI exactos. La [colección completa](/llms-full.txt) incluye los tres idiomas; la colección de un solo idioma es más pequeña. Las descripciones de endpoints reunidas no sustituyen los esquemas completos de OpenAPI.
+
+**Ejemplo de prompt:**
+
+> Lee https://docs.bridge.new/llms.txt y elige las fuentes en español para enviar un PDF. Lee la guía completa de adjuntos y el OpenAPI REST enlazado antes de escribir código. Explica la secuencia de carga, los campos obligatorios y las limitaciones de entrega. Conserva las firmas publicadas de la API y cita las URLs que leíste. Prepara solo el código; no hagas solicitudes reales.
+
+Si buscas mediante MCP, especifica `language: "es"` para español, `language: "pt-BR"` para portugués o `language: "en"` para inglés. Las páginas públicas usan `.md`; las lecturas de páginas en el filesystem MCP usan `.mdx`. Consulta también la [guía de capacidades y fuentes de Bridge](/skill.md).
+
 ## Implementa con el contrato correcto
 
 El servidor permite buscar documentación, leer páginas y esquemas completos en un sistema de archivos virtual de documentación y, opcionalmente, enviar comentarios. La herramienta de archivos no ejecuta comandos en tu equipo. Los comentarios son una función separada de la búsqueda y lectura: úsala solo cuando realmente quieras enviar un comentario sobre la documentación.

@@ -1,10 +1,12 @@
 ---
-title: "Faça upload e envie um anexo"
-sidebarTitle: "Anexos"
-description: "Calcule o hash de um arquivo, obtenha um PUT pré-assinado, envie os bytes e anexe à mensagem o ID de mídia retornado."
+title: "Enviar PDF e outros anexos"
+sidebarTitle: "PDF e anexos"
+description: "Envie um PDF ou outro arquivo compatível em uma conversa: calcule o checksum, faça upload na URL pré-assinada e anexe o ID de mídia à mensagem."
+keywords: ["enviar PDF", "upload de PDF", "anexar arquivo", "enviar documento", "upload pré-assinado", "checksumBase64", "mediaIds"]
+boost: 2
 ---
 
-O envio de um anexo exige três operações: solicitar um upload ao Bridge, enviar os bytes à URL retornada e criar uma mensagem com o `mediaId` recebido.
+Para enviar um PDF ou outro anexo compatível, solicite um upload ao Bridge, envie os bytes do arquivo à URL retornada e crie uma mensagem com o `mediaId` recebido. O exemplo completo no servidor abaixo envia um PDF.
 
 <a id="before-you-start"></a>
 
@@ -14,6 +16,16 @@ O envio de um anexo exige três operações: solicitar um upload ao Bridge, envi
 - Escolha um PDF que você tem autorização para compartilhar e confirme se ele atende aos limites da [API de arquivos](/pt-br/api-reference/files-api/criar-uploads-pr%C3%A9-assinados-de-arquivos).
 - Mantenha a chave de API do Bridge no servidor. Não a acrescente à requisição de upload pré-assinada.
 - Escolha explicitamente o sinalizador `enableExternalBroadcast` da mensagem.
+
+<a id="validate-the-file-before-requesting-an-upload"></a>
+
+## Valide o arquivo antes de solicitar um upload
+
+Verifique o arquivo real no seu servidor: a extensão, o tipo MIME e o tamanho em bytes devem cumprir as regras publicadas da [API de arquivos](/pt-br/api-reference/files-api/criar-uploads-pré-assinados-de-arquivos). A requisição de URL pré-assinada contém metadados e um checksum, não os bytes do arquivo nem um campo de tamanho. Uma resposta `201` prepara um upload; não comprova que os bytes reais foram inspecionados, que o tamanho enviado cumpre os limites publicados ou que um provedor de mensagens aceitará o arquivo.
+
+Se você omitir `contentType`, ainda assim copie `presignUrl.headers` para a requisição PUT: a Bridge pode deduzir `Content-Type` pelo nome do arquivo. Se o informar, use o tipo MIME do arquivo real e mantenha-o coerente com `fileType` e a extensão. Renomear um arquivo não converte seu conteúdo.
+
+Após um PUT bem-sucedido, o processamento do upload ainda pode estar pendente. Se uma requisição de Message retornar um [erro de upload de arquivos](/pt-br/error-codes#file-upload-errors), preserve o erro completo e confira a etapa que falhou antes de decidir se outra gravação é segura.
 
 <a id="upload-sequence"></a>
 

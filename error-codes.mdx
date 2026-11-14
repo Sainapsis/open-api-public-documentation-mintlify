@@ -46,6 +46,10 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
 4. Preserve `traceId`, status and the request URL for support. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
 
+### Legacy code strings
+
+Some legacy error handlers append a symbolic name to `code`, for example `BRIDGE_PRELOAD_FILE_0002 | PRELOAD_FILE_IS_PENDING`. Preserve the complete received value for logs and support. For catalog lookup, accept a known bare code or its explicitly recognized legacy form; do not compare human-readable `title` or `detail`, invent an unknown code, or rewrite the response body. The current deployed handler version has not been independently confirmed by this source review.
+
 <Warning>
   **Validation compatibility:** some published OpenAPI responses declare `HTTPValidationError.detail[]` and `application/json`, while the shared API error handler reviewed for this documentation returns validation details as `Problem.errors[]` with `application/problem+json`. This editorial update preserves those published response definitions. Handle both forms; confirmation against the deployed API remains pending before choosing one as the only accepted form in a strict generated client.
 </Warning>
@@ -62,6 +66,17 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 | Timeout, disconnected response or `5xx` after a write | Treat the outcome as uncertain. Inspect the affected resource before resubmitting; an error does not prove that no work was persisted. |
 
 The general retry guidance does not add idempotency to an endpoint. For outbound reuse, recovery and partial writes, see [Agent outbound and handoff](/guides/agent-outbound). Custom Connections has its own [error reference](/lead-capture/errors) and no REST API key.
+
+## File upload errors
+
+The reviewed upload flow defines these legacy error strings. Their suffix is part of the received `code`, not a request field. Consult the operation response contract and keep the compatibility parsing above.
+
+| Legacy `code` | Status | Action |
+| --- | --- | --- |
+| `BRIDGE_PRELOAD_FILE_0001 \| PRELOAD_FILE_NOT_FOUND` | 404 | Check the returned `mediaId` and the upload being referenced. |
+| `BRIDGE_PRELOAD_FILE_0002 \| PRELOAD_FILE_IS_PENDING` | 400 | The file is still pending. Confirm the PUT completed and allow upload processing; do not infer that a failed Message request persisted no work. |
+| `BRIDGE_PRELOAD_FILE_0003 \| PRELOAD_FILE_INVALID_MIME_TYPE` | 400 | Correct the MIME type and logical `fileType` combination. |
+| `BRIDGE_PRELOAD_FILE_0004 \| PRELOAD_FILE_INVALID_NAME` | 400 | Supply a file name with an extension allowed for that logical `fileType`. |
 
 ## Agent Error Codes
 

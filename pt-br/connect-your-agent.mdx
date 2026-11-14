@@ -140,6 +140,26 @@ Uma verificação bem-sucedida usa uma ferramenta de documentação e cita uma p
 
 <a id="build-with-the-right-contract"></a>
 
+<a id="read-with-any-ai-tool-without-mcp"></a>
+
+## Leia a documentação com qualquer IA, sem MCP
+
+Não é necessário conectar o MCP para ler a documentação do Bridge. Forneça a um assistente que possa abrir URLs o [índice trilíngue da documentação](/llms.txt) e escolha as fontes para sua tarefa e idioma:
+
+| Idioma | Índice de páginas | Documentação reunida |
+| --- | --- | --- |
+| English | [English index](/llms-en.txt) | [English collection](/llms-full-en.txt) |
+| Español | [Índice en español](/llms-es.txt) | [Documentación en español](/llms-full-es.txt) |
+| Português do Brasil | [Índice em português](/llms-pt-br.txt) | [Documentação em português](/llms-full-pt-br.txt) |
+
+O índice aponta para páginas `.md` individuais e para os arquivos OpenAPI exatos. A [coleção completa](/llms-full.txt) inclui os três idiomas; a coleção de um único idioma é menor. As descrições de endpoints reunidas não substituem os esquemas completos do OpenAPI.
+
+**Exemplo de prompt:**
+
+> Leia https://docs.bridge.new/llms.txt e selecione as fontes em português para enviar um PDF. Leia o guia completo de anexos e o OpenAPI REST vinculado antes de escrever código. Explique a sequência de upload, os campos obrigatórios e as limitações de entrega. Preserve as assinaturas publicadas da API e cite as URLs que você leu. Prepare apenas o código; não faça requisições reais.
+
+Se pesquisar pelo MCP, especifique `language: "pt-BR"` para português, `language: "es"` para espanhol ou `language: "en"` para inglês. As páginas públicas usam `.md`; as leituras de páginas no filesystem MCP usam `.mdx`. Consulte também o [guia de capacidades e fontes do Bridge](/skill.md).
+
 ## Implemente com o contrato correto
 
 O servidor oferece pesquisa na documentação, leitura completa de páginas e esquemas em um sistema de arquivos virtual de documentação e feedback opcional sobre a documentação. A ferramenta de sistema de arquivos não executa comandos no seu computador. O feedback é separado da pesquisa e da leitura: use-o somente quando quiser enviar um comentário sobre a documentação.
