@@ -34,7 +34,11 @@ async function worker() {
       const bytes = Buffer.from(await response.arrayBuffer()), value = bytes.toString('utf8'), actualSha256 = sha(bytes);
       const result = { ...request, status: response.status, bytes: bytes.length, contentType: response.headers.get('content-type'), sha256: actualSha256, passed: response.status === 200 && (!request.expectedSha256 || request.expectedSha256 === actualSha256) };
       if (request.kind === 'generated') {
-        if (request.path.startsWith('/llms-full')) {
+        if (request.path === '/sitemap.xml') {
+          result.canonicalUrls = (value.match(/<loc>/g) ?? []).length;
+          result.languageAlternates = (value.match(/<xhtml:link\b/g) ?? []).length;
+          result.passed &&= value.startsWith('<?xml ') && value.includes('xmlns:xhtml="http://www.w3.org/1999/xhtml"') && result.canonicalUrls === manifest.sitemap.canonicalCount && result.languageAlternates === manifest.sitemap.canonicalCount * manifest.sitemap.languages.length;
+        } else if (request.path.startsWith('/llms-full')) {
           result.sources = (value.match(/^Source:/gm) ?? []).length;
           const locale = request.path.match(/^\/llms-full-(.+)\.txt$/)?.[1];
           result.expectedSources = locale ? manifest.byLocale[locale].pages : manifest.totals.pages;
@@ -46,7 +50,7 @@ async function worker() {
           result.expectedPageLinks = locale ? manifest.byLocale[locale].pages : manifest.totals.pages;
           result.passed &&= result.editorialAndOperationLinks === result.expectedPageLinks;
         }
-        result.passed &&= /^# /.test(value);
+        if (request.path !== '/sitemap.xml') result.passed &&= /^# /.test(value);
       }
       if (request.kind === 'page') result.passed &&= value.length > 50 && !/^\s*<!doctype html/i.test(value);
       if (request.kind === 'agent-guidance') result.passed &&= value.includes('Bridge integration guidance') && value.includes('/llms-es.txt') && value.includes('/llms-pt-br.txt');

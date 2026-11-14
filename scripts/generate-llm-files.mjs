@@ -49,6 +49,34 @@ export function segments(source) {
 }
 export const fences = (source) => segments(source).filter((x) => x.code).map((x) => x.value);
 
+export function canonicalPath(route) { return route.replace(/\/index$/, '') || '/'; }
+const xmlEscape = (value) => text(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+/** Pair translations by exact source identity or method/path, never translated titles. */
+export function buildSitemap(entries, locales, base) {
+  const families = new Map(), canonicalUrls = new Set();
+  const href = (entry) => base + encodeURI(canonicalPath(entry.route));
+  for (const entry of entries) {
+    const prefix = entry.locale === 'en' ? '' : entry.locale + '/';
+    ensure(!prefix || entry.source.startsWith(prefix), 'Localized source path does not identify its language: ' + entry.source);
+    const source = prefix ? entry.source.slice(prefix.length) : entry.source;
+    const key = entry.kind === 'operation' ? 'operation:' + source + ':' + entry.methodPath : 'page:' + source;
+    if (!families.has(key)) families.set(key, new Map());
+    const family = families.get(key);
+    ensure(!family.has(entry.locale), 'Duplicate language in sitemap translation family: ' + key);
+    ensure(!canonicalUrls.has(href(entry)), 'Duplicate sitemap canonical URL: ' + href(entry));
+    canonicalUrls.add(href(entry)); family.set(entry.locale, entry);
+  }
+  ensure(locales.includes('en'), 'Sitemap x-default requires the reviewed English fallback');
+  for (const [key, family] of families) ensure(locales.every((locale) => family.has(locale)), 'Sitemap translation family is missing a language: ' + key);
+  const body = [];
+  for (const family of families.values()) {
+    const alternates = locales.map((locale) => ({ language: locale === 'pt-br' ? 'pt-BR' : locale, href: href(family.get(locale)) }));
+    alternates.push({ language: 'x-default', href: href(family.get('en')) });
+    for (const entry of family.values()) body.push('  <url>\n    <loc>' + xmlEscape(href(entry)) + '</loc>\n' + alternates.map((alternate) => '    <xhtml:link rel="alternate" hreflang="' + xmlEscape(alternate.language) + '" href="' + xmlEscape(alternate.href) + '" />').join('\n') + '\n  </url>');
+  }
+  return { xml: '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' + body.join('\n') + '\n</urlset>\n', canonicalCount: canonicalUrls.size, familyCount: families.size, operationFamilies: [...families.keys()].filter((key) => key.startsWith('operation:')).length, editorialFamilies: [...families.keys()].filter((key) => key.startsWith('page:')).length, languages: locales.map((locale) => locale === 'pt-br' ? 'pt-BR' : locale).concat('x-default') };
+}
+
 function attributes(source) {
   const result = {};
   for (const match of source.matchAll(/([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]+)\})/g)) result[match[1]] = match[2] ?? match[3] ?? match[4];
@@ -210,7 +238,10 @@ export async function buildArtifacts({ sourceRoot, baseUrl = 'https://docs.bridg
   const agentLinks = agentResources.length ? '\n## Agent guidance\n\n' + agentResources.map((resource) => '- ' + markdownLink(resource.title, resource.url)).join('\n') + '\n' : '';
   artifacts['llms.txt'] = globalHeader + agentLinks + '\n' + inventory + '\n' + specsText(specs, 'OpenAPI specifications') + '\n## Language exports\n\n' + exports.join('\n') + '\n';
   artifacts['llms-full.txt'] = globalHeader + 'This combined corpus contains all three languages. It includes guides and operation descriptions, but does not embed every request and response schema. Read the exact OpenAPI contract linked for each surface before generating requests.\n\n' + agentLinks + '\n' + specsText(specs, 'OpenAPI specifications') + '\n' + generatedEntries.map((entry) => entry.markdown).join('\n---\n\n');
+  const sitemap = buildSitemap(entries, locales, base);
+  artifacts['sitemap.xml'] = sitemap.xml;
   const manifest = { formatVersion: 1, generator: 'scripts/generate-llm-files.mjs', routeGenerator: '@mintlify/scraping processOpenApiPath', baseUrl: base, totals: { locales: locales.length, pages: entries.length, editorialPages: entries.filter((entry) => entry.kind === 'page').length, operationPages: entries.filter((entry) => entry.kind === 'operation').length, specs: specs.length }, byLocale: Object.fromEntries(locales.map((locale) => [locale, { pages: entries.filter((entry) => entry.locale === locale).length, editorialPages: entries.filter((entry) => entry.locale === locale && entry.kind === 'page').length, operationPages: entries.filter((entry) => entry.locale === locale && entry.kind === 'operation').length }])), inputs: Object.fromEntries(Object.entries(inputHashes).sort(([a], [b]) => a.localeCompare(b))), pages: entries.map(({ locale, kind, route, source, title, methodPath, operationId }) => ({ locale, kind, route, source, title, ...(methodPath ? { methodPath, operationId } : {}) })), specs, agentResources, outputs: Object.fromEntries(Object.entries(artifacts).map(([name, value]) => [name, { bytes: Buffer.byteLength(value), sha256: sha(value) }])) };
+  manifest.sitemap = Object.fromEntries(Object.entries(sitemap).filter(([key]) => key !== 'xml'));
   artifacts['llms-manifest.json'] = JSON.stringify(manifest, null, 2) + '\n';
   return { artifacts, manifest };
 }
@@ -218,7 +249,7 @@ export async function buildArtifacts({ sourceRoot, baseUrl = 'https://docs.bridg
 export function applyArtifacts(artifacts, outputRoot, check = false) {
   const changed = [];
   for (const [name, value] of Object.entries(artifacts)) {
-    ensure(/^(?:llms(?:-full)?(?:-[a-z-]+)?\.txt|llms-manifest\.json)$/.test(name), 'Unexpected output filename: ' + name);
+    ensure(/^(?:llms(?:-full)?(?:-[a-z-]+)?\.txt|llms-manifest\.json|sitemap\.xml)$/.test(name), 'Unexpected output filename: ' + name);
     const target = path.join(outputRoot, name); const old = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : null;
     if (old === value) continue;
     changed.push(name);

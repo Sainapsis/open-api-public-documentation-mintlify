@@ -1407,6 +1407,22 @@
     "llms-full.txt": {
       "bytes": 694750,
       "sha256": "d6e4332d5ce8ce8abb68ba3381e15ef6765154157515183281c7363063ab29ce"
+    },
+    "sitemap.xml": {
+      "bytes": 92257,
+      "sha256": "5ffab15d3836acbaec137ca97096ddcbd83ee799f0d3fb5c8369bf03c1c9703f"
     }
+  },
+  "sitemap": {
+    "canonicalCount": 150,
+    "familyCount": 50,
+    "operationFamilies": 26,
+    "editorialFamilies": 24,
+    "languages": [
+      "en",
+      "es",
+      "pt-BR",
+      "x-default"
+    ]
   }
 }

@@ -8,12 +8,17 @@ import { spawnSync } from 'node:child_process';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { applyArtifacts, buildArtifacts, fences, loadToolchain, toMarkdown } from '../../scripts/generate-llm-files.mjs';
+import { applyArtifacts, buildArtifacts, buildSitemap, fences, loadToolchain, toMarkdown } from '../../scripts/generate-llm-files.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const toolchain = await loadToolchain(process.env.BRIDGE_LLM_MODULE_ROOT);
 const digest = (value) => crypto.createHash('sha256').update(value).digest('hex');
 const context = { locale: 'en', base: 'https://docs.bridge.new', route: '/guides/example', aliases: new Map([['/credentials', '/credentials'], ['/guides/example', '/guides/example']]) };
+function parseSitemap(xml) {
+  const python = 'import sys,json,xml.etree.ElementTree as E\nr=E.fromstring(sys.stdin.read())\nn={"s":"http://www.sitemaps.org/schemas/sitemap/0.9","x":"http://www.w3.org/1999/xhtml"}\nassert r.tag=="{http://www.sitemaps.org/schemas/sitemap/0.9}urlset"\nprint(json.dumps([{"loc":u.find("s:loc",n).text,"alternates":{a.attrib["hreflang"]:a.attrib["href"] for a in u.findall("x:link",n)},"alternateCount":len(u.findall("x:link",n)),"lastmod":u.find("s:lastmod",n) is not None} for u in r.findall("s:url",n)]))';
+  const parsed = spawnSync('python3', ['-c', python], { input: xml, encoding: 'utf8' });
+  assert.equal(parsed.status, 0, parsed.stderr); return JSON.parse(parsed.stdout);
+}
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-llm-test-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -143,6 +148,27 @@ test('only allowlisted generated filenames can be written', () => {
   assert.throws(() => applyArtifacts({ '../docs.json': '{}' }, os.tmpdir()), /Unexpected output filename/);
 });
 
+test('sitemap uses exact translation identities, escapes Unicode URLs and omits index aliases and invented lastmod', () => {
+  const entries = [];
+  const routes = { en: '/api-reference/files/send-pdf-&-document', es: '/es/api-reference/archivos/enviar-documentación', 'pt-br': '/pt-br/api-reference/arquivos/enviar-ações' };
+  for (const locale of ['en', 'es', 'pt-br']) {
+    const prefix = locale === 'en' ? '' : locale + '/';
+    entries.push({ locale, kind: 'page', source: prefix + 'index.mdx', route: '/' + prefix + 'index', title: 'Different translated title ' + locale });
+    entries.push({ locale, kind: 'operation', source: prefix + 'api-reference/openapi.yaml', route: routes[locale], methodPath: 'post /files', title: 'Unrelated display label ' + locale });
+  }
+  const sitemap = buildSitemap(entries, ['en', 'es', 'pt-br'], 'https://docs.bridge.new'), parsed = parseSitemap(sitemap.xml);
+  assert.equal(sitemap.familyCount, 2); assert.equal(parsed.length, 6); assert.equal(new Set(parsed.map((entry) => entry.loc)).size, 6);
+  assert.ok(sitemap.xml.includes('&amp;')); assert.ok(sitemap.xml.includes('%C3%A7'));
+  const home = parsed.find((entry) => entry.loc === 'https://docs.bridge.new/');
+  assert.deepEqual(home.alternates, { en: 'https://docs.bridge.new/', es: 'https://docs.bridge.new/es', 'pt-BR': 'https://docs.bridge.new/pt-br', 'x-default': 'https://docs.bridge.new/' });
+  for (const row of parsed) {
+    assert.equal(row.alternateCount, 4); assert.equal(row.lastmod, false); assert.ok(!new URL(row.loc).pathname.endsWith('/index'));
+    for (const target of Object.values(row.alternates)) assert.deepEqual(parsed.find((entry) => entry.loc === target).alternates, row.alternates);
+  }
+  assert.throws(() => buildSitemap(entries.filter((entry) => !(entry.kind === 'operation' && entry.locale === 'es')), ['en', 'es', 'pt-br'], 'https://docs.bridge.new'), /missing a language/);
+  assert.throws(() => buildSitemap([...entries, { locale: 'en', kind: 'page', source: 'duplicate.mdx', route: '/' }], ['en', 'es', 'pt-br'], 'https://docs.bridge.new'), /Duplicate sitemap canonical/);
+});
+
 test('HTTP verifier counts collections separately from indexes and detects a corrupted published export', async (t) => {
   const f = fixture(t), built = await f.build(), output = path.join(f.root, 'generated');
   applyArtifacts(built.artifacts, output); let corrupt = false;
@@ -180,6 +206,22 @@ test('real multilingual corpus preserves every source fence and native verified 
   assert.equal(markdownLinks.filter((url) => !url.endsWith('/skill.md')).length, manifest.totals.pages);
   assert.equal(markdownLinks.filter((url) => url.endsWith('/skill.md')).length, 1);
   assert.equal((artifacts['llms-full.txt'].match(/^Source:/gm) ?? []).length, manifest.totals.pages);
+  const sitemap = parseSitemap(artifacts['sitemap.xml']);
+  assert.equal(sitemap.length, manifest.totals.pages);
+  assert.equal(new Set(sitemap.map((entry) => entry.loc)).size, sitemap.length);
+  assert.equal(manifest.sitemap.operationFamilies, manifest.byLocale.en.operationPages);
+  assert.equal(manifest.sitemap.editorialFamilies, manifest.byLocale.en.editorialPages);
+  const canonical = (route) => 'https://docs.bridge.new' + encodeURI(route.split('/').at(-1) === 'index' ? route.slice(0, -6) || '/' : route);
+  for (const page of manifest.pages) {
+    const row = sitemap.find((item) => item.loc === canonical(page.route));
+    assert.ok(row, 'Missing canonical: ' + page.route); assert.equal(row.alternateCount, 4); assert.equal(row.lastmod, false);
+    for (const locale of ['en', 'es', 'pt-br']) {
+      const peer = manifest.pages.find((item) => item.locale === locale && item.kind === page.kind && (item.kind === 'operation' ? item.methodPath === page.methodPath && item.source.replace(/^(?:es|pt-br)\//, '') === page.source.replace(/^(?:es|pt-br)\//, '') : item.source.replace(/^(?:es|pt-br)\//, '') === page.source.replace(/^(?:es|pt-br)\//, '')));
+      assert.equal(row.alternates[locale === 'pt-br' ? 'pt-BR' : locale], canonical(peer.route));
+    }
+    assert.equal(row.alternates['x-default'], row.alternates.en);
+    for (const target of Object.values(row.alternates)) assert.deepEqual(sitemap.find((item) => item.loc === target).alternates, row.alternates);
+  }
   for (const locale of ['en', 'es', 'pt-br']) {
     assert.equal(manifest.byLocale[locale].pages, defaultPageCount);
     const expectedFences = [];
