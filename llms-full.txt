@@ -815,6 +815,8 @@ The upload sends the same `bytes` that produced the checksum. Do not convert the
 
 For multiple files, preserve the association between each returned `mediaId`, its presigned data, and its corresponding file. Complete every required upload before attaching those IDs to a Message.
 
+Some media need more preparation after the storage upload, such as copying the file, generating a preview, conversion or upload to the messaging provider. These stages can fail independently. A successful PUT or a 201 Message response does not establish that processing or provider delivery has completed. Keep the original file and the returned identifiers for correlation; check the result before repeating a Message request.
+
 ## Handle a failed stage
 
 - **Bridge rejects the file request:** check the extension, `fileType`, content type, size, and checksum against the reference.
@@ -1734,6 +1736,8 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
 4. Preserve `traceId`, status and the request URL for support. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
 
+An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, or when `template.media` supplies both or neither of `mediaId` and `url`. Invalid field types or UUIDs can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
+
 ### Legacy code strings
 
 Some legacy error handlers append a symbolic name to `code`, for example `BRIDGE_PRELOAD_FILE_0002 | PRELOAD_FILE_IS_PENDING`. Preserve the complete received value for logs and support. For catalog lookup, accept a known bare code or its explicitly recognized legacy form; do not compare human-readable `title` or `detail`, invent an unknown code, or rewrite the response body. The current deployed handler version has not been independently confirmed by this source review.
@@ -1755,9 +1759,20 @@ Some legacy error handlers append a symbolic name to `code`, for example `BRIDGE
 
 The general retry guidance does not add idempotency to an endpoint. For outbound reuse, recovery and partial writes, see [Agent outbound and handoff](https://docs.bridge.new/guides/agent-outbound.md). Custom Connections has its own [error reference](https://docs.bridge.new/lead-capture/errors.md) and no REST API key.
 
+## Message reply errors
+
+For `POST .../messages`, the reviewed reply checks define these additional legacy forms:
+
+- `BRIDGE_MESSAGE_0001 | MESSAGE_NOT_FOUND` (`404`): the Message named by `replyToMessageId` was not found.
+- `BRIDGE_MESSAGE_0002 | MESSAGE_IS_NOT_ON_CONVERSATION` (`403`): the reply target belongs to another Conversation. Use a target from the Conversation you are sending to.
+
+Preserve the full `code` string, including its symbolic suffix. These checks concern the reply target, not the attached file's `mediaId`.
+
 ## File upload errors
 
 The reviewed upload flow defines these legacy error strings. Their suffix is part of the received `code`, not a request field. Consult the operation response contract and keep the compatibility parsing above.
+
+The operation determines which file errors apply: `POST .../files` checks metadata and can return `0003` or `0004` below. `POST .../messages` can return `0001` or `0002` when an attached `mediaId` is missing or still pending. Outbound template media has its own error handling; do not substitute these codes for `BRIDGE_AI_LEADSCOUT_0016`.
 
 | Legacy `code` | Status | Action |
 | --- | --- | --- |
@@ -5086,6 +5101,8 @@ La carga envía los mismos `bytes` con los que se calculó el checksum. No convi
 
 Si cargas varios archivos, conserva la relación entre cada `mediaId` devuelto, sus datos prefirmados y el archivo correspondiente. Completa todas las cargas necesarias antes de adjuntar esos IDs a un mensaje.
 
+Algunos medios necesitan más preparación después de la carga: copiar el archivo, generar una vista previa, convertirlo o cargarlo al proveedor de mensajería. Estas etapas pueden fallar por separado. Un PUT correcto o una respuesta 201 al crear el mensaje no demuestran que el procesamiento ni la entrega del proveedor hayan terminado. Conserva el archivo original y los identificadores recibidos para correlacionar el resultado antes de repetir una solicitud de mensaje.
+
 ## Maneja una etapa fallida
 
 - **Bridge rechaza la solicitud del archivo:** comprueba la extensión, `fileType`, el tipo de contenido, el tamaño y el checksum contra la referencia.
@@ -6007,6 +6024,8 @@ Acepta cuerpos de error JSON con `application/json` o `application/problem+json`
 3. Si `detail` es un array, interprétalo como el formato `HTTPValidationError`. Un `detail` de tipo cadena es una explicación, no una lista de errores de campos.
 4. Conserva `traceId`, el estado y la URL de solicitud para soporte. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
 
+Un campo inválido y una regla que relaciona varios campos no tienen por qué compartir el mismo estado. Las reglas del cuerpo saliente revisadas generan `400` con `BRIDGE_CORE_0103` cuando `consent.status` es `GRANTED` y no se incluye `capturedAt`, o cuando `template.media` proporciona ambos o ninguno de `mediaId` y `url`. Los tipos de campo o UUID inválidos pueden producir, en cambio, detalles de validación de solicitud con `422`. Interpreta juntos el estado y el cuerpo de error; no exijas un array `errors` para toda solicitud inválida.
+
 ### Códigos heredados con sufijo
 
 Algunos manejadores de errores heredados añaden un nombre simbólico a `code`, por ejemplo, `BRIDGE_PRELOAD_FILE_0002 | PRELOAD_FILE_IS_PENDING`. Conserva el valor recibido completo para registros y soporte. Para consultar el catálogo, acepta un código simple conocido o su forma heredada reconocida explícitamente; no compares `title` o `detail`, no inventes un código desconocido ni reescribas el cuerpo de la respuesta. Esta revisión del código fuente no ha confirmado de forma independiente qué versión del manejador está desplegada.
@@ -6028,9 +6047,20 @@ Algunos manejadores de errores heredados añaden un nombre simbólico a `code`, 
 
 Esta guía general de reintentos no agrega idempotencia a un endpoint. Para reutilización, recuperación y escrituras parciales, consulta [Conversaciones salientes y transferencias de agentes](https://docs.bridge.new/es/guides/agent-outbound.md). Custom Connections tiene su propia [referencia de errores](https://docs.bridge.new/es/lead-capture/errors.md) y no usa una clave de la API REST.
 
+## Errores al responder a un mensaje
+
+Para `POST .../messages`, las comprobaciones revisadas del mensaje al que respondes definen estas formas heredadas adicionales:
+
+- `BRIDGE_MESSAGE_0001 | MESSAGE_NOT_FOUND` (`404`): no se encontró el Message indicado en `replyToMessageId`.
+- `BRIDGE_MESSAGE_0002 | MESSAGE_IS_NOT_ON_CONVERSATION` (`403`): el mensaje al que respondes pertenece a otra Conversation. Usa uno de la Conversation en la que vas a enviar el mensaje.
+
+Conserva `code` completo, incluido su sufijo simbólico. Estas comprobaciones se refieren al mensaje al que respondes, no al `mediaId` del archivo adjunto.
+
 ## Errores de carga de archivos
 
 El flujo de carga revisado define estos códigos heredados. El sufijo forma parte del `code` recibido, no es un campo de la solicitud. Consulta el contrato de respuesta de la operación y conserva la interpretación compatible anterior.
+
+La operación determina qué errores de archivo corresponden: `POST .../files` comprueba los metadatos y puede devolver los códigos `0003` o `0004` de abajo. `POST .../messages` puede devolver `0001` o `0002` cuando el `mediaId` de un adjunto no existe o sigue pendiente. Los archivos de las plantillas salientes tienen su propio manejo de errores; no sustituyas `BRIDGE_AI_LEADSCOUT_0016` por estos códigos.
 
 | `code` heredado | Estado | Acción |
 | --- | --- | --- |
@@ -9259,6 +9289,8 @@ O upload envia os mesmos `bytes` usados para calcular o checksum. Não converta 
 
 Para vários arquivos, preserve a associação entre cada `mediaId` retornado, os dados pré-assinados e o arquivo correspondente. Conclua todos os uploads necessários antes de anexar os IDs a uma mensagem.
 
+Algumas mídias precisam de mais preparação após o upload, como copiar o arquivo, gerar uma prévia, converter ou enviar o arquivo ao provedor de mensagens. Essas etapas podem falhar de forma independente. Um PUT bem-sucedido ou uma resposta 201 ao criar a mensagem não comprovam que o processamento ou a entrega pelo provedor foram concluídos. Mantenha o arquivo original e os identificadores recebidos para correlacionar o resultado antes de repetir uma requisição de mensagem.
+
 ## Trate uma falha em cada etapa
 
 - **O Bridge rejeita a solicitação de arquivo:** confira extensão, `fileType`, tipo de conteúdo, tamanho e checksum na referência.
@@ -10180,6 +10212,8 @@ Aceite corpos de erro JSON tanto com `application/json` quanto com `application/
 3. Se `detail` for um array, interprete-o no formato `HTTPValidationError`. Um `detail` do tipo string é uma explicação, não uma lista de erros de campo.
 4. Preserve `traceId`, o status e a URL da requisição para suporte. Não exija que `code` ou `extra` existam nem compare mensagens legíveis por pessoas como identificadores.
 
+Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, ou quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`. Tipos de campo ou UUIDs inválidos podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
+
 ### Códigos legados com sufixo
 
 Alguns tratadores de erro legados acrescentam um nome simbólico a `code`, por exemplo, `BRIDGE_PRELOAD_FILE_0002 | PRELOAD_FILE_IS_PENDING`. Preserve o valor recebido completo para logs e suporte. Para consultar o catálogo, aceite um código simples conhecido ou sua forma legada reconhecida explicitamente; não compare `title` ou `detail`, não invente um código desconhecido nem reescreva o corpo da resposta. Esta revisão do código-fonte não confirmou de forma independente qual versão do tratador está implantada.
@@ -10201,9 +10235,20 @@ Alguns tratadores de erro legados acrescentam um nome simbólico a `code`, por e
 
 As orientações gerais de nova tentativa não acrescentam idempotência a um endpoint. Para reutilização outbound, recuperação e gravações parciais, veja [outbound de Agente e transferência](https://docs.bridge.new/pt-br/guides/agent-outbound.md). Custom Connections tem sua própria [referência de erros](https://docs.bridge.new/pt-br/lead-capture/errors.md) e não usa chave da API REST.
 
+## Erros ao responder a uma mensagem
+
+Para `POST .../messages`, as verificações revisadas da mensagem à qual você responde definem estas formas legadas adicionais:
+
+- `BRIDGE_MESSAGE_0001 | MESSAGE_NOT_FOUND` (`404`): o Message indicado em `replyToMessageId` não foi encontrado.
+- `BRIDGE_MESSAGE_0002 | MESSAGE_IS_NOT_ON_CONVERSATION` (`403`): a mensagem à qual você responde pertence a outra Conversation. Use uma da Conversation em que você enviará a mensagem.
+
+Preserve o `code` completo, incluindo seu sufixo simbólico. Essas verificações se referem à mensagem à qual você responde, não ao `mediaId` do anexo.
+
 ## Erros de upload de arquivos
 
 O fluxo de upload revisado define estes códigos legados. O sufixo faz parte do `code` recebido, não é um campo da requisição. Consulte o contrato de resposta da operação e mantenha a interpretação compatível acima.
+
+A operação determina quais erros de arquivo se aplicam: `POST .../files` verifica os metadados e pode retornar os códigos `0003` ou `0004` abaixo. `POST .../messages` pode retornar `0001` ou `0002` quando o `mediaId` de um anexo não existe ou ainda está pendente. Os arquivos de templates outbound têm seu próprio tratamento de erros; não substitua `BRIDGE_AI_LEADSCOUT_0016` por esses códigos.
 
 | `code` legado | Status | Ação |
 | --- | --- | --- |

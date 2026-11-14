@@ -128,6 +128,8 @@ The upload sends the same `bytes` that produced the checksum. Do not convert the
 
 For multiple files, preserve the association between each returned `mediaId`, its presigned data, and its corresponding file. Complete every required upload before attaching those IDs to a Message.
 
+Some media need more preparation after the storage upload, such as copying the file, generating a preview, conversion or upload to the messaging provider. These stages can fail independently. A successful PUT or a 201 Message response does not establish that processing or provider delivery has completed. Keep the original file and the returned identifiers for correlation; check the result before repeating a Message request.
+
 ## Handle a failed stage
 
 - **Bridge rejects the file request:** check the extension, `fileType`, content type, size, and checksum against the reference.

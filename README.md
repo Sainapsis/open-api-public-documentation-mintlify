@@ -42,6 +42,10 @@ Known items requiring confirmation in this revision:
 
 Webhooks sign Python's sorted JSON representation; the timestamp header is not part of the HMAC. Keep the reproducible vector and receiver guidance consistent. `forceSend` permits reuse, is not idempotency and differs between LeadScout and Agents routes. A successful creation or acceptance response is not a delivery receipt.
 
+The Python documentation tests execute the published verifier, durable receiver and WSGI configuration directly from the English, Spanish and Portuguese MDX examples. They use synthetic fixtures, temporary SQLite databases and no network or private backend source. Coverage includes altered signatures, replay after a process restart, concurrent duplicates, different payloads with the same event ID, acknowledgement after commit and storage failure. Run them through the existing `test_*.py` command; copying an example into a separate test fixture would no longer verify what readers actually copy.
+
+Run `node --test tests/documentation/test-*.mjs` for the export checks and the actual PDF recipe with a simulated transport. The recipe tests verify the checksum, signed upload URL and bytes, credential separation, and that rejected presign requests, checksum mismatches and failed uploads stop before Message creation. They also require the translated recipes to retain the same executable code. These checks prove local example behavior, not deployed upload policy or provider delivery.
+
 The feature label is **Custom Connections**. Existing `/lead-capture` documentation paths, API routes, `captureKey`, schema names and error identifiers remain unchanged. Keep REST, webhook and browser credentials clearly separated.
 
 ## Acceptance and publication

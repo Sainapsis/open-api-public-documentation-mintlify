@@ -138,6 +138,8 @@ La carga envía los mismos `bytes` con los que se calculó el checksum. No convi
 
 Si cargas varios archivos, conserva la relación entre cada `mediaId` devuelto, sus datos prefirmados y el archivo correspondiente. Completa todas las cargas necesarias antes de adjuntar esos IDs a un mensaje.
 
+Algunos medios necesitan más preparación después de la carga: copiar el archivo, generar una vista previa, convertirlo o cargarlo al proveedor de mensajería. Estas etapas pueden fallar por separado. Un PUT correcto o una respuesta 201 al crear el mensaje no demuestran que el procesamiento ni la entrega del proveedor hayan terminado. Conserva el archivo original y los identificadores recibidos para correlacionar el resultado antes de repetir una solicitud de mensaje.
+
 <a id="handle-a-failed-stage"></a>
 
 ## Maneja una etapa fallida

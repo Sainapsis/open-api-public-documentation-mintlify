@@ -50,6 +50,8 @@ Acepta cuerpos de error JSON con `application/json` o `application/problem+json`
 3. Si `detail` es un array, interprétalo como el formato `HTTPValidationError`. Un `detail` de tipo cadena es una explicación, no una lista de errores de campos.
 4. Conserva `traceId`, el estado y la URL de solicitud para soporte. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
 
+Un campo inválido y una regla que relaciona varios campos no tienen por qué compartir el mismo estado. Las reglas del cuerpo saliente revisadas generan `400` con `BRIDGE_CORE_0103` cuando `consent.status` es `GRANTED` y no se incluye `capturedAt`, o cuando `template.media` proporciona ambos o ninguno de `mediaId` y `url`. Los tipos de campo o UUID inválidos pueden producir, en cambio, detalles de validación de solicitud con `422`. Interpreta juntos el estado y el cuerpo de error; no exijas un array `errors` para toda solicitud inválida.
+
 <a id="legacy-code-strings"></a>
 
 ### Códigos heredados con sufijo
@@ -75,11 +77,24 @@ Algunos manejadores de errores heredados añaden un nombre simbólico a `code`, 
 
 Esta guía general de reintentos no agrega idempotencia a un endpoint. Para reutilización, recuperación y escrituras parciales, consulta [Conversaciones salientes y transferencias de agentes](/es/guides/agent-outbound). Custom Connections tiene su propia [referencia de errores](/es/lead-capture/errors) y no usa una clave de la API REST.
 
+<a id="message-reply-errors"></a>
+
+## Errores al responder a un mensaje
+
+Para `POST .../messages`, las comprobaciones revisadas del mensaje al que respondes definen estas formas heredadas adicionales:
+
+- `BRIDGE_MESSAGE_0001 | MESSAGE_NOT_FOUND` (`404`): no se encontró el Message indicado en `replyToMessageId`.
+- `BRIDGE_MESSAGE_0002 | MESSAGE_IS_NOT_ON_CONVERSATION` (`403`): el mensaje al que respondes pertenece a otra Conversation. Usa uno de la Conversation en la que vas a enviar el mensaje.
+
+Conserva `code` completo, incluido su sufijo simbólico. Estas comprobaciones se refieren al mensaje al que respondes, no al `mediaId` del archivo adjunto.
+
 <a id="file-upload-errors"></a>
 
 ## Errores de carga de archivos
 
 El flujo de carga revisado define estos códigos heredados. El sufijo forma parte del `code` recibido, no es un campo de la solicitud. Consulta el contrato de respuesta de la operación y conserva la interpretación compatible anterior.
+
+La operación determina qué errores de archivo corresponden: `POST .../files` comprueba los metadatos y puede devolver los códigos `0003` o `0004` de abajo. `POST .../messages` puede devolver `0001` o `0002` cuando el `mediaId` de un adjunto no existe o sigue pendiente. Los archivos de las plantillas salientes tienen su propio manejo de errores; no sustituyas `BRIDGE_AI_LEADSCOUT_0016` por estos códigos.
 
 | `code` heredado | Estado | Acción |
 | --- | --- | --- |
