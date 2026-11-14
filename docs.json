@@ -425,31 +425,5 @@
       "mcp",
       "download-spec"
     ]
-  },
-  "redirects": [
-    {
-      "source": "/llms-en.txt",
-      "destination": "/llms-en.json"
-    },
-    {
-      "source": "/llms-full-en.txt",
-      "destination": "/llms-full-en.json"
-    },
-    {
-      "source": "/llms-es.txt",
-      "destination": "/llms-es.json"
-    },
-    {
-      "source": "/llms-full-es.txt",
-      "destination": "/llms-full-es.json"
-    },
-    {
-      "source": "/llms-pt-br.txt",
-      "destination": "/llms-pt-br.json"
-    },
-    {
-      "source": "/llms-full-pt-br.txt",
-      "destination": "/llms-full-pt-br.json"
-    }
-  ]
+  }
 }

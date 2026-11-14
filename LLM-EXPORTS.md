@@ -28,7 +28,7 @@ node scripts/generate-llm-files.mjs --check
 
 Run generation whenever navigation, page content, page metadata, API annotations, API operations, shared agent instructions or `skill.md` changes. Commit the two root TXT files, six locale JSON files, `sitemap.xml` and `llms-manifest.json` with that source change. CI must run the tests and `--check`; the latter exits with status 1 if any generated output is stale and does not rewrite it. The check prevents a source change from silently publishing old collected content. A separate authorized automation may regenerate and commit outputs, but this script never pushes or creates commits.
 
-Generation also removes only the six former locale TXT files (`llms-en.txt`, `llms-es.txt`, `llms-pt-br.txt` and their `llms-full-` equivalents). In `--check` mode it reports their presence without deleting them. The two root TXT files and unrelated assets are preserved. Keep the configured legacy redirects to their matching JSON resources.
+Generation also removes only the six former locale TXT files (`llms-en.txt`, `llms-es.txt`, `llms-pt-br.txt` and their `llms-full-` equivalents). In `--check` mode it reports their presence without deleting them. The two root TXT files and unrelated assets are preserved.
 
 The generator reads `docs.json`, the navigated MDX sources and the six OpenAPI specifications. Route slugs come from Mintlify's `processOpenApiPath`, not a custom translation or slug algorithm. New or removed native operations enter or leave the inventory when generation runs. Page/spec counts are derived from source rather than fixed at 150.
 
