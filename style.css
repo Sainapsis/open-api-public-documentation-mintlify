@@ -183,6 +183,5 @@ html:not(.dark) .card:hover {
 
 /* Section aliases use the same sticky-header offset as native headings. */
 #content-area a[id]:not([href]) {
-  display: block;
   scroll-margin-top: var(--scroll-mt, 9.5rem);
 }
