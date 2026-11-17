@@ -1,0 +1,246 @@
+openapi: 3.1.0
+info:
+  title: Bridge Campaign Leads API
+  description: >-
+    Endpoint público para registrar leads captados pela página de destino de um
+    tenant. Não é necessária uma chave de API: quem chama é identificado pelo
+    workspace e pela chave de captura, junto com um token do reCAPTCHA v3.
+  version: 1.0.0
+servers:
+  - url: https://integrations-us.app.bridge.new/api/v1
+paths:
+  /leadscout/campaign-leads:
+    post:
+      tags:
+        - Campaign leads
+      summary: Registrar um lead de campanha
+      description: >-
+        Registra um lead captado pela página de destino de um tenant e coloca na
+        fila a primeira mensagem de saída do WhatsApp. Um 202 significa que o
+        lead foi aceito, não que uma mensagem foi enviada.
+      operationId: create_campaign_lead_leadscout_campaign_leads_post
+      parameters:
+        - description: >-
+            Obrigatório ao chamar de um navegador. Uma solicitação CORS
+            preflight não tem corpo, portanto o tenant não pode ser resolvido
+            nem Access-Control-Allow-Origin pode ser devolvido a menos que o
+            workspace esteja na URL. Chamadas de servidor para servidor não
+            fazem preflight e podem omiti-lo.
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: "null"
+            title: Workspaceid
+            description: >-
+              Obrigatório ao chamar de um navegador. Uma solicitação CORS
+              preflight não tem corpo, portanto o tenant não pode ser resolvido
+              nem Access-Control-Allow-Origin pode ser devolvido a menos que o
+              workspace esteja na URL. Chamadas de servidor para servidor não
+              fazem preflight e podem omiti-lo.
+          name: workspaceId
+          in: query
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignLeadRequestDto"
+        required: true
+      responses:
+        "202":
+          description: "Aceito e na fila. NÃO enviado: um serviço separado transmite a
+            primeira mensagem depois."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignLeadAcceptedDto"
+        "400":
+          description: Payload malformado, telefone inutilizável, consentimento não
+            concedido ou brand ausente.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetailsDto"
+        "403":
+          description: Captura desativada, chave de captura incorreta, captcha rejeitado
+            ou origem não permitida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetailsDto"
+        "422":
+          description: Não foi possível contatar o provedor de captcha. É transitório; é
+            seguro tentar novamente.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetailsDto"
+        "500":
+          description: Falha inesperada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetailsDto"
+components:
+  schemas:
+    CampaignLeadAcceptedDto:
+      properties:
+        requestId:
+          type: string
+          title: Requestid
+          description: ID de correlação deste envio. Presente apenas na aceitação; as
+            respostas de erro não incluem um.
+      type: object
+      required:
+        - requestId
+      title: CampaignLeadAcceptedDto
+      description: >-
+        Corpo da resposta `202 Accepted`.
+
+
+        Tem um nome em vez de ser apenas um `dict[str, str]` para que o schema
+        publicado informe qual é o único campo e para que serve, em vez de “um
+        objeto com propriedades de texto”.
+    CampaignLeadRequestDto:
+      properties:
+        workspaceId:
+          type: string
+          title: Workspaceid
+        captureKey:
+          type: string
+          title: Capturekey
+        cellphone:
+          type: string
+          title: Cellphone
+        name:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: Name
+        brandId:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: Brandid
+        landingUri:
+          type: string
+          title: Landinguri
+        utm:
+          additionalProperties:
+            type: string
+          type: object
+          title: Utm
+        consent:
+          $ref: "#/components/schemas/ConsentDto"
+        recaptchaToken:
+          type: string
+          title: Recaptchatoken
+      type: object
+      required:
+        - workspaceId
+        - captureKey
+        - cellphone
+        - landingUri
+        - consent
+        - recaptchaToken
+      title: CampaignLeadRequestDto
+      description: Contrato de comunicação de `POST api/v1/leadscout/campaign-leads`.
+    ConsentDto:
+      properties:
+        status:
+          $ref: "#/components/schemas/ConsentStatus"
+        capturedAt:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+          title: Capturedat
+      type: object
+      required:
+        - status
+      title: ConsentDto
+      description: >-
+        Declaração do tenant de que o visitante deu permissão para receber
+        mensagens.
+
+
+        Isto NÃO é `CommercialConsentState`, nosso registro do ciclo de vida do
+        consentimento de um contato. É uma afirmação externa que não podemos
+        verificar: comprova o que nos foi informado e quando, que é o que
+        apresentaríamos se o portfólio de um tenant fosse restringido.
+    ConsentStatus:
+      type: string
+      enum:
+        - GRANTED
+        - NOT_PROVIDED
+      title: ConsentStatus
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: "#/components/schemas/ValidationError"
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ProblemDetailsDto:
+      properties:
+        type:
+          type: string
+          title: Type
+          description: Código de erro estável legível por máquinas.
+        title:
+          type: string
+          title: Title
+          description: Resumo breve legível por humanos.
+        status:
+          type: integer
+          title: Status
+          description: Código de status HTTP, repetido no corpo.
+        detail:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: Detail
+          description: Detalhamento opcional. Ausente na maioria das rejeições.
+      type: object
+      required:
+        - type
+        - title
+        - status
+      title: ProblemDetailsDto
+      description: >-
+        Detalhes de problema do RFC 9457, conforme emitidos pelo tratador global
+        de exceções.
+
+
+        O contexto é removido deliberadamente antes de chegar a quem chama: em
+        um endpoint público, uma rejeição detalhada informa a um invasor em qual
+        verificação ele falhou.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError
+    ResponseValidationError:
+      properties:
+        detail:
+          items:
+            $ref: "#/components/schemas/ValidationError"
+          type: array
+          title: Detail
+      type: object
+      title: ResponseValidationError

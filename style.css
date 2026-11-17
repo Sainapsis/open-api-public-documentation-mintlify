@@ -1,6 +1,187 @@
-/* The PNG logo lockup (icon container + wordmark) is proportionally taller than
-   the old SVG, so at Mintlify's default 28px logo height its wordmark reads too
-   small. Bump the navbar logo height to compensate. */
+/* Keep the Bridge lockup readable and proportional to the navbar controls. */
 .nav-logo {
-  height: 2.5rem;
+  height: 2rem;
+  width: auto;
+  max-width: 9rem;
+  object-fit: contain;
+}
+
+/* Bridge documentation: visual tokens shared with help.bridge.new.
+   Keep API playground and code typography under Mintlify's native controls. */
+:root {
+  --bridge-blue: #3e6ee5;
+  --bridge-navy: #0e2841;
+  --bridge-ink: #1a1a2e;
+  --bridge-muted: #6d6c69;
+  --bridge-border: #e1e8f2;
+  --bridge-soft: #f0f5fe;
+  --bridge-teal: #3a8a9c;
+}
+
+body {
+  font-family: "Helvetica Neue", Roboto, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#page-title {
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+
+#content-area h2,
+#content-area h3 {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+html:not(.dark) #page-title,
+html:not(.dark) #content-area h2,
+html:not(.dark) #content-area h3 {
+  color: var(--bridge-navy);
+}
+
+html:not(.dark) #navbar {
+  background-color: rgba(255, 255, 255, 0.96);
+}
+
+#search-bar-entry,
+#search-bar-entry-mobile {
+  border-radius: 12px;
+}
+
+html:not(.dark) #search-bar-entry {
+  background: #fff;
+  border-color: var(--bridge-border);
+  box-shadow: 0 1px 3px rgba(14, 40, 65, 0.04);
+}
+
+#topbar-cta-button {
+  border-radius: 8px;
+}
+
+.card {
+  border-radius: 12px;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+html:not(.dark) .card {
+  border-color: var(--bridge-border);
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(14, 40, 65, 0.035);
+}
+
+html:not(.dark) .card:hover {
+  border-color: #b8ccf5;
+  background-color: #f8faff;
+  box-shadow: 0 5px 16px rgba(14, 40, 65, 0.06);
+}
+
+.callout,
+.code-block {
+  border-radius: 12px;
+}
+
+/* Comfortable reading without changing native code typography. */
+#content p,
+#content li {
+  line-height: 1.65;
+}
+
+.bridge-surfaces .card {
+  margin-top: 0;
+}
+
+/* Visible focus and a generous logo target retain keyboard and touch access. */
+.card:focus-visible,
+#navbar a:focus-visible,
+#sidebar a:focus-visible,
+#search-bar-entry:focus-visible {
+  outline: 2px solid #3865d8;
+  outline-offset: 3px;
+}
+
+#navbar a:has(.nav-logo) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  .nav-logo {
+    height: 1.75rem;
+    max-width: 8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}
+
+/* Subscription version is a label, not an interactive control. */
+.bridge-version-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(62, 110, 229, 0.10);
+  color: #3e6ee5;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.dark .bridge-version-badge { color: #93b5ff; }
+
+/* Keep the outbound decision table legible and keyboard-scrollable. */
+.bridge-comparison { overflow-x: auto; margin: 1.25rem 0; border-radius: 6px; }
+.bridge-comparison table { display: table; min-width: 720px; width: 100%; overflow: visible; margin: 0; }
+.bridge-comparison:focus-visible { outline: 2px solid #3e6ee5; outline-offset: 3px; }
+
+/* Put coding-assistant setup before the task catalogue. */
+.bridge-ai-start {
+  margin: 1.75rem 0 2rem;
+  padding: 20px 24px;
+  border: 1px solid #cbd9f5;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0f5fe 0%, #fafcff 100%);
+}
+.bridge-ai-start .bridge-ai-eyebrow {
+  margin: 0 0 8px;
+  color: #2f58c4;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.bridge-ai-start h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.5rem; }
+.bridge-ai-start > p:last-child { margin-bottom: 0; font-size: 13px; }
+.bridge-ai-providers { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.bridge-ai-providers a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid #c7d5f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #234cae;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.bridge-ai-providers a:hover { border-color: #3e6ee5; background: #f7faff; }
+.bridge-ai-providers a:focus-visible { outline: 2px solid #3e6ee5; outline-offset: 3px; }
+.dark .bridge-ai-start { background: linear-gradient(135deg, #112441, #0f1b2e); border-color: #29446b; }
+.dark .bridge-ai-start .bridge-ai-eyebrow { color: #b3caff; }
+.dark .bridge-ai-providers a { background: #152640; color: #c1d4ff; border-color: #38537c; }
+.dark .bridge-ai-providers a:hover { background: #1c3356; border-color: #93b5ff; }
+@media (max-width: 640px) {
+  .bridge-ai-start { padding: 18px; }
+  .bridge-ai-providers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bridge-ai-providers a { font-size: 13px; }
+}
+
+/* Section aliases use the same sticky-header offset as native headings. */
+#content-area a[id]:not([href]) {
+  scroll-margin-top: var(--scroll-mt, 9.5rem);
 }

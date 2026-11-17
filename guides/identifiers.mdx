@@ -1,0 +1,63 @@
+---
+title: "Glossary and identifiers"
+sidebarTitle: "Concepts and IDs"
+description: "Find the correct workspace, Contact, Bridge User, Agent, conversation, template, line, and media identifiers without confusing them."
+keywords: ["identifier", "workspaceId", "contactId", "userId", "agentId", "providerChannelId", "brandId", "templateId", "mediaId"]
+---
+
+## Start with the right integration
+
+The **REST Integrations API** reads or changes workspace resources from your server using `x-api-key`. **Webhooks** send events from Bridge to your receiver. **Custom Connections** registers leads from a landing page using its separate public endpoint, `captureKey`, and reCAPTCHA.
+
+An API Key is a server-side secret. A Custom Connections `captureKey` is designed to be in the landing page. These values are not interchangeable. See [Authentication](/credentials) and [Custom Connections](/lead-capture).
+
+## People, Agents, and lines
+
+- A **Contact** is the external person your business communicates with. Contact endpoints and external conversation participants refer to this person.
+- A **Bridge User** is an internal human user. Internal-user lookup and handoff assignees refer to these users.
+- An **Agent** is an automated Agent exposed by the Agents API. Its type is `LEADSCOUT` or `SERVICE_AGENT`; it has its own identifier, availability, and lines.
+- A **provider** is a channel type, such as `WHATSAPP`. A **line** is a specific channel used for a conversation. A provider type, phone number, and `providerChannelId` are different values.
+- A **workspace** scopes the request. A **brand** is another identifier used where the operation requires or accepts it; it is not a workspace or a line.
+
+A Contact's `ownerId` refers to a Bridge User, not an automated Agent. Resolve it with the [internal-user read endpoint](/api-reference/internal-users-api/retrieve-an-internal-user-by-id).
+
+## Where each identifier comes from
+
+Use identifiers from the intended workspace. Do not reuse an identifier merely because the same phone number, email, or name appears in another workspace.
+
+| Value you need | Where to obtain or verify it | What to pass |
+| --- | --- | --- |
+| `workspaceId` | Use the workspace identifier supplied for your integration. If it is missing, ask your Bridge administrator. The published REST contract does not provide a global workspace-list endpoint. | The workspace ID in the operation's path. Custom Connections also requires it in its body and, for browser requests, query string. |
+| Contact ID | [Look up a Contact](/api-reference/contacts-api/retrieve-a-contact-by-an-identifier) by `PHONE`, `EMAIL`, or `ID`; list, create, and upsert responses also return the Contact's `id`. | The returned `id` for `{contactId}` or an identifier object with `identifierType: "ID"`, where that operation accepts it. |
+| Bridge User ID | [Look up an internal user](/api-reference/internal-users-api/retrieve-an-internal-user-by-an-identifier) by `EMAIL` or `ID`, or use the internal-user list. | The returned `id` for `{userId}` or an internal identifier object. Internal-user lookup does not accept `PHONE`. |
+| Agent ID | [List Agents](/api-reference/agents-api/list-the-agents-of-a-workspace). Read `agents[].id`, `type`, and `available`. | `agents[].id` for `{agentId}` in Agent outbound. `available` indicates whether that Agent can start conversations. |
+| Agent's line ID | In the same Agents response, read that Agent's `lines[].providerChannelId`. | A line ID belonging to that Agent when the operation accepts `contact.providerChannelId`. Read the outbound reference for line-selection rules. |
+| General provider channel | [List provider channels](/api-reference/provider-channels-api/get-provider-channels-by-workspace-id). This response publishes `provider` and `identifier`, not a channel UUID. | Use these fields only for the purposes documented by the consuming operation. Do not substitute the phone-like `identifier` for `providerChannelId`. |
+| `brandId` | An Agent response can expose its `brandId`. For another flow, obtain the intended brand ID from your integration configuration or administrator; the published contract does not provide a general brand-list endpoint. | The brand ID accepted by the operation. A brand ID is not a line ID. |
+| `teamId` | Obtain the intended internal team ID from your Bridge administrator or integration configuration. The published REST contract does not provide a team-list endpoint. | The documented team assignment option on conversation creation; do not also supply `participants.internals`. |
+| Conversation ID | Create or retrieve a conversation and retain its returned `id`. Outbound responses contain `conversation.id`. | `{conversationId}` or `conversationId`, exactly where the operation requires it. |
+| Template | [Discover a template](/api-reference/templates-api/discover-a-templates-agnostic-variable-inventory) using its ID or name. The response returns `id`, `name`, and variable keys. | Use the selector expected by the sending operation; see the next section. |
+| `mediaId` | [Create presigned uploads](/api-reference/files-api/create-presigned-uploads-for-files). Each response array item has `mediaId` and `presignUrl`. Complete the required PUT upload. | The returned `mediaId` in `mediaIds`, or the media field supported by that operation. Do not send the presigned URL as a media ID. |
+
+<Note>
+  Agents lists expose line IDs in the context of each Agent. This is not a general discovery method for every workspace line. If another flow requires a `providerChannelId` you cannot obtain from the published response, ask your Bridge administrator or [support](mailto:support@sainapsis.com) for the intended line ID. Do not generate one or derive one from a telephone number.
+</Note>
+
+## Similar names can require different fields
+
+**Contact lookup** takes query parameters named `type` and `value`. An external participant in a conversation takes `identifier` and `identifierType`, plus the other fields required by that operation. Do not copy a lookup query directly into a participant body.
+
+**Template discovery** accepts an ID or name in the path parameter `{templateId}`. **Conversation onboarding** uses `onboardingTemplates[].templateId`. **Outbound template selection** uses the `template` object's `id` or `name`; read that endpoint's schema rather than renaming every selector to `templateId`.
+
+Use each returned variable's `key` in template `parameters`. Variable keys are not Meta slot indexes. The [template parameters guide](/templates-and-parameters) explains required values, defaults, and the difference between omitted and blank values.
+
+## Keep result identifiers separate
+
+| Returned value | Identifies | What it does not establish by itself |
+| --- | --- | --- |
+| `messageId` | A message created through the message endpoint | A provider delivery receipt |
+| `trackingId` | An accepted LeadScout handoff request | Completed assignment of the requested users |
+| `requestId` | An accepted Custom Connections submission | Delivery of the opening WhatsApp message |
+| `eventId` | An identifier supplied with a webhook event; some event families use entity-derived values | A globally unique deduplication key or delivery-order guarantee |
+
+Follow [Receive events](/webhooks/receive-events) for event identity and duplicate handling. See [Responses and errors](/guides/responses) for status codes, asynchronous results, and retry decisions. For a complete flow, follow [your first conversation](/guides/first-conversation) or [sending an attachment](/guides/send-attachments).

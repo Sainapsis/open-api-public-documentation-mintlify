@@ -1,0 +1,263 @@
+---
+title: "Parâmetros de templates de WhatsApp"
+sidebarTitle: "Templates de WhatsApp"
+description: "Abra uma conversa com seus próprios templates de WhatsApp, preencha as variáveis e trate os erros que a requisição pode retornar."
+keywords: ["mensagens iniciais", "onboardingTemplates", "template", "parâmetros", "variáveis", "callerMustSupply", "isCustom", "default", "WhatsApp", "422"]
+---
+
+<a id="overview"></a>
+
+## Visão geral
+
+Ao criar uma conversa, `onboardingTemplates` permite escolher, em ordem, os templates de WhatsApp usados na abertura. Um template pode conter variáveis, como número de pedido, data de entrega ou nome do Contato. O Bridge preenche algumas delas para cada Contato; outras só você pode fornecer, enviando-as em `parameters` da entrada correspondente.
+
+O fluxo tem três etapas:
+
+1. Consulte as variáveis do template.
+2. Decida quais valores enviar.
+3. Envie-os com `POST .../conversations`.
+
+<Note>
+  Todas as verificações descritas nesta página ocorrem antes de qualquer criação. Se a requisição for rejeitada, **nenhuma conversa é criada e nenhuma mensagem é enviada**. Você pode corrigi-la e enviá-la novamente.
+</Note>
+
+---
+
+<a id="1-find-the-templates-variables"></a>
+
+## 1. Encontre as variáveis do template
+
+```http
+GET /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}
+x-api-key: YOUR_API_KEY
+```
+
+`templateId` aceita o `id` ou o `name` do template. A resposta lista suas variáveis:
+
+```json
+{
+  "id": "f0000040-0000-4000-8000-000000000040",
+  "name": "order_shipped_promo",
+  "language": "es",
+  "driftWarning": { "hasDrift": false, "stale": [], "missingLabels": [] },
+  "variables": [
+    { "key": "first_name", "label": "Contact first name", "callerMustSupply": false, "isCustom": false, "default": null },
+    { "key": "order_number", "label": "Order number", "callerMustSupply": true, "isCustom": false, "default": null },
+    { "key": "delivery_date", "label": "Delivery date", "callerMustSupply": true, "isCustom": false, "default": null },
+    { "key": "tracking_code", "label": "Tracking code", "callerMustSupply": false, "isCustom": true, "default": "pending" }
+  ]
+}
+```
+
+`driftWarning` é apenas diagnóstico: informa diferenças entre as variáveis declaradas e o snapshot do template na Meta e nunca bloqueia um envio. A tabela abaixo descreve cada item de `variables`.
+
+| Campo | Significado |
+| ----- | ------- |
+| `key` | O nome a usar em `parameters` |
+| `label` | Uma descrição da variável legível por pessoas |
+| `callerMustSupply` | `true` quando você precisa fornecer um valor não vazio porque o Bridge não tem uma fonte para ele; `false` nos demais casos |
+| `isCustom` | Indica se a variável é personalizada: um valor que só você conhece, com um texto padrão |
+| `default` | Para uma variável personalizada, o texto enviado quando você não fornece um valor; `null` nos demais casos |
+
+Um template que não pertence ao workspace retorna `404` com `BRIDGE_TEMPLATE_0001`.
+
+---
+
+<a id="2-decide-which-values-to-send"></a>
+
+## 2. Decida quais valores enviar
+
+| Variável | O que significa | O que fazer |
+| -------- | ------------- | ---------- |
+| `callerMustSupply: true` | O Bridge não tem uma fonte para esse valor | **Obrigatório.** Envie um valor não vazio para sua `key` |
+| `callerMustSupply: false`, `isCustom: false` | O Bridge preenche o valor para cada Contato, como o primeiro nome | **Opcional.** Omita-o para manter o valor do Bridge |
+| `isCustom: true` | Um valor que só você conhece, com um `default` | **Opcional.** Envie seu valor, omita-o ou envie-o vazio para usar o `default` |
+
+Um valor enviado para uma variável `callerMustSupply: false` substitui o valor do Bridge e é usado **para todos os Contatos** da conversa.
+
+<Warning>
+  Para uma variável não personalizada, mantenha o valor do Bridge **omitindo a chave**. Um valor vazio não significa "usar o padrão": ele é enviado como você o escreveu. Uma variável obrigatória vazia ou composta apenas de espaços é rejeitada como ausente. Somente variáveis personalizadas (`isCustom: true`) tratam um valor vazio como não enviado e usam seu `default`.
+</Warning>
+
+---
+
+<a id="3-send-the-parameters"></a>
+
+## 3. Envie os parâmetros
+
+Cada entrada de `onboardingTemplates` recebe o `id` do template retornado na etapa 1 e seus `parameters`, indexados pela `key` da variável. A posição na lista define a ordem de envio.
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/conversations
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+```
+
+```json
+{
+  "participants": {
+    "externals": [
+      {
+        "identifier": "+13802098869",
+        "identifierType": "PHONE",
+        "messageProviderType": "WHATSAPP",
+        "brandId": "YOUR_BRAND_ID"
+      }
+    ]
+  },
+  "onboardingTemplates": [
+    {
+      "templateId": "f0000040-0000-4000-8000-000000000040",
+      "parameters": {
+        "order_number": "A-10492",
+        "delivery_date": "3 de octubre"
+      }
+    }
+  ]
+}
+```
+
+Neste exemplo, `first_name` e `tracking_code` são omitidos. Assim, cada Contato recebe seu próprio primeiro nome, e `tracking_code` é enviado com seu valor padrão, `pending`.
+
+Limites por template: no máximo **50** parâmetros, chaves de até **128** caracteres e valores de até **1.024** caracteres. Requisições que ultrapassam esses limites são rejeitadas como malformadas; veja [erros](#errors).
+
+Conforme a configuração do workspace, seus templates substituem toda a sequência inicial ou apenas o primeiro template. No segundo caso, o restante da sequência configurada ainda é enviado depois dos seus.
+
+---
+
+<a id="whatsapp-value-rules"></a>
+
+## Regras de valores do WhatsApp
+
+O WhatsApp rejeita determinados valores no envio da mensagem. O Bridge os verifica antes para que a requisição falhe enquanto você ainda pode corrigi-los:
+
+| Regra | Limite |
+| ---- | ----- |
+| Quebras de linha e tabulações | Não permitidas: sem `\n`, `\r` ou `\t` |
+| Espaços consecutivos | No máximo quatro seguidos |
+| Cabeçalho | O texto do cabeçalho com o valor inserido deve caber em **60** caracteres |
+| Botão de URL | O link do botão com o valor inserido deve caber em **2.000** caracteres |
+| Corpo | O texto do corpo mais todos os valores deve caber em **1.024** caracteres |
+
+<Warning>
+  O limite do corpo inclui os valores que o Bridge preenche para cada Contato, como o primeiro nome. O Bridge só consegue verificar os valores disponíveis no momento da requisição; reserve espaço para os demais.
+</Warning>
+
+O Bridge nunca remove espaços das extremidades nem reescreve seus valores: o que você envia é o que o Contato recebe.
+
+---
+
+<a id="errors"></a>
+
+## Erros
+
+Todos os erros usam o formato `application/problem+json` descrito em [códigos de erro](/pt-br/error-codes). Escolha o tratamento por `code`, nunca por `title`.
+
+| Código | Status | Quando ocorre | `extra` |
+| ---- | ------ | ---- | ------- |
+| `BRIDGE_CONVERSATION_0601` | 404 | O template não existe | `templateId`, `workspaceId` |
+| `BRIDGE_CONVERSATION_0602` | 400 | O template pertence a outro workspace | `templateId`, `workspaceId` |
+| `BRIDGE_CONVERSATION_0603` | 400 | O template não foi aprovado para a linha pela qual um participante será contatado | `templateId`, `workspaceId`, `userIds` (os Contatos cuja linha não tem aprovação, quando conhecidos) |
+| `BRIDGE_CONVERSATION_0604` | 422 | Uma variável obrigatória está ausente ou vazia | `templateId`, `missingVariables: [{key, label}]` |
+| `BRIDGE_CONVERSATION_0605` | 422 | Uma chave de `parameters` não está entre as variáveis do template | `templateId`, `unknownKeys: [key]` |
+| `BRIDGE_CONVERSATION_0606` | 422 | `parameters` foi enviado para um template que não é de WhatsApp | `templateId` |
+| `BRIDGE_CONVERSATION_0607` | 422 | Um valor viola uma [regra do WhatsApp](#whatsapp-value-rules) | `templateId`, `invalidVariables: [{key, label, reason}]` |
+| `BRIDGE_CONVERSATION_0608` | 422 | Um template enviado pelo workspace depois do seu exige valores que só o integrador pode fornecer | `templateId`, `origin: "WORKSPACE_CONFIGURATION"` |
+
+<a id="missing-values-—-0604"></a>
+
+### Valores ausentes — `0604`
+
+```json
+{
+  "title": "A template named in the onboarding override is missing values only the caller can provide",
+  "status": 422,
+  "detail": "A template named in the onboarding override is missing values only the caller can provide",
+  "code": "BRIDGE_CONVERSATION_0604",
+  "extra": {
+    "templateId": "f0000040-0000-4000-8000-000000000040",
+    "missingVariables": [
+      { "key": "delivery_date", "label": "Delivery date" }
+    ]
+  }
+}
+```
+
+<a id="invalid-values-—-0607"></a>
+
+### Valores inválidos — `0607`
+
+```json
+{
+  "title": "Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent",
+  "status": 422,
+  "detail": "Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent",
+  "code": "BRIDGE_CONVERSATION_0607",
+  "extra": {
+    "templateId": "f0000040-0000-4000-8000-000000000040",
+    "invalidVariables": [
+      { "key": "order_number", "label": "Order number", "reason": "NEWLINE" }
+    ]
+  }
+}
+```
+
+`reason` informa a primeira regra violada pelo valor:
+
+| `reason` | Significado |
+| -------- | ------- |
+| `NEWLINE` | O valor contém `\n` ou `\r` |
+| `TAB` | O valor contém `\t` |
+| `CONSECUTIVE_SPACES` | O valor contém mais de quatro espaços seguidos |
+| `TOO_LONG` | O cabeçalho ou botão de URL ultrapassa o limite com o valor inserido |
+| `BODY_TOO_LONG` | O corpo ultrapassa 1.024 caracteres; todos os valores de corpo enviados são listados |
+
+<a id="0608-is-not-fixed-by-changing-the-request"></a>
+
+### O erro `0608` não se resolve alterando a requisição
+
+`BRIDGE_CONVERSATION_0608` ocorre somente em workspaces em que seus templates substituem apenas o primeiro template da sequência inicial. Isso significa que um template enviado pelo workspace depois do seu precisa de valores que só o integrador pode fornecer e que a API não consegue suprir. Peça a um administrador para alterar a sequência inicial.
+
+<a id="malformed-requests"></a>
+
+### Requisições malformadas
+
+Uma requisição incompatível com o esquema — mais de 50 parâmetros, chave com mais de 128 caracteres, valor com mais de 1.024 caracteres ou campo desconhecido — é rejeitada com `422` **sem `code`**. Nesse caso, uma lista `errors` aponta cada problema:
+
+```json
+{
+  "title": "Unprocessable content",
+  "status": 422,
+  "errors": [
+    {
+      "loc": ["body", "onboardingTemplates", 0, "parameters", "order_number"],
+      "msg": "String should have at most 1024 characters",
+      "type": "string_too_long"
+    }
+  ]
+}
+```
+
+<a id="evaluation-order"></a>
+
+### Ordem de avaliação
+
+As verificações seguem esta ordem, e **o primeiro erro prevalece**:
+
+1. Limite de requisições — `429`
+2. Formato da requisição — `422` sem `code`
+3. Participantes, marca e linha — `400` / `409`, por exemplo, `BRIDGE_BRAND_0101` ou `BRIDGE_PROVIDER_CHANNEL_0001`
+4. Cada template, na ordem da lista: `0601` / `0602` → `0603` → `0606` → `0605` → `0604` → `0607`
+5. `0608`, somente em workspaces onde seus templates substituem apenas o primeiro template
+
+Por isso, corrigir um erro pode revelar o próximo. Os valores de um template posterior só são verificados depois que todos os anteriores passam.
+
+---
+
+<a id="related-topics"></a>
+
+## Tópicos relacionados
+
+- [Criar uma conversa](/pt-br/api-reference/conversations-api/criar-conversa-com-identifica%C3%A7%C3%A3o-flex%C3%ADvel-de-usu%C3%A1rios) — Referência completa da requisição e resposta
+- [Códigos de erro](/pt-br/error-codes) — Todos os códigos, incluindo erros de marca e linha
+- [Limites de requisições](/pt-br/rate-limits) — Tratamento de `429`

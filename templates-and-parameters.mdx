@@ -1,6 +1,6 @@
 ---
-title: "Onboarding template parameters"
-sidebarTitle: "Onboarding template parameters"
+title: "WhatsApp template parameters"
+sidebarTitle: "WhatsApp templates"
 description: "Open a conversation with your own WhatsApp templates, fill their variables, and handle every error the request can return."
 keywords: ["onboarding", "onboardingTemplates", "template", "parameters", "variables", "callerMustSupply", "isCustom", "default", "WhatsApp", "422"]
 ---
@@ -35,6 +35,7 @@ x-api-key: YOUR_API_KEY
   "id": "f0000040-0000-4000-8000-000000000040",
   "name": "order_shipped_promo",
   "language": "es",
+  "driftWarning": { "hasDrift": false, "stale": [], "missingLabels": [] },
   "variables": [
     { "key": "first_name", "label": "Contact first name", "callerMustSupply": false, "isCustom": false, "default": null },
     { "key": "order_number", "label": "Order number", "callerMustSupply": true, "isCustom": false, "default": null },
@@ -44,11 +45,13 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
+`driftWarning` is diagnostic only: it reports differences between the declared variables and Meta's template snapshot and never blocks a send. The table below describes each item in `variables`.
+
 | Field | Meaning |
 | ----- | ------- |
 | `key` | The name to use in `parameters` |
 | `label` | A human-readable description of the variable |
-| `callerMustSupply` | Whether Bridge has a value of its own for this variable |
+| `callerMustSupply` | `true` when you must supply a non-blank value because Bridge has no source for it; `false` otherwise |
 | `isCustom` | Whether this is a custom variable: a value only you know, with a default text |
 | `default` | For a custom variable, the text sent when you send no value for it; `null` otherwise |
 

@@ -1,0 +1,73 @@
+---
+title: "Glossário e identificadores"
+sidebarTitle: "Conceitos e IDs"
+description: "Encontre os identificadores corretos de workspace, Contato, usuário do Bridge, Agente, conversa, template, linha e mídia, sem confundi-los."
+keywords: ["identificador", "workspaceId", "contactId", "userId", "agentId", "providerChannelId", "brandId", "templateId", "mediaId"]
+---
+
+<a id="start-with-the-right-integration"></a>
+
+## Comece pela integração correta
+
+A **API REST de integrações** lê ou altera recursos do workspace a partir do seu servidor usando `x-api-key`. **Webhooks** enviam eventos do Bridge ao seu receptor. **Custom Connections** registra leads de uma landing page por meio de um endpoint público separado, com `captureKey` e reCAPTCHA.
+
+A chave de API é um segredo do servidor. A `captureKey` de Custom Connections foi projetada para estar na landing page. Esses valores não são intercambiáveis. Veja [autenticação](/pt-br/credentials) e [Custom Connections](/pt-br/lead-capture).
+
+<a id="people-agents-and-lines"></a>
+
+## Pessoas, Agentes e linhas
+
+- Um **Contato** é a pessoa externa com quem sua empresa se comunica. Os endpoints de contatos e os participantes externos de conversas se referem a essa pessoa.
+- Um **usuário do Bridge** é um usuário humano interno. A consulta de usuários internos e os destinatários de uma transferência de atendimento se referem a esses usuários.
+- Um **Agente** é um agente automatizado exposto pela API de Agentes. Seu tipo é `LEADSCOUT` ou `SERVICE_AGENT`; ele tem identificador, disponibilidade e linhas próprios.
+- Um **provedor** é um tipo de canal, como `WHATSAPP`. Uma **linha** é um canal específico usado em uma conversa. O tipo de provedor, o telefone e o `providerChannelId` são valores diferentes.
+- Um **workspace** delimita o escopo da requisição. Uma **marca** tem outro identificador, usado onde a operação o exige ou aceita; ela não é um workspace nem uma linha.
+
+O `ownerId` de um Contato se refere a um usuário do Bridge, não a um Agente automatizado. Consulte esse usuário no [endpoint de leitura de usuários internos](/pt-br/api-reference/internal-users-api/obter-usu%C3%A1rio-interno-por-id).
+
+<a id="where-each-identifier-comes-from"></a>
+
+## De onde vem cada identificador
+
+Use identificadores do workspace desejado. Não reutilize um identificador apenas porque o mesmo telefone, e-mail ou nome aparece em outro workspace.
+
+| Valor necessário | Onde obter ou verificar | O que enviar |
+| --- | --- | --- |
+| `workspaceId` | Use o identificador de workspace fornecido para sua integração. Se não o tiver, peça ao administrador do Bridge. O contrato REST publicado não oferece um endpoint global de listagem de workspaces. | O ID do workspace no caminho da operação. Custom Connections também o exige no corpo e, para requisições do navegador, na query string. |
+| ID do Contato | [Consulte um Contato](/pt-br/api-reference/contacts-api/obter-contato-por-um-identificador) por `PHONE`, `EMAIL` ou `ID`; respostas de listagem, criação e upsert também retornam o `id` do Contato. | O `id` retornado em `{contactId}` ou em um objeto identificador com `identifierType: "ID"`, onde a operação aceitar esse formato. |
+| ID do usuário do Bridge | [Consulte um usuário interno](/pt-br/api-reference/internal-users-api/obter-usu%C3%A1rio-interno-por-um-identificador) por `EMAIL` ou `ID`, ou use a lista de usuários internos. | O `id` retornado em `{userId}` ou em um objeto identificador interno. A consulta de usuários internos não aceita `PHONE`. |
+| ID do Agente | [Liste os Agentes](/pt-br/api-reference/agents-api/listar-os-agents-de-um-workspace). Leia `agents[].id`, `type` e `available`. | `agents[].id` em `{agentId}` na operação outbound de Agente. `available` indica se o Agente pode iniciar conversas. |
+| ID da linha do Agente | Na mesma resposta de Agentes, leia `lines[].providerChannelId` do Agente correspondente. | Um ID de linha pertencente ao Agente quando a operação aceitar `contact.providerChannelId`. Consulte as regras de seleção de linha na referência outbound. |
+| Canal de provedor em geral | [Liste os canais de provedor](/pt-br/api-reference/provider-channels-api/obter-canais-de-provedores-por-workspace). Essa resposta publica `provider` e `identifier`, não o UUID do canal. | Use esses campos somente para as finalidades documentadas pela operação que os recebe. Não substitua `providerChannelId` pelo `identifier`, que tem formato de telefone. |
+| `brandId` | Uma resposta de Agente pode expor seu `brandId`. Para outro fluxo, obtenha o ID da marca na configuração da integração ou com o administrador; o contrato publicado não oferece um endpoint geral de listagem de marcas. | O ID de marca aceito pela operação. Um ID de marca não é um ID de linha. |
+| `teamId` | Obtenha o ID da equipe interna desejada com o administrador do Bridge ou na configuração da integração. O contrato REST publicado não oferece um endpoint de listagem de equipes. | A opção documentada de atribuição de equipe na criação da conversa; não envie também `participants.internals`. |
+| ID da conversa | Crie ou consulte uma conversa e guarde o `id` retornado. As respostas outbound contêm `conversation.id`. | `{conversationId}` ou `conversationId`, exatamente onde a operação exigir. |
+| Template | [Descubra um template](/pt-br/api-reference/templates-api/descobrir-as-vari%C3%A1veis-agn%C3%B3sticas-de-um-modelo) por ID ou nome. A resposta retorna `id`, `name` e as chaves das variáveis. | Use o seletor esperado pela operação de envio; veja a próxima seção. |
+| `mediaId` | [Crie uploads pré-assinados](/pt-br/api-reference/files-api/criar-uploads-pr%C3%A9-assinados-de-arquivos). Cada item do array de resposta contém `mediaId` e `presignUrl`. Conclua o upload PUT obrigatório. | O `mediaId` retornado em `mediaIds` ou no campo de mídia aceito pela operação. Não envie a URL pré-assinada como ID de mídia. |
+
+<Note>
+  As listagens de Agentes expõem IDs de linha no contexto de cada Agente. Isso não é uma forma geral de descobrir todas as linhas do workspace. Se outro fluxo exigir um `providerChannelId` que você não consegue obter da resposta publicada, peça ao administrador do Bridge ou ao [suporte](mailto:support@sainapsis.com) o ID da linha desejada. Não gere um ID nem o derive de um telefone.
+</Note>
+
+<a id="similar-names-can-require-different-fields"></a>
+
+## Nomes semelhantes podem exigir campos diferentes
+
+A **consulta de contatos** recebe parâmetros de query chamados `type` e `value`. Um participante externo de conversa recebe `identifier` e `identifierType`, além dos demais campos exigidos pela operação. Não copie diretamente a query de consulta para o corpo de um participante.
+
+A **descoberta de templates** aceita ID ou nome no parâmetro de caminho `{templateId}`. Os **templates iniciais de conversa** usam `onboardingTemplates[].templateId`. A **seleção de template outbound** usa `id` ou `name` no objeto `template`; leia o esquema do endpoint em vez de renomear todos os seletores para `templateId`.
+
+Use a `key` retornada para cada variável em `parameters` do template. As chaves das variáveis não são índices de posições da Meta. O [guia de parâmetros de templates](/pt-br/templates-and-parameters) explica valores obrigatórios, padrões e a diferença entre omitir um valor e enviá-lo vazio.
+
+<a id="keep-result-identifiers-separate"></a>
+
+## Não confunda os identificadores de resultado
+
+| Valor retornado | O que identifica | O que não comprova por si só |
+| --- | --- | --- |
+| `messageId` | Uma mensagem criada pelo endpoint de mensagens | Um comprovante de entrega do provedor |
+| `trackingId` | Uma solicitação aceita de transferência LeadScout | A conclusão da atribuição aos usuários solicitados |
+| `requestId` | Um envio aceito de Custom Connections | A entrega da mensagem inicial de WhatsApp |
+| `eventId` | Um identificador enviado com o evento de webhook; algumas famílias usam valores derivados da entidade | Uma chave de deduplicação globalmente única ou garantia de ordem de entrega |
+
+Siga o guia de [recebimento de eventos](/pt-br/webhooks/receive-events) para entender a identidade dos eventos e tratar duplicatas. Veja [respostas e erros](/pt-br/guides/responses) para interpretar códigos de status, resultados assíncronos e novas tentativas. Para um fluxo completo, siga o guia da [primeira conversa](/pt-br/guides/first-conversation) ou de [envio de anexos](/pt-br/guides/send-attachments).

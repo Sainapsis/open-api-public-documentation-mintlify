@@ -1,0 +1,144 @@
+---
+title: "Recibe eventos de forma confiable"
+sidebarTitle: "Recepción de eventos"
+description: "Verifica, guarda y confirma los webhooks; después procesa de forma segura los duplicados y los eventos fuera de orden."
+---
+
+Un receptor de webhooks tiene dos tareas: aceptar rápidamente un evento autenticado y procesarlo de forma confiable después. Ejecuta las llamadas lentas al CRM, el enriquecimiento y otras tareas de negocio fuera de la solicitud HTTP.
+
+<a id="receive-→-verify-→-persist-→-acknowledge"></a>
+
+## Recibe → verifica → guarda → confirma
+
+1. Lee el cuerpo y los encabezados de la solicitud.
+2. Verifica la clave de API del webhook, el HMAC canónico y la política de marcas de tiempo con [el verificador](/es/webhooks/verifying-signatures).
+3. Guarda atómicamente el evento verificado en una bandeja de entrada duradera o confirma que ese evento exacto ya esté almacenado.
+4. Devuelve una respuesta `2xx` rápidamente. Procesa los eventos almacenados en un proceso de trabajo y haz que cada acción de negocio sea idempotente.
+
+Devuelve éxito solo después de la aceptación duradera. Si el almacenamiento no está disponible, devuelve una respuesta distinta de `2xx` para no confirmar el intento de entrega. Un duplicado que ya está guardado debe recibir `2xx` nuevamente.
+
+<a id="retry-behavior"></a>
+
+## Comportamiento de reintentos
+
+El emisor actual hace hasta **tres intentos HTTP** para una operación de entrega. Espera **un segundo** y luego **dos segundos** antes de los intentos restantes. Cualquier respuesta `2xx` detiene esos intentos. Una respuesta distinta de `2xx`, un fallo de conexión o una excepción de solicitud pueden activar el siguiente intento. El tiempo de espera de socket predeterminado es de **10 segundos** por intento: confirma la recepción en pocos segundos en lugar de depender de un margen de 30 segundos.
+
+El cuerpo y los encabezados de firma y marca de tiempo se reutilizan dentro de esa operación de entrega. Esos tres intentos limitan una operación de envío, **no el total de entregas de un evento de extremo a extremo**. Si un evento vuelve a entregarse en una etapa anterior, puede invocar de nuevo al emisor. Aquí no se promete un número total de reintentos ni un plazo máximo de reenvío. No dependas de un encabezado de respuesta `Retry-After` para establecer los tiempos de reintento de Bridge.
+
+Si fallan todos los intentos, la entrega se considera fallida. No asumas reintentos automáticos indefinidos ni un endpoint público de reenvío. Para investigar, conserva el espacio de trabajo, el tipo, el ID y la hora aproximada del evento, y contacta a soporte de Bridge. No incluyas las credenciales del webhook en mensajes a soporte ni en registros de la aplicación.
+
+<a id="duplicates-and-event-identity"></a>
+
+## Duplicados e identidad del evento
+
+Tu servicio puede haber guardado un evento aunque Bridge no haya recibido tu respuesta `2xx`. Reintentarlo no debe crear una segunda actualización del CRM, factura, mensaje u otro efecto de negocio.
+
+Delimita cada registro de la bandeja mediante `workspaceId`, `eventType` y `eventId`. Guarda también un resumen del evento verificado. No asumas que `eventId` es globalmente único en todas las familias de notificaciones: algunas usan un ID derivado de la entidad. Conserva los cuerpos distintos que compartan un ID y aplica después idempotencia de negocio a la operación que ejecuta tu proceso de trabajo.
+
+El ejemplo siguiente deduplica eventos repetidos exactos usando los tres identificadores y la huella SHA-256 del evento canónico. Es una clave de bandeja para este ejemplo, no un campo nuevo de solicitud de Bridge.
+
+No hagas vencer un registro de deduplicación solo porque transcurrió la ventana de cinco minutos de la marca de tiempo. Ese encabezado no está firmado, por lo que la ventana no establece un vencimiento seguro de protección contra reenvíos. Elige la retención según las necesidades de conciliación de tu negocio y mantén idempotentes las acciones del sistema de destino. El ejemplo no elimina automáticamente los registros de la bandeja.
+
+<a id="minimal-durable-receiver"></a>
+
+## Receptor duradero mínimo
+
+Agrega estas definiciones al módulo `bridge_webhooks.py` de [Verificar solicitudes de webhook](/es/webhooks/verifying-signatures). El módulo del verificador ya incluye las importaciones usadas aquí.
+
+```python
+class SQLiteInbox:
+    """Single-service example inbox. Use a shared durable store for multiple replicas."""
+    def __init__(self, path):
+        self.path = str(path)
+        with sqlite3.connect(self.path) as db:
+            db.execute("""CREATE TABLE IF NOT EXISTS webhook_inbox (
+                workspace_id TEXT NOT NULL, event_type TEXT NOT NULL,
+                event_id TEXT NOT NULL, fingerprint TEXT NOT NULL,
+                body TEXT NOT NULL, received_at REAL NOT NULL,
+                processed INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(workspace_id, event_type, event_id, fingerprint)
+            )""")
+
+    def accept(self, event):
+        identifiers = [event.get(key) for key in ("workspaceId", "eventType", "eventId")]
+        if not all(isinstance(value, str) and value for value in identifiers):
+            raise VerificationError("Missing event envelope identifiers")
+        body = canonical_payload(event)
+        fingerprint = hashlib.sha256(body).hexdigest()
+        with sqlite3.connect(self.path, timeout=3) as db:
+            cursor = db.execute(
+                """INSERT OR IGNORE INTO webhook_inbox
+                (workspace_id, event_type, event_id, fingerprint, body, received_at)
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                (*identifiers, fingerprint, body.decode("utf-8"), time.time()),
+            )
+            inserted = cursor.rowcount == 1
+        # Context manager commits before the request can be acknowledged.
+        return inserted
+
+
+def make_wsgi_app(inbox, webhook_api_key, client_secret):
+    """Verify, commit an inbox record, then acknowledge; workers process it later."""
+    def app(environ, start_response):
+        if environ.get("REQUEST_METHOD") != "POST":
+            start_response("405 Method Not Allowed", [("Allow", "POST")])
+            return [b""]
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or "0")
+            if length < 1:
+                raise VerificationError("Missing JSON body")
+            raw_body = environ["wsgi.input"].read(length)
+            headers = {
+                "x-bridge-api-key": environ.get("HTTP_X_BRIDGE_API_KEY", ""),
+                "x-bridge-signature": environ.get("HTTP_X_BRIDGE_SIGNATURE", ""),
+                "x-bridge-timestamp": environ.get("HTTP_X_BRIDGE_TIMESTAMP", ""),
+            }
+            event = verify_webhook(raw_body, headers, webhook_api_key, client_secret)
+            inbox.accept(event)  # A duplicate exact event is also acknowledged.
+        except (VerificationError, ValueError):
+            status, body = "400 Bad Request", b'{"accepted":false}'
+        except sqlite3.Error:
+            status, body = "503 Service Unavailable", b'{"accepted":false}'
+        else:
+            status, body = "200 OK", b'{"accepted":true}'
+        start_response(status, [("Content-Type", "application/json"), ("Content-Length", str(len(body)))])
+        return [body]
+    return app
+
+```
+
+Crea la aplicación WSGI en la configuración de tu servidor:
+
+```python
+import os
+
+from bridge_webhooks import SQLiteInbox, make_wsgi_app
+
+application = make_wsgi_app(
+    SQLiteInbox(os.environ["WEBHOOK_INBOX_PATH"]),
+    os.environ["BRIDGE_WEBHOOK_API_KEY"],
+    os.environ["BRIDGE_WEBHOOK_CLIENT_SECRET"],
+)
+```
+
+Usa una ruta de base de datos duradera para este ejemplo de un solo servicio. Si ejecutas varias réplicas del receptor, usa almacenamiento compartido con una restricción equivalente de unicidad atómica. Aplica los límites de tamaño de solicitud y las políticas de red de tu servicio en el servidor HTTP, y termina allí la conexión HTTPS.
+
+Este ejemplo llega hasta la aceptación duradera. Un proceso de trabajo debe leer las filas con `processed=0`, ejecutar la acción de negocio de manera idempotente y marcarlas como procesadas solo después del éxito. Una confirmación local no demuestra que la acción de negocio haya terminado.
+
+<a id="ordering-and-reconciliation"></a>
+
+## Orden y conciliación
+
+No dependas de un orden global de entrega. Distintas familias de recursos e intentos independientes de entrega pueden intercalarse. Dirige cada evento según el `eventType` publicado y usa el esquema de esa suscripción.
+
+Cuando un cuerpo incluya `sequence`, trátalo como una indicación de orden del recurso o flujo, no como un contador global compartido por todos los espacios de trabajo o familias de eventos. No lo inventes para eventos cuyo esquema no tenga secuencia. Conserva las marcas de tiempo y los identificadores de origen, y evita reemplazar un estado nuevo por una notificación anterior. Si la API REST permite leer el recurso, consulta su estado actual cuando el evento deje el resultado incierto; de lo contrario, sigue la guía de la familia de eventos o contacta a soporte.
+
+No exijas un campo `version` universal en todos los sobres de evento. Para las familias admitidas por este servicio de webhooks, la versión de suscripción configurada selecciona el transformador registrado y el esquema de esa familia. Sigue el esquema documentado de esa familia y suscripción; no deduzcas una propiedad de versión que el sobre no publica.
+
+<a id="check-the-receiver-before-launch"></a>
+
+## Comprueba el receptor antes de pasar a producción
+
+Prueba el vector de firma proporcionado, un cuerpo modificado, una clave de API incorrecta, marcas de tiempo vencidas y futuras, una entrega duplicada después de reiniciar el proceso, un fallo de almacenamiento y dos cuerpos distintos con el mismo ID. Reenviar un cuerpo firmado anteriormente con una nueva marca de tiempo demuestra por qué necesitas una bandeja duradera además de la comprobación de vigencia.
+
+Usa el webhook de prueba de la consola de Bridge para validar la conexión y las credenciales configuradas después de desplegar el receptor. Una prueba exitosa demuestra que funciona la ruta de recepción; no establece garantías de entrega u orden para todos los eventos de negocio.

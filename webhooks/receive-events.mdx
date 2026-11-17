@@ -1,0 +1,132 @@
+---
+title: "Receive events reliably"
+sidebarTitle: "Receive events"
+description: "Verify, persist and acknowledge webhooks, then process duplicates and out-of-order events safely."
+---
+
+A webhook receiver has two jobs: accept an authenticated event quickly, then process it reliably. Keep slow CRM calls, enrichment and other business work outside the HTTP request.
+
+## Receive → verify → persist → acknowledge
+
+1. Read the request body and headers.
+2. Verify the webhook API key, canonical HMAC and timestamp policy with [the verifier](/webhooks/verifying-signatures).
+3. Atomically store the verified event in a durable inbox, or confirm that this exact event is already there.
+4. Return a `2xx` response promptly. Process stored events in a worker and make each business action idempotent.
+
+Return success only after durable acceptance. If storage is unavailable, return a non-`2xx` response so the delivery attempt is not acknowledged. A duplicate that is already stored should receive `2xx` again.
+
+## Retry behavior
+
+The current sender makes up to **three HTTP attempts** for one delivery operation. It waits **one second**, then **two seconds**, before the remaining attempts. Any `2xx` response stops those attempts. A non-`2xx` response, a connection failure or a request exception can trigger the next attempt. The default socket timeout is **10 seconds** per attempt; acknowledge in a few seconds rather than relying on a 30-second allowance.
+
+The payload, signature and timestamp headers are reused within that delivery operation. These three attempts are a bound for one send operation, **not an end-to-end ceiling on all deliveries of an event**. If an upstream event is delivered again, it can invoke the sender again. No total retry count or replay horizon is promised here. Do not rely on a `Retry-After` response header to set Bridge's retry timing.
+
+If all attempts fail, the delivery is considered failed. Do not assume indefinite automatic retry or a public replay endpoint. For investigation, keep the event's workspace, type, ID and approximate time, and contact Bridge support. Do not include webhook credentials in support messages or application logs.
+
+## Duplicates and event identity
+
+Your service may have committed an event even when Bridge did not receive your `2xx` response. Retrying it must not create a second CRM update, invoice, message or other business effect.
+
+Scope an inbox record to `workspaceId`, `eventType` and `eventId`. Also store a digest of the verified event. Do not assume `eventId` is a globally unique ID across every notification family: some notifications use an entity-derived ID. Retain distinct payloads that share an ID, then apply business idempotency for the operation your worker performs.
+
+The example below deduplicates exact repeated events using all three identifiers plus the SHA-256 fingerprint of the canonical event. This is an inbox key for this example, not a new Bridge request field.
+
+Do not expire a deduplication record merely because the five-minute timestamp window has passed. That header is not signed, so the window does not establish a safe replay expiry. Choose retention around your business reconciliation needs and keep destination-side business actions idempotent. The example does not automatically delete inbox records.
+
+## Minimal durable receiver
+
+Add these definitions to the `bridge_webhooks.py` module from [Verify webhook requests](/webhooks/verifying-signatures). The verifier module already includes the imports used below.
+
+```python
+class SQLiteInbox:
+    """Single-service example inbox. Use a shared durable store for multiple replicas."""
+    def __init__(self, path):
+        self.path = str(path)
+        with sqlite3.connect(self.path) as db:
+            db.execute("""CREATE TABLE IF NOT EXISTS webhook_inbox (
+                workspace_id TEXT NOT NULL, event_type TEXT NOT NULL,
+                event_id TEXT NOT NULL, fingerprint TEXT NOT NULL,
+                body TEXT NOT NULL, received_at REAL NOT NULL,
+                processed INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(workspace_id, event_type, event_id, fingerprint)
+            )""")
+
+    def accept(self, event):
+        identifiers = [event.get(key) for key in ("workspaceId", "eventType", "eventId")]
+        if not all(isinstance(value, str) and value for value in identifiers):
+            raise VerificationError("Missing event envelope identifiers")
+        body = canonical_payload(event)
+        fingerprint = hashlib.sha256(body).hexdigest()
+        with sqlite3.connect(self.path, timeout=3) as db:
+            cursor = db.execute(
+                """INSERT OR IGNORE INTO webhook_inbox
+                (workspace_id, event_type, event_id, fingerprint, body, received_at)
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                (*identifiers, fingerprint, body.decode("utf-8"), time.time()),
+            )
+            inserted = cursor.rowcount == 1
+        # Context manager commits before the request can be acknowledged.
+        return inserted
+
+
+def make_wsgi_app(inbox, webhook_api_key, client_secret):
+    """Verify, commit an inbox record, then acknowledge; workers process it later."""
+    def app(environ, start_response):
+        if environ.get("REQUEST_METHOD") != "POST":
+            start_response("405 Method Not Allowed", [("Allow", "POST")])
+            return [b""]
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or "0")
+            if length < 1:
+                raise VerificationError("Missing JSON body")
+            raw_body = environ["wsgi.input"].read(length)
+            headers = {
+                "x-bridge-api-key": environ.get("HTTP_X_BRIDGE_API_KEY", ""),
+                "x-bridge-signature": environ.get("HTTP_X_BRIDGE_SIGNATURE", ""),
+                "x-bridge-timestamp": environ.get("HTTP_X_BRIDGE_TIMESTAMP", ""),
+            }
+            event = verify_webhook(raw_body, headers, webhook_api_key, client_secret)
+            inbox.accept(event)  # A duplicate exact event is also acknowledged.
+        except (VerificationError, ValueError):
+            status, body = "400 Bad Request", b'{"accepted":false}'
+        except sqlite3.Error:
+            status, body = "503 Service Unavailable", b'{"accepted":false}'
+        else:
+            status, body = "200 OK", b'{"accepted":true}'
+        start_response(status, [("Content-Type", "application/json"), ("Content-Length", str(len(body)))])
+        return [body]
+    return app
+
+```
+
+Create the WSGI application in your server configuration:
+
+```python
+import os
+
+from bridge_webhooks import SQLiteInbox, make_wsgi_app
+
+application = make_wsgi_app(
+    SQLiteInbox(os.environ["WEBHOOK_INBOX_PATH"]),
+    os.environ["BRIDGE_WEBHOOK_API_KEY"],
+    os.environ["BRIDGE_WEBHOOK_CLIENT_SECRET"],
+)
+```
+
+Use a durable database path for this single-service example. When you run multiple receiver replicas, use a shared store with an equivalent atomic uniqueness constraint. Enforce your service's request-size and network policies at the HTTP server, and terminate HTTPS there.
+
+This example stops at durable acceptance. A worker must read rows with `processed=0`, perform the business action idempotently, and mark them processed only after success. A local acknowledgement is not proof that the business action completed.
+
+## Ordering and reconciliation
+
+Do not rely on a global delivery order. Different resource families and independent delivery attempts can interleave. Route on the published `eventType` and use the schema for that subscription.
+
+Where a payload includes `sequence`, treat it as a resource/stream ordering hint, not a global counter shared by all workspaces or event families. Do not invent it for events whose schema has no sequence. Preserve source timestamps and identifiers, and avoid replacing newer state with an older notification. Where the REST API supports reading the resource, fetch current state when an event leaves the result uncertain; otherwise use the event-family guidance or contact support.
+
+Do not require a universal `version` field in every event envelope. For the supported event families in this webhook service, the configured subscription version selects that family's registered transformer and payload schema. Follow the documented schema for that family and subscription; do not infer a version property that its envelope does not publish.
+
+## Check the receiver before launch
+
+Verify the provided signature vector, a changed payload, a wrong API key, expired and future timestamps, duplicate delivery after a process restart, storage failure, and two distinct payloads sharing an ID. A re-timestamped replay of a previously signed payload demonstrates why the durable inbox is needed in addition to the timestamp check.
+
+Use Bridge's console test webhook to validate the connection and configured credentials after deploying your receiver. A successful test demonstrates the callback path; it does not establish delivery or ordering guarantees for every business event.

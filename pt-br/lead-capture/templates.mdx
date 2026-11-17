@@ -1,0 +1,56 @@
+---
+title: "Requisitos de templates"
+sidebarTitle: "Templates"
+description: "Categorias de templates aceitas e orientações para abrir conversas por Custom Connections."
+keywords: ["template", "utility", "marketing", "WhatsApp", "Custom Connections"]
+---
+
+<a id="supported-template-categories"></a>
+
+## Categorias de templates aceitas
+
+O template que abre a conversa pode ser da categoria **utility** ou **marketing**:
+
+- **Templates Utility**: estritamente transacionais, relacionados ao que o visitante acabou de enviar, como a confirmação de recebimento de uma consulta. Essa categoria tem tarifas menores de conversa no WhatsApp.
+- **Templates Marketing**: podem incluir linguagem promocional, descontos, ofertas especiais ou abordagens diretas de venda. São cobrados pelas tarifas padrão de marketing do WhatsApp.
+
+<Note>
+  Templates **Authentication** não podem ser usados com Custom Connections. Qualquer template configurado com a categoria `AUTHENTICATION` será rejeitado.
+</Note>
+
+Você configura e submete os templates diretamente no Meta WhatsApp Manager. A aprovação é um requisito para colocar a integração em produção.
+
+<a id="meta-classification-and-deliverability"></a>
+
+## Classificação da Meta e entrega
+
+<Warning>
+  A Meta classifica os templates pelo conteúdo, não apenas pela categoria selecionada na submissão. Se um template submetido como UTILITY contiver linguagem promocional, a Meta poderá reclassificá-lo como MARKETING ou rejeitá-lo.
+</Warning>
+
+Escolher a categoria correta desde o início evita problemas de classificação e mantém a entrega e a cobrança de acordo com o esperado.
+
+<a id="category-examples"></a>
+
+## Exemplos por categoria
+
+**Utility (transacional)** — confirma o recebimento de uma consulta sem ofertas promocionais:
+
+```text
+Hi {{1}}, thanks for your enquiry about the {{2}}. A member of our team will follow up here shortly.
+```
+
+**Marketing (promocional)** — inclui linguagem promocional, descontos ou ofertas de venda:
+
+```text
+Hi {{1}}, thanks for your enquiry about the {{2}}. Book this week and get 15% off — reply YES to claim.
+```
+
+<a id="practical-guidance"></a>
+
+## Orientações práticas
+
+- **Escolha Utility** quando o objetivo principal for responder rapidamente de forma transacional, confirmando a solicitação do visitante. Mantenha a mensagem estritamente relacionada ao que ele enviou, sem apelos promocionais, para preservar a categoria Utility e sua tarifa menor.
+- **Escolha Marketing** quando quiser oferecer imediatamente descontos de apresentação, incentivos promocionais ou produtos do catálogo após a captura.
+- **Evite templates Authentication**: essa categoria é exclusiva para senhas de uso único e códigos de verificação e é rejeitada no envio para leads de campanha.
+- Quando a pessoa responde, inicia-se uma sessão normal de conversa. As restrições de categoria do template deixam de se aplicar às mensagens recebidas e às respostas dos atendentes ou Agentes.

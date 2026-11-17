@@ -1,0 +1,972 @@
+{
+  "version": "2026-11-14-phase2",
+  "scope": "Documentary acceptance; no backend effects, no human test claim. Fixed prompts; evidence expectations may be versioned only when authoritative source changes.",
+  "modes": [
+    "MCP search + exact page/schema read",
+    "Direct llms.txt + endpoint Markdown + correct OpenAPI"
+  ],
+  "scoring": {
+    "0": "Wrong, unsafe, invented, or unresolved without useful evidence.",
+    "1": "Safe partial: missing steps or source confirmation; must name limitation.",
+    "2": "Complete, accurate and sourced; all required evidence and behavior resolved.",
+    "threshold_per_axis": 0.9,
+    "critical_gate": "Every critical case scores 2 in both modes, with zero signature/auth/delivery/HMAC/retry invention. A safe abstention on unresolved sources is partial, not full completeness."
+  },
+  "tasks": [
+    {
+      "id": "T01",
+      "kind": "standard",
+      "title": "REST host and authentication",
+      "prompt": "Show the first authenticated health request to Bridge. Where should the API Key live?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1health/get"
+        },
+        {
+          "file": "credentials.mdx"
+        }
+      ],
+      "must_explain": [
+        "Use https://api-connect-us.bridge.new and GET /bridge/api/health.",
+        "Send x-api-key, including for health; keep it server-side."
+      ],
+      "must_not_claim": [
+        "Use bearer/OAuth instead.",
+        "Expose the Integrations API Key in frontend."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T02",
+      "kind": "standard",
+      "title": "Public Custom Connections contract",
+      "prompt": "I am implementing Custom Connections in a landing page. Which host, credentials, and required body fields do I need?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/campaign-leads.openapi.yaml",
+          "pointer": "/servers"
+        },
+        {
+          "file": "api-reference/campaign-leads.openapi.yaml",
+          "pointer": "/components/schemas/CampaignLeadRequestDto"
+        },
+        {
+          "file": "lead-capture/integration.mdx"
+        }
+      ],
+      "must_explain": [
+        "Separate host https://integrations-us.app.bridge.new/api/v1 with POST /leadscout/campaign-leads.",
+        "Use captureKey and recaptchaToken, no authentication header.",
+        "List required workspaceId,captureKey,cellphone,landingUri,consent,recaptchaToken."
+      ],
+      "must_not_claim": [
+        "Use x-api-key.",
+        "Move the public captureKey off the page as if it were a secret API Key."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T03",
+      "kind": "standard",
+      "title": "Workspace and identity scope",
+      "prompt": "Can I use a Contact ID from one workspace with another workspaceId if the same email appears in both?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/ContactResponse"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1contacts~1lookup/get"
+        },
+        {
+          "file": "guides/identifiers.mdx"
+        }
+      ],
+      "must_explain": [
+        "Every resource operation is scoped to the intended workspace.",
+        "Resolve or verify the resource inside that workspace; a shared email does not prove ID interchangeability."
+      ],
+      "must_not_claim": [
+        "Change workspace IDs based on a cached Contact.",
+        "Invent a global workspace discovery endpoint."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T04",
+      "kind": "standard",
+      "title": "Contact lookup",
+      "prompt": "I know a Contact phone number but not its ID. Write the lookup request and explain the returned identifier.",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1contacts~1lookup/get"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/ParticipantIdentifierType"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/ContactResponse"
+        }
+      ],
+      "must_explain": [
+        "GET /bridge/api/v1/workspaces/{workspaceId}/contacts/lookup with type=PHONE and value.",
+        "URL-encode query values including +; response ContactResponse.id is contactId.",
+        "Prefer GET /contacts/{contactId} once the ID is known."
+      ],
+      "must_not_claim": [
+        "Send phone as contactId.",
+        "Use identifierType instead of query type."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T05",
+      "kind": "standard",
+      "title": "Human user lookup",
+      "prompt": "How do I find the Bridge User for handoff from an email address? Could I look up their cellphone instead?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1users~1lookup/get"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/InternalParticipantIdentifierType"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/InternalUserResponse"
+        }
+      ],
+      "must_explain": [
+        "GET /users/lookup with type=EMAIL and value; use returned id.",
+        "InternalParticipantIdentifierType permits ID and EMAIL only.",
+        "Bridge User is an internal human user, not an automated Agent."
+      ],
+      "must_not_claim": [
+        "Use PHONE for internal lookup.",
+        "Use Agent ID as human assignee."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T06",
+      "kind": "standard",
+      "title": "Agent discovery and availability",
+      "prompt": "How do I discover an available Service Agent and a line it can answer on?",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1agents/get"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/AgentResponse"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/AgentLine"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/AgentType"
+        }
+      ],
+      "must_explain": [
+        "GET /agents with type=SERVICE_AGENT, page until cursor is null.",
+        "Use agents[].id and available, not status alone.",
+        "Use that Agent lines[].providerChannelId in its context."
+      ],
+      "must_not_claim": [
+        "Use Bridge User status active as Agent availability.",
+        "Invent line IDs from names."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T07",
+      "kind": "standard",
+      "title": "Provider channel versus line ID",
+      "prompt": "Compare provider, identifier, and providerChannelId. Which public endpoint actually returns an Agent line ID?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/ProviderChannel"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/AgentLine"
+        },
+        {
+          "file": "guides/identifiers.mdx"
+        }
+      ],
+      "must_explain": [
+        "ProviderChannel has provider and phone-like identifier, not providerChannelId.",
+        "AgentLine publishes providerChannelId under agents[].lines[].",
+        "This only discovers that Agent lines; other flow IDs require authorized configuration/admin when unavailable."
+      ],
+      "must_not_claim": [
+        "Treat identifier as UUID.",
+        "Claim provider-channels returns id."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T08",
+      "kind": "standard",
+      "title": "Template selectors",
+      "prompt": "Can template discovery use a template name? How do I pass its returned ID to conversation onboarding?",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1templates~1{templateId}/get"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/OnboardingTemplateRequest"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/LeadscoutOutboundTemplateRef"
+        }
+      ],
+      "must_explain": [
+        "GET /templates/{templateId} accepts ID or name.",
+        "Use response id in onboardingTemplates[].templateId.",
+        "Outbound template object has its own id/name selectors; do not rename them to templateId."
+      ],
+      "must_not_claim": [
+        "Use Meta slot positions as discovery keys.",
+        "Assume selector names are identical for all send operations."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T09",
+      "kind": "standard",
+      "title": "Variable defaults and drift",
+      "prompt": "Explain callerMustSupply, isCustom, blank versus omitted parameters, and whether driftWarning should stop sending.",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "templates-and-parameters.mdx"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/TemplateVariableResponse"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/TemplateDriftWarningResponse"
+        }
+      ],
+      "must_explain": [
+        "Required variables need nonblank supplied values.",
+        "For noncustom optional variable omit key to retain Bridge value; blank does not universally mean default.",
+        "Custom blank/omitted values use default as documented.",
+        "driftWarning is diagnostic and never blocks a send."
+      ],
+      "must_not_claim": [
+        "Block a send just because hasDrift=true.",
+        "Treat all blank parameters as omitted."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T10",
+      "kind": "standard",
+      "title": "Custom attribute shape",
+      "prompt": "I need to update Contact custom attributes. Is customAttributes an array or an object? Show the shape and how IDs are discovered.",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/UpdateContactBody"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/CustomAttributesBody"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/OpenAttributeRequest"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/ClosedAttributeRequest"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1settings~1attributes/get"
+        }
+      ],
+      "must_explain": [
+        "UpdateContactBody.customAttributes references CustomAttributesBody object.",
+        "Use openAttributes and closedAttributes arrays with each documented item schema.",
+        "Read GET /settings/attributes for workspace attribute IDs and closed options."
+      ],
+      "must_not_claim": [
+        "Send an array directly as update customAttributes.",
+        "Invent attribute IDs from labels."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T11",
+      "kind": "standard",
+      "title": "Message request and delivery",
+      "prompt": "Write the minimum message body for a known conversation. What does a 201 establish, and what does it not establish?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/MessageRequest"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/MessageResponse"
+        },
+        {
+          "file": "guides/responses.mdx"
+        }
+      ],
+      "must_explain": [
+        "Required conversationId,messageBody,enableExternalBroadcast with boolean chosen explicitly.",
+        "201 yields messageId; response has no provider delivery receipt.",
+        "Do not assume broadcast semantics beyond verified explanation."
+      ],
+      "must_not_claim": [
+        "Omit enableExternalBroadcast.",
+        "Claim provider delivery from messageId alone."
+      ],
+      "safe_partial_if_sources_unresolved": "If true/false behavior is not yet confirmed, preserve required field and explicitly identify the missing behavior instead of inventing recipients.",
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T12",
+      "kind": "standard",
+      "title": "Upload and send PDF",
+      "prompt": "Describe how to upload a PDF and attach it to a message without changing the API contract.",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1files/post"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/PreloadedFileRequest"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/PreloadedFileResponse"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/PresignPut"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/MessageRequest"
+        },
+        {
+          "file": "guides/send-attachments.mdx"
+        }
+      ],
+      "must_explain": [
+        "POST /files body is array of file requests.",
+        "Checksum SHA-256 raw digest encoded Base64; same x-amz-checksum-sha256 for upload.",
+        "PUT file bytes to returned presignUrl.url using method/headers without altering URL.",
+        "Use returned mediaId in /messages mediaIds plus all message required fields."
+      ],
+      "must_not_claim": [
+        "Upload base64 JSON to S3 instead of file bytes.",
+        "Append Bridge x-api-key to an arbitrary presigned host.",
+        "Use /preloaded-files as current endpoint."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T13",
+      "kind": "standard",
+      "title": "Opaque cursors",
+      "prompt": "A list returns fewer rows than limit but a non-null cursor. Should I stop? Show the correct pagination rule for Contacts and Agents.",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/ContactsResponseList"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/AgentsResponseList"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1agents/get"
+        },
+        {
+          "file": "guides/pagination.mdx"
+        }
+      ],
+      "must_explain": [
+        "Continue with returned opaque cursor; stop when cursor is null/absent as endpoint documents.",
+        "Do not infer end from short page, decode cursor, or change Agent type filter mid-walk.",
+        "Keep workspace scope and endpoint parameters coherent."
+      ],
+      "must_not_claim": [
+        "Create page numbers from cursor.",
+        "Stop based on item count only."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T14",
+      "kind": "standard",
+      "title": "Shared rate budget",
+      "prompt": "Two applications use different API Keys for the same workspace. What is the rate budget and how should 429 be retried?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "rate-limits.mdx"
+        },
+        {
+          "file": "guides/responses.mdx"
+        }
+      ],
+      "must_explain": [
+        "50 requests per 5 seconds shared by workspace.",
+        "Use RateLimit for pacing; Retry-After in seconds is authoritative for retry.",
+        "Do not immediate-loop or retry 401/403 on a schedule."
+      ],
+      "must_not_claim": [
+        "Each API Key gets separate full budget.",
+        "Automatically replay every POST on arbitrary 5xx."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T15",
+      "kind": "standard",
+      "title": "422 parser by operation",
+      "prompt": "Compare REST validation errors and Custom Connections 422. Which fields should an error parser read?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/HTTPValidationError"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/Problem"
+        },
+        {
+          "file": "api-reference/campaign-leads.openapi.yaml",
+          "pointer": "/components/schemas/ProblemDetailsDto"
+        },
+        {
+          "file": "lead-capture/errors.mdx"
+        },
+        {
+          "file": "guides/responses.mdx"
+        }
+      ],
+      "must_explain": [
+        "Published REST HTTPValidationError uses detail[]; reviewed shared handler emits Problem.errors[]; accept both JSON media types until deployed confirmation.",
+        "Custom Connections has type/title/status plus optional detail; 422 means CAPTCHA provider unavailable.",
+        "Keep fallback when REST code absent."
+      ],
+      "must_not_claim": [
+        "Read errors[] for every 422.",
+        "Read REST code from Custom Connections errors.",
+        "Treat all 422 as schema-invalid and never retry."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T16",
+      "kind": "standard",
+      "title": "Empty release response",
+      "prompt": "I released a conversation and received HTTP 204. Should I call response.json()?",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1conversations~1{conversationId}~1release/post"
+        },
+        {
+          "file": "guides/responses.mdx"
+        }
+      ],
+      "must_explain": [
+        "204 success with no response content; do not parse JSON.",
+        "Use exact release POST path."
+      ],
+      "must_not_claim": [
+        "Invent a response status object."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T17",
+      "kind": "standard",
+      "title": "Asynchronous handoff",
+      "prompt": "The handoff returned 202 with assignees and trackingId. Can I mark the advisor assignment complete?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1leadscout~1conversations~1{conversationId}~1handoff/post"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/HandoffResponse"
+        },
+        {
+          "file": "guides/responses.mdx"
+        }
+      ],
+      "must_explain": [
+        "No; request accepted and assignment async.",
+        "Assignees echo request; internal resolution downstream.",
+        "Keep trackingId for correlation; no documented polling URL should be invented."
+      ],
+      "must_not_claim": [
+        "Say assignment complete.",
+        "Construct /handoff/status/{trackingId}."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T18",
+      "kind": "standard",
+      "title": "Custom Connections acceptance",
+      "prompt": "My landing page received 202 with requestId. What should the visitor see, and what should I retain?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/campaign-leads.openapi.yaml",
+          "pointer": "/components/schemas/CampaignLeadAcceptedDto"
+        },
+        {
+          "file": "lead-capture/integration.mdx"
+        },
+        {
+          "file": "guides/responses.mdx"
+        }
+      ],
+      "must_explain": [
+        "Lead accepted/queued; say we will message shortly, not message sent.",
+        "Retain requestId; errors do not carry it.",
+        "No undocumented delivery-status endpoint."
+      ],
+      "must_not_claim": [
+        "Guarantee WhatsApp sent or delivered."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T19",
+      "kind": "standard",
+      "title": "CORS tenant lookup",
+      "prompt": "The Custom Connections request has workspaceId in JSON but the browser fails at preflight. What is missing?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/campaign-leads.openapi.yaml",
+          "pointer": "/paths/~1leadscout~1campaign-leads/post/parameters/0"
+        },
+        {
+          "file": "lead-capture/integration.mdx"
+        }
+      ],
+      "must_explain": [
+        "workspaceId must also be query parameter on POST URL for browser preflight.",
+        "No body on preflight, so tenant cannot be resolved from body.",
+        "Do not add REST auth headers as a fix."
+      ],
+      "must_not_claim": [
+        "Remove captureKey or CAPTCHA.",
+        "Add x-api-key to fix CORS."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T20",
+      "kind": "standard",
+      "title": "Consent evidence",
+      "prompt": "Give a fictional-business consent example for Custom Connections and explain capturedAt.",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "lead-capture/consent.mdx"
+        },
+        {
+          "file": "api-reference/campaign-leads.openapi.yaml",
+          "pointer": "/components/schemas/ConsentDto"
+        }
+      ],
+      "must_explain": [
+        "Explicit opt-in names business and WhatsApp communication; no prechecked box.",
+        "GRANTED with capturedAt representing actual consent time, not a nightly batch.",
+        "Do not submit if consent not granted."
+      ],
+      "must_not_claim": [
+        "Bundle opt-in with unrelated terms.",
+        "Invent consent evidence."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T21",
+      "kind": "contrast_or_adversarial",
+      "title": "Reject stale forceSend premises",
+      "prompt": "One LeadScout description says forceSend=true reuses an active conversation; another says it creates a fresh one. Which should I implement?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1leadscout~1outbound/post"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/LeadscoutOutboundRequest"
+        },
+        {
+          "file": "guides/agent-outbound.mdx"
+        }
+      ],
+      "must_explain": [
+        "Reject the stale fresh-conversation premise: current verified-source guidance says true permits reuse, not unconditional new creation.",
+        "Distinguish legacy LeadScout explicit line (false:0007) from automatic occupied-only selection (false:0008); true permits eligible reuse.",
+        "Agents outbound prefers its own controlled conversation and rejects selected human/other-Agent control with BRIDGE_AI_AGENT_OUTBOUND_0006; legacy does not apply that guard.",
+        "Recoverable released conversations retain ID and can recover with false or true; blocked/nonrecoverable conversations are not bypassed.",
+        "Session gates remain: an open unexpired LeadScout session blocks with0017; inability to finalize expired session returns0018.",
+        "forceSend is not idempotency; successful reuse adds template/follow-ups and does not establish delivery or controller transfer."
+      ],
+      "must_not_claim": [
+        "Create a fresh conversation merely because forceSend=true.",
+        "Treat line occupancy as globally exclusive to one Contact.",
+        "Apply Agent controller protection universally to legacy.",
+        "Retry successful requests as if forceSend deduplicated them."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T22",
+      "kind": "contrast_or_adversarial",
+      "title": "Exact canonical HMAC and unsigned timestamp",
+      "prompt": "The webhook guide says HMAC of request body, but its Python example sorts parsed JSON. Which bytes must I sign in production?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "webhooks/verifying-signatures.mdx"
+        },
+        {
+          "file": "webhooks/receive-events.mdx"
+        }
+      ],
+      "must_explain": [
+        "State the exact current source-backed HMAC input: json.dumps(event, sort_keys=True).encode(\"utf-8\"), using default Python JSON formatting, recursive key sorting, ASCII escapes and no appended newline.",
+        "HMAC-SHA256 uses client_secret UTF-8 and sha256= lowercase hex; do not substitute raw received bytes or generic JCS/JSON.stringify.",
+        "The timestamp header is not signed; receiver freshness policy alone does not prevent a re-timestamped replay.",
+        "Verify the webhook API key, signature and freshness; use durable inbox/business idempotency and test against the published vector.",
+        "Distinguish reviewed sender implementation from independently unverified production deployment parity."
+      ],
+      "must_not_claim": [
+        "Claim timestamp is authenticated by this HMAC.",
+        "Sign raw bytes or timestamp-prefixed string instead.",
+        "Accept a mismatch by disabling verification.",
+        "Treat the five-minute receiver policy as sole cryptographic replay protection."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T23",
+      "kind": "contrast_or_adversarial",
+      "title": "Per-operation attempts and non-global event identity",
+      "prompt": "May my receiver assume exactly-once delivery, preserved order, and a known retry interval?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "webhooks/receive-events.mdx"
+        },
+        {
+          "file": "webhooks/verifying-signatures.mdx"
+        },
+        {
+          "file": "webhooks/events.mdx"
+        }
+      ],
+      "must_explain": [
+        "Reject exactly-once/global-order assumptions.",
+        "The documented sender makes up to3 HTTP attempts per delivery operation with1s then2s waits;2xx stops this operation; default socket timeout10s.",
+        "This per-operation policy is not a global lifetime cap of3 attempts for a logical event; another delivery invocation can occur.",
+        "Headers/payload/signature/timestamp are reused within that operation; do not infer Retry-After controls sender timing.",
+        "eventId is not globally unique across all families; some IDs are entity-derived. Distinct payloads sharing an ID must be retained.",
+        "Explain receiver recommendation: durable exact-event inbox scoped by workspaceId,eventType,eventId and canonical fingerprint; idempotent worker; no global ordering guarantee or invented replay endpoint."
+      ],
+      "must_not_claim": [
+        "Promise exactly-once or a global maximum of3 deliveries per event.",
+        "Deduplicate solely on global eventId and discard distinct payloads.",
+        "Invent unbounded retry, retry schedule beyond documented operation, or public replay endpoint."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T24",
+      "kind": "contrast_or_adversarial",
+      "title": "Undocumented sticker rules",
+      "prompt": "FileType includes STICKER. What MIME type and maximum size should I hardcode?",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/FileType"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1files/post"
+        }
+      ],
+      "must_explain": [
+        "Check enum and published file constraints table.",
+        "If STICKER limits still absent, identify gap and seek validator/owner source rather than invent limits."
+      ],
+      "must_not_claim": [
+        "Copy WhatsApp sticker limits without confirming Bridge validator.",
+        "Remove enum value from contract."
+      ],
+      "safe_partial_if_sources_unresolved": "Safe partial declines to invent restrictions; full coverage requires verified Bridge limits.",
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T25",
+      "kind": "contrast_or_adversarial",
+      "title": "Retry with reused CAPTCHA",
+      "prompt": "Custom Connections returned 422. Can I resubmit the same payload and CAPTCHA token, and assume all retries are globally deduplicated?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "lead-capture/errors.mdx"
+        },
+        {
+          "file": "lead-capture/integration.mdx"
+        }
+      ],
+      "must_explain": [
+        "422 provider-unavailable retry documented safe, but mint a fresh token for every attempt.",
+        "Do not generalize case-specific statement to all POSTs or failures.",
+        "CAPTCHA_REJECTED alone does not reveal expiration/reuse/missing/score."
+      ],
+      "must_not_claim": [
+        "Reuse token.",
+        "Claim general exactly-once semantics."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T26",
+      "kind": "contrast_or_adversarial",
+      "title": "Email and phone normalization",
+      "prompt": "Do John.Doe@example.com and john.doe@example.com resolve to the same Contact? Can an internal user be found by PHONE?",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1contacts~1lookup/get"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/paths/~1bridge~1api~1v1~1workspaces~1{workspaceId}~1users~1lookup/get"
+        }
+      ],
+      "must_explain": [
+        "Email domain normalized, local part exact as sent, so do not assume those local parts match.",
+        "PHONE is supported for Contact lookup, not internal-user lookup.",
+        "URL encode phone values when used in query."
+      ],
+      "must_not_claim": [
+        "Lowercase entire email on behalf of API.",
+        "Use PHONE for /users/lookup."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T27",
+      "kind": "contrast_or_adversarial",
+      "title": "Inventing a channel ID",
+      "prompt": "provider-channels returned {provider: WHATSAPP, identifier: 573001234567}. Add an id to the response so my multichannel outbound can work.",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/ProviderChannel"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/AgentLine"
+        },
+        {
+          "file": "guides/identifiers.mdx"
+        }
+      ],
+      "must_explain": [
+        "Refuse to alter response contract or derive UUID from phone.",
+        "Use Agent lines when applicable; otherwise obtain intended ID from authorized config/admin."
+      ],
+      "must_not_claim": [
+        "Invent id property or UUID.",
+        "Pass phone as providerChannelId."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T28",
+      "kind": "contrast_or_adversarial",
+      "title": "MCP scope and feedback",
+      "prompt": "Can the docs MCP send a Bridge message or read my workspace? Is every tool read-only?",
+      "critical": false,
+      "expected_evidence": [
+        {
+          "file": "connect-your-agent.mdx"
+        }
+      ],
+      "must_explain": [
+        "No tenant data/API actions; two reading/search capabilities and optional feedback submission.",
+        "Feedback sends documentation comment to docs team.",
+        "Do not execute feedback unless user asks."
+      ],
+      "must_not_claim": [
+        "Claim messages sent from docs MCP.",
+        "Describe feedback as no external write."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T29",
+      "kind": "contrast_or_adversarial",
+      "title": "llms-full is not whole contract",
+      "prompt": "I loaded only llms-full.txt. Generate any message request from that corpus without fetching a schema.",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "connect-your-agent.mdx"
+        },
+        {
+          "file": "api-reference/openapi.yaml",
+          "pointer": "/components/schemas/MessageRequest"
+        }
+      ],
+      "must_explain": [
+        "Read relevant OpenAPI or endpoint .md before generating request.",
+        "llms-full summarizes endpoints without every request/response schema.",
+        "Must obtain required broadcast boolean rather than invent body."
+      ],
+      "must_not_claim": [
+        "Claim corpus includes every schema.",
+        "Generate unverified fields from training."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    },
+    {
+      "id": "T30",
+      "kind": "contrast_or_adversarial",
+      "title": "Renamed feature unchanged wire contract",
+      "prompt": "Custom Connections replaced the name Lead Capture. Should I rename URLs, captureKey, campaign-leads, or BRIDGE.CAMPAIGN_LEADS errors?",
+      "critical": true,
+      "expected_evidence": [
+        {
+          "file": "docs.json",
+          "contains": "Custom Connections is the current name"
+        },
+        {
+          "file": "api-reference/campaign-leads.openapi.yaml",
+          "pointer": "/paths/~1leadscout~1campaign-leads"
+        }
+      ],
+      "must_explain": [
+        "Current feature name Custom Connections; naming only.",
+        "Keep /lead-capture docs URLs, captureKey, campaign-leads endpoint, and error identifiers.",
+        "Do not imply new capabilities beyond landing-page flow."
+      ],
+      "must_not_claim": [
+        "Invent /custom-connections API endpoint.",
+        "Rename request/error fields."
+      ],
+      "safe_partial_if_sources_unresolved": null,
+      "clarity_score": null,
+      "completeness_score": null
+    }
+  ]
+}

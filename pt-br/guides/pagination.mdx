@@ -1,0 +1,117 @@
+---
+title: "Leia todas as páginas de resultados"
+sidebarTitle: "Paginação"
+description: "Percorra os cursores opacos de Contatos, conversas, usuários do Bridge e Agentes, sem parar em uma página com poucos registros."
+---
+
+Os endpoints de listagem retornam uma coleção e um `cursor` opcional. Envie esse cursor sem alterações para ler a próxima página. Continue seguindo os cursores até que o valor seja nulo ou esteja ausente.
+
+<a id="choose-the-collection"></a>
+
+## Escolha a coleção
+
+Os quatro endpoints abaixo aceitam `limit` de **1 a 100**, com valor padrão **20**.
+
+| Recurso | Caminho após o workspace | Campo da coleção |
+| --- | --- | --- |
+| Contatos | `/contacts` | `contacts` |
+| Conversas | `/conversations` | `conversations` |
+| Usuários do Bridge | `/users` | `users` |
+| Agentes | `/agents` | `agents` |
+
+Use a [consulta de contatos](/pt-br/api-reference/contacts-api/obter-contato-por-um-identificador) ou a [consulta de usuários do Bridge](/pt-br/api-reference/internal-users-api/obter-usu%C3%A1rio-interno-por-um-identificador) quando precisar encontrar uma pessoa conhecida. Percorrer a lista inteira é uma tarefa diferente.
+
+<a id="server-side-example"></a>
+
+## Exemplo no servidor
+
+Este exemplo lê Contatos. Salve como `list-contacts.mjs` e defina `BRIDGE_API_KEY` e `BRIDGE_WORKSPACE_ID` no servidor.
+
+A proteção local `maxPages` evita uma execução ilimitada por engano; ela não é um limite da API Bridge. A proteção contra cursores repetidos interrompe a execução e informa o problema, em vez de retornar silenciosamente uma lista incompleta.
+
+```javascript
+const BASE = "https://api-connect-us.bridge.new";
+const apiKey = process.env.BRIDGE_API_KEY;
+const workspaceId = process.env.BRIDGE_WORKSPACE_ID;
+if (!apiKey || !workspaceId) {
+  throw new Error("Set BRIDGE_API_KEY and BRIDGE_WORKSPACE_ID.");
+}
+
+async function* pages(resource, collection, filters = {}) {
+  let cursor;
+  const seen = new Set();
+  const maxPages = 10000;
+
+  for (let pageNumber = 0; pageNumber < maxPages; pageNumber += 1) {
+    const url = new URL(
+      `/bridge/api/v1/workspaces/${encodeURIComponent(workspaceId)}/${resource}`,
+      BASE,
+    );
+    for (const [key, value] of Object.entries(filters)) {
+      url.searchParams.set(key, String(value));
+    }
+    url.searchParams.set("limit", "100");
+    if (cursor !== undefined) url.searchParams.set("cursor", cursor);
+
+    const response = await fetch(url, { headers: { "x-api-key": apiKey } });
+    const body = await response.json().catch(() => null);
+    if (response.status !== 200) {
+      const code = body?.code ? ` (${body.code})` : "";
+      throw new Error(`List ${resource}: HTTP ${response.status}${code}`);
+    }
+    if (!Array.isArray(body?.[collection])) {
+      throw new Error(`Expected the ${collection} collection.`);
+    }
+
+    yield body[collection];
+    if (body.cursor === null || body.cursor === undefined) return;
+    if (typeof body.cursor !== "string" || seen.has(body.cursor)) {
+      throw new Error("Invalid or repeated cursor; stopped without claiming completion.");
+    }
+    seen.add(body.cursor);
+    cursor = body.cursor;
+  }
+  throw new Error("Local page guard reached; the sweep is incomplete.");
+}
+
+let count = 0;
+for await (const contacts of pages("contacts", "contacts")) {
+  // Process or store this page before continuing. Avoid logging personal data.
+  count += contacts.length;
+}
+console.log({ contactsRead: count });
+```
+
+```bash
+node list-contacts.mjs
+```
+
+Use `pages("conversations", "conversations", { status: "ACTIVE" })`, `pages("users", "users")` ou `pages("agents", "agents")` com o contrato correspondente. Mantenha os mesmos filtros durante todo o percurso.
+
+<a id="do-not-stop-on-a-short-page"></a>
+
+## Não pare em uma página com poucos registros
+
+Uma página com menos registros que `limit` ainda pode ter uma próxima página. O endpoint de Agentes documenta esse comportamento explicitamente. O sinal de continuação é o cursor retornado, não o tamanho da coleção.
+
+Trate o cursor como opaco. Não o decodifique, incremente ou crie por conta própria. O `URL.searchParams` do exemplo preserva seu valor por meio da codificação de URL.
+
+<a id="filters-and-rate-limits"></a>
+
+## Filtros e limites de requisições
+
+- Os filtros `ownerEmail` e `search` da lista de Contatos estão obsoletos. Para um e-mail ou telefone conhecido, use a consulta de contatos. Para filtrar um conjunto por `ownerId`, leia esse campo nas linhas retornadas e faça a filtragem no seu código.
+- Os filtros `email` e `status` da lista de usuários do Bridge estão obsoletos. Use a consulta para um e-mail conhecido ou examine o `status` de cada usuário retornado.
+- Cada requisição de página consome a cota compartilhada do workspace. Siga o guia de [limites de requisições](/pt-br/rate-limits), incluindo `Retry-After` em respostas `429`. Este exemplo mínimo para em respostas diferentes de 200, sem tentar novamente automaticamente.
+
+Os contratos publicados não garantem uma visão transacionalmente consistente da lista enquanto os registros estão mudando. Não apresente esse percurso como uma exportação necessariamente consistente nem presuma um prazo de validade do cursor que não esteja documentado.
+
+<a id="references"></a>
+
+## Referências
+
+- [Listar Contatos](/pt-br/api-reference/contacts-api/listar-contatos)
+- [Listar conversas](/pt-br/api-reference/conversations-api/consultar-conversas-com-filtros-flex%C3%ADveis)
+- [Listar usuários do Bridge](/pt-br/api-reference/internal-users-api/listar-usu%C3%A1rios-internos)
+- [Listar Agentes](/pt-br/api-reference/agents-api/listar-os-agents-de-um-workspace)
+- [Respostas e erros](/pt-br/guides/responses)

@@ -1,0 +1,144 @@
+---
+title: "Receba eventos de forma confiável"
+sidebarTitle: "Recebimento de eventos"
+description: "Verifique, persista e confirme webhooks; depois processe com segurança duplicatas e eventos fora de ordem."
+---
+
+Um receptor de webhooks tem duas responsabilidades: aceitar rapidamente um evento autenticado e processá-lo de forma confiável. Mantenha chamadas lentas ao CRM, enriquecimento e outras tarefas de negócio fora da requisição HTTP.
+
+<a id="receive-→-verify-→-persist-→-acknowledge"></a>
+
+## Receba → verifique → persista → confirme
+
+1. Leia o corpo e os cabeçalhos da requisição.
+2. Verifique a chave de API do webhook, o HMAC canônico e a política de timestamp com o [verificador](/pt-br/webhooks/verifying-signatures).
+3. Armazene atomicamente o evento verificado em uma caixa de entrada persistente ou confirme que esse evento exato já está armazenado.
+4. Retorne uma resposta `2xx` prontamente. Processe os eventos armazenados em um worker e torne cada ação de negócio idempotente.
+
+Retorne sucesso somente após a aceitação persistente. Se o armazenamento estiver indisponível, retorne uma resposta diferente de `2xx` para não confirmar a tentativa de entrega. Uma duplicata já armazenada deve receber `2xx` novamente.
+
+<a id="retry-behavior"></a>
+
+## Regras de novas tentativas
+
+O emissor atual faz até **três tentativas HTTP** para uma operação de entrega. Ele espera **um segundo** e depois **dois segundos** antes das tentativas restantes. Qualquer resposta `2xx` encerra essas tentativas. Uma resposta diferente de `2xx`, uma falha de conexão ou uma exceção na requisição pode acionar a próxima tentativa. O timeout padrão do socket é de **10 segundos** por tentativa; confirme em poucos segundos, em vez de contar com uma tolerância de 30 segundos.
+
+O payload, a assinatura e os cabeçalhos de timestamp são reutilizados nessa operação de entrega. Essas três tentativas limitam uma operação de envio, **não o total de todas as entregas de um evento ao longo do fluxo**. Se um evento anterior for entregue novamente, ele poderá acionar o emissor outra vez. Não há aqui promessa de um número total de tentativas ou de um prazo máximo para reenvios. Não conte com o cabeçalho de resposta `Retry-After` para definir o intervalo das tentativas do Bridge.
+
+Se todas as tentativas falharem, a entrega é considerada malsucedida. Não presuma repetição automática indefinida nem um endpoint público de reenvio. Para investigar, guarde o workspace, o tipo, o ID e o horário aproximado do evento e entre em contato com o suporte do Bridge. Não inclua credenciais de webhook em mensagens de suporte ou logs da aplicação.
+
+<a id="duplicates-and-event-identity"></a>
+
+## Duplicatas e identidade do evento
+
+Seu serviço pode ter confirmado a gravação de um evento mesmo que o Bridge não tenha recebido sua resposta `2xx`. Uma nova tentativa não deve causar outra atualização do CRM, fatura, mensagem ou outro efeito de negócio.
+
+Delimite o registro da caixa de entrada por `workspaceId`, `eventType` e `eventId`. Armazene também um digest do evento verificado. Não presuma que `eventId` seja globalmente único em todas as famílias de notificação: algumas usam um ID derivado da entidade. Preserve payloads diferentes que compartilhem um ID e aplique idempotência de negócio à operação executada pelo worker.
+
+O exemplo abaixo elimina repetições exatas usando os três identificadores e a impressão digital SHA-256 do evento canônico. Essa é uma chave da caixa de entrada deste exemplo, não um novo campo de requisição do Bridge.
+
+Não expire um registro de deduplicação apenas porque a janela de cinco minutos do timestamp terminou. Esse cabeçalho não é assinado, portanto a janela não define um prazo seguro de expiração para proteção contra reenvios. Escolha a retenção conforme suas necessidades de conciliação de negócio e mantenha as ações no destino idempotentes. O exemplo não exclui registros da caixa de entrada automaticamente.
+
+<a id="minimal-durable-receiver"></a>
+
+## Receptor persistente mínimo
+
+Adicione estas definições ao módulo `bridge_webhooks.py` do guia [verifique requisições de webhook](/pt-br/webhooks/verifying-signatures). O módulo do verificador já inclui as importações usadas abaixo.
+
+```python
+class SQLiteInbox:
+    """Single-service example inbox. Use a shared durable store for multiple replicas."""
+    def __init__(self, path):
+        self.path = str(path)
+        with sqlite3.connect(self.path) as db:
+            db.execute("""CREATE TABLE IF NOT EXISTS webhook_inbox (
+                workspace_id TEXT NOT NULL, event_type TEXT NOT NULL,
+                event_id TEXT NOT NULL, fingerprint TEXT NOT NULL,
+                body TEXT NOT NULL, received_at REAL NOT NULL,
+                processed INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(workspace_id, event_type, event_id, fingerprint)
+            )""")
+
+    def accept(self, event):
+        identifiers = [event.get(key) for key in ("workspaceId", "eventType", "eventId")]
+        if not all(isinstance(value, str) and value for value in identifiers):
+            raise VerificationError("Missing event envelope identifiers")
+        body = canonical_payload(event)
+        fingerprint = hashlib.sha256(body).hexdigest()
+        with sqlite3.connect(self.path, timeout=3) as db:
+            cursor = db.execute(
+                """INSERT OR IGNORE INTO webhook_inbox
+                (workspace_id, event_type, event_id, fingerprint, body, received_at)
+                VALUES (?, ?, ?, ?, ?, ?)""",
+                (*identifiers, fingerprint, body.decode("utf-8"), time.time()),
+            )
+            inserted = cursor.rowcount == 1
+        # Context manager commits before the request can be acknowledged.
+        return inserted
+
+
+def make_wsgi_app(inbox, webhook_api_key, client_secret):
+    """Verify, commit an inbox record, then acknowledge; workers process it later."""
+    def app(environ, start_response):
+        if environ.get("REQUEST_METHOD") != "POST":
+            start_response("405 Method Not Allowed", [("Allow", "POST")])
+            return [b""]
+        try:
+            length = int(environ.get("CONTENT_LENGTH") or "0")
+            if length < 1:
+                raise VerificationError("Missing JSON body")
+            raw_body = environ["wsgi.input"].read(length)
+            headers = {
+                "x-bridge-api-key": environ.get("HTTP_X_BRIDGE_API_KEY", ""),
+                "x-bridge-signature": environ.get("HTTP_X_BRIDGE_SIGNATURE", ""),
+                "x-bridge-timestamp": environ.get("HTTP_X_BRIDGE_TIMESTAMP", ""),
+            }
+            event = verify_webhook(raw_body, headers, webhook_api_key, client_secret)
+            inbox.accept(event)  # A duplicate exact event is also acknowledged.
+        except (VerificationError, ValueError):
+            status, body = "400 Bad Request", b'{"accepted":false}'
+        except sqlite3.Error:
+            status, body = "503 Service Unavailable", b'{"accepted":false}'
+        else:
+            status, body = "200 OK", b'{"accepted":true}'
+        start_response(status, [("Content-Type", "application/json"), ("Content-Length", str(len(body)))])
+        return [body]
+    return app
+
+```
+
+Crie a aplicação WSGI na configuração do servidor:
+
+```python
+import os
+
+from bridge_webhooks import SQLiteInbox, make_wsgi_app
+
+application = make_wsgi_app(
+    SQLiteInbox(os.environ["WEBHOOK_INBOX_PATH"]),
+    os.environ["BRIDGE_WEBHOOK_API_KEY"],
+    os.environ["BRIDGE_WEBHOOK_CLIENT_SECRET"],
+)
+```
+
+Use um caminho persistente para o banco neste exemplo de um único serviço. Ao executar várias réplicas do receptor, use um armazenamento compartilhado com restrição atômica de unicidade equivalente. Aplique as políticas de tamanho de requisição e de rede no servidor HTTP e faça a terminação HTTPS nele.
+
+Este exemplo termina na aceitação persistente. Um worker precisa ler as linhas com `processed=0`, executar a ação de negócio de forma idempotente e marcá-las como processadas somente após o sucesso. Uma confirmação local não comprova que a ação de negócio terminou.
+
+<a id="ordering-and-reconciliation"></a>
+
+## Ordenação e conciliação
+
+Não dependa de uma ordem global de entrega. Famílias diferentes de recursos e tentativas de entrega independentes podem se intercalar. Encaminhe cada evento pelo `eventType` publicado e use o esquema da assinatura correspondente.
+
+Quando o payload incluir `sequence`, trate-o como uma indicação de ordem do recurso ou fluxo, não como um contador global compartilhado por todos os workspaces ou famílias de eventos. Não o invente para eventos cujo esquema não tenha sequência. Preserve os timestamps e identificadores de origem e evite substituir um estado mais recente por uma notificação antiga. Quando a API REST permitir ler o recurso, consulte o estado atual se o evento deixar o resultado incerto; nos demais casos, siga a orientação da família de eventos ou contate o suporte.
+
+Não exija um campo universal `version` em todos os envelopes. Para as famílias de eventos aceitas por esse serviço, a versão configurada na assinatura seleciona o transformador registrado e o esquema de payload daquela família. Siga o esquema documentado para a família e a assinatura; não presuma uma propriedade de versão que seu envelope não publica.
+
+<a id="check-the-receiver-before-launch"></a>
+
+## Teste o receptor antes de colocar em produção
+
+Verifique o vetor de assinatura fornecido, payload alterado, chave de API incorreta, timestamps expirados e futuros, entrega duplicada após reiniciar o processo, falha de armazenamento e dois payloads diferentes com o mesmo ID. O reenvio de um payload previamente assinado com um novo timestamp demonstra por que a caixa de entrada persistente é necessária além da verificação temporal.
+
+Use o webhook de teste do console do Bridge para validar a conexão e as credenciais configuradas depois de implantar o receptor. Um teste bem-sucedido demonstra que o caminho de callback funciona; não estabelece garantias de entrega ou ordem para todos os eventos de negócio.

@@ -1,0 +1,113 @@
+---
+title: "Registro de cambios"
+sidebarTitle: "Registro de cambios"
+description: "Cambios de la API de Bridge que afectan tu integración, del más reciente al más antiguo."
+keywords: ["registro de cambios", "cambio incompatible", "obsolescencia", "migración", "lookup", "filtros de listados"]
+---
+
+<a id="overview"></a>
+
+## Descripción general
+
+Aquí se muestran los cambios que afectan las llamadas que ya haces, del más reciente al más antiguo. Los cambios aditivos —un endpoint nuevo o un campo opcional nuevo— no se incluyen salvo que reemplacen algo que se retirará; aparecen en la [referencia de la API REST](/es/api-reference/health/comprobar-estado) cuando se publican.
+
+<Note>
+  Las entradas anteriores de abajo no registraron fechas de entrada en vigor. No se han verificado sus fechas de despliegue y su orden no establece una fecha de lanzamiento. **Aún no se ha anunciado** la fecha de retirada de los filtros de listado obsoletos. Sigue usando el contrato actual documentado hasta que se publique un cambio efectivo y usa los endpoints de consulta por identificador disponibles para integraciones nuevas.
+</Note>
+
+<a id="documentation-improvements"></a>
+
+## Mejoras de documentación
+
+Esta revisión aclara el contrato existente de la API e incorpora guías de integración por tarea. Renombra la función de landing pages como **Custom Connections**, explica la reutilización y recuperación de conversaciones salientes y mejora las guías de errores y webhooks. Se conservan las firmas actuales de la API y las URLs de documentación `/lead-capture`. La fecha de una revisión documental no es una fecha de despliegue de la API ni de retirada de funciones.
+
+---
+
+<a id="creating-a-conversation-recovers-a-released-one"></a>
+
+## Crear una conversación puede recuperar una liberada
+
+`POST /conversations` antes devolvía `409 BRIDGE_PROVIDER_CHANNEL_0001` cuando no había una línea libre. Ahora, si los contactos solicitados tienen una conversación liberada con recuperación habilitada, se recupera y se devuelve con `201` y su `id` existente. Por eso puedes recibir un `id` que ya tenías guardado. Si esa conversación incluye otros contactos o líneas, la solicitud devuelve `409 BRIDGE_CONVERSATION_0105`. Consulta los detalles en la [referencia de la API REST](/es/api-reference/health/comprobar-estado).
+
+---
+
+<a id="finding-a-contact-or-a-user-by-an-identifier"></a>
+
+## Buscar un contacto o usuario por identificador
+
+<Warning>
+  **Se retirarán parámetros de consulta que existen hoy.** Todavía funcionan y están marcados como obsoletos en la [referencia de la API REST](/es/api-reference/health/comprobar-estado). Antes de que dejen de aceptarse publicaremos aquí la fecha. Los endpoints de consulta por identificador que los reemplazan ya están disponibles.
+</Warning>
+
+<a id="what-changes"></a>
+
+### Qué cambia
+
+**Disponibles ahora:** `GET /contacts/lookup` y `GET /users/lookup` devuelven un contacto o un usuario de Bridge —usuario interno en la referencia de la API— a partir de un identificador.
+
+**Obsoletos, pendientes de retirada:** los endpoints de listado dejarán de filtrar. `GET /contacts` y `GET /users` conservarán únicamente `limit` y `cursor`.
+
+| Obsoleto | Reemplazo |
+| --- | --- |
+| `GET /contacts?search=`: teléfono | `GET /contacts/lookup?type=PHONE&value=…` |
+| `GET /contacts?search=`: correo | `GET /contacts/lookup?type=EMAIL&value=…` |
+| `GET /contacts?search=`: nombre | **Ninguno** |
+| `GET /contacts?ownerEmail=` | **Ninguno** |
+| `GET /users?email=` | `GET /users/lookup?type=EMAIL&value=…` |
+| `GET /users?status=` | **Ninguno**: cada fila ya incluye `status` |
+
+Después de retirarse, el parámetro se **rechazará**, no se ignorará. Enviarlo devolverá `400` con `BRIDGE_CORE_0103` y la respuesta nombrará el parámetro. Es deliberado: si se ignorara el filtro silenciosamente, la llamada entregaría la primera página de todo el espacio de trabajo y podrías tratarla como una coincidencia.
+
+<a id="what-to-do"></a>
+
+### Qué debes hacer
+
+**Si buscas por teléfono o correo**, migra al endpoint de consulta correspondiente. Devuelve el mismo objeto que el listado entrega en cada fila, o `404` cuando no hay coincidencia.
+
+`type` acepta los tipos de identificador que la API usa en otros lugares: los mismos valores de `identifierType` de un participante de conversación. Los contactos admiten `ID`, `EMAIL` y `PHONE`; los usuarios de Bridge admiten `ID` y `EMAIL`, porque su teléfono no funciona como identificador de consulta en Bridge.
+
+Se admite `ID` por la misma razón: el código que ya maneja un par `{identifierType, identifier}` no debería tener que separar uno de sus valores para construir una URL distinta. Devuelve exactamente lo mismo que `GET /contacts/{contactId}`, que sigue siendo la URL canónica de un contacto: prefiérela cuando ya tengas el ID.
+
+```bash
+# Before
+curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?search=%2B14084029292" \
+  -H "x-api-key: $BRIDGE_API_KEY"
+
+# After
+curl "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts/lookup?type=PHONE&value=%2B14084029292" \
+  -H "x-api-key: $BRIDGE_API_KEY"
+```
+
+Un `PHONE` se interpreta igual que el teléfono que envías al crear un contacto: si no incluye código de país, se interpreta según el país predeterminado del espacio de trabajo, y se ignoran espacios y separadores. En un `EMAIL`, el dominio se convierte a minúsculas, pero la parte local debe coincidir exactamente con lo enviado.
+
+<Note>
+  Un teléfono en formato internacional comienza con `+`, que debe codificarse como `%2B` en la cadena de consulta. La mayoría de los clientes HTTP lo hacen automáticamente si proporcionas los parámetros como un mapa en lugar de construir la URL a mano.
+</Note>
+
+Un `value` que no corresponda a su `type` —correo, teléfono o UUID con formato incorrecto— se rechaza con `422` y `BRIDGE_CORE_0101` antes de hacer la búsqueda. Si pasas entradas del usuario directamente, maneja ese caso por separado de `404`: uno indica *enviaste algo que no es un identificador* y el otro, *nadie en este espacio de trabajo tiene ese identificador*.
+
+**Si filtras usuarios de Bridge por estado**, lee el `status` de cada fila. Es un valor calculado, no almacenado, y ya aparece en todas las respuestas. Hoy el listado devuelve solo usuarios activos si no envías `status`; cuando se retire ese parámetro, devolverá tanto activos como deshabilitados.
+
+Lo mismo aplica a `GET /users/lookup`: devuelve al usuario de Bridge esté activo o deshabilitado y prefiere el activo cuando el correo coincide con ambos. Hoy `GET /users?email=` no devuelve un usuario deshabilitado; por eso debes revisar el `status` de la respuesta si solo quieres actuar sobre usuarios activos.
+
+**Si buscas contactos por nombre**, no habrá reemplazo. Conviene entender qué se pierde: el parámetro solo coincide con el **nombre completo exacto**, formado por nombre, un espacio y apellido. Nunca coincide con un prefijo, una parte del nombre o solo el apellido. Si hoy te funciona, ya estás enviando el nombre completo.
+
+**Si filtras contactos por propietario**, no habrá reemplazo. Obtén la página y filtra por `ownerId` en tu código. `ownerId` es el ID del usuario de Bridge propietario, no su correo: consúltalo una vez con `GET /users/lookup?type=EMAIL&value=…` y compáralo con su `id`.
+
+<a id="why"></a>
+
+### Por qué cambia
+
+Filtrar con esos parámetros hace que el costo de la llamada dependa del tamaño del espacio de trabajo en lugar del tamaño de la respuesta. Buscar un contacto por teléfono en un espacio de trabajo grande lee decenas de miles de registros para devolver uno; pedir una página mayor lo hace más lento, no más rápido. Los endpoints de consulta solo leen los registros que tienen ese identificador.
+
+Por eso se retiran esos filtros en lugar de ajustarlos: cuando existe un reemplazo, es mejor; y la búsqueda por nombre, que no tiene reemplazo, nunca encontró algo distinto del nombre completo exacto.
+
+---
+
+<a id="related-topics"></a>
+
+## Temas relacionados
+
+- [Códigos de error](/es/error-codes): referencia completa, incluidos `BRIDGE_CORE_0103` y `BRIDGE_CORE_0101`.
+- [Referencia de la API REST](/es/api-reference/health/comprobar-estado): endpoints de consulta, sus parámetros y sus respuestas.
+- [Límites de solicitudes](/es/rate-limits): qué acepta la API por espacio de trabajo y cómo esperar correctamente antes de reintentar.

@@ -1,94 +1,144 @@
-Each webhook request sent by Bridge is signed with an HMAC-SHA256 signature to verify that the request is authentic and has not been tampered with.  
-Your server should validate this signature before processing the payload.
-
+---
+title: "Verify webhook requests"
+sidebarTitle: "Verify signatures"
+description: "Verify the webhook API key and the exact HMAC representation used by Bridge, then deduplicate accepted events."
 ---
 
-## Signature Overview
+Verify each request before accepting it into your system. Use the **webhook** API key and client secret configured for this callback; these are separate from your REST Integrations API key.
 
-Bridge includes three headers for authentication and validation:
+## Authentication headers
 
-| Header               | Description           | Purpose                                   |
-| -------------------- | --------------------- | ----------------------------------------- |
-| `X-Bridge-API-Key`   | Your assigned API key | Identifies your workspace                 |
-| `X-Bridge-Signature` | `sha256={signature}`  | HMAC-SHA256 signature of the request body |
-| `X-Bridge-Timestamp` | Unix timestamp        | Used to prevent replay attacks            |
+| Header | Check |
+| --- | --- |
+| `X-Bridge-API-Key` | Constant-time comparison with the webhook API key you configured |
+| `X-Bridge-Signature` | `sha256=` followed by the lowercase HMAC-SHA256 hex digest |
+| `X-Bridge-Timestamp` | Unix seconds within your accepted freshness window; the example allows five minutes in either direction |
 
----
+Header names are case-insensitive.
 
-## Step-by-Step Verification (Python Example)
+## Exactly what is signed
 
-Below is an example of how to verify a webhook’s signature in Python.
+Bridge builds the HMAC input from the JSON event using the Python expression below, then encodes that string as UTF-8:
 
 ```python
-import hmac
-import hashlib
-import json
-
-# Your Bridge client secret
-client_secret = "your_client_secret_here"
-
-# Example: raw request payload and headers
-payload = {
-    "eventId": "evt_123456789",
-    "eventType": "contact.updated",
-    "payload": {"id": "contact_123"}
-}
-
-headers = {
-    "X-Bridge-Signature": "sha256=a1b2c3d4e5f6789012345678901234567890abcdef",
-    "X-Bridge-Timestamp": "1735069432"
-}
-
-# Step 1: Get the received signature
-received_signature = headers["X-Bridge-Signature"].replace("sha256=", "")
-
-# Step 2: Serialize the payload (keys sorted for consistency)
-payload_string = json.dumps(payload, sort_keys=True)
-
-# Step 3: Compute your own HMAC-SHA256 signature
-expected_signature = hmac.new(
-    client_secret.encode("utf-8"),
-    payload_string.encode("utf-8"),
-    hashlib.sha256
-).hexdigest()
-
-# Step 4: Compare both signatures safely
-is_valid = hmac.compare_digest(expected_signature, received_signature)
-
-print("Signature valid:", is_valid)
+json.dumps(event, sort_keys=True).encode("utf-8")
 ```
 
----
+This sorts object keys recursively, preserves array order, escapes non-ASCII characters, and uses Python's default spaces after commas and colons. It does not append a newline. The key is the client secret encoded as UTF-8. This is a Python JSON serialization convention, not RFC 8785 / JCS.
 
-## Timestamp Validation
+Do not replace it with a digest of arbitrary raw request bytes, compact JSON, a generic JavaScript `JSON.stringify`, or a timestamp-prefixed string. Whitespace, Unicode escaping and number formatting can change the HMAC input even when the parsed object looks equivalent. Use the Python verifier below or test another implementation against the vector before connecting it.
 
-To prevent replay attacks, Bridge includes the header `X-Bridge-Timestamp`.
-Your system should reject webhook requests older than **5 minutes**.
+<Warning>
+  The current HMAC input contains the event JSON only. **`X-Bridge-Timestamp` is not included in the signature.** Check freshness, but do not treat the timestamp alone as cryptographic replay protection: a previously valid payload and signature can be presented with a different timestamp. Authenticate the webhook API key and use a durable inbox and idempotent business processing as described in [Receive events](/webhooks/receive-events).
+</Warning>
+
+## Python verifier
+
+Save this as `bridge_webhooks.py`. It returns the verified parsed object so downstream code uses the same interpretation that was authenticated. Secrets should come from server-side environment variables or your secret store.
 
 ```python
+import hashlib
+import hmac
+import json
+import re
+import sqlite3
 import time
 
-timestamp = int(headers["X-Bridge-Timestamp"])
-current_time = int(time.time())
 
-if abs(current_time - timestamp) > 300:
-    raise Exception("Webhook timestamp too old")
+class VerificationError(ValueError):
+    pass
+
+
+def canonical_payload(event):
+    # Match Bridge's Python json.dumps defaults: sort recursively, ASCII escapes,
+    # a space after commas and colons, then UTF-8. This is not RFC 8785 / JCS.
+    return json.dumps(event, sort_keys=True).encode("utf-8")
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise VerificationError("Duplicate JSON object key")
+        result[key] = value
+    return result
+
+
+def verify_webhook(raw_body, headers, webhook_api_key, client_secret, *, now=None, tolerance=300):
+    headers = {key.lower(): value for key, value in headers.items()}
+    received_key = headers.get("x-bridge-api-key", "")
+    if not received_key or not webhook_api_key or not client_secret:
+        raise VerificationError("Missing webhook credentials")
+    if not hmac.compare_digest(received_key.encode("utf-8"), webhook_api_key.encode("utf-8")):
+        raise VerificationError("Invalid webhook API key")
+
+    received_signature = headers.get("x-bridge-signature", "")
+    if not re.fullmatch(r"sha256=[0-9a-f]{64}", received_signature):
+        raise VerificationError("Invalid signature format")
+    timestamp = headers.get("x-bridge-timestamp", "")
+    if not re.fullmatch(r"[0-9]+", timestamp):
+        raise VerificationError("Invalid timestamp")
+    current_time = time.time() if now is None else now
+    if abs(current_time - int(timestamp)) > tolerance:
+        raise VerificationError("Timestamp outside the permitted window")
+
+    try:
+        event = json.loads(raw_body.decode("utf-8"), object_pairs_hook=_unique_object)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise VerificationError("Invalid JSON body") from exc
+    if not isinstance(event, dict):
+        raise VerificationError("Expected a JSON object")
+    expected = "sha256=" + hmac.new(
+        client_secret.encode("utf-8"), canonical_payload(event), hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(expected, received_signature):
+        raise VerificationError("Invalid webhook signature")
+    return event
+
 ```
 
----
+The five-minute window is receiver policy; keep your server clock synchronized. The verifier also rejects ambiguous duplicate JSON keys. Do not disable authentication when debugging a mismatch: check the configured webhook credentials and compare the canonical input against the fixture below.
 
-## Security Recommendations
+## Reproducible signature vector
 
-- Always verify both the **HMAC signature** and **timestamp**.
-- Enforce **HTTPS** for all webhook endpoints.
-- Implement **rate limiting** to protect against abuse.
-- Only process events that pass signature verification.
-- Never share your **client secret** publicly or store it in frontend code.
+These values are synthetic fixtures, not live credentials or an event to send to Bridge. When testing freshness checks, set the verifier's `now` argument to `1800000000`.
 
----
+| Value | Fixture |
+| --- | --- |
+| Client secret | `bridge-docs-test-secret` |
+| Webhook API key | `bridge-docs-test-key` |
+| Timestamp header | `1800000000` |
+| Expected signature | `sha256=5536c29fd98baab6ffe46dd9517adb185b32202864cbb5a76146172fc0b39423` |
 
-## Related Topics
+Event object:
 
-- [Overview](/webhooks)
-- [Event Types](/webhooks/events)
-- [Console Configuration](/webhooks/configuration)
+```json
+{
+  "eventId": "evt_docs_001",
+  "eventType": "contact.updated",
+  "entity": "contact",
+  "workspaceId": "ws_docs",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "payload": {
+    "name": "José",
+    "tags": [
+      "café",
+      "one"
+    ],
+    "active": true,
+    "count": 2
+  }
+}
+```
+
+Exact signed JSON string (the `\u` sequences below are literal ASCII backslashes, not decoded characters):
+
+```text
+{"entity": "contact", "eventId": "evt_docs_001", "eventType": "contact.updated", "payload": {"active": true, "count": 2, "name": "Jos\u00e9", "tags": ["caf\u00e9", "one"]}, "timestamp": "2026-01-01T00:00:00Z", "workspaceId": "ws_docs"}
+```
+
+Changing a field must fail verification. Changing only input key order or sending literal Unicode instead of JSON Unicode escapes must still verify after parsing and rebuilding the same canonical representation.
+
+## After verification
+
+Commit the event to a durable inbox before acknowledging it. A valid HMAC confirms the authenticated event representation; it does not prove that your business action has run, that the event is new, or that it is the latest state of the resource. Continue with [delivery, duplicates and ordering](/webhooks/receive-events).

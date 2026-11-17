@@ -1,0 +1,193 @@
+---
+title: "Conecta tu asistente de programación con IA"
+sidebarTitle: "Conecta tu asistente"
+description: "Conecta Codex, Claude Code, Cursor o GitHub Copilot a la documentación actual de Bridge e implementa a partir del contrato exacto de la API."
+keywords: ["MCP", "Model Context Protocol", "Codex", "Claude Code", "Cursor", "GitHub Copilot", "VS Code", "asistente de programación con IA", "conectar"]
+---
+
+Dale a tu asistente acceso a la documentación actual de Bridge antes de pedirle que construya tu integración. Elige tu herramienta, agrega el endpoint público MCP y comprueba la conexión.
+
+| Configuración | Valor |
+| --- | --- |
+| URL del servidor | `https://docs.bridge.new/mcp` |
+| Conexión | HTTP remoto / Streamable HTTP |
+| Nombre local sugerido | `bridgeDocs` |
+| Credenciales de Bridge | No se necesitan para este servidor de documentación |
+
+<Note>
+  Esto conecta tu asistente a la **documentación de Bridge**. No lo conecta a tu espacio de trabajo ni le da permiso para crear contactos o enviar mensajes. Tu integración usa por separado las [credenciales de la API REST](/es/credentials) o la configuración pública de [Custom Connections](/es/lead-capture). El servidor de documentación también ofrece una herramienta opcional para enviar comentarios sobre la documentación a Bridge.
+</Note>
+
+<a id="choose-your-coding-assistant"></a>
+
+## Elige tu asistente de programación
+
+<CardGroup cols={2}>
+  <Card title="Codex" icon="terminal" href="#codex">Configuración de CLI y del IDE local.</Card>
+  <Card title="Claude Code" icon="terminal" href="#claude-code">Agrega un comando y comprueba la conexión.</Card>
+  <Card title="Cursor" icon="code" href="#cursor">Agrega el servidor al archivo MCP de tu proyecto.</Card>
+  <Card title="GitHub Copilot" icon="code" href="#github-copilot">Configuración guiada en VS Code o configuración portátil del proyecto.</Card>
+</CardGroup>
+
+## Codex
+
+**Antes de comenzar:** debes tener instalado Codex CLI o la extensión de Codex para tu IDE. Para la CLI, agrega el servidor desde la terminal:
+
+```bash
+codex mcp add bridgeDocs --url https://docs.bridge.new/mcp
+codex mcp list
+```
+
+La lista debe incluir `bridgeDocs` con la URL de documentación de Bridge. Que aparezca confirma la configuración; usa [la comprobación de conexión](#check-the-connection) para confirmar que realmente puede leer la documentación.
+
+Si prefieres editar la configuración, agrega esta entrada a `~/.codex/config.toml`. Conserva las demás opciones y los otros servidores:
+
+```toml
+[mcp_servers.bridgeDocs]
+url = "https://docs.bridge.new/mcp"
+```
+
+Reinicia el cliente o la extensión después de cambiar su configuración. En la interfaz de terminal de Codex, `/mcp` muestra los servidores activos. Los clientes locales de Codex pueden compartir la configuración en el mismo equipo; los entornos remotos pueden tener configuraciones y políticas independientes.
+
+**Ejemplo de prompt:**
+
+> Usa bridgeDocs para leer el contrato REST de Bridge y la guía de primera conversación. Prepara una integración en Node.js que cree un contacto, inicie una conversación y cree un mensaje. Enumera primero los identificadores y la configuración necesarios. Conserva todos los campos y tipos de la API, cita tus fuentes y no hagas solicitudes reales a la API.
+
+[Guía oficial de MCP para Codex](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+
+## Claude Code
+
+**Antes de comenzar:** debes tener instalado Claude Code. Agrega el servidor a tu configuración personal para usarlo en distintos proyectos:
+
+```bash
+claude mcp add --transport http bridgeDocs --scope user https://docs.bridge.new/mcp
+claude mcp list
+```
+
+Si prefieres una configuración compartida del proyecto, usa `--scope project` en lugar de `--scope user`. Revisa la configuración resultante antes de guardarla en el repositorio.
+
+Inicia Claude Code y usa `/mcp` para inspeccionar `bridgeDocs`. Después ejecuta [la comprobación de conexión](#check-the-connection). El endpoint de documentación de Bridge no necesita una clave de API de Bridge ni iniciar sesión con OAuth.
+
+**Ejemplo de prompt:**
+
+> Usa bridgeDocs para leer las guías actuales de verificación y recepción de webhooks de Bridge. Implementa un receptor en Python con la representación HMAC documentada y aceptación duradera antes de confirmar la recepción. Agrega pruebas sin conexión usando el vector de firma publicado. Explica la limitación de la marca de tiempo y el manejo de duplicados, y cita las páginas utilizadas.
+
+[Guía oficial de MCP para Claude Code](https://code.claude.com/docs/en/mcp).
+
+## Cursor
+
+**Antes de comenzar:** abre tu proyecto de integración en Cursor. Crea o actualiza `.cursor/mcp.json` en ese proyecto. Combina la entrada con los servidores existentes:
+
+```json
+{
+  "mcpServers": {
+    "bridgeDocs": {
+      "url": "https://docs.bridge.new/mcp"
+    }
+  }
+}
+```
+
+Para una configuración personal entre proyectos, usa `~/.cursor/mcp.json`. En la barra lateral **Customize** de Cursor, comprueba que el servidor esté habilitado. Abre una conversación de Agent y ejecuta [la comprobación de conexión](#check-the-connection); las herramientas MCP pertinentes aparecen en **Available Tools**. Revisa las solicitudes de uso de herramientas cuando Cursor te lo pida.
+
+**Ejemplo de prompt:**
+
+> Usa bridgeDocs para encontrar el flujo completo de adjuntos PDF. Implementa una carga desde el servidor que calcule el SHA-256 en Base64 de los bytes exactos del archivo, solicite una carga prefirmada, ejecute el PUT obligatorio y cree un mensaje con el mediaId devuelto. Conserva los campos documentados y explica cómo manejar los fallos de cada etapa. No envíes una clave de API de Bridge a la URL de carga.
+
+[Guía oficial de MCP para Cursor](https://cursor.com/docs/mcp).
+
+## GitHub Copilot
+
+**Antes de comenzar:** habilita GitHub Copilot en VS Code y abre la carpeta de tu proyecto. Selecciona **Copilot** como destino de la sesión.
+
+1. Abre la paleta de comandos con <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> en macOS o <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> en Windows/Linux.
+2. Ejecuta **MCP: Add Server** y elige **HTTP (HTTP or Server-Sent Events)**.
+3. Introduce `https://docs.bridge.new/mcp` y llama al servidor `bridgeDocs`.
+4. Elige **Global → Copilot Global** para tu configuración personal, cuando esté disponible. Revisa el destino que muestra tu versión de VS Code y cualquier solicitud de confianza del servidor.
+5. Abre una conversación de Copilot, habilita las herramientas de documentación de Bridge para esa sesión y ejecuta [la comprobación de conexión](#check-the-connection).
+
+Para un proyecto compartido con la configuración portátil actual de Copilot, crea o combina esta entrada en `.mcp.json`, en la raíz del espacio de trabajo:
+
+```json
+{
+  "mcpServers": {
+    "bridgeDocs": {
+      "type": "http",
+      "url": "https://docs.bridge.new/mcp",
+      "tools": ["*"]
+    }
+  }
+}
+```
+
+El formato portátil de Copilot anterior difiere de `.vscode/mcp.json`, administrado por el editor, que usa un objeto `servers`. Usa el archivo correspondiente a la conexión elegida; no mezcles ambos formatos. Si el destino portátil no está disponible en tu versión, usa la configuración guiada y el archivo que seleccione.
+
+**Ejemplo de prompt:**
+
+> Usa bridgeDocs para leer la guía de Custom Connections y su contrato OpenAPI independiente. Prepara un formulario de landing page que registre el consentimiento, obtenga un token CAPTCHA nuevo en cada intento y presente un 202 como aceptado con su requestId. Conserva captureKey, los campos de solicitud y la acción CAPTCHA configurada. No uses una clave de la API REST en la página.
+
+[Configuración oficial de VS Code](https://code.visualstudio.com/docs/agent-customization/mcp-servers) · [Referencia de configuración de Copilot](https://code.visualstudio.com/docs/agents/reference/mcp-configuration).
+
+<a id="check-the-connection"></a>
+
+## Comprueba la conexión
+
+Después de configurar cualquiera de los cuatro clientes, pregunta lo siguiente:
+
+> Usa el servidor MCP de documentación de Bridge para buscar cómo crear un mensaje. Lee el esquema MessageRequest en el OpenAPI REST publicado. ¿Qué tres campos son obligatorios y un 201 exitoso demuestra la entrega por WhatsApp? Cita la fuente exacta de Bridge que leíste. No llames a la API de negocio.
+
+Una comprobación exitosa usa una herramienta de documentación y cita una página o esquema de Bridge. Debe identificar `conversationId`, `messageBody` y `enableExternalBroadcast` como obligatorios y distinguir un mensaje creado de una confirmación de entrega del proveedor. Una respuesta plausible sin uso de herramientas ni fuente no es una prueba de conexión.
+
+<a id="build-with-the-right-contract"></a>
+
+<a id="read-with-any-ai-tool-without-mcp"></a>
+
+## Lee la documentación con cualquier IA, sin MCP
+
+No necesitas conectar MCP para leer la documentación de Bridge. Dale a un asistente que pueda abrir URLs el [índice trilingüe de documentación](/llms.txt) y elige las fuentes para tu tarea e idioma:
+
+| Idioma | Índice de páginas | Documentación reunida |
+| --- | --- | --- |
+| English | [English index](/llms-en.json) | [English collection](/llms-full-en.json) |
+| Español | [Índice en español](/llms-es.json) | [Documentación en español](/llms-full-es.json) |
+| Português do Brasil | [Índice em português](/llms-pt-br.json) | [Documentação em português](/llms-full-pt-br.json) |
+
+El índice enlaza a las páginas `.md` individuales y a los archivos OpenAPI exactos. La [colección completa](/llms-full.txt) incluye los tres idiomas; la colección de un solo idioma es más pequeña. Las descripciones de endpoints reunidas no sustituyen los esquemas completos de OpenAPI.
+
+Los archivos por idioma usan JSON: el índice enumera las URLs y cada colección contiene el texto de las páginas como Markdown en su campo `contentMarkdown`. Los archivos generales `llms.txt` y `llms-full.txt` mantienen el formato Markdown.
+
+**Ejemplo de prompt:**
+
+> Lee https://docs.bridge.new/llms.txt y elige las fuentes en español para enviar un PDF. Lee la guía completa de adjuntos y el OpenAPI REST enlazado antes de escribir código. Explica la secuencia de carga, los campos obligatorios y las limitaciones de entrega. Conserva las firmas publicadas de la API y cita las URLs que leíste. Prepara solo el código; no hagas solicitudes reales.
+
+Si buscas mediante MCP, especifica `language: "es"` para español, `language: "pt-BR"` para portugués o `language: "en"` para inglés. Las páginas públicas usan `.md`; las lecturas de páginas en el filesystem MCP usan `.mdx`. Consulta también la [guía de capacidades y fuentes de Bridge](/skill.md).
+
+## Implementa con el contrato correcto
+
+El servidor permite buscar documentación, leer páginas y esquemas completos en un sistema de archivos virtual de documentación y, opcionalmente, enviar comentarios. La herramienta de archivos no ejecuta comandos en tu equipo. Los comentarios son una función separada de la búsqueda y lectura: úsala solo cuando realmente quieras enviar un comentario sobre la documentación.
+
+Indica al asistente la tarea y el flujo correspondiente:
+
+- [Primera conversación](/es/guides/first-conversation): contacto → conversación → mensaje.
+- [Adjuntos](/es/guides/send-attachments): bytes del archivo → checksum → PUT prefirmado → mensaje.
+- [Plantillas](/es/guides/send-template): consulta las variables antes de enviar.
+- [Conversaciones salientes de agentes](/es/guides/agent-outbound): selecciona un agente y entiende `forceSend`, la reutilización y la recuperación.
+- [Receptor de webhooks](/es/webhooks/receive-events): verifica, guarda, confirma y procesa.
+
+El [índice de documentación](/llms.txt) permite encontrar las páginas. La [documentación reunida](/llms-full.txt) agrupa guías y descripciones de endpoints, pero no incluye todos los esquemas. Antes de generar código, lee el Markdown del endpoint individual o el [OpenAPI REST](/es/api-reference/openapi.yaml) o [OpenAPI de Custom Connections](/es/api-reference/campaign-leads.openapi.yaml) que corresponda.
+
+Pídele al asistente que conserve hosts, métodos, rutas, autenticación, identificadores, nombres de campos, tipos, campos obligatorios y que admiten null, enums, valores predeterminados, límites y códigos de respuesta. Si las fuentes publicadas se contradicen, identifica los fragmentos y confirma el comportamiento actual antes de basarte en ellos.
+
+<a id="if-the-server-does-not-appear"></a>
+
+## Si no aparece el servidor
+
+| Síntoma | Qué revisar |
+| --- | --- |
+| Falta el servidor | Confirma la ubicación del archivo o el alcance de la configuración, el nombre del servidor y el cliente o entorno que usas. Conserva la configuración existente al agregar la entrada. |
+| Está configurado, pero no hay herramientas | Reinicia o recarga el cliente, habilita el servidor y revisa su estado MCP o sus registros. La organización puede restringir los servidores personalizados. |
+| Solicita autenticación | El servidor público de documentación de Bridge no necesita una clave de API de Bridge. Comprueba la URL y las políticas del cliente o de tu organización. No pegues credenciales del espacio de trabajo en el chat. |
+| Responde sin citas | Pide explícitamente usar `bridgeDocs`, buscar y leer el esquema del endpoint. Ejecuta nuevamente la comprobación de conexión. |
+| MCP no está disponible temporalmente | Lee directamente el [índice](/llms.txt), el Markdown del endpoint y el OpenAPI. El servidor de documentación no tiene un compromiso de disponibilidad separado. |
+
+Las interfaces de los clientes cambian con el tiempo. Las opciones pueden variar según la versión y las políticas de la organización; consulta la documentación del proveedor enlazada si tus menús son distintos. Instrucciones de proveedores verificadas por última vez: **14 de noviembre de 2026**.

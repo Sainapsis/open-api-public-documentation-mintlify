@@ -1,0 +1,38 @@
+name: Documentation quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  contracts-and-exports:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: scripts/llm-tools/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install pinned documentation tools
+        run: npm ci --prefix scripts/llm-tools --ignore-scripts --no-audit --no-fund
+      - name: Protect all three API contracts
+        run: |
+          python3 scripts/check-doc-contracts.py --source .
+          python3 scripts/check-doc-contracts.py --source es
+          python3 scripts/check-doc-contracts.py --source pt-br
+          python3 -m unittest discover -s tests/documentation -p 'test_*.py'
+      - name: Verify current public LLM exports
+        run: |
+          node scripts/generate-llm-files.mjs --check
+          node --test tests/documentation/test-*.mjs

@@ -1,3 +1,9 @@
+---
+title: "Webhook events"
+sidebarTitle: "Event reference"
+description: "Event families, payload examples and subscription versions for Bridge webhooks."
+---
+
 Bridge webhooks deliver structured event payloads in JSON format whenever specific actions occur in your workspace.  
 Each event follows a consistent schema to make parsing and validation simple.
 
@@ -5,16 +11,16 @@ Each event follows a consistent schema to make parsing and validation simple.
 
 ## Common Event Structure
 
-All webhook events share the same top-level structure:
+The following illustrates the common envelope; `"string"` is a type placeholder, not an event value to send. Read the family-specific payload examples below. Do not assume that `eventId` is globally unique across notification families.
 
 ```json
 {
-  "eventId": "string", // Unique event identifier
-  "eventType": "string", // Type of event (entity.action)
-  "entity": "string", // Entity affected by the event
-  "workspaceId": "string", // Your Bridge workspace ID
-  "timestamp": "string", // ISO 8601 timestamp
-  "payload": {} // Event-specific data
+  "eventId": "string",
+  "eventType": "string",
+  "entity": "string",
+  "workspaceId": "string",
+  "timestamp": "string",
+  "payload": {}
 }
 ```
 
@@ -22,7 +28,7 @@ All webhook events share the same top-level structure:
 
 ## Conversation Summary Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Triggered once per day, per conversation, when Bridge AI generates the daily summary. The summary captures the key points exchanged along with the internal and external participants involved.
 
@@ -64,7 +70,7 @@ Triggered once per day, per conversation, when Bridge AI generates the daily sum
 
 ## Task Updates
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Triggered when tasks are created or their state changes (status, assignment, reminders).
 
@@ -264,7 +270,7 @@ Payloads vary by event type. The `details` field in the payload describes what c
 
 ## Contact Updates
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Triggered when contact records are created, updated, or deleted.
 
@@ -386,7 +392,7 @@ Triggered when contact records are created, updated, or deleted.
 
 ## Call Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Triggered as a call moves through its lifecycle. Bridge emits at most one webhook per lifecycle phase per call, so your integration receives a clean four-phase timeline (created, ringing, started, finished) rather than every intermediate state transition Bridge writes internally.
 
@@ -561,7 +567,7 @@ Once a call finishes, Bridge runs the recording through an asynchronous AI trans
 
 ## Meeting Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Triggered when a meeting reaches the CREATED state. Meeting cancellations are surfaced through the corresponding email notification.
 
@@ -609,7 +615,7 @@ Triggered when a meeting reaches the CREATED state. Meeting cancellations are su
 
 ## Email Notifications
 
-<button type="button" style={{ display: "inline-block", padding: "3px 12px", borderRadius: "999px", background: "#3b82f6", color: "white", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.05em", border: "none", cursor: "pointer", marginTop: "-0.5rem" }}>v1</button>
+<span className="bridge-version-badge">v1</span>
 
 Triggered once an email has been processed and the AI summary is available.
 
@@ -659,7 +665,7 @@ The `sentFromBridge` field indicates direction: true for outbound emails sent fr
 
 - Bridge may add new event categories in the future.
 - Always check the event type field to determine which handler to execute.
-- Webhook payloads are versioned — ensure your integration supports the declared version in each event.
+- Configure and support the version selected for each event subscription. The common envelope does not declare a universal `version` field; do not require or invent one. See [receiving events](/webhooks/receive-events) for duplicates and ordering.
 
 ---
 

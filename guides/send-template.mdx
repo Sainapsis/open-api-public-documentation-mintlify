@@ -1,0 +1,149 @@
+---
+title: "Choose and fill a WhatsApp template"
+sidebarTitle: "Template recipe"
+description: "Discover a template by ID or name, supply its agnostic variable keys, and use its returned ID in a Conversation request."
+---
+
+Use this recipe when you want a Conversation to open with a particular WhatsApp template. The detailed [template reference](/templates-and-parameters) explains validation rules and every documented template error.
+
+## Before you start
+
+- Know the template's **ID or name**. Both are accepted by `GET .../templates/{templateId}`.
+- Confirm the template is approved for the WhatsApp Business Account behind the intended line.
+- Have an existing test Contact ID, the authorized WhatsApp `providerChannelId`, and an internal Bridge User's email. See [Identifiers and concepts](/guides/identifiers).
+- Review the workspace's onboarding sequence: your override can replace the whole sequence or only its first template, depending on workspace configuration.
+
+<Warning>
+  The final request starts a Conversation and can send onboarding templates. Use an authorized test Contact and intended content.
+</Warning>
+
+## 1. Discover the variables
+
+```http
+GET /bridge/api/v1/workspaces/{workspaceId}/templates/{templateId}
+x-api-key: YOUR_API_KEY
+```
+
+URL-encode the supplied ID or name. Read the response's `id`, `name`, `variables`, and `driftWarning`.
+
+| Variable | Action |
+| --- | --- |
+| `callerMustSupply: true` | Supply a non-blank string under that variable's `key`. |
+| `callerMustSupply: false`, not custom | Omit it to keep Bridge's per-Contact value. A supplied value replaces that value for every Contact. |
+| `isCustom: true` | Supply your value, or omit it or send it blank to use its `default`. |
+
+Use the agnostic `key`, never the display `label`, a Meta position, or an invented variable name. `driftWarning` is diagnostic and does not by itself block sending.
+
+## 2. Prepare your values
+
+Create a server-side JSON file containing only keys returned by discovery. For a template that actually declares `order_number` and `delivery_date`, it could contain:
+
+```json
+{
+  "order_number": "A-10492",
+  "delivery_date": "October 3"
+}
+```
+
+Those two names are examples, not universal Bridge fields. Read your own template before using them. Keep values within the [WhatsApp value rules](/templates-and-parameters#whatsapp-value-rules); omit non-custom values you want Bridge to fill instead of sending blank strings.
+
+## 3. Discover, check, and create the Conversation
+
+Use Node.js with built-in `fetch`. Save this as `send-template.mjs` and set `BRIDGE_API_KEY`, `BRIDGE_WORKSPACE_ID`, `BRIDGE_TEMPLATE_ID_OR_NAME`, `TEMPLATE_VALUES_PATH`, `BRIDGE_CONTACT_ID`, `BRIDGE_PROVIDER_CHANNEL_ID`, and `BRIDGE_USER_EMAIL`.
+
+```javascript
+import { readFile } from "node:fs/promises";
+
+const BASE = "https://api-connect-us.bridge.new";
+function required(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Set ${name} before running this example.`);
+  return value;
+}
+const apiKey = required("BRIDGE_API_KEY");
+const workspaceId = required("BRIDGE_WORKSPACE_ID");
+const templateRef = required("BRIDGE_TEMPLATE_ID_OR_NAME");
+const contactId = required("BRIDGE_CONTACT_ID");
+const providerChannelId = required("BRIDGE_PROVIDER_CHANNEL_ID");
+const internalEmail = required("BRIDGE_USER_EMAIL");
+const parameters = JSON.parse(await readFile(required("TEMPLATE_VALUES_PATH"), "utf8"));
+if (parameters === null || Array.isArray(parameters) || typeof parameters !== "object") {
+  throw new Error("The template values file must contain a JSON object.");
+}
+if (Object.entries(parameters).some(([key, value]) =>
+  Array.from(key).length > 128 || typeof value !== "string" || Array.from(value).length > 1024
+)) {
+  throw new Error("Parameter keys and values must respect the published string limits.");
+}
+if (Object.keys(parameters).length > 50) throw new Error("At most 50 parameters are allowed.");
+const workspacePath = `/bridge/api/v1/workspaces/${encodeURIComponent(workspaceId)}`;
+
+async function request(method, path, body, expectedStatus) {
+  const response = await fetch(`${BASE}${workspacePath}${path}`, {
+    method,
+    headers: {
+      "x-api-key": apiKey,
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const result = await response.json().catch(() => null);
+  if (response.status !== expectedStatus) {
+    const code = result?.code ? ` (${result.code})` : "";
+    throw new Error(`${method} ${path}: HTTP ${response.status}${code}`);
+  }
+  return result;
+}
+
+const template = await request(
+  "GET", `/templates/${encodeURIComponent(templateRef)}`, undefined, 200,
+);
+if (!template?.id) throw new Error("Template discovery returned no id.");
+const variables = template.variables ?? [];
+const known = new Set(variables.map((variable) => variable.key));
+const unknown = Object.keys(parameters).filter((key) => !known.has(key));
+const missing = variables.filter((variable) =>
+  variable.callerMustSupply &&
+  (typeof parameters[variable.key] !== "string" || !parameters[variable.key].trim())
+);
+if (unknown.length || missing.length) {
+  throw new Error(`Check template keys: ${unknown.length} unknown, ${missing.length} missing.`);
+}
+
+const conversation = await request("POST", "/conversations", {
+  participants: {
+    externals: [{
+      identifier: contactId,
+      identifierType: "ID",
+      messageProviderType: "WHATSAPP",
+      providerChannelId,
+    }],
+    internals: [{ identifier: internalEmail, identifierType: "EMAIL" }],
+  },
+  onboardingTemplates: [{ templateId: template.id, parameters }],
+}, 201);
+if (!conversation?.id || conversation.workspaceId !== workspaceId) {
+  throw new Error("The Conversation response does not identify the intended workspace.");
+}
+console.log({ templateId: template.id, conversationId: conversation.id });
+```
+
+```bash
+node send-template.mjs
+```
+
+The example uses the ID returned by discovery in `onboardingTemplates[].templateId`. The two outbound operations also accept a template ID or name, with the ID taking precedence when both are supplied. Their request shapes differ from `onboardingTemplates`; read the operation's contract before reusing this body elsewhere.
+
+The local checks catch unknown and missing keys. Bridge still performs its own validation, including approval for the selected line and the final WhatsApp value rules. Do not treat local validation as approval or a delivery guarantee.
+
+## Recover from a rejected request
+
+| Error | What to do |
+| --- | --- |
+| Discovery `BRIDGE_TEMPLATE_0001` | Check the ID/name and workspace. This response does not reveal whether another workspace owns that identifier. |
+| `BRIDGE_CONVERSATION_0604` | Supply the non-blank values listed in `extra.missingVariables`. |
+| `BRIDGE_CONVERSATION_0605` | Remove keys listed in `extra.unknownKeys`; use discovery's agnostic keys. |
+| `BRIDGE_CONVERSATION_0607` | Correct the values listed in `extra.invalidVariables` according to their `reason`. |
+| `BRIDGE_CONVERSATION_0608` | Ask a workspace administrator to change the configured onboarding sequence. Changing your template values does not fix this configuration error. |
+
+Read the [complete template error reference](/templates-and-parameters#errors) for approval, ownership, unsupported parameters, and malformed requests. Do not retry a timed-out Conversation request automatically: determine its outcome first.

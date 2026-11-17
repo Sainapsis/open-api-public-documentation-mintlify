@@ -1,0 +1,319 @@
+---
+title: "Códigos de erro"
+sidebarTitle: "Códigos de erro"
+description: "Interprete códigos de erro da API REST, respostas de validação e resultados incertos de gravações para escolher a próxima ação."
+keywords: ["erro", "códigos de erro", "solução de problemas", "404", "422", "validação"]
+---
+<a id="response-format"></a>
+
+## Formato da resposta
+
+Exemplo de resposta `Problem`. Consulte na referência do endpoint o status HTTP, o tipo de mídia e o esquema da resposta:
+
+```json
+{
+  "title": "A template named in the onboarding override is missing values only the caller can provide",
+  "status": 422,
+  "detail": "A template named in the onboarding override is missing values only the caller can provide",
+  "code": "BRIDGE_CONVERSATION_0604",
+  "extra": {
+    "templateId": "f0000040-0000-4000-8000-000000000040",
+    "missingVariables": [{ "key": "delivery_date", "label": "Delivery date" }]
+  },
+  "instance": "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/{workspaceId}/conversations",
+  "traceId": "Root=1-6702b8c4-3f1a2b4c5d6e7f8091a2b3c4"
+}
+```
+
+| Campo | Significado |
+| ----- | ------- |
+| `code` | Quando presente, o código estável de erro listado nesta página. **Escolha o tratamento por esse campo, não pelo título.** Erros de validação e de servidor podem omiti-lo. |
+| `title` | Uma mensagem legível por pessoas. Ela pode ser mais longa que o título das tabelas abaixo; nunca use seu texto para identificar o erro |
+| `status` | O código de status HTTP |
+| `detail` | Mais detalhes sobre a ocorrência, quando disponíveis |
+| `extra` | Contexto do erro legível por máquina, como IDs ou chaves envolvidos, quando disponível |
+| `instance` | A URL da requisição |
+| `traceId` | Inclua-o ao entrar em contato com o suporte |
+
+<Note>
+  Leia o esquema de resposta da operação chamada. Quando ele for `HTTPValidationError`, os detalhes de validação estarão em um array `detail`; cada entrada contém `loc` (onde), `msg` (o quê) e `type`. Outras respostas `422` documentadas usam `Problem` e podem incluir `code` e `extra`. Não presuma que todas as respostas `422` tenham o mesmo formato.
+</Note>
+
+<a id="parse-validation-errors-defensively"></a>
+
+### Interprete erros de validação de forma defensiva
+
+Aceite corpos de erro JSON tanto com `application/json` quanto com `application/problem+json`. Primeiro verifique o status HTTP; depois, examine o corpo:
+
+1. Se `code` estiver presente, use a entrada correspondente desta página para escolher a ação.
+2. Se `errors` for um array, leia suas entradas `loc`, `msg` e `type` como detalhes de validação.
+3. Se `detail` for um array, interprete-o no formato `HTTPValidationError`. Um `detail` do tipo string é uma explicação, não uma lista de erros de campo.
+4. Preserve `traceId`, o status e a URL da requisição para suporte. Não exija que `code` ou `extra` existam nem compare mensagens legíveis por pessoas como identificadores.
+
+Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, ou quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`. Tipos de campo ou UUIDs inválidos podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
+
+<a id="legacy-code-strings"></a>
+
+### Códigos legados com sufixo
+
+Alguns tratadores de erro legados acrescentam um nome simbólico a `code`, por exemplo, `BRIDGE_PRELOAD_FILE_0002 | PRELOAD_FILE_IS_PENDING`. Preserve o valor recebido completo para logs e suporte. Para consultar o catálogo, aceite um código simples conhecido ou sua forma legada reconhecida explicitamente; não compare `title` ou `detail`, não invente um código desconhecido nem reescreva o corpo da resposta. Esta revisão do código-fonte não confirmou de forma independente qual versão do tratador está implantada.
+
+<Warning>
+  **Compatibilidade de validação:** algumas respostas OpenAPI publicadas declaram `HTTPValidationError.detail[]` e `application/json`, enquanto o tratador compartilhado de erros da API revisado para esta documentação retorna detalhes de validação como `Problem.errors[]` com `application/problem+json`. Esta atualização editorial preserva as definições de resposta publicadas. Trate os dois formatos; a confirmação na API implantada continua pendente antes de adotar um deles como único formato aceito por um cliente gerado estrito.
+</Warning>
+
+<a id="decide-whether-to-retry"></a>
+
+### Decida se deve tentar novamente
+
+| Resultado | Ação |
+| --- | --- |
+| `400` ou `422` | Corrija a requisição usando o código e os erros de campo. Repetir os mesmos dados não corrige a validação. |
+| `401` ou `403` | Confira credencial, workspace e permissões da integração correta. Mantenha as chaves da API REST no servidor. |
+| `404` | Confirme o identificador e o workspace. Uma consulta que não encontra um Contato é diferente de uma entrada malformada. |
+| `409` | Leia o código da operação: conversa existente, Agente indisponível e sessão não finalizada exigem soluções diferentes. Não habilite `forceSend` automaticamente. |
+| `429` | Siga os [cabeçalhos de limite e as orientações de espera](/pt-br/rate-limits). |
+| Timeout, desconexão da resposta ou `5xx` após uma gravação | Trate o resultado como incerto. Consulte o recurso afetado antes de reenviar: um erro não comprova que nenhum trabalho foi persistido. |
+
+As orientações gerais de nova tentativa não acrescentam idempotência a um endpoint. Para reutilização outbound, recuperação e gravações parciais, veja [outbound de Agente e transferência](/pt-br/guides/agent-outbound). Custom Connections tem sua própria [referência de erros](/pt-br/lead-capture/errors) e não usa chave da API REST.
+
+<a id="message-reply-errors"></a>
+
+## Erros ao responder a uma mensagem
+
+Para `POST .../messages`, as verificações revisadas da mensagem à qual você responde definem estas formas legadas adicionais:
+
+- `BRIDGE_MESSAGE_0001 | MESSAGE_NOT_FOUND` (`404`): o Message indicado em `replyToMessageId` não foi encontrado.
+- `BRIDGE_MESSAGE_0002 | MESSAGE_IS_NOT_ON_CONVERSATION` (`403`): a mensagem à qual você responde pertence a outra Conversation. Use uma da Conversation em que você enviará a mensagem.
+
+Preserve o `code` completo, incluindo seu sufixo simbólico. Essas verificações se referem à mensagem à qual você responde, não ao `mediaId` do anexo.
+
+<a id="file-upload-errors"></a>
+
+## Erros de upload de arquivos
+
+O fluxo de upload revisado define estes códigos legados. O sufixo faz parte do `code` recebido, não é um campo da requisição. Consulte o contrato de resposta da operação e mantenha a interpretação compatível acima.
+
+A operação determina quais erros de arquivo se aplicam: `POST .../files` verifica os metadados e pode retornar os códigos `0003` ou `0004` abaixo. `POST .../messages` pode retornar `0001` ou `0002` quando o `mediaId` de um anexo não existe ou ainda está pendente. Os arquivos de templates outbound têm seu próprio tratamento de erros; não substitua `BRIDGE_AI_LEADSCOUT_0016` por esses códigos.
+
+| `code` legado | Status | Ação |
+| --- | --- | --- |
+| `BRIDGE_PRELOAD_FILE_0001 \| PRELOAD_FILE_NOT_FOUND` | 404 | Confira o `mediaId` retornado e o upload referenciado. |
+| `BRIDGE_PRELOAD_FILE_0002 \| PRELOAD_FILE_IS_PENDING` | 400 | O arquivo ainda está pendente. Confirme que o PUT terminou e aguarde o processamento do upload; não conclua que uma requisição de Message com falha não persistiu nenhum trabalho. |
+| `BRIDGE_PRELOAD_FILE_0003 \| PRELOAD_FILE_INVALID_MIME_TYPE` | 400 | Corrija a combinação do tipo MIME e do `fileType` lógico. |
+| `BRIDGE_PRELOAD_FILE_0004 \| PRELOAD_FILE_INVALID_NAME` | 400 | Informe um nome com uma extensão aceita para esse `fileType` lógico. |
+
+<a id="agent-error-codes"></a>
+
+## Códigos de erro de Agentes
+
+Códigos de erro de operações de Agentes.
+
+| Código | Título | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_AI_AGENT_OUTBOUND_0001` | Agente não encontrado | O Agente não foi encontrado no workspace |
+| `BRIDGE_AI_AGENT_OUTBOUND_0002` | Agente indisponível | O Agente não está disponível para outbound |
+| `BRIDGE_AI_AGENT_OUTBOUND_0003` | Tipo de Agente não aceito | O tipo de Agente não é aceito para outbound |
+| `BRIDGE_AI_AGENT_OUTBOUND_0004` | Agente sem canais | Nenhuma linha ativa de mensagens está vinculada ao Agente |
+| `BRIDGE_AI_AGENT_OUTBOUND_0005` | Agente não atribuído ao canal | O Agente não está atribuído ao canal solicitado |
+| `BRIDGE_AI_AGENT_OUTBOUND_0006` | Conversa controlada por outro Agente | A conversa ativa é controlada por outro Agente |
+| `BRIDGE_AI_AGENT_OUTBOUND_0007` | Cursor inválido | O cursor de paginação está malformado ou pertence a outro workspace |
+
+`POST .../agents/{agentId}/outbound` retorna `0001` e `0004` como `404`, `0002` e `0006` como `409`, e `0003` e `0005` como `422`.
+
+- `0002`: o Agente é um rascunho ou não tem linha. `extra.reason` informa qual é o caso; o mesmo motivo aparece como `unavailableReason` em `GET .../agents`.
+- `0006`: a conversa do Contato na linha selecionada pela requisição está sob o controle de outro Agente ou de um usuário do Bridge. Nada foi enviado. Libere-a com `POST .../conversations/{conversationId}/release`, usando `extra.conversationId`, e depois tente novamente. `extra` também contém `channelId` e, somente quando o controlador é um Agente, `controllingAgentId`. Quando o controlador é um usuário do Bridge, a chave está ausente, não é `null`.
+
+`GET .../agents` retorna `0007` como `400` quando o `cursor` está malformado ou foi emitido para outro workspace. Recomece sem cursor. Mantenha o mesmo filtro `type` durante a paginação: um cursor emitido com um filtro `type` é rejeitado se a requisição informar outro `type`.
+
+<a id="other-codes-returned-by-post-/agents/agentid/outbound"></a>
+
+### Outros códigos retornados por `POST .../agents/{agentId}/outbound`
+
+| Código | Status | Significado |
+| ---- | ------ | ------- |
+| `BRIDGE_CORE_0103` | 400 | A requisição é inválida: `consent.status` é `GRANTED` sem `capturedAt`, `template` não contém `id` nem `name`, ou `template.media` não contém exatamente um entre `mediaId` e `url` |
+| `BRIDGE_CORE_0301` | 403 | O workspace do caminho difere do workspace da chave de API |
+| `BRIDGE_AI_LEADSCOUT_0001` | 404 | O Contato não existe no workspace |
+| `BRIDGE_AI_LEADSCOUT_0002` | 404 | O usuário do Bridge de `handoffOverride` não existe no workspace |
+| `BRIDGE_AI_LEADSCOUT_0003` | 409 | O usuário do Bridge de `handoffOverride` foi excluído |
+| `BRIDGE_AI_LEADSCOUT_0004` | 404 | Nenhum template do workspace corresponde a `template.id` ou a `template.name`, quando nenhum ID é enviado |
+| `BRIDGE_AI_LEADSCOUT_0005` | 409 | Template não aprovado |
+| `BRIDGE_AI_LEADSCOUT_0006` | 400 | Os parâmetros ordenados do template não correspondem ao esperado |
+| `BRIDGE_AI_LEADSCOUT_0007` | 409 | Já existe uma conversa ativa: outra requisição assumiu primeiro a conversa liberada. Tente novamente |
+| `BRIDGE_AI_LEADSCOUT_0008` | 409 | Nenhuma linha do Agente está livre ou recuperável para esse Contato; veja `forceSend` |
+| `BRIDGE_AI_LEADSCOUT_0009` | 404 | Nenhuma linha configurada para o `brandId` solicitado |
+| `BRIDGE_AI_LEADSCOUT_0016` | 400 | Erro de validação outbound |
+| `BRIDGE_AI_LEADSCOUT_0017` | 409 | A sessão mais recente não foi finalizada |
+| `BRIDGE_AI_LEADSCOUT_0018` | 409 | Não foi possível finalizar a sessão expirada antes de iniciar uma nova |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Variáveis obrigatórias do template ausentes |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | Fontes de parâmetros de template conflitantes para a mesma posição |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Chave de parâmetro de template desconhecida |
+
+Em `POST .../agents/{agentId}/outbound`, erros `5xx` não contêm `code` nem `extra`.
+
+<a id="leadscout-error-codes"></a>
+
+## Códigos de erro de LeadScout
+
+Códigos adicionais documentados para [iniciar uma conversa outbound de LeadScout](/pt-br/api-reference/leadscout-api/iniciar-conversa-de-sa%C3%ADda-do-leadscout-com-um-lead-conhecido) com `POST .../leadscout/outbound`:
+
+| Código | Status | Título | Significado |
+| --- | --- | --- | --- |
+| `BRIDGE_AI_LEADSCOUT_0010` | 404 | Canal fora do workspace | O canal de provedor não pertence ao workspace |
+| `BRIDGE_AI_LEADSCOUT_0011` | 404 | Nenhum canal de provedor | O workspace não tem canais de provedor |
+| `BRIDGE_AI_LEADSCOUT_0012` | 404 | Nenhum Agente para o canal | Não há Agente de prospecção para o canal |
+| `BRIDGE_AI_LEADSCOUT_0013` | 409 | Vários Agentes para a marca | Há vários Agentes de prospecção para a marca |
+| `BRIDGE_AI_LEADSCOUT_0014` | 409 | Vários Agentes para o canal | Há vários Agentes de prospecção para o canal |
+| `BRIDGE_AI_LEADSCOUT_0015` | 500 | Falha na operação de conversa | A operação de conversa falhou |
+
+<a id="brand-error-codes"></a>
+
+## Códigos de erro de marcas
+
+Códigos das verificações de marca na criação de uma conversa.
+
+| Código | Título | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_BRAND_0101` | Marca obrigatória | O workspace tem marcas habilitadas; cada participante externo precisa ser associado a uma marca ou linha |
+
+Retornado como `400`. Envie `brandId` ou `providerChannelId` para cada participante externo; `extra.resources` lista os participantes que não tinham nenhum dos dois.
+
+<a id="conversation-error-codes"></a>
+
+## Códigos de erro de conversas
+
+Códigos das operações de conversas.
+
+| Código | Título | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_CONVERSATION_0001` | Conversa não encontrada | A conversa solicitada não foi encontrada |
+| `BRIDGE_CONVERSATION_0002` | Conversa fora do workspace | A conversa não pertence ao workspace informado |
+| `BRIDGE_CONVERSATION_0003` | Já existe conversa com os mesmos participantes | Já existe uma conversa ativa com os mesmos participantes |
+| `BRIDGE_CONVERSATION_0004` | Conversa inativa | A conversa está inativa; nenhuma operação pode ser realizada nela |
+| `BRIDGE_CONVERSATION_0005` | Falha na operação de conversa | Ocorreu um erro ao executar a operação na conversa |
+| `BRIDGE_CONVERSATION_0006` | Conversa em estado inconsistente | A conversa está em um estado inconsistente; contate o suporte para resolver |
+| `BRIDGE_CONVERSATION_0007` | Conversa liberada | A conversa está liberada; `409` de `POST .../messages` |
+| `BRIDGE_CONVERSATION_0101` | Usuário interno já está na conversa | O usuário interno já participa da conversa |
+| `BRIDGE_CONVERSATION_0102` | Usuário interno não está na conversa | O usuário interno não participa da conversa |
+| `BRIDGE_CONVERSATION_0103` | Usuário externo já está na conversa | O usuário externo já participa da conversa |
+| `BRIDGE_CONVERSATION_0104` | Usuário externo não está na conversa | O usuário externo não participa da conversa |
+| `BRIDGE_CONVERSATION_0105` | Usuário externo já usa o canal | O usuário externo já usa esse canal de mensagens em alguma conversa |
+| `BRIDGE_CONVERSATION_0201` | Participantes externos obrigatórios | É necessário pelo menos um participante externo para operar em uma conversa |
+| `BRIDGE_CONVERSATION_0202` | Participantes internos obrigatórios | É necessário pelo menos um participante interno para operar em uma conversa |
+| `BRIDGE_CONVERSATION_0203` | Usuário não é administrador | O usuário não é administrador desta conversa |
+| `BRIDGE_CONVERSATION_0204` | Remoção do último administrador não permitida | A conversa precisa ter pelo menos um administrador |
+| `BRIDGE_CONVERSATION_0205` | Mínimo de usuários internos | A conversa precisa ter uma quantidade mínima de participantes internos |
+| `BRIDGE_CONVERSATION_0206` | Máximo de participantes internos excedido | A conversa excedeu o máximo de participantes internos |
+| `BRIDGE_CONVERSATION_0207` | Mínimo de participantes externos | A conversa precisa ter uma quantidade mínima de participantes externos |
+| `BRIDGE_CONVERSATION_0208` | Máximo de participantes externos excedido | A conversa excedeu o máximo de participantes externos |
+| `BRIDGE_CONVERSATION_0210` | Quantidade mínima de participantes | A conversa precisa ter uma quantidade mínima de participantes |
+| `BRIDGE_CONVERSATION_0211` | Quantidade máxima de participantes | A conversa precisa respeitar uma quantidade máxima de participantes |
+| `BRIDGE_CONVERSATION_0212` | Máximo de mensagens iniciais excedido | A quantidade máxima de mensagens iniciais foi excedida |
+| `BRIDGE_CONVERSATION_0213` | Mensagens fora da conversa | As mensagens precisam pertencer à mesma conversa |
+| `BRIDGE_CONVERSATION_0601` | Template inicial não encontrado | Um template informado na substituição da sequência inicial não existe |
+| `BRIDGE_CONVERSATION_0602` | Template inicial fora do workspace | Um template informado na substituição da sequência inicial pertence a outro workspace |
+| `BRIDGE_CONVERSATION_0603` | Template inicial não aprovado | Um template informado na substituição da sequência inicial não foi aprovado para a linha de um participante |
+| `BRIDGE_CONVERSATION_0604` | Parâmetros ausentes no template inicial | Um template da sequência inicial exige valores que só o integrador pode fornecer |
+| `BRIDGE_CONVERSATION_0605` | Parâmetros desconhecidos no template inicial | A substituição da sequência inicial informa parâmetros não declarados pelo template |
+| `BRIDGE_CONVERSATION_0606` | Parâmetros não aceitos pelo template inicial | Foram enviados parâmetros para um template inicial que não é um template de provedor WhatsApp |
+| `BRIDGE_CONVERSATION_0607` | Valores inválidos no template inicial | Valores do template inicial violam uma regra do WhatsApp e seriam rejeitados no envio |
+| `BRIDGE_CONVERSATION_0608` | Template configurado exige valores do integrador | Um template da sequência inicial do workspace precisa de valores que só o integrador pode fornecer; um administrador deve alterar a sequência |
+
+Ao criar uma conversa, `BRIDGE_CONVERSATION_0105` retorna `409` com `extra.reason` igual a `PARTICIPANTS_MISMATCH`: uma conversa liberada ocupa a linha do Contato com outros Contatos ou linhas. Solicite os mesmos Contatos e linhas ou use outra linha.
+
+`BRIDGE_CONVERSATION_0601` retorna `404`, `0602` e `0603` retornam `400`, e de `0604` a `0608` retornam `422`. Veja em [parâmetros de templates iniciais](/pt-br/templates-and-parameters) o conteúdo de `extra` de cada erro e como corrigi-lo.
+
+<a id="external-user-error-codes"></a>
+
+## Códigos de erro de usuários externos
+
+Códigos das operações de usuários externos, ou Contatos.
+
+| Código | Título | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_EXTERNAL_0001` | Usuário externo não encontrado | O usuário externo solicitado não foi encontrado |
+| `BRIDGE_EXTERNAL_0002` | Usuário externo já existe | Já existe um usuário externo com os mesmos dados de identificação |
+| `BRIDGE_EXTERNAL_0004` | Usuário externo fora do workspace | Um ou mais usuários externos não pertencem ao workspace informado |
+| `BRIDGE_EXTERNAL_0005` | Campo não configurado no usuário externo | O usuário externo não tem um campo configurado; confira as configurações do workspace ou das informações externas |
+| `BRIDGE_EXTERNAL_0007` | Celular pertence a outro Contato | O telefone já é uma identidade ativa de outro usuário externo |
+| `BRIDGE_EXTERNAL_0013` | E-mail pertence a outro Contato | O e-mail já é uma identidade ativa de outro usuário externo |
+| `BRIDGE_EXTERNAL_0101` | Falha na operação de usuário externo | Ocorreu um erro ao executar a operação no usuário externo |
+
+<a id="internal-user-error-codes"></a>
+
+## Códigos de erro de usuários internos
+
+Códigos das operações de usuários internos.
+
+| Código | Título legível | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_INTERNAL_0001` | Usuário interno não encontrado | O usuário interno não foi encontrado |
+| `BRIDGE_INTERNAL_0002` | Usuários internos fora do workspace | Os usuários internos informados não pertencem ao workspace especificado |
+| `BRIDGE_INTERNAL_0003` | Usuário interno inativo | Um ou mais usuários internos estão inativos; confira o status do usuário nas configurações do workspace |
+| `BRIDGE_INTERNAL_0004` | Campo não configurado no usuário interno | O usuário interno não tem um campo configurado; confira as configurações do workspace ou das informações internas |
+| `BRIDGE_INTERNAL_0101` | Operação não aceita pelo usuário interno | O usuário interno não aceita essa operação |
+
+<a id="provider-channel-error-codes"></a>
+
+## Códigos de erro de canais de provedor
+
+Códigos das operações de canais de provedor.
+
+| Código | Título legível | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_PROVIDER_CHANNEL_0001` | Canal de provedor não encontrado | O canal de provedor não foi encontrado; verifique se o workspace tem canais configurados |
+
+Ao criar uma conversa, esse código é retornado como `409` quando nenhuma linha de WhatsApp está livre para um Contato e não há uma conversa liberada para recuperar, ou quando o `providerChannelId` informado não está disponível para esse Contato.
+
+<a id="rate-limit-error-codes"></a>
+
+## Códigos de limite de requisições
+
+Códigos retornados quando um workspace excede a cota de requisições. Veja em [limites de requisições](/pt-br/rate-limits) a cota, os cabeçalhos e um cliente que controla seu ritmo.
+
+| Código | Título | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_RATE_LIMIT_0001` | Requisições em excesso | O workspace esgotou a cota de requisições da janela atual |
+
+Esse é o único código que deve ser repetido automaticamente, e apenas após o intervalo informado no cabeçalho `Retry-After`. Falhas de autenticação não são erros de limite, e repeti-las periodicamente não resolverá o problema.
+
+<a id="request-error-codes"></a>
+
+## Códigos de erro de requisição
+
+Códigos retornados antes de executar a operação, quando a própria requisição não pode ser processada. Veja no [histórico de alterações](/pt-br/changelog) os parâmetros que um endpoint deixará de aceitar.
+
+| Código | Título | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_CORE_0101` | Formato de campo inválido | O formato do campo é inválido; forneça um valor válido |
+| `BRIDGE_CORE_0102` | Campo obrigatório ausente | A requisição não contém campos obrigatórios; revise a operação |
+| `BRIDGE_CORE_0103` | Requisição inválida | A requisição é inválida; revise o corpo e os parâmetros |
+| `BRIDGE_CORE_0104` | Cursor inválido | O cursor fornecido é inválido; use um cursor obtido em uma resposta anterior |
+
+Nenhum desses erros deve ser repetido sem alterações. `detail` descreve o problema e, quando possível, identifica o campo ou parâmetro incorreto; a mesma requisição falhará da mesma forma até ser corrigida.
+
+<a id="template-error-codes"></a>
+
+## Códigos de erro de templates
+
+Códigos das operações de templates.
+
+| Código | Título | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_TEMPLATE_0001` | Template de provedor não encontrado | Nenhum template de provedor encontrado para o workspace e nome informados |
+
+Retornado como `404` por `GET .../templates/{templateId}` quando o ID ou nome não corresponde a um template de WhatsApp do workspace.
+
+<a id="workspace-error-codes"></a>
+
+## Códigos de erro de workspace
+
+Códigos das operações de workspace.
+
+| Código | Título | Mensagem |
+| ---- | -------------- | ------- |
+| `BRIDGE_WORKSPACE_0001` | Workspace não encontrado | O workspace solicitado não foi encontrado |
+| `BRIDGE_WORKSPACE_0002` | Workspace fora da organização | O workspace não pertence à organização informada |
+| `BRIDGE_WORKSPACE_0003` | Workspace sem canais de provedor disponíveis | O workspace não tem canais de provedor disponíveis |
+| `BRIDGE_WORKSPACE_0004` | Campo não configurado no workspace | O workspace não tem um campo configurado; `409` de `POST .../conversations/{conversationId}/release` |

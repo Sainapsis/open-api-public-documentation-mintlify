@@ -1,0 +1,107 @@
+---
+title: "Read every page of results"
+sidebarTitle: "Pagination"
+description: "Follow opaque cursors across Contacts, Conversations, Bridge Users, and Agents without stopping on a short page."
+---
+
+List endpoints return a collection and an optional `cursor`. Send that cursor unchanged to read the next page. Keep following cursors until it is null or absent.
+
+## Choose the collection
+
+All four endpoints below accept `limit` from **1 to 100**, with a default of **20**.
+
+| Resource | Path after the workspace | Collection field |
+| --- | --- | --- |
+| Contacts | `/contacts` | `contacts` |
+| Conversations | `/conversations` | `conversations` |
+| Bridge Users | `/users` | `users` |
+| Agents | `/agents` | `agents` |
+
+Use [contact lookup](/api-reference/contacts-api/retrieve-a-contact-by-an-identifier) or [Bridge User lookup](/api-reference/internal-users-api/retrieve-an-internal-user-by-an-identifier) when you need one known person. A full list sweep is a different task.
+
+## Server-side example
+
+This example reads Contacts. Save it as `list-contacts.mjs` and set `BRIDGE_API_KEY` and `BRIDGE_WORKSPACE_ID` on your server.
+
+The local `maxPages` guard prevents an accidentally unbounded run; it is not a Bridge API limit. The repeated-cursor guard stops and reports a problem rather than silently returning an incomplete list.
+
+```javascript
+const BASE = "https://api-connect-us.bridge.new";
+const apiKey = process.env.BRIDGE_API_KEY;
+const workspaceId = process.env.BRIDGE_WORKSPACE_ID;
+if (!apiKey || !workspaceId) {
+  throw new Error("Set BRIDGE_API_KEY and BRIDGE_WORKSPACE_ID.");
+}
+
+async function* pages(resource, collection, filters = {}) {
+  let cursor;
+  const seen = new Set();
+  const maxPages = 10000;
+
+  for (let pageNumber = 0; pageNumber < maxPages; pageNumber += 1) {
+    const url = new URL(
+      `/bridge/api/v1/workspaces/${encodeURIComponent(workspaceId)}/${resource}`,
+      BASE,
+    );
+    for (const [key, value] of Object.entries(filters)) {
+      url.searchParams.set(key, String(value));
+    }
+    url.searchParams.set("limit", "100");
+    if (cursor !== undefined) url.searchParams.set("cursor", cursor);
+
+    const response = await fetch(url, { headers: { "x-api-key": apiKey } });
+    const body = await response.json().catch(() => null);
+    if (response.status !== 200) {
+      const code = body?.code ? ` (${body.code})` : "";
+      throw new Error(`List ${resource}: HTTP ${response.status}${code}`);
+    }
+    if (!Array.isArray(body?.[collection])) {
+      throw new Error(`Expected the ${collection} collection.`);
+    }
+
+    yield body[collection];
+    if (body.cursor === null || body.cursor === undefined) return;
+    if (typeof body.cursor !== "string" || seen.has(body.cursor)) {
+      throw new Error("Invalid or repeated cursor; stopped without claiming completion.");
+    }
+    seen.add(body.cursor);
+    cursor = body.cursor;
+  }
+  throw new Error("Local page guard reached; the sweep is incomplete.");
+}
+
+let count = 0;
+for await (const contacts of pages("contacts", "contacts")) {
+  // Process or store this page before continuing. Avoid logging personal data.
+  count += contacts.length;
+}
+console.log({ contactsRead: count });
+```
+
+```bash
+node list-contacts.mjs
+```
+
+Use `pages("conversations", "conversations", { status: "ACTIVE" })`, `pages("users", "users")`, or `pages("agents", "agents")` with the corresponding contract. Keep the same filters throughout one traversal.
+
+## Do not stop on a short page
+
+A page containing fewer records than `limit` can still have another page. The Agents endpoint explicitly documents this behavior. The returned cursor is the continuation signal; collection length is not.
+
+Treat the cursor as opaque. Do not decode it, increment it, or build one yourself. `URL.searchParams` in the example preserves its value through URL encoding.
+
+## Filters and rate limits
+
+- The Contact list's `ownerEmail` and `search` filters are deprecated. For a known email or phone, use contact lookup. To filter an inventory by `ownerId`, read that field from the returned rows in your own code.
+- The Bridge User list's `email` and `status` filters are deprecated. Use lookup for a known email, or inspect each returned User's `status`.
+- Each page request consumes the workspace's shared request budget. Follow [Rate limits](/rate-limits), including `Retry-After` on `429`. This minimal example stops on non-200 responses instead of retrying automatically.
+
+The published contracts do not promise a transactional snapshot of a list while records are changing. Do not describe this traversal as a guaranteed consistent export or infer an undocumented cursor lifetime.
+
+## References
+
+- [List Contacts](/api-reference/contacts-api/list-contacts)
+- [List Conversations](/api-reference/conversations-api/retrieve-conversations-with-flexible-filtering-options)
+- [List Bridge Users](/api-reference/internal-users-api/list-internal-users)
+- [List Agents](/api-reference/agents-api/list-the-agents-of-a-workspace)
+- [Responses and errors](/guides/responses)
