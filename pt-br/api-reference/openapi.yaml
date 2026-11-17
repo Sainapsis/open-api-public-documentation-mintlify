@@ -2021,46 +2021,22 @@ paths:
       tags:
         - LeadScout API
       summary: Iniciar conversa de saída do LeadScout com um lead conhecido
-      description: >-
-        Inicia uma conversa de saída do LeadScout com um Contact conhecido. O
-        Contact já deve existir. A Bridge seleciona um Agent de prospecção para
-        uma linha de WhatsApp elegível. O template é referenciado por
-        template.id ou template.name; id tem precedência quando ambos são
-        informados. Ele deve existir e estar APPROVED, e qualquer Bridge User de
-        handoffOverride deve ser válido.
+      description: |-
+        Inicia uma conversa de saída do LeadScout com um Contact conhecido. O Contact já deve existir. A Bridge seleciona um Agent de prospecção para uma linha de WhatsApp elegível. O template é referenciado por template.id ou template.name; id tem precedência quando ambos são informados. Ele deve existir e estar APPROVED, e qualquer Bridge User de handoffOverride deve ser válido.
 
+        Um contact.providerChannelId explícito é respeitado. Sem ele, a seleção automática prefere uma linha livre, depois uma conversa liberada recuperável com este Contact e, por último, uma conversa ativa ocupada somente quando forceSend=true. A disponibilidade é avaliada por Contact em cada linha, não pela ocupação global da linha.
 
-        Um contact.providerChannelId explícito é respeitado. Sem ele, a seleção
-        automática prefere uma linha livre, depois uma conversa liberada
-        recuperável com este Contact e, por último, uma conversa ativa ocupada
-        somente quando forceSend=true. A disponibilidade é avaliada por Contact
-        em cada linha, não pela ocupação global da linha.
+        forceSend=true reutiliza uma conversa ativa elegível; não a ignora nem cria uma nova. Uma reutilização bem-sucedida retorna alreadyInitiated=true e persiste o novo template e os acompanhamentos. Uma conversa liberada recuperável pode ser recuperada com qualquer um dos valores, mantém seu ID e retorna recovered=true. Esta opção não torna utilizáveis as conversas bloqueadas nem as liberadas não recuperáveis. A rota legada pode reutilizar uma conversa controlada por um humano ou outro Agent; ao contrário da saída de Agents, ela não exige a verificação de controle pelo Agent solicitado.
 
+        Uma sessão aberta do LeadScout ainda não expirada continua bloqueando uma nova solicitação de saída com 409 BRIDGE_AI_LEADSCOUT_0017; a impossibilidade de finalizar uma sessão expirada retorna 409 BRIDGE_AI_LEADSCOUT_0018. As outras validações continuam valendo. As mensagens adicionais são persistidas; a persistência não comprova a entrega nem uma espera pela resposta do lead. Uma solicitação com falha pode deixar trabalho parcial, portanto não trate forceSend como idempotência nem repita às cegas uma solicitação com resultado incerto.
 
-        forceSend=true reutiliza uma conversa ativa elegível; não a ignora nem
-        cria uma nova. Uma reutilização bem-sucedida retorna
-        alreadyInitiated=true e persiste o novo template e os acompanhamentos.
-        Uma conversa liberada recuperável pode ser recuperada com qualquer um
-        dos valores, mantém seu ID e retorna recovered=true. Esta opção não
-        torna utilizáveis as conversas bloqueadas nem as liberadas não
-        recuperáveis. A rota legada pode reutilizar uma conversa controlada por
-        um humano ou outro Agent; ao contrário da saída de Agents, ela não exige
-        a verificação de controle pelo Agent solicitado.
+        Erros de parâmetros de template, todos 422 e gerados antes de gravar qualquer coisa:
+        - `BRIDGE_AI_LEADSCOUT_0019`: falta uma variável que quem chama deve fornecer (`callerMustSupply: true` em `GET /templates/{templateId}`) ou ela está em branco. `extra.missingVariables` lista as chaves como `[{key, label}]`. Também lista uma variável que a Bridge preenche quando o valor se mostra vazio para este envio: uma variável de destinatário cujo contato não tem valor nem valor padrão, ou um valor calculado pela Bridge que o WhatsApp rejeitaria (quebra de linha, tabulação etc.). Tente novamente com essa chave em `parameters`.
+        - `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` e `parameters` fornecem o mesmo slot. `extra.conflictingParameters` os lista.
+        - `BRIDGE_AI_LEADSCOUT_0021`: uma chave de `parameters` não é uma variável do template. `extra.unknownKeys` a lista.
+        - `BRIDGE_AI_LEADSCOUT_0025`: um valor viola as regras do WhatsApp para um parâmetro (uma quebra de linha, uma tabulação, cinco ou mais espaços consecutivos ou comprimento excessivo). `extra.invalidVariables` lista cada variável infratora como `[{key, label, reason}]`, ordenadas por chave.
 
-
-        Uma sessão aberta do LeadScout ainda não expirada continua bloqueando
-        uma nova solicitação de saída com 409 BRIDGE_AI_LEADSCOUT_0017; a
-        impossibilidade de finalizar uma sessão expirada retorna 409
-        BRIDGE_AI_LEADSCOUT_0018. As outras validações continuam valendo. As
-        mensagens adicionais são persistidas; a persistência não comprova a
-        entrega nem uma espera pela resposta do lead. Uma solicitação com falha
-        pode deixar trabalho parcial, portanto não trate forceSend como
-        idempotência nem repita às cegas uma solicitação com resultado incerto.
-
-
-        Consulte [o guia completo de saída](/pt-br/guides/agent-outbound) para a
-        matriz false/true, os indicadores de resposta, as diferenças em relação
-        à saída de Agents, os erros e a transferência.
+        Consulte [o guia completo de saída](/pt-br/guides/agent-outbound) para a matriz false/true, os indicadores de resposta, as diferenças em relação à saída de Agents, os erros e a transferência.
       operationId: initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post
       security:
         - x-api-key: []
@@ -2207,6 +2183,11 @@ paths:
                     title: Unknown Template Parameter Key
                     status: 422
                     code: BRIDGE_AI_LEADSCOUT_0021
+                INVALID_TEMPLATE_VARIABLE_VALUES:
+                  value:
+                    title: Invalid Template Variable Values
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0025
               schema:
                 $ref: "#/components/schemas/Problem"
         "429":
@@ -2310,46 +2291,21 @@ paths:
       tags:
         - Templates API
       summary: Descobrir as variáveis agnósticas de um modelo
-      description: >-
-        Retorna as variáveis de um template:
-        `key`/`label`/`callerMustSupply`/`isCustom`/`default`, independentes da
-        posição na Meta.
-
+      description: |-
+        Retorna as variáveis de um template: `key`/`label`/`callerMustSupply`/`isCustom`/`default`, independentes da posição na Meta.
 
         Nunca retorna o endereço ou índice de uma posição da Meta.
 
+        `templateId` aceita o `id` ou o `name` do template. As operações de saída aceitam `template.id` ou `template.name`, com precedência para um id não vazio. A abertura de conversas usa `onboardingTemplates[].templateId`. Use o seletor exigido pela operação de envio. Consulte [a receita de templates](/pt-br/guides/send-template).
 
-        `templateId` aceita o `id` ou o `name` do template. As operações de
-        saída aceitam `template.id` ou `template.name`, com precedência para um
-        id não vazio. A abertura de conversas usa
-        `onboardingTemplates[].templateId`. Use o seletor exigido pela operação
-        de envio. Consulte [a receita de
-        templates](/pt-br/guides/send-template).
-
-
-        Uma variável com `callerMustSupply: true` não tem uma fonte declarada:
-        quem chama deve incluir sua `key` em `parameters` ao enviar; caso
-        contrário, o envio falha com um 422 que identifica a mesma `key`.
-
-        Uma variável com `callerMustSupply: false` é resolvida pela própria
-        Bridge, por exemplo, o primeiro nome do destinatário, ou já tem um valor
-        que quem chama pode substituir opcionalmente.
-
-        Uma variável com `isCustom: true` é um valor conhecido apenas por quem
-        chama e tem um `default`: envie-a em `parameters` para usar seu próprio
-        valor, ou omita-a ou deixe-a em branco para enviar `default`.
-
+        Uma variável com `callerMustSupply: true` é uma que a Bridge não consegue preencher para o envio: quem chama deve incluir sua `key` em `parameters` ao enviar; caso contrário, o envio falha com um 422 que identifica a mesma `key`.
+        Uma variável com `callerMustSupply: false` é preenchida pela Bridge para o envio (por exemplo, o primeiro nome do contato, ou uma variável com valor padrão); quem chama pode substituí-la opcionalmente.
+        As variáveis de remetente são preenchidas somente a partir do valor padrão: as chamadas pela API de integrações não têm nenhuma pessoa como remetente.
+        Uma variável com `isCustom: true` é um valor conhecido apenas por quem chama e tem um `default`: envie-a em `parameters` para usar seu próprio valor, ou omita-a ou deixe-a em branco para enviar `default`.
 
         Códigos de erro:
-
-        - BRIDGE_CORE_0301: o workspace na rota não corresponde ao workspace de
-        quem chama (403)
-
-        - BRIDGE_TEMPLATE_0001: nenhuma PROVIDER_TEMPLATE foi encontrada para
-        este workspace e identificador. Abrange igualmente um id/name
-        desconhecido, um template de outro workspace e um template que não é
-        PROVIDER_TEMPLATE (404); este endpoint nunca confirma a existência de um
-        template fora do workspace de quem chama
+        - BRIDGE_CORE_0301: o workspace na rota não corresponde ao workspace de quem chama (403)
+        - BRIDGE_TEMPLATE_0001: nenhuma PROVIDER_TEMPLATE foi encontrada para este workspace e identificador. Abrange igualmente um id/name desconhecido, um template de outro workspace e um template que não é PROVIDER_TEMPLATE (404); este endpoint nunca confirma a existência de um template fora do workspace de quem chama
       operationId: get_template_discovery_bridge_api_v1_workspaces__workspaceId__templates__templateId__get
       security:
         - x-api-key: []
@@ -2893,68 +2849,29 @@ paths:
       tags:
         - Agents API
       summary: Iniciar conversa de saída com um Contact como Agent específico
-      description: >-
-        Inicia uma conversa de saída com um Contact conhecido, atendida pelo
-        Agent indicado.
+      description: |-
+        Inicia uma conversa de saída com um Contact conhecido, atendida pelo Agent indicado.
 
+        Funciona com Agents LeadScout e Service. Primeiro é resolvido o Contact e depois o Agent, que deve existir no workspace e estar disponível (consulte `GET /agents`). O template é referenciado por `template.id` ou `template.name` (id tem precedência quando ambos são enviados), deve existir e estar APPROVED, e qualquer Bridge User de `handoffOverride` deve ser válido. Se `template.media.mediaId` for desconhecido, a solicitação falha com 400 `BRIDGE_AI_LEADSCOUT_0016` somente depois de a conversa ser criada ou recuperada, portanto uma nova tentativa após esse erro pode responder de forma diferente. As regras do corpo (`consent.status=GRANTED` sem `capturedAt`, ou `template.media` sem exatamente um de `mediaId` ou `url`) falham com 400 `BRIDGE_CORE_0103`.
 
-        Funciona com Agents LeadScout e Service. Primeiro é resolvido o Contact
-        e depois o Agent, que deve existir no workspace e estar disponível
-        (consulte `GET /agents`). O template é referenciado por `template.id` ou
-        `template.name` (id tem precedência quando ambos são enviados), deve
-        existir e estar APPROVED, e qualquer Bridge User de `handoffOverride`
-        deve ser válido. Se `template.media.mediaId` for desconhecido, a
-        solicitação falha com 400 `BRIDGE_AI_LEADSCOUT_0016` somente depois de a
-        conversa ser criada ou recuperada, portanto uma nova tentativa após esse
-        erro pode responder de forma diferente. As regras do corpo
-        (`consent.status=GRANTED` sem `capturedAt`, ou `template.media` sem
-        exatamente um de `mediaId` ou `url`) falham com 400 `BRIDGE_CORE_0103`.
-
-
-        A conversa é aberta em uma das linhas ativas de WhatsApp do Agent, sob
-        seu controle, com o template como primeira mensagem. A linha é escolhida
-        nesta ordem:
-
+        A conversa é aberta em uma das linhas ativas de WhatsApp do Agent, sob seu controle, com o template como primeira mensagem. A linha é escolhida nesta ordem:
         - Uma linha livre.
+        - Caso contrário, uma linha com uma conversa liberada recuperável com este Contact. A recuperação retorna `recovered=true` e substitui o contexto de saída anterior e `agentContext`. Isso acontece mesmo com `forceSend=false`.
+        - Se nenhuma linha estiver livre ou for recuperável: `forceSend=false` (padrão) falha com 409 `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reutiliza uma linha ocupada por uma conversa ativa com este Contact, dando preferência a uma controlada por este Agent. Se a conversa escolhida for controlada por outro Agent ou por um Bridge User, a chamada falha com 409 `BRIDGE_AI_AGENT_OUTBOUND_0006` e nada é gravado. Libere-a primeiro e tente novamente. Linhas cuja conversa está bloqueada ou foi liberada sem recuperação nunca são usadas; assim, se nenhuma linha estiver ocupada por uma conversa ativa, a chamada falha com 409 `BRIDGE_AI_LEADSCOUT_0008` mesmo com `forceSend=true`.
 
-        - Caso contrário, uma linha com uma conversa liberada recuperável com
-        este Contact. A recuperação retorna `recovered=true` e substitui o
-        contexto de saída anterior e `agentContext`. Isso acontece mesmo com
-        `forceSend=false`.
-
-        - Se nenhuma linha estiver livre ou for recuperável: `forceSend=false`
-        (padrão) falha com 409 `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true`
-        reutiliza uma linha ocupada por uma conversa ativa com este Contact,
-        dando preferência a uma controlada por este Agent. Se a conversa
-        escolhida for controlada por outro Agent ou por um Bridge User, a
-        chamada falha com 409 `BRIDGE_AI_AGENT_OUTBOUND_0006` e nada é gravado.
-        Libere-a primeiro e tente novamente. Linhas cuja conversa está bloqueada
-        ou foi liberada sem recuperação nunca são usadas; assim, se nenhuma
-        linha estiver ocupada por uma conversa ativa, a chamada falha com 409
-        `BRIDGE_AI_LEADSCOUT_0008` mesmo com `forceSend=true`.
-
-
-        `contact.providerChannelId` é uma preferência: a linha indicada é usada
-        quando está livre ou é recuperável; caso contrário, a mesma ordem é
-        aplicada entre todas as linhas do Agent. Entre as linhas ocupadas, uma
-        controlada por este Agent tem prioridade; se nenhuma for, a linha
-        indicada é reutilizada (e pode falhar com 0006).
-
+        `contact.providerChannelId` é uma preferência: a linha indicada é usada quando está livre ou é recuperável; caso contrário, a mesma ordem é aplicada entre todas as linhas do Agent. Entre as linhas ocupadas, uma controlada por este Agent tem prioridade; se nenhuma for, a linha indicada é reutilizada (e pode falhar com 0006).
 
         A reutilização de uma conversa depende do tipo de Agent:
+        - LeadScout: se sua sessão do LeadScout ainda estiver aberta e não expirada, a chamada falha com 409 `BRIDGE_AI_LEADSCOUT_0017` (`extra` inclui `conversationId`, `sessionId` e `stage`). Se uma sessão expirada não puder ser finalizada, falha com 409 `BRIDGE_AI_LEADSCOUT_0018`.
+        - Service Agent: uma sessão de serviço aberta e não expirada continua; uma sessão expirada é encerrada como abandonada e uma nova é aberta.
 
-        - LeadScout: se sua sessão do LeadScout ainda estiver aberta e não
-        expirada, a chamada falha com 409 `BRIDGE_AI_LEADSCOUT_0017` (`extra`
-        inclui `conversationId`, `sessionId` e `stage`). Se uma sessão expirada
-        não puder ser finalizada, falha com 409 `BRIDGE_AI_LEADSCOUT_0018`.
+        Erros de parâmetros de template, todos 422 e gerados antes de gravar qualquer coisa:
+        - `BRIDGE_AI_LEADSCOUT_0019`: falta uma variável que quem chama deve fornecer (`callerMustSupply: true` em `GET /templates/{templateId}`) ou ela está em branco. `extra.missingVariables` lista as chaves como `[{key, label}]`. Também lista uma variável que a Bridge preenche quando o valor se mostra vazio para este envio: uma variável de destinatário cujo contato não tem valor nem valor padrão, ou um valor calculado pela Bridge que o WhatsApp rejeitaria (quebra de linha, tabulação etc.). Tente novamente com essa chave em `parameters`.
+        - `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` e `parameters` fornecem o mesmo slot. `extra.conflictingParameters` os lista.
+        - `BRIDGE_AI_LEADSCOUT_0021`: uma chave de `parameters` não é uma variável do template. `extra.unknownKeys` a lista.
+        - `BRIDGE_AI_LEADSCOUT_0025`: um valor viola as regras do WhatsApp para um parâmetro (uma quebra de linha, uma tabulação, cinco ou mais espaços consecutivos ou comprimento excessivo). `extra.invalidVariables` lista cada variável infratora como `[{key, label, reason}]`, ordenadas por chave.
 
-        - Service Agent: uma sessão de serviço aberta e não expirada continua;
-        uma sessão expirada é encerrada como abandonada e uma nova é aberta.
-
-
-        Consulte [o guia completo de saída](/pt-br/guides/agent-outbound) para
-        os pré-requisitos, a tabela de decisão de forceSend, a recuperação, o
-        trabalho parcial e as decisões seguras de nova tentativa.
+        Consulte [o guia completo de saída](/pt-br/guides/agent-outbound) para os pré-requisitos, a tabela de decisão de forceSend, a recuperação, o trabalho parcial e as decisões seguras de nova tentativa.
       operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
       security:
         - x-api-key: []
@@ -3144,6 +3061,11 @@ paths:
                     title: Unknown Template Parameter Key
                     status: 422
                     code: BRIDGE_AI_LEADSCOUT_0021
+                INVALID_TEMPLATE_VARIABLE_VALUES:
+                  value:
+                    title: Invalid Template Variable Values
+                    status: 422
+                    code: BRIDGE_AI_LEADSCOUT_0025
               schema:
                 $ref: "#/components/schemas/Problem"
         "429":
@@ -5005,9 +4927,11 @@ components:
             type: string
           type: array
           title: Ordered Parameters
-          description: >-
-            Valores fornecidos pelo cliente para os slots de parâmetros do
-            modelo com origem CALLER, em ordem de posição.
+          description: 'Valores para as variáveis do corpo do template, em ordem. Não cobre
+            as variáveis dos botões: envie-as em `parameters`, por chave. Envie um valor para
+            cada posição do corpo, porque a Bridge não ignora posições que poderia preencher.
+            Use `parameters` em vez disso para enviar apenas as variáveis que a Bridge não pode
+            preencher.'
           examples:
             - - Maria
               - ACME
@@ -5016,13 +4940,18 @@ components:
             type: string
           type: object
           title: Parameters
-          description: >-
-            Valores fornecidos pelo cliente e indexados pela chave de variável
-            do modelo (consulte GET /templates/{id} para obter as chaves), tanto
-            para o corpo como para os botões. Prefira esta opção a orderedParams
-            se o modelo tiver um botão dinâmico. Uma chave desconhecida ou que
-            se sobreponha a um slot já coberto por orderedParams é rejeitada com
-            422.
+          description: Valores indexados pela chave de variável do template (consulte GET /templates/{id}
+            para obter as chaves), tanto para o corpo como para os botões. Envie as variáveis
+            que `GET /templates/{id}` marca como obrigatórias para quem chama; omita as que
+            a Bridge preenche. Em uma variável que a Bridge preenche, um valor em branco ou
+            só com espaços é considerado omitido, e um valor que você enviar substitui o da
+            Bridge. Em uma variável que você deve fornecer, um valor em branco é rejeitado como
+            um valor ausente (422 `BRIDGE_AI_LEADSCOUT_0019`). Prefira esta opção a orderedParams
+            se o template tiver um botão dinâmico. Uma chave desconhecida (`BRIDGE_AI_LEADSCOUT_0021`)
+            ou que se sobreponha a um slot já coberto por orderedParams (`BRIDGE_AI_LEADSCOUT_0020`)
+            é rejeitada com 422. Um valor que viola as regras do WhatsApp para um parâmetro
+            (uma quebra de linha, uma tabulação, cinco ou mais espaços consecutivos ou comprimento
+            excessivo) é rejeitado com 422 `BRIDGE_AI_LEADSCOUT_0025`.
           examples:
             - recipient_first_name: Maria
               tracking_code: TRK123
@@ -5630,8 +5559,9 @@ components:
         driftWarning:
           $ref: "#/components/schemas/TemplateDriftWarningResponse"
           title: Drift warning
-          description: Diferença entre declaração e snapshot, apenas para diagnóstico.
-            Nunca bloqueia um envio.
+          description: Diferença entre a declaração e o snapshot. Uma variável obsoleta nunca
+            bloqueia um envio. Um rótulo ausente significa que o template deve ser sincronizado
+            novamente ou reparado antes de poder ser enviado.
       type: object
       required:
         - id
@@ -5679,20 +5609,17 @@ components:
             $ref: "#/components/schemas/TemplateVariableRef"
           type: array
           title: Missing labels
-          description: Exigido pelo snapshot, mas ainda não declarado.
+          description: 'Exigido pelo snapshot, mas ainda não declarado. O template não pode
+            ser enviado até ser sincronizado novamente ou reparado: esses slots não aparecem
+            em `variables` e não têm nenhuma chave que você possa enviar.'
       type: object
       required:
         - hasDrift
       title: TemplateDriftWarningResponse
-      description: >-
-        Diferença, apenas para diagnóstico, entre as variáveis declaradas e o
-        que o snapshot da Meta exige.
+      description: |-
+        Diferença entre as variáveis declaradas e o que o snapshot da Meta exige.
 
-
-        Conforme a regra de autoridade, isso nunca afeta o sucesso de um envio:
-        apenas o snapshot determina o resultado. Permite que o cliente ou o
-        console identifique um modelo cujos rótulos precisam ser atualizados
-        após uma edição feita diretamente no WhatsApp Manager.
+        Apenas o snapshot determina o que um envio deve cobrir. Uma variável obsoleta nunca bloqueia um envio; um slot com rótulo ausente bloqueia, até que o template seja sincronizado novamente ou reparado.
     TemplateVariableRef:
       properties:
         key:
@@ -5729,12 +5656,20 @@ components:
         callerMustSupply:
           type: boolean
           title: Caller must supply
-          description: >-
-            Indica se o cliente deve fornecer um valor para esta variável ao
-            enviar o modelo: true quando o modelo não tem uma origem declarada
-            para o valor (por exemplo, um código promocional conhecido apenas
-            pelo cliente) e false quando o Bridge o resolve por conta própria
-            (por exemplo, a partir do perfil do destinatário).
+          description: 'Indica se quem chama deve fornecer um valor para esta variável
+            ao enviar o template por meio de `POST /agents/{agentId}/outbound` ou
+            `POST /leadscout/outbound`. Para um template usado ao criar uma conversa
+            (`POST /conversations`), o servidor valida as variáveis na criação. É
+            false quando o Bridge a preenche para o envio: uma variável de destinatário
+            (por exemplo, o primeiro nome do Contato) quando o Contato tem um valor
+            ou a variável tem um valor padrão; o nome da organização, sempre; uma
+            variável de remetente, uma variável personalizada, um link de termos ou
+            privacidade ou o nome da conversa, somente quando tem um valor padrão
+            não vazio (se o Bridge tem um link ou um nome de conversa, ele o envia
+            no lugar do valor padrão). Nos demais casos é true, por exemplo, um código
+            promocional que só quem chama conhece, ou um nome de remetente sem valor
+            padrão (as chamadas pela API de integrações não têm nenhuma pessoa como
+            remetente). Consulte [O que o Bridge preenche](/pt-br/templates-and-parameters#o-que-o-bridge-preenche).'
           examples:
             - true
             - false

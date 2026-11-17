@@ -36,7 +36,7 @@ Codifica para URL el ID o nombre proporcionado. Lee `id`, `name`, `variables` y 
 | `callerMustSupply: false`, no personalizada | Omítela para conservar el valor que Bridge obtiene para cada contacto. Un valor enviado reemplaza ese valor para todos los contactos. |
 | `isCustom: true` | Proporciona tu valor, omítelo o envíalo en blanco para usar su `default`. |
 
-Usa la `key` independiente del proveedor, nunca el `label` visible, una posición de Meta ni un nombre de variable inventado. `driftWarning` es informativo y por sí solo no bloquea el envío.
+Usa la `key` independiente del proveedor, nunca el `label` visible, una posición de Meta ni un nombre de variable inventado. Una variable obsoleta en `driftWarning` no bloquea el envío, pero un slot con una etiqueta faltante sí: vuelve a sincronizar o repara primero la plantilla.
 
 <a id="2-prepare-your-values"></a>
 

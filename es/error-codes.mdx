@@ -146,9 +146,12 @@ Errores de las operaciones de agentes.
 | `BRIDGE_AI_LEADSCOUT_0016` | 400 | Error de validación de conversación saliente |
 | `BRIDGE_AI_LEADSCOUT_0017` | 409 | La sesión más reciente no está finalizada |
 | `BRIDGE_AI_LEADSCOUT_0018` | 409 | No se pudo finalizar la sesión vencida antes de iniciar otra |
-| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Faltan una o más variables obligatorias de la plantilla |
-| `BRIDGE_AI_LEADSCOUT_0020` | 422 | Hay fuentes de parámetros de plantilla superpuestas para la misma posición |
-| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Clave de parámetro de plantilla desconocida |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Falta una variable de la plantilla que quien llama debe proporcionar, o está en blanco. `extra.missingVariables`: `[{key, label}]`. También enumera una variable que Bridge completa cuando su valor resulta vacío para el envío: una variable de destinatario cuyo contacto no tiene valor ni valor predeterminado, o un valor calculado por Bridge que WhatsApp rechazaría (salto de línea, tabulación, etc.). Reintenta con esa clave en `parameters` |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` y `parameters` proporcionan la misma posición. `extra.conflictingParameters` las enumera |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Una clave de `parameters` no es una variable de la plantilla. `extra.unknownKeys` la enumera |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | Un valor de variable de la plantilla incumple las reglas de WhatsApp para un parámetro: un salto de línea, una tabulación, cinco o más espacios consecutivos o demasiada longitud. `extra.invalidVariables`: `[{key, label, reason}]`, ordenadas por clave |
+
+`POST .../leadscout/outbound` también devuelve `0019`, `0020`, `0021` y `0025`, con el mismo significado. Consulta [Plantillas salientes](/es/templates-and-parameters#outbound-templates).
 
 En `POST .../agents/{agentId}/outbound`, los errores `5xx` no incluyen `code` ni `extra`.
 

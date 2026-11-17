@@ -29,25 +29,25 @@
   },
   "inputs": {
     "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
-    "api-reference/openapi.yaml": "17118b230e17bebf391bfa44f03f097cfb0c3e0ab50a88a997a125634f7a5148",
+    "api-reference/openapi.yaml": "e2e1e4781210235272b3025e775c3dd97cfe875057234c4ff1a49370887f959b",
     "changelog.mdx": "e9084e3294b5d4a359eab45b627c4db6dec026c430818960778d75ae2366eab2",
     "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
     "docs.json": "ef1cb7e68c9fd91dde687999a26f89aa046e67c8326359c435c514abce7b968d",
-    "error-codes.mdx": "f321bf29af41956bdb6330501a481e10c69ea35d75b697aa1f30ea02dc04f08d",
+    "error-codes.mdx": "5c8e1715994fe9deab860b25f5ced7917341046d348029f633549be01a58770d",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
-    "es/api-reference/openapi.yaml": "44131c94325ca6c801f47fd974a79946bc4872b5a71e30f132e0d5b884e9020f",
+    "es/api-reference/openapi.yaml": "8ea03fa88c5247e81c0d2659f3e5b0b29c43d469a2b8ca05a7f048fc81b485b7",
     "es/changelog.mdx": "b2d420cca846e287101c92623dbac4c485f0e11c4198653a80caa50f19d96f28",
     "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
-    "es/error-codes.mdx": "c5ecc132f274d45a56ee26bdc984780410912b086422b2c2946ec80bac3a9192",
+    "es/error-codes.mdx": "61a8234c947ce0ade9ba54f79cf3813a87d5854188a45834fc97af244920fb58",
     "es/guides/agent-outbound.mdx": "4602116efdc7585fa63ce2cce355122d3c6583c0c542b644af395e08f0dcc45f",
     "es/guides/first-conversation.mdx": "eb152c9a23454466b70b82cba98fa7755a720db6edbed22ab382aac1130af147",
     "es/guides/identifiers.mdx": "5ecbe5a47e052c83de34391ef8d1fd83c73c561a28fe9777f3ae6ce7b9816442",
     "es/guides/pagination.mdx": "836fb8501a011883e58b457b9216e71b4056d4353f111143459784c4cbd7c70f",
     "es/guides/responses.mdx": "6cbe950fee4f2e2dbcf0a358c1f8964d48db20a56b274d7354f7626684eaba64",
     "es/guides/send-attachments.mdx": "276f2588132bb36f8d2af0615e78f7a5e945439c9318c81aac0aa7de6a8e53b1",
-    "es/guides/send-template.mdx": "01ae1692e7264584b783e64c2563ba131e084bd42cbff16c0d09272dee4347af",
+    "es/guides/send-template.mdx": "4ba4acfaf0859733adfca594b56be2625620aa527c642c4890f041348bdbfbbb",
     "es/index.mdx": "a479ed3fbf7d8a4a5d649659d676a7813b773ddff251485bd9774347b02ff9ab",
     "es/lead-capture/consent.mdx": "54f105a7a5411cf0c792e977821b9873c986ec2b1643ee9eed7d40a75631df2b",
     "es/lead-capture/errors.mdx": "31d3912e2db12220ba890b4e2cf915fe9934c68afcbe41c7862779da6c634354",
@@ -55,7 +55,7 @@
     "es/lead-capture/integration.mdx": "ef98f7b0bdf0b46bc0fa39a773788528cd13f841627fefbc4e2ee09b505c5d3d",
     "es/lead-capture/templates.mdx": "998d557640fef48aaa5fed8cd0eacb0a33eb23cba360a38edca42e3e2adfcc78",
     "es/rate-limits.mdx": "b04b3550913fcf60ab64e24e0d282d0f1c61837272317b8a4ade9bc8696d1cb3",
-    "es/templates-and-parameters.mdx": "b84d3a81604d3a21781225e3b79c72ee65044d43eb42641eb334356a43f7da3b",
+    "es/templates-and-parameters.mdx": "0a932387d205bed64d75a83976fe93fc08b39477ae1f4b94704ce2ab19b459c4",
     "es/webhooks.mdx": "1c793a756a4e3b57244c441718d9e02346c5938a6e6bd0ac2b4a5e1bfe6d7000",
     "es/webhooks/configuration.mdx": "5d7b1164e4cd3c87991b009ef1da93c42fd66e6bd45a65dfb74017dc3299f629",
     "es/webhooks/events.mdx": "f260daf3b3bd933ee67784d7693461ce14f32dee5849747c3bf69f0b51c0e53f",
@@ -67,7 +67,7 @@
     "guides/pagination.mdx": "03f46cf534aeb21d11c5622224049a1095f6cb86a1815d3a97a1fbfb00bb8051",
     "guides/responses.mdx": "bb89ab581d6642f9ce4a3d43d58e4201c061b99b6cb3eebb7de7f52f648d5f67",
     "guides/send-attachments.mdx": "e87bffcc0533e84c06a6597ec4178861df02e1020079a7913251af249ca8e350",
-    "guides/send-template.mdx": "c1368bcefd1f21d26290090e3acf023f81f2b89e12b3dbf9d6d54babf21e036c",
+    "guides/send-template.mdx": "0b9ebb791bd2d0053e246ca9397cfa0a444354ca61e08350edb63a69d1c2cba9",
     "index.mdx": "c64fc52a224f49562716236aadeabeb57a4eacb972089f8fa4d96d0df1a56996",
     "lead-capture/consent.mdx": "5bda24afe5d4c3d01e5d8c118b22c926339304feac29cba80fb51d25a71a4c30",
     "lead-capture/errors.mdx": "b0897defce7672536ff037b972ae4db7f0611fee0c81c5a43d04457afed36ae5",
@@ -75,18 +75,18 @@
     "lead-capture/integration.mdx": "e41b09302ab3d26dcb1089158f3ef805e6ab5f1d1574bfa877dfbf9630651d03",
     "lead-capture/templates.mdx": "506d2ef49287c95004fcd43150af114e6ced5f39cc32caaa9e2566fcc101f66f",
     "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
-    "pt-br/api-reference/openapi.yaml": "6127964522812d40fd6f7a11628625ca021adb362dd7310c1d4884c52d1257f2",
+    "pt-br/api-reference/openapi.yaml": "a675b04a2ce489e87762a7137a812112de6f7dcda902358ea6f7192b741497b5",
     "pt-br/changelog.mdx": "f5ebecd2c3c7ee00801d64520995d86ae544264cd272db0233d32fab4ad9c455",
     "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
-    "pt-br/error-codes.mdx": "0166227258b12cdcef1ef4c37d3f0a765c7cabb2d7079335f10b1da0f69d46e4",
+    "pt-br/error-codes.mdx": "924cafd6240a2b8803c6ab083f596f9b687ed062019a627dc57457808217c53e",
     "pt-br/guides/agent-outbound.mdx": "b43380b51224c6d81fb6b0db9e2e0a9528987498badf91b231e6ab567185c157",
     "pt-br/guides/first-conversation.mdx": "d21f83a729a307d4a2d18e2e6c719854da15f222d3d4dc93071d02466340356c",
     "pt-br/guides/identifiers.mdx": "d6d17a99838659f8a3fe08817fcf54b38c12559b730acb2dd84bc42d166b8b90",
     "pt-br/guides/pagination.mdx": "394b5c681dd321375e1aacfe0e9ca9b81c5ca3cce900b516324b64372b400992",
     "pt-br/guides/responses.mdx": "d1b9b1306d9530b107a0c5b13f6d127a177e912984c08ffd0411c0a3065c2447",
     "pt-br/guides/send-attachments.mdx": "3e10ccd0c205762541af94297e30ec16b60a2d71ddb0a1e1543d3d77713905ef",
-    "pt-br/guides/send-template.mdx": "c80473322f9940863989ce43395b7a82b6caa6ec7b516a76b0c720d1298f7f90",
+    "pt-br/guides/send-template.mdx": "9b16a5f8574292e5a1276e12eea990542807d54759584ef28d0ee3d758a98b77",
     "pt-br/index.mdx": "f30f20608635feffa22d1c566c40843d3b29215ecf7875c73fce49e7a621e5a9",
     "pt-br/lead-capture/consent.mdx": "3cbfc6db2c724e435aac01b50eb94bba0e3ad40c012f2ea205fa2c9a6515eaf1",
     "pt-br/lead-capture/errors.mdx": "189a7d4172d2af033d7d211711e15d92d02c5278db066df4bc27c1f8c13890aa",
@@ -94,7 +94,7 @@
     "pt-br/lead-capture/integration.mdx": "8f11e6f732c6b5e68ade245b125ab4095718a999be7b87b8acfc1af4d12612aa",
     "pt-br/lead-capture/templates.mdx": "782779caa6f93f7c61ddc22742d0e7a4b33788e7bb51bf8a3ab18aa60d3bd899",
     "pt-br/rate-limits.mdx": "55f5c118aa49db4f2f33b624b468c9cec8f7b1622b7308ebf94f701d8956ab56",
-    "pt-br/templates-and-parameters.mdx": "27b76d089945a1b5312bd925d5a5dd85631d8e55aacaca3cd7018f5f12d9faff",
+    "pt-br/templates-and-parameters.mdx": "28106e6586ec2d45cf72884ca65cba7a3483418c0721d296012d522f31d8eb72",
     "pt-br/webhooks.mdx": "30c6bdff5c113b29818fb8afd531ee5455969f9b00d08298ddd327d9e12423f9",
     "pt-br/webhooks/configuration.mdx": "3ddc354af0ed3e886620ed4e0d2cff1c5fe2cd5ab5a8719ba9dd6cb092e27139",
     "pt-br/webhooks/events.mdx": "c536347e48ea4fca2b110f59995614c71d8c6667e156f40acf22f2b704c32545",
@@ -102,7 +102,7 @@
     "pt-br/webhooks/verifying-signatures.mdx": "27e126d6edbe017da7116c4001bafe6e555e3bd7d762eebae303177fedfa0dc0",
     "rate-limits.mdx": "110dfae500b1545c77f8adde168eb3a071c5da58354a14c0078d91eadcfa233d",
     "skill.md": "b89b5379faf505816aad291a2ddc3ea7b58f249aee4294b1959ee2a05f314746",
-    "templates-and-parameters.mdx": "aefdd33cb1660afc4b21aaa98570397534235989695177ed4bfe7808f46d1565",
+    "templates-and-parameters.mdx": "98e9a9cc2dee41caeefd1131f267b0b925c08391227b7363c3ffc8af208b79d8",
     "webhooks.mdx": "8203de4edaaf8f317455300f712403850c7bab280d84d34b31fe3cd8ecdb88ab",
     "webhooks/configuration.mdx": "d2788ec46367b9816e5ba94e97bb0b0053b7f5270159575464e49d65e2d2ba5f",
     "webhooks/events.mdx": "054a801f7ee33be7c515cc23dc49545f2ab7ac4bdeddd3cbd4948ec2bbf3e00c",
@@ -1323,7 +1323,7 @@
       "source": "api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "17118b230e17bebf391bfa44f03f097cfb0c3e0ab50a88a997a125634f7a5148",
+      "sha256": "e2e1e4781210235272b3025e775c3dd97cfe875057234c4ff1a49370887f959b",
       "operationCount": 25
     },
     {
@@ -1339,7 +1339,7 @@
       "source": "es/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/es/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "44131c94325ca6c801f47fd974a79946bc4872b5a71e30f132e0d5b884e9020f",
+      "sha256": "8ea03fa88c5247e81c0d2659f3e5b0b29c43d469a2b8ca05a7f048fc81b485b7",
       "operationCount": 25
     },
     {
@@ -1355,7 +1355,7 @@
       "source": "pt-br/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/pt-br/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "6127964522812d40fd6f7a11628625ca021adb362dd7310c1d4884c52d1257f2",
+      "sha256": "a675b04a2ce489e87762a7137a812112de6f7dcda902358ea6f7192b741497b5",
       "operationCount": 25
     },
     {
@@ -1377,36 +1377,36 @@
   ],
   "outputs": {
     "llms-en.json": {
-      "bytes": 31738,
-      "sha256": "482edc321484b6ee26eae70f0f1710cea1c25f77c848a0fa24b0e973023f49c3"
+      "bytes": 33962,
+      "sha256": "20a5f1d9d34720d9dee02185ed8725235a6275831ac0d3f964efda5e26a38b79"
     },
     "llms-full-en.json": {
-      "bytes": 251176,
-      "sha256": "94cb7067cea5ae3bad25128620ed47e8090d459bea89e266ebd5359cf8311693"
+      "bytes": 261141,
+      "sha256": "3b5e78bf457428c4c2e5532d90cc507ca3f58fd8d2f658114680a0541262d2a0"
     },
     "llms-es.json": {
-      "bytes": 34179,
-      "sha256": "5eaf17a880035653b6041966ee66c61ef144850c90f6a3984756df83157b8b61"
+      "bytes": 36769,
+      "sha256": "313979ee8be52c411fd5d91d042e655c83a1f0157e33b1f1ab5f5df0c7aa7763"
     },
     "llms-full-es.json": {
-      "bytes": 270878,
-      "sha256": "a5912ee9c6d058ca5f34e60d04e6758ffb356b26503f98994ff85e7fd542c4df"
+      "bytes": 282389,
+      "sha256": "6f82fb5324119b0fe29b3179c9f042b7f420726fdfc6433bd4cafd0771d88035"
     },
     "llms-pt-br.json": {
-      "bytes": 34095,
-      "sha256": "b7d81d6cfbf5949896d7280a44edfb26fdfdbba1828d1a150b8339416db50ce3"
+      "bytes": 36659,
+      "sha256": "b5197af9d37bc7f6b8bf3735e674578f59b730f51605255587271446347dbfc8"
     },
     "llms-full-pt-br.json": {
-      "bytes": 269008,
-      "sha256": "fc599949a481aca90b13860fcd85671e05e5035258749571fa7e62c5f0f64a47"
+      "bytes": 280402,
+      "sha256": "1492347ba4e5dbb0c774d8f55e734c43a9376cffba1ffc2c1dd72db56fc35046"
     },
     "llms.txt": {
       "bytes": 40277,
       "sha256": "62a48193c9bd2f1cf544952ff378daba83821501d01ff631ad22b5725f924231"
     },
     "llms-full.txt": {
-      "bytes": 701332,
-      "sha256": "4420d04d435a45b8b27371bc88c30639d57590017498b63de4af0758b2dcaa4c"
+      "bytes": 726382,
+      "sha256": "9a58286def89c30b5ec11278d06a8722216925f8402288460c620bacfbce9ad7"
     },
     "sitemap.xml": {
       "bytes": 92257,

@@ -863,7 +863,7 @@ URL-encode the supplied ID or name. Read the response's `id`, `name`, `variables
 | `callerMustSupply: false`, not custom | Omit it to keep Bridge's per-Contact value. A supplied value replaces that value for every Contact. |
 | `isCustom: true` | Supply your value, or omit it or send it blank to use its `default`. |
 
-Use the agnostic `key`, never the display `label`, a Meta position, or an invented variable name. `driftWarning` is diagnostic and does not by itself block sending.
+Use the agnostic `key`, never the display `label`, a Meta position, or an invented variable name. A stale variable in `driftWarning` does not block sending, but a slot with a missing label does: re-sync or repair the template first.
 
 ## 2. Prepare your values
 
@@ -1317,13 +1317,13 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
-`driftWarning` is diagnostic only: it reports differences between the declared variables and Meta's template snapshot and never blocks a send. The table below describes each item in `variables`.
+`driftWarning` reports differences between the declared variables and Meta's template snapshot. A stale variable never blocks a send. A slot with a missing label (`missingLabels`) does: the template cannot be sent until it is re-synced or repaired, and that slot is not listed in `variables` because it has no key you can send. The table below describes each item in `variables`.
 
 | Field | Meaning |
 | ----- | ------- |
 | `key` | The name to use in `parameters` |
 | `label` | A human-readable description of the variable |
-| `callerMustSupply` | `true` when you must supply a non-blank value because Bridge has no source for it; `false` otherwise |
+| `callerMustSupply` | `true` when you must supply a non-blank value because Bridge cannot fill it for the send; `false` when Bridge fills it (the cases are in [What Bridge fills](https://docs.bridge.new/templates-and-parameters.md#what-bridge-fills)) |
 | `isCustom` | Whether this is a custom variable: a value only you know, with a default text |
 | `default` | For a custom variable, the text sent when you send no value for it; `null` otherwise |
 
@@ -1501,6 +1501,85 @@ Checks run in this order, and **the first error wins**:
 5. `0608`, only in workspaces where your templates replace just the first template
 
 So fixing one error can reveal the next. Values for a later template are not checked until every earlier template passes.
+
+---
+
+## Outbound templates
+
+`POST .../agents/{agentId}/outbound` and `POST .../leadscout/outbound` send a template with `template.parameters` (keyed by variable `key`) or `template.orderedParams`. The variables come from the same `GET .../templates/{templateId}` lookup as above, and the same `callerMustSupply` flag applies.
+
+### What Bridge fills
+
+Bridge fills a variable for a send when it can. Otherwise you must send it, and `callerMustSupply` says which case applies to that variable.
+
+| Variable | Bridge fills it from | Otherwise |
+| -------- | -------------------- | --------- |
+| Recipient, such as the Contact's first name | The Contact | The variable's default; with no default, you must send it |
+| Sender, such as the sender's first or last name | Its default only. A call through the Integrations API has no person as sender | With no default, you must send it |
+| Custom (`isCustom: true`) | Its default, when not blank | You must send it |
+| Organization name | The workspace's organization name | Nothing to send: Bridge always fills it |
+| Terms or privacy link | Only when the variable has a default: Bridge then sends the workspace's link if one is configured, otherwise the default | With no default, you must send it |
+| Conversation name | The conversation's own name when it has one, otherwise the variable's default | With no default and no name on the conversation, you must send it |
+
+`callerMustSupply: false` on a recipient variable assumes the Contact has that value. When the Contact has none and the variable has no default, the send answers `422` `BRIDGE_AI_LEADSCOUT_0019` listing it, and you can retry with the value in `parameters`.
+
+### Rules for `parameters`
+
+- Send the variables with `callerMustSupply: true`. Omit the ones Bridge fills.
+- A value you send for a variable Bridge could fill replaces Bridge's value.
+- For a variable Bridge fills, a blank or whitespace-only value counts as omitted.
+- For a variable you must send, a blank value is rejected like a missing one, with `422` `BRIDGE_AI_LEADSCOUT_0019`.
+
+`orderedParams` covers the template's body variables only, in order. It does not cover button variables: send those in `parameters`, by key. Send a value for every body position, including the ones Bridge could fill. Use `parameters` to send only what Bridge cannot fill. Do not send the same slot in both (`0020`).
+
+### Example
+
+`order_shipped_promo` has `first_name`, filled from the Contact, and `order_number` and `delivery_date`, which you must send. `parameters` carries only those two:
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+```
+
+```json
+{
+  "contact": {
+    "identifier": "+13802098869",
+    "identifierType": "PHONE",
+    "messageProviderType": "WHATSAPP"
+  },
+  "template": {
+    "id": "f0000040-0000-4000-8000-000000000040",
+    "parameters": {
+      "order_number": "A-10492",
+      "delivery_date": "3 de octubre"
+    }
+  }
+}
+```
+
+### Errors
+
+| Code | Status | When | `extra` |
+| ---- | ------ | ---- | ------- |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | A variable you must send is missing or blank. Also a variable Bridge fills whose value turns out empty for this send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.) | `missingVariables: [{key, label}]`. Retry with those keys in `parameters` |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` and `parameters` both supply the same slot | `conflictingParameters` |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | A key in `parameters` is not a variable of the template | `unknownKeys: [key]` |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | A value breaks WhatsApp's rules for a parameter: a line break, a tab, five or more consecutive spaces, or too long | `invalidVariables: [{key, label, reason}]`, sorted by key |
+
+```json
+{
+  "title": "Missing Template Variables",
+  "status": 422,
+  "code": "BRIDGE_AI_LEADSCOUT_0019",
+  "extra": {
+    "missingVariables": [
+      { "key": "delivery_date", "label": "Delivery date" }
+    ]
+  }
+}
+```
 
 ---
 
@@ -1820,9 +1899,12 @@ Error codes for Agent operations.
 | `BRIDGE_AI_LEADSCOUT_0016` | 400 | Outbound validation error |
 | `BRIDGE_AI_LEADSCOUT_0017` | 409 | Latest session is not finalized |
 | `BRIDGE_AI_LEADSCOUT_0018` | 409 | Could not finalize the expired session before starting a new one |
-| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Missing required template variable(s) |
-| `BRIDGE_AI_LEADSCOUT_0020` | 422 | Conflicting template parameter sources for the same slot |
-| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Unknown template parameter key |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | A template variable the caller must supply is missing or blank. `extra.missingVariables`: `[{key, label}]`. It also lists a variable Bridge fills when its value turns out empty for the send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.). Retry with that key in `parameters` |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters` lists them |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | A key in `parameters` is not a variable of the template. `extra.unknownKeys` lists it |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | A template variable value breaks WhatsApp's rules for a parameter: a line break, a tab, five or more consecutive spaces, or too long. `extra.invalidVariables`: `[{key, label, reason}]`, sorted by key |
+
+`POST .../leadscout/outbound` also returns `0019`, `0020`, `0021` and `0025`, with the same meaning. See [Outbound templates](https://docs.bridge.new/templates-and-parameters.md#outbound-templates).
 
 For `POST .../agents/{agentId}/outbound`, `5xx` errors carry no `code` or `extra`.
 
@@ -4123,6 +4205,12 @@ forceSend=true reuses an eligible active conversation; it does not ignore it or 
 
 A nonexpired open LeadScout session still blocks a new outbound request with 409 BRIDGE_AI_LEADSCOUT_0017; inability to finalize an expired session returns 409 BRIDGE_AI_LEADSCOUT_0018. Other validation still applies. Additional messages are persisted; persistence does not prove delivery or a wait for the lead to reply. A failed request can leave partial work, so do not treat forceSend as idempotency or blindly retry an uncertain result.
 
+Template parameter errors, all 422 and raised before anything is written:
+- `BRIDGE_AI_LEADSCOUT_0019`: a variable the caller must supply (`callerMustSupply: true` in `GET /templates/{templateId}`) is missing or blank. `extra.missingVariables` lists the keys as `[{key, label}]`. It also lists a variable Bridge fills when the value turns out empty for this send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.). Retry with that key in `parameters`.
+- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters` lists them.
+- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not a variable of the template. `extra.unknownKeys` lists it.
+- `BRIDGE_AI_LEADSCOUT_0025`: a value breaks WhatsApp's rules for a parameter (a line break, a tab, five or more consecutive spaces, or too long). `extra.invalidVariables` lists each offending variable as `[{key, label, reason}]`, sorted by key.
+
 See [the complete outbound guide](https://docs.bridge.new/guides/agent-outbound.md) for the false/true matrix, response flags, differences from Agents outbound, errors and handoff.
 
 [Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
@@ -4165,10 +4253,10 @@ Never a Meta slot address or index.
 
 `templateId` accepts either the template's `id` or its `name`. Outbound operations accept `template.id` or `template.name`, with a nonblank id taking precedence. Conversation onboarding uses `onboardingTemplates[].templateId`. Use the selector required by the sending operation. See [the template recipe](https://docs.bridge.new/guides/send-template.md).
 
-A variable with `callerMustSupply: true` has no declared source — the caller must include
+A variable with `callerMustSupply: true` is one Bridge cannot fill for the send — the caller must include
 its `key` in `parameters` when sending, or the send fails with a 422 naming that same `key`.
-A variable with `callerMustSupply: false` is either resolved by Bridge on its own (e.g. the
-recipient's first name) or already has a value the caller may optionally override.
+A variable with `callerMustSupply: false` is filled by Bridge for the send (e.g. the Contact's first name, or a variable with a default); the caller may optionally override it.
+Sender variables are filled only from their default: calls through the integrations API have no person as sender.
 A variable with `isCustom: true` is a value only the caller knows, with a `default`: send it in
 `parameters` to use your own value, or leave it out (or blank) and `default` goes out.
 
@@ -4299,6 +4387,12 @@ Reusing a conversation depends on the Agent type:
   session cannot be finalized, it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.
 - Service Agent: an open, unexpired service session is continued; an expired one is closed as abandoned and a
   new one opens.
+
+Template parameter errors, all 422 and raised before anything is written:
+- `BRIDGE_AI_LEADSCOUT_0019`: a variable the caller must supply (`callerMustSupply: true` in `GET /templates/{templateId}`) is missing or blank. `extra.missingVariables` lists the keys as `[{key, label}]`. It also lists a variable Bridge fills when the value turns out empty for this send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.). Retry with that key in `parameters`.
+- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters` lists them.
+- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not a variable of the template. `extra.unknownKeys` lists it.
+- `BRIDGE_AI_LEADSCOUT_0025`: a value breaks WhatsApp's rules for a parameter (a line break, a tab, five or more consecutive spaces, or too long). `extra.invalidVariables` lists each offending variable as `[{key, label, reason}]`, sorted by key.
 
 See [the complete outbound guide](https://docs.bridge.new/guides/agent-outbound.md) for prerequisites, the forceSend decision table, recovery, partial work and safe retry decisions.
 
@@ -5149,7 +5243,7 @@ Codifica para URL el ID o nombre proporcionado. Lee `id`, `name`, `variables` y 
 | `callerMustSupply: false`, no personalizada | Omítela para conservar el valor que Bridge obtiene para cada contacto. Un valor enviado reemplaza ese valor para todos los contactos. |
 | `isCustom: true` | Proporciona tu valor, omítelo o envíalo en blanco para usar su `default`. |
 
-Usa la `key` independiente del proveedor, nunca el `label` visible, una posición de Meta ni un nombre de variable inventado. `driftWarning` es informativo y por sí solo no bloquea el envío.
+Usa la `key` independiente del proveedor, nunca el `label` visible, una posición de Meta ni un nombre de variable inventado. Una variable obsoleta en `driftWarning` no bloquea el envío, pero un slot con una etiqueta faltante sí: vuelve a sincronizar o repara primero la plantilla.
 
 ## 2. Prepara los valores
 
@@ -5603,13 +5697,13 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
-`driftWarning` es solo informativo: señala diferencias entre las variables declaradas y la instantánea de la plantilla de Meta y nunca bloquea un envío. La tabla siguiente describe cada elemento de `variables`.
+`driftWarning` señala diferencias entre las variables declaradas y la instantánea de la plantilla de Meta. Una variable obsoleta nunca bloquea un envío. Un slot con una etiqueta faltante (`missingLabels`) sí lo bloquea: la plantilla no se puede enviar hasta que se vuelva a sincronizar o reparar, y ese slot no aparece en `variables` porque no tiene ninguna clave que puedas enviar. La tabla siguiente describe cada elemento de `variables`.
 
 | Campo | Significado |
 | --- | --- |
 | `key` | Nombre que debes usar en `parameters` |
 | `label` | Descripción de la variable legible para personas |
-| `callerMustSupply` | `true` cuando debes proporcionar un valor que no esté en blanco porque Bridge no tiene una fuente para él; `false` en los demás casos |
+| `callerMustSupply` | `true` cuando debes proporcionar un valor que no esté en blanco porque Bridge no puede completarla para el envío; `false` cuando Bridge la completa (los casos están en [Qué completa Bridge](https://docs.bridge.new/es/templates-and-parameters.md#qu%C3%A9-completa-bridge)) |
 | `isCustom` | Indica si es una variable personalizada: un valor que solo tú conoces y que tiene un texto predeterminado |
 | `default` | Para una variable personalizada, texto enviado si no proporcionas un valor; `null` en los demás casos |
 
@@ -5789,6 +5883,86 @@ Las comprobaciones se ejecutan en este orden y **solo se devuelve el primer erro
 5. `0608`, solo si tus plantillas reemplazan únicamente la primera de la secuencia del espacio de trabajo.
 
 Por eso corregir un error puede revelar el siguiente. Los valores de una plantilla posterior no se revisan hasta que pasen todas las anteriores.
+
+---
+
+## Plantillas salientes
+
+`POST .../agents/{agentId}/outbound` y `POST .../leadscout/outbound` envían una plantilla con `template.parameters` (indexado por la `key` de la variable) o `template.orderedParams`. Las variables provienen de la misma consulta `GET .../templates/{templateId}` descrita arriba, y se aplica el mismo indicador `callerMustSupply`.
+
+### Qué completa Bridge
+
+Bridge completa una variable en un envío cuando puede. De lo contrario, debes enviarla, y `callerMustSupply` indica qué caso corresponde a cada variable.
+
+| Variable | Bridge la completa a partir de | En caso contrario |
+| -------- | ------------------------------ | ----------------- |
+| Destinatario, como el nombre del contacto | El contacto | El valor predeterminado de la variable; sin valor predeterminado, debes enviarla |
+| Remitente, como el nombre o el apellido del remitente | Solo su valor predeterminado. Una llamada mediante la API de integraciones no tiene una persona como remitente | Sin valor predeterminado, debes enviarla |
+| Personalizada (`isCustom: true`) | Su valor predeterminado, si no está en blanco | Debes enviarla |
+| Nombre de la organización | El nombre de la organización del espacio de trabajo | No hay nada que enviar: Bridge siempre la completa |
+| Enlace de términos o de privacidad | Solo cuando la variable tiene un valor predeterminado: Bridge envía entonces el enlace del espacio de trabajo si está configurado y, si no, el valor predeterminado | Sin valor predeterminado, debes enviarla |
+| Nombre de la conversación | El nombre propio de la conversación si lo tiene; si no, el valor predeterminado de la variable | Sin valor predeterminado y sin nombre en la conversación, debes enviarla |
+
+`callerMustSupply: false` en una variable de destinatario supone que el contacto tiene ese valor. Cuando el contacto no lo tiene y la variable no tiene valor predeterminado, el envío responde `422` `BRIDGE_AI_LEADSCOUT_0019` con la variable en la lista, y puedes reintentar con el valor en `parameters`.
+
+### Reglas de `parameters`
+
+- Envía las variables con `callerMustSupply: true`. Omite las que completa Bridge.
+- Un valor que envíes para una variable que Bridge podría completar reemplaza el valor de Bridge.
+- En una variable que completa Bridge, un valor en blanco o solo con espacios se considera omitido.
+- En una variable que debes enviar, un valor en blanco se rechaza igual que uno ausente, con `422` `BRIDGE_AI_LEADSCOUT_0019`.
+
+`orderedParams` cubre solo las variables del cuerpo de la plantilla, en orden. No cubre las variables de los botones: envíalas en `parameters`, por clave. Envía un valor para cada posición del cuerpo, incluidas las que Bridge podría completar. Usa `parameters` para enviar solo lo que Bridge no puede completar. No envíes la misma posición en ambos (`0020`).
+
+### Ejemplo
+
+`order_shipped_promo` tiene `first_name`, que se completa a partir del contacto, y `order_number` y `delivery_date`, que debes enviar. `parameters` incluye solo esas dos:
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+```
+
+```json
+{
+  "contact": {
+    "identifier": "+13802098869",
+    "identifierType": "PHONE",
+    "messageProviderType": "WHATSAPP"
+  },
+  "template": {
+    "id": "f0000040-0000-4000-8000-000000000040",
+    "parameters": {
+      "order_number": "A-10492",
+      "delivery_date": "3 de octubre"
+    }
+  }
+}
+```
+
+
+### Errores
+
+| Código | Estado | Cuándo ocurre | `extra` |
+| ------ | ------ | ------------- | ------- |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Falta una variable que debes enviar o está en blanco. También una variable que Bridge completa cuando su valor resulta vacío para este envío: una variable de destinatario cuyo contacto no tiene valor ni valor predeterminado, o un valor calculado por Bridge que WhatsApp rechazaría (salto de línea, tabulación, etc.) | `missingVariables: [{key, label}]`. Reintenta con esas claves en `parameters` |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` y `parameters` proporcionan la misma posición | `conflictingParameters` |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Una clave de `parameters` no es una variable de la plantilla | `unknownKeys: [key]` |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | Un valor incumple las reglas de WhatsApp para un parámetro: un salto de línea, una tabulación, cinco o más espacios consecutivos o demasiada longitud | `invalidVariables: [{key, label, reason}]`, ordenadas por clave |
+
+```json
+{
+  "title": "Missing Template Variables",
+  "status": 422,
+  "code": "BRIDGE_AI_LEADSCOUT_0019",
+  "extra": {
+    "missingVariables": [
+      { "key": "delivery_date", "label": "Delivery date" }
+    ]
+  }
+}
+```
 
 ---
 
@@ -6108,9 +6282,12 @@ Errores de las operaciones de agentes.
 | `BRIDGE_AI_LEADSCOUT_0016` | 400 | Error de validación de conversación saliente |
 | `BRIDGE_AI_LEADSCOUT_0017` | 409 | La sesión más reciente no está finalizada |
 | `BRIDGE_AI_LEADSCOUT_0018` | 409 | No se pudo finalizar la sesión vencida antes de iniciar otra |
-| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Faltan una o más variables obligatorias de la plantilla |
-| `BRIDGE_AI_LEADSCOUT_0020` | 422 | Hay fuentes de parámetros de plantilla superpuestas para la misma posición |
-| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Clave de parámetro de plantilla desconocida |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Falta una variable de la plantilla que quien llama debe proporcionar, o está en blanco. `extra.missingVariables`: `[{key, label}]`. También enumera una variable que Bridge completa cuando su valor resulta vacío para el envío: una variable de destinatario cuyo contacto no tiene valor ni valor predeterminado, o un valor calculado por Bridge que WhatsApp rechazaría (salto de línea, tabulación, etc.). Reintenta con esa clave en `parameters` |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` y `parameters` proporcionan la misma posición. `extra.conflictingParameters` las enumera |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Una clave de `parameters` no es una variable de la plantilla. `extra.unknownKeys` la enumera |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | Un valor de variable de la plantilla incumple las reglas de WhatsApp para un parámetro: un salto de línea, una tabulación, cinco o más espacios consecutivos o demasiada longitud. `extra.invalidVariables`: `[{key, label, reason}]`, ordenadas por clave |
+
+`POST .../leadscout/outbound` también devuelve `0019`, `0020`, `0021` y `0025`, con el mismo significado. Consulta [Plantillas salientes](https://docs.bridge.new/es/templates-and-parameters.md#outbound-templates).
 
 En `POST .../agents/{agentId}/outbound`, los errores `5xx` no incluyen `code` ni `extra`.
 
@@ -8341,6 +8518,12 @@ forceSend=true reutiliza una conversación activa apta; no la ignora ni crea una
 
 Una sesión abierta de LeadScout que no haya vencido sigue bloqueando una nueva solicitud saliente con 409 BRIDGE_AI_LEADSCOUT_0017; si no se puede finalizar una sesión vencida, devuelve 409 BRIDGE_AI_LEADSCOUT_0018. Las demás validaciones siguen vigentes. Los mensajes adicionales se persisten; persistirlos no demuestra su entrega ni que se espere la respuesta del lead. Una solicitud fallida puede dejar trabajo parcial, por lo que no debes tratar forceSend como idempotencia ni reintentar a ciegas un resultado incierto.
 
+Errores de parámetros de plantilla, todos 422 y generados antes de escribir nada:
+- `BRIDGE_AI_LEADSCOUT_0019`: falta una variable que quien llama debe proporcionar (`callerMustSupply: true` en `GET /templates/{templateId}`) o está en blanco. `extra.missingVariables` enumera las claves como `[{key, label}]`. También enumera una variable que Bridge rellena cuando el valor resulta vacío para este envío: una variable de destinatario cuyo contacto no tiene valor ni valor predeterminado, o un valor calculado por Bridge que WhatsApp rechazaría (salto de línea, tabulación, etc.). Reintenta con esa clave en `parameters`.
+- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` y `parameters` proporcionan el mismo slot. `extra.conflictingParameters` los enumera.
+- `BRIDGE_AI_LEADSCOUT_0021`: una clave de `parameters` no es una variable de la plantilla. `extra.unknownKeys` la enumera.
+- `BRIDGE_AI_LEADSCOUT_0025`: un valor incumple las reglas de WhatsApp para un parámetro (un salto de línea, una tabulación, cinco o más espacios consecutivos o demasiada longitud). `extra.invalidVariables` enumera cada variable infractora como `[{key, label, reason}]`, ordenadas por clave.
+
 Consulta [la guía completa de envío saliente](https://docs.bridge.new/es/guides/agent-outbound.md) para la matriz false/true, los indicadores de respuesta, las diferencias con el envío saliente de Agents, los errores y la transferencia.
 
 [Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
@@ -8381,8 +8564,9 @@ Nunca devuelve la dirección o el índice de una posición de Meta.
 
 `templateId` acepta el `id` o el `name` de la plantilla. Las operaciones salientes aceptan `template.id` o `template.name`, con prioridad para un id no vacío. El inicio de conversaciones utiliza `onboardingTemplates[].templateId`. Utiliza el selector que exige la operación de envío. Consulta [la receta de plantillas](https://docs.bridge.new/es/guides/send-template.md).
 
-Una variable con `callerMustSupply: true` no tiene una fuente declarada: quien llama debe incluir su `key` en `parameters` al enviar; de lo contrario, el envío falla con un 422 que identifica ese mismo `key`.
-Una variable con `callerMustSupply: false` la resuelve Bridge por su cuenta, por ejemplo, el nombre del destinatario, o ya tiene un valor que quien llama puede sobrescribir opcionalmente.
+Una variable con `callerMustSupply: true` es una que Bridge no puede rellenar para el envío: quien llama debe incluir su `key` en `parameters` al enviar; de lo contrario, el envío falla con un 422 que identifica ese mismo `key`.
+Una variable con `callerMustSupply: false` la rellena Bridge para el envío (por ejemplo, el nombre del contacto, o una variable con un valor predeterminado); quien llama puede sobrescribirla opcionalmente.
+Las variables de remitente se rellenan solo a partir de su valor predeterminado: las llamadas a través de la API de integraciones no tienen ninguna persona como remitente.
 Una variable con `isCustom: true` es un valor que solo conoce quien llama y tiene un `default`: envíala en `parameters` para usar tu propio valor, u omítela o déjala en blanco para enviar `default`.
 
 Códigos de error:
@@ -8487,6 +8671,12 @@ La conversación se abre en una de las líneas activas de WhatsApp del Agent, ba
 La reutilización de una conversación depende del tipo de Agent:
 - LeadScout: si su sesión de LeadScout sigue abierta y no ha vencido, la llamada falla con 409 `BRIDGE_AI_LEADSCOUT_0017` (`extra` incluye `conversationId`, `sessionId` y `stage`). Si no se puede finalizar una sesión vencida, falla con 409 `BRIDGE_AI_LEADSCOUT_0018`.
 - Service Agent: se continúa una sesión de servicio abierta que no haya vencido; una sesión vencida se cierra como abandonada y se abre una nueva.
+
+Errores de parámetros de plantilla, todos 422 y generados antes de escribir nada:
+- `BRIDGE_AI_LEADSCOUT_0019`: falta una variable que quien llama debe proporcionar (`callerMustSupply: true` en `GET /templates/{templateId}`) o está en blanco. `extra.missingVariables` enumera las claves como `[{key, label}]`. También enumera una variable que Bridge rellena cuando el valor resulta vacío para este envío: una variable de destinatario cuyo contacto no tiene valor ni valor predeterminado, o un valor calculado por Bridge que WhatsApp rechazaría (salto de línea, tabulación, etc.). Reintenta con esa clave en `parameters`.
+- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` y `parameters` proporcionan el mismo slot. `extra.conflictingParameters` los enumera.
+- `BRIDGE_AI_LEADSCOUT_0021`: una clave de `parameters` no es una variable de la plantilla. `extra.unknownKeys` la enumera.
+- `BRIDGE_AI_LEADSCOUT_0025`: un valor incumple las reglas de WhatsApp para un parámetro (un salto de línea, una tabulación, cinco o más espacios consecutivos o demasiada longitud). `extra.invalidVariables` enumera cada variable infractora como `[{key, label, reason}]`, ordenadas por clave.
 
 Consulta [la guía completa de envío saliente](https://docs.bridge.new/es/guides/agent-outbound.md) para los requisitos, la tabla de decisión de forceSend, la recuperación, el trabajo parcial y las decisiones de reintento seguro.
 
@@ -9337,7 +9527,7 @@ Codifique o ID ou nome fornecido para uso na URL. Leia `id`, `name`, `variables`
 | `callerMustSupply: false`, não personalizada | Omita-a para manter o valor definido pelo Bridge para cada Contato. Um valor informado substitui esse valor para todos os Contatos. |
 | `isCustom: true` | Forneça seu valor ou omita-o ou envie-o vazio para usar o `default`. |
 
-Use a `key` agnóstica, nunca o `label` de exibição, uma posição da Meta ou um nome de variável inventado. `driftWarning` é diagnóstico e, por si só, não bloqueia o envio.
+Use a `key` agnóstica, nunca o `label` de exibição, uma posição da Meta ou um nome de variável inventado. Uma variável obsoleta em `driftWarning` não bloqueia o envio, mas um slot com rótulo ausente bloqueia: sincronize novamente ou repare primeiro o template.
 
 ## 2. Prepare seus valores
 
@@ -9791,13 +9981,13 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
-`driftWarning` é apenas diagnóstico: informa diferenças entre as variáveis declaradas e o snapshot do template na Meta e nunca bloqueia um envio. A tabela abaixo descreve cada item de `variables`.
+`driftWarning` informa diferenças entre as variáveis declaradas e o snapshot do template na Meta. Uma variável obsoleta nunca bloqueia um envio. Um slot com rótulo ausente (`missingLabels`) bloqueia: o template não pode ser enviado até ser sincronizado novamente ou reparado, e esse slot não aparece em `variables` porque não tem nenhuma chave que você possa enviar. A tabela abaixo descreve cada item de `variables`.
 
 | Campo | Significado |
 | ----- | ------- |
 | `key` | O nome a usar em `parameters` |
 | `label` | Uma descrição da variável legível por pessoas |
-| `callerMustSupply` | `true` quando você precisa fornecer um valor não vazio porque o Bridge não tem uma fonte para ele; `false` nos demais casos |
+| `callerMustSupply` | `true` quando você precisa fornecer um valor não vazio porque o Bridge não consegue preenchê-la para o envio; `false` quando o Bridge a preenche (os casos estão em [O que o Bridge preenche](https://docs.bridge.new/pt-br/templates-and-parameters.md#o-que-o-bridge-preenche)) |
 | `isCustom` | Indica se a variável é personalizada: um valor que só você conhece, com um texto padrão |
 | `default` | Para uma variável personalizada, o texto enviado quando você não fornece um valor; `null` nos demais casos |
 
@@ -9977,6 +10167,86 @@ As verificações seguem esta ordem, e **o primeiro erro prevalece**:
 5. `0608`, somente em workspaces onde seus templates substituem apenas o primeiro template
 
 Por isso, corrigir um erro pode revelar o próximo. Os valores de um template posterior só são verificados depois que todos os anteriores passam.
+
+---
+
+## Templates outbound
+
+`POST .../agents/{agentId}/outbound` e `POST .../leadscout/outbound` enviam um template com `template.parameters` (indexado pela `key` da variável) ou `template.orderedParams`. As variáveis vêm da mesma consulta `GET .../templates/{templateId}` descrita acima, e vale o mesmo indicador `callerMustSupply`.
+
+### O que o Bridge preenche
+
+O Bridge preenche uma variável em um envio quando consegue. Caso contrário, você precisa enviá-la, e `callerMustSupply` indica qual caso vale para cada variável.
+
+| Variável | O Bridge a preenche a partir de | Caso contrário |
+| -------- | ------------------------------- | -------------- |
+| Destinatário, como o primeiro nome do Contato | O Contato | O valor padrão da variável; sem valor padrão, você precisa enviá-la |
+| Remetente, como o nome ou o sobrenome do remetente | Somente o valor padrão. Uma chamada pela API de Integrações não tem uma pessoa como remetente | Sem valor padrão, você precisa enviá-la |
+| Personalizada (`isCustom: true`) | Seu valor padrão, quando não está vazio | Você precisa enviá-la |
+| Nome da organização | O nome da organização do workspace | Não há nada a enviar: o Bridge sempre a preenche |
+| Link de termos ou de privacidade | Somente quando a variável tem um valor padrão: o Bridge então envia o link do workspace, se estiver configurado, ou, caso contrário, o valor padrão | Sem valor padrão, você precisa enviá-la |
+| Nome da conversa | O nome próprio da conversa, quando ela tem um; caso contrário, o valor padrão da variável | Sem valor padrão e sem nome na conversa, você precisa enviá-la |
+
+`callerMustSupply: false` em uma variável de destinatário pressupõe que o Contato tenha esse valor. Quando o Contato não tem e a variável não tem valor padrão, o envio responde `422` `BRIDGE_AI_LEADSCOUT_0019` listando a variável, e você pode tentar novamente com o valor em `parameters`.
+
+### Regras de `parameters`
+
+- Envie as variáveis com `callerMustSupply: true`. Omita as que o Bridge preenche.
+- Um valor enviado para uma variável que o Bridge poderia preencher substitui o valor do Bridge.
+- Em uma variável que o Bridge preenche, um valor vazio ou composto apenas de espaços conta como omitido.
+- Em uma variável que você precisa enviar, um valor vazio é rejeitado como um valor ausente, com `422` `BRIDGE_AI_LEADSCOUT_0019`.
+
+`orderedParams` cobre somente as variáveis do corpo do template, em ordem. Não cobre as variáveis dos botões: envie-as em `parameters`, por chave. Envie um valor para cada posição do corpo, inclusive as que o Bridge poderia preencher. Use `parameters` para enviar apenas o que o Bridge não consegue preencher. Não envie a mesma posição nos dois (`0020`).
+
+### Exemplo
+
+`order_shipped_promo` tem `first_name`, preenchido a partir do Contato, e `order_number` e `delivery_date`, que você precisa enviar. `parameters` leva somente essas duas:
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/agents/{agentId}/outbound
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+```
+
+```json
+{
+  "contact": {
+    "identifier": "+13802098869",
+    "identifierType": "PHONE",
+    "messageProviderType": "WHATSAPP"
+  },
+  "template": {
+    "id": "f0000040-0000-4000-8000-000000000040",
+    "parameters": {
+      "order_number": "A-10492",
+      "delivery_date": "3 de octubre"
+    }
+  }
+}
+```
+
+
+### Erros
+
+| Código | Status | Quando ocorre | `extra` |
+| ------ | ------ | ------------- | ------- |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Falta uma variável que você precisa enviar ou ela está vazia. Também uma variável que o Bridge preenche quando o valor se mostra vazio para este envio: uma variável de destinatário cujo Contato não tem valor nem valor padrão, ou um valor calculado pelo Bridge que o WhatsApp rejeitaria (quebra de linha, tabulação etc.) | `missingVariables: [{key, label}]`. Tente novamente com essas chaves em `parameters` |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` e `parameters` fornecem a mesma posição | `conflictingParameters` |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Uma chave de `parameters` não é uma variável do template | `unknownKeys: [key]` |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | Um valor viola as regras do WhatsApp para um parâmetro: uma quebra de linha, uma tabulação, cinco ou mais espaços consecutivos ou comprimento excessivo | `invalidVariables: [{key, label, reason}]`, ordenadas por chave |
+
+```json
+{
+  "title": "Missing Template Variables",
+  "status": 422,
+  "code": "BRIDGE_AI_LEADSCOUT_0019",
+  "extra": {
+    "missingVariables": [
+      { "key": "delivery_date", "label": "Delivery date" }
+    ]
+  }
+}
+```
 
 ---
 
@@ -10296,9 +10566,12 @@ Códigos de erro de operações de Agentes.
 | `BRIDGE_AI_LEADSCOUT_0016` | 400 | Erro de validação outbound |
 | `BRIDGE_AI_LEADSCOUT_0017` | 409 | A sessão mais recente não foi finalizada |
 | `BRIDGE_AI_LEADSCOUT_0018` | 409 | Não foi possível finalizar a sessão expirada antes de iniciar uma nova |
-| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Variáveis obrigatórias do template ausentes |
-| `BRIDGE_AI_LEADSCOUT_0020` | 422 | Fontes de parâmetros de template conflitantes para a mesma posição |
-| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Chave de parâmetro de template desconhecida |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Falta uma variável do template que quem chama deve fornecer, ou ela está vazia. `extra.missingVariables`: `[{key, label}]`. Também lista uma variável que o Bridge preenche quando o valor se mostra vazio para o envio: uma variável de destinatário cujo Contato não tem valor nem valor padrão, ou um valor calculado pelo Bridge que o WhatsApp rejeitaria (quebra de linha, tabulação etc.). Tente novamente com essa chave em `parameters` |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` e `parameters` fornecem a mesma posição. `extra.conflictingParameters` as lista |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Uma chave de `parameters` não é uma variável do template. `extra.unknownKeys` a lista |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | Um valor de variável do template viola as regras do WhatsApp para um parâmetro: uma quebra de linha, uma tabulação, cinco ou mais espaços consecutivos ou comprimento excessivo. `extra.invalidVariables`: `[{key, label, reason}]`, ordenadas por chave |
+
+`POST .../leadscout/outbound` também retorna `0019`, `0020`, `0021` e `0025`, com o mesmo significado. Veja [Templates outbound](https://docs.bridge.new/pt-br/templates-and-parameters.md#outbound-templates).
 
 Em `POST .../agents/{agentId}/outbound`, erros `5xx` não contêm `code` nem `extra`.
 
@@ -12529,6 +12802,12 @@ forceSend=true reutiliza uma conversa ativa elegível; não a ignora nem cria um
 
 Uma sessão aberta do LeadScout ainda não expirada continua bloqueando uma nova solicitação de saída com 409 BRIDGE_AI_LEADSCOUT_0017; a impossibilidade de finalizar uma sessão expirada retorna 409 BRIDGE_AI_LEADSCOUT_0018. As outras validações continuam valendo. As mensagens adicionais são persistidas; a persistência não comprova a entrega nem uma espera pela resposta do lead. Uma solicitação com falha pode deixar trabalho parcial, portanto não trate forceSend como idempotência nem repita às cegas uma solicitação com resultado incerto.
 
+Erros de parâmetros de template, todos 422 e gerados antes de gravar qualquer coisa:
+- `BRIDGE_AI_LEADSCOUT_0019`: falta uma variável que quem chama deve fornecer (`callerMustSupply: true` em `GET /templates/{templateId}`) ou ela está em branco. `extra.missingVariables` lista as chaves como `[{key, label}]`. Também lista uma variável que a Bridge preenche quando o valor se mostra vazio para este envio: uma variável de destinatário cujo contato não tem valor nem valor padrão, ou um valor calculado pela Bridge que o WhatsApp rejeitaria (quebra de linha, tabulação etc.). Tente novamente com essa chave em `parameters`.
+- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` e `parameters` fornecem o mesmo slot. `extra.conflictingParameters` os lista.
+- `BRIDGE_AI_LEADSCOUT_0021`: uma chave de `parameters` não é uma variável do template. `extra.unknownKeys` a lista.
+- `BRIDGE_AI_LEADSCOUT_0025`: um valor viola as regras do WhatsApp para um parâmetro (uma quebra de linha, uma tabulação, cinco ou mais espaços consecutivos ou comprimento excessivo). `extra.invalidVariables` lista cada variável infratora como `[{key, label, reason}]`, ordenadas por chave.
+
 Consulte [o guia completo de saída](https://docs.bridge.new/pt-br/guides/agent-outbound.md) para a matriz false/true, os indicadores de resposta, as diferenças em relação à saída de Agents, os erros e a transferência.
 
 [Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
@@ -12569,8 +12848,9 @@ Nunca retorna o endereço ou índice de uma posição da Meta.
 
 `templateId` aceita o `id` ou o `name` do template. As operações de saída aceitam `template.id` ou `template.name`, com precedência para um id não vazio. A abertura de conversas usa `onboardingTemplates[].templateId`. Use o seletor exigido pela operação de envio. Consulte [a receita de templates](https://docs.bridge.new/pt-br/guides/send-template.md).
 
-Uma variável com `callerMustSupply: true` não tem uma fonte declarada: quem chama deve incluir sua `key` em `parameters` ao enviar; caso contrário, o envio falha com um 422 que identifica a mesma `key`.
-Uma variável com `callerMustSupply: false` é resolvida pela própria Bridge, por exemplo, o primeiro nome do destinatário, ou já tem um valor que quem chama pode substituir opcionalmente.
+Uma variável com `callerMustSupply: true` é uma que a Bridge não consegue preencher para o envio: quem chama deve incluir sua `key` em `parameters` ao enviar; caso contrário, o envio falha com um 422 que identifica a mesma `key`.
+Uma variável com `callerMustSupply: false` é preenchida pela Bridge para o envio (por exemplo, o primeiro nome do contato, ou uma variável com valor padrão); quem chama pode substituí-la opcionalmente.
+As variáveis de remetente são preenchidas somente a partir do valor padrão: as chamadas pela API de integrações não têm nenhuma pessoa como remetente.
 Uma variável com `isCustom: true` é um valor conhecido apenas por quem chama e tem um `default`: envie-a em `parameters` para usar seu próprio valor, ou omita-a ou deixe-a em branco para enviar `default`.
 
 Códigos de erro:
@@ -12675,6 +12955,12 @@ A conversa é aberta em uma das linhas ativas de WhatsApp do Agent, sob seu cont
 A reutilização de uma conversa depende do tipo de Agent:
 - LeadScout: se sua sessão do LeadScout ainda estiver aberta e não expirada, a chamada falha com 409 `BRIDGE_AI_LEADSCOUT_0017` (`extra` inclui `conversationId`, `sessionId` e `stage`). Se uma sessão expirada não puder ser finalizada, falha com 409 `BRIDGE_AI_LEADSCOUT_0018`.
 - Service Agent: uma sessão de serviço aberta e não expirada continua; uma sessão expirada é encerrada como abandonada e uma nova é aberta.
+
+Erros de parâmetros de template, todos 422 e gerados antes de gravar qualquer coisa:
+- `BRIDGE_AI_LEADSCOUT_0019`: falta uma variável que quem chama deve fornecer (`callerMustSupply: true` em `GET /templates/{templateId}`) ou ela está em branco. `extra.missingVariables` lista as chaves como `[{key, label}]`. Também lista uma variável que a Bridge preenche quando o valor se mostra vazio para este envio: uma variável de destinatário cujo contato não tem valor nem valor padrão, ou um valor calculado pela Bridge que o WhatsApp rejeitaria (quebra de linha, tabulação etc.). Tente novamente com essa chave em `parameters`.
+- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` e `parameters` fornecem o mesmo slot. `extra.conflictingParameters` os lista.
+- `BRIDGE_AI_LEADSCOUT_0021`: uma chave de `parameters` não é uma variável do template. `extra.unknownKeys` a lista.
+- `BRIDGE_AI_LEADSCOUT_0025`: um valor viola as regras do WhatsApp para um parâmetro (uma quebra de linha, uma tabulação, cinco ou mais espaços consecutivos ou comprimento excessivo). `extra.invalidVariables` lista cada variável infratora como `[{key, label, reason}]`, ordenadas por chave.
 
 Consulte [o guia completo de saída](https://docs.bridge.new/pt-br/guides/agent-outbound.md) para os pré-requisitos, a tabela de decisão de forceSend, a recuperação, o trabalho parcial e as decisões seguras de nova tentativa.
 
