@@ -1,0 +1,225 @@
+---
+title: "Create and move pipeline records"
+sidebarTitle: "Pipeline records"
+description: "Create pipeline records for existing Contacts, retry safely with Idempotency-Key, avoid lost updates with expectedRevision, and close or reopen records."
+keywords: ["pipeline", "pipeline record", "opportunity", "stage", "Idempotency-Key", "expectedRevision", "externalId", "close reason", "reasonId", "reopen", "stage actions"]
+---
+
+A pipeline record follows one piece of work for a Contact, such as a sales opportunity, through the stages of a pipeline. Use this recipe to keep the records of your system in a Bridge pipeline: create them, change their values, move them between stages, close them with a reason and reopen them. To receive the changes made in Bridge, subscribe to [pipeline record events](/webhooks/pipeline-records).
+
+## Before you start
+
+- Get a server-side API Key from [Authentication](/credentials) and send it in `x-api-key`, as with every other operation. The `workspaceId` in the path must be the workspace of that key. Any other workspace is refused with `403` `BRIDGE_CORE_0301`, and nothing is read or written.
+- Pipelines must be enabled for the workspace. Otherwise every operation answers `403` `BRIDGE_PIPELINE_0301`.
+- [Retrieve the pipeline](/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes) you write to. It lists the `stageId` values, the attribute ids you use as `values` keys and the active close reasons. [List the pipelines](/api-reference/pipelines-api/list-the-pipelines-of-a-workspace) to find its id.
+
+```json 403 BRIDGE_CORE_0301
+{
+  "title": "You do not have permission to access this resource",
+  "status": 403,
+  "detail": "There exists a mismatch between the claims workspace and the provided workspace",
+  "code": "BRIDGE_CORE_0301"
+}
+```
+
+## The operations
+
+| Your goal | Operation | `Idempotency-Key` | `expectedRevision` |
+| --- | --- | --- | --- |
+| Create a record | [`POST .../records`](/api-reference/pipeline-records-api/create-a-pipeline-record) | Required | Not accepted |
+| Find records by your id, a Contact or a pipeline | [`GET .../records`](/api-reference/pipeline-records-api/list-pipeline-records) | Not accepted | Not accepted |
+| Read one record | [`GET .../records/{recordId}`](/api-reference/pipeline-records-api/retrieve-a-pipeline-record) | Not accepted | Not accepted |
+| Change its name or values | [`PATCH .../records/{recordId}`](/api-reference/pipeline-records-api/update-a-pipeline-record) | Not accepted | Optional |
+| Move it to another stage, or close it | [`POST .../records/{recordId}/move`](/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage) | Required | Optional |
+| Reopen a closed record | [`POST .../records/{recordId}/reopen`](/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record) | Required | Optional |
+
+`...` stands for `/bridge/api/v1/workspaces/{workspaceId}`, on the REST API host `https://api-connect-us.bridge.new`.
+
+## Create a record
+
+Name the Contact with exactly one of `contact.id`, `contact.phone` or `contact.email`. Bridge finds the Contact the same way as [contact lookup](/api-reference/contacts-api/retrieve-a-contact-by-an-identifier); a Contact merged into another one resolves to the Contact that replaced it. The Contact is never created: when it does not exist the request fails with `404` `BRIDGE_EXTERNAL_0001`, so [create the Contact](/api-reference/contacts-api/create-a-new-contact) first and retry.
+
+Without `pipelineId` the record goes to the workspace's default pipeline, and without `stageId` to the pipeline's initial stage. A final stage is refused at creation. A pipeline set not to accept records from the API refuses the creation with `403` `BRIDGE_PIPELINE_0317`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-create" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contact": {
+      "phone": "+573001234567"
+    }
+  }'
+```
+
+A created record answers `201` with a `Location` header and the record. Keep its `id` and its `revision`:
+
+```json 201
+{
+  "id": "record-1",
+  "pipelineId": "pipe-sales",
+  "pipelineVersion": 3,
+  "stageId": "stage-new",
+  "state": "OPEN",
+  "name": "Ana Gómez",
+  "values": {
+    "budget": 1500
+  },
+  "contact": {
+    "id": "contact-1"
+  },
+  "ownerId": null,
+  "source": "API",
+  "externalId": null,
+  "revision": 1,
+  "closeReason": null,
+  "closedAt": null,
+  "createdAt": "2026-11-11T15:00:00.000Z",
+  "updatedAt": "2026-11-11T15:00:00.000Z"
+}
+```
+
+```json 404 BRIDGE_EXTERNAL_0001
+{
+  "title": "The requested external user was not found",
+  "status": 404,
+  "detail": "External user was not found with PHONE and value +573001234567",
+  "code": "BRIDGE_EXTERNAL_0001",
+  "extra": {
+    "externalIdentificationType": "PHONE",
+    "externalIdentificationValue": "+573001234567"
+  }
+}
+```
+
+### Link the record to your own id
+
+Send `externalId` with the id the record has in your system. A pipeline holds **one record per `externalId`**: a second creation with the same `externalId` in the same pipeline fails with `409` `BRIDGE_PIPELINE_0003`, and `extra.recordId` is the record that already has it. Read that record instead of creating another one. To find it later, [list records](/api-reference/pipeline-records-api/list-pipeline-records) with `externalId` (and `pipelineId` when it is not the default pipeline).
+
+The record id is chosen by Bridge; the request body has no field to set it.
+
+```json 409 BRIDGE_PIPELINE_0003
+{
+  "title": "A record with this external id already exists in the pipeline",
+  "status": 409,
+  "code": "BRIDGE_PIPELINE_0003",
+  "extra": {
+    "recordId": "record-1",
+    "pipelineId": "pipe-sales",
+    "externalId": "ERP-1"
+  }
+}
+```
+
+### One open record per Contact
+
+A pipeline can be set in Bridge to allow a Contact only one open record at a time. In such a pipeline, creating a record for a Contact that already has an open one fails with `409` `BRIDGE_PIPELINE_0318`, and `extra.openRecordId` is that open record: work on it instead. Closed records do not count, so a Contact can start a new record once the previous one is closed. Reopening a record fails the same way when the Contact has another open record in the pipeline.
+
+```json 409 BRIDGE_PIPELINE_0318
+{
+  "title": "The contact already has an open record in this pipeline",
+  "status": 409,
+  "detail": "Contact 'contact-1' already has the open record 'record-open' in pipeline 'pipe-onboarding'",
+  "code": "BRIDGE_PIPELINE_0318",
+  "extra": {
+    "openRecordId": "record-open",
+    "pipelineId": "pipe-onboarding",
+    "externalUserId": "contact-1"
+  }
+}
+```
+
+## Retry safely with Idempotency-Key
+
+`POST .../records`, `POST .../move` and `POST .../reopen` require an `Idempotency-Key` header of 1 to 255 characters. Use one key per change you want to make, and send the same key when you retry that change.
+
+| You send | Bridge answers |
+| --- | --- |
+| The same key and the same body, after the first request finished | The same status (`201` or `200`) with the header `Idempotent-Replayed: true`. The body is the record **as it is now**, so it can already show later changes |
+| The same key with a different body, or on another record or operation | `422` `BRIDGE_PIPELINE_0402` |
+| The same key while the first request is still running | `409` `BRIDGE_PIPELINE_0401`. Retry after a pause |
+| The same key after the first request failed | The request runs again: a failed request frees its key |
+
+A key is kept for **24 hours**; after that the same key runs as a new request. Keys are shared by every operation of the workspace, so do not reuse one across records.
+
+<Warning>
+  If a request is cut off before it finishes, its key can keep answering `409` `BRIDGE_PIPELINE_0401` for up to 24 hours. Retry with a new key. Send `externalId` when you create records, so that a retry with a new key can never create a second record.
+</Warning>
+
+## Avoid overwriting changes with expectedRevision
+
+Every record has a `revision` that goes up by one each time the record changes. Send the `revision` you last read as `expectedRevision` in the body of `PATCH`, `move` or `reopen`. If someone changed the record in the meantime, the request fails with `409` `BRIDGE_PIPELINE_0101` and changes nothing. `extra.currentRecord` is the record as it is now: decide again from it and retry with its `revision`.
+
+`expectedRevision` is optional. Without it, the change applies to the record as Bridge reads it, and a change made at the same moment can still fail it with the same `409`.
+
+```json PATCH
+{
+  "expectedRevision": 2,
+  "name": "Renamed"
+}
+```
+
+```json 409 BRIDGE_PIPELINE_0101
+{
+  "title": "The pipeline record was modified by another operation",
+  "status": 409,
+  "detail": "Pipeline record 'record-1' is at revision 4, the write expected 2",
+  "code": "BRIDGE_PIPELINE_0101",
+  "extra": {
+    "recordId": "record-1",
+    "expectedRevision": 2,
+    "currentRevision": 4,
+    "currentRecord": {
+      "id": "record-1",
+      "stageId": "stage-proposal",
+      "revision": 4
+    }
+  }
+}
+```
+
+`extra.currentRecord` holds the whole record, with the same fields as the `201` response above; the example shows only three of them.
+
+## Move, close and reopen
+
+[Move the record](/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage) with the `stageId` of a stage of the pipeline version it follows. Moving it to a **final stage closes it**. A move to a final stage can carry `reasonId`, one of the active close reasons of the pipeline, and a `reasonNote` of up to 500 characters, which needs `reasonId`. The close reason is optional: without one, the record closes with `closeReason: null`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records/$RECORD_ID/move" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-won" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "stageId": "stage-won",
+    "reasonId": "reason-price"
+  }'
+```
+
+The answer is `200` with the record. A closed record has `state: "FINAL"`, `closedAt` and, when the move carried one, `closeReason` with the `id`, `label` and `note` of the reason.
+
+| Problem | Answer |
+| --- | --- |
+| The record is already in that stage | `409` `BRIDGE_PIPELINE_0004` |
+| The record is closed | `409` `BRIDGE_PIPELINE_0306`: reopen it first |
+| The stage is not in the record's pipeline version | `422` `BRIDGE_PIPELINE_0311`, with `errRecordStage` in `extra.errors` |
+| A close reason or note on a move to an open stage | `422` `BRIDGE_PIPELINE_0311`, with `errReasonOnlyFinal` in `extra.errors` |
+| The close reason does not exist, or is retired | `422` `BRIDGE_PIPELINE_0315`, or `422` `BRIDGE_PIPELINE_0314` |
+| The stage requires a complete Contact | `422` `BRIDGE_PIPELINE_0305`; `extra.missing` names what the Contact lacks |
+
+[Reopen a closed record](/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record) to take it back to the open stage it was in before it was closed; its close reason is cleared. When its history names no open stage of its version, the record goes to the pipeline's initial stage. The body is optional and only takes `expectedRevision`. Reopening an open record fails with `409` `BRIDGE_PIPELINE_0307`.
+
+## Stage actions run on every entry
+
+<Warning>
+  A stage can have actions, such as creating a task or creating a record in another pipeline. They run **every time a record enters the stage**: when it is created in the stage, when it is moved to it and when it is reopened into it. That includes every record you create through the API, so a bulk import into a stage with actions runs them once per record. Check the actions of the stage before an import.
+</Warning>
+
+The actions run after the API answers; the response does not wait for them. Their results arrive as [`pipeline_action.*` webhook events](/webhooks/pipeline-records#stage-action-events).
+
+## Errors and limits
+
+- Every error answers a `Problem` body. Branch on `code`, not on `title`. See [Pipeline error codes](/error-codes#pipeline-error-codes) for each code and what to do.
+- The pipelines operations draw from the same budget as the rest of the API: **50 requests every 5 seconds per workspace**. See [Rate limits](/rate-limits).

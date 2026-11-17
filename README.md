@@ -57,7 +57,7 @@ Publish through the repository's normal pull-request and Code Owner review proce
 
 ## Languages and coding-assistant setup
 
-English keeps the existing root URLs. Spanish is under `es/`; Brazilian Portuguese is under `pt-br/` with Mintlify language code `pt-BR`. Each language has the same 24 source pages and 26 API operations. Localized OpenAPI files translate only genuine descriptions and summaries; API identifiers, schemas, types, examples and all wire behavior remain unchanged.
+English keeps the existing root URLs. Spanish is under `es/`; Brazilian Portuguese is under `pt-br/` with Mintlify language code `pt-BR`. Each language has the same 26 source pages and 34 API operations. Localized OpenAPI files translate only genuine descriptions and summaries; API identifiers, schemas, types, examples and all wire behavior remain unchanged.
 
 The homepage, first sidebar group and localized navbar link to the four-provider coding-assistant guide. Preserve its distinction between documentation MCP access and customer-workspace API access. Provider interfaces can change: verify commands, configuration formats and links against official documentation when updating the guide.
 
@@ -77,7 +77,7 @@ Use a current Mintlify CLI for preview. Older versions can discard language-leve
 
 ## Public discovery without MCP
 
-`llms.txt` is a custom trilingual directory: 150 documentation pages and six exact OpenAPI files. `llms-full.txt` collects all three languages; the smaller `llms-{en,es,pt-br}.json` indexes and `llms-full-{en,es,pt-br}.json` collections let HTTP readers choose one language. Public page reads use `.md` (or `Accept: text/markdown`); MCP filesystem page reads use `.mdx`. Collections contain guides and operation descriptions and link to the complete contracts instead of duplicating every schema.
+`llms.txt` is a custom trilingual directory: 180 documentation pages and six exact OpenAPI files. `llms-full.txt` collects all three languages; the smaller `llms-{en,es,pt-br}.json` indexes and `llms-full-{en,es,pt-br}.json` collections let HTTP readers choose one language. Public page reads use `.md` (or `Accept: text/markdown`); MCP filesystem page reads use `.mdx`. Collections contain guides and operation descriptions and link to the complete contracts instead of duplicating every schema.
 
 `skill.md` is the maintained capability and source-selection guide. It overrides Mintlify's generated file, which previously contained inaccurate endpoint and payload examples. Keep its existing `name: sainapsisinc` stable for discovery URLs, and preserve the documentation site's technical name and MCP tool identity. The `download-spec` contextual option enables Mintlify's API catalog and direct specification downloads. The generated `sitemap.xml` covers all 150 canonical pages with reciprocal language alternates, including API references with different translated slugs. Families use the exact operation method/path or matching editorial source paths. Canonical HTML metadata and crawler rules remain managed by Mintlify.
 

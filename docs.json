@@ -19,7 +19,8 @@
       "Before generating an API request, read the relevant OpenAPI specification or the individual endpoint Markdown page. llms-full.txt collects guides and endpoint descriptions; it does not embed every request and response schema. The REST and Custom Connections contracts are separate.",
       "Preserve the published host, method, path, operationId, authentication, headers, parameter and field names, types, formats, required and nullable fields, enums, defaults, limits, and response codes. Do not invent identifiers, fields, retry rules, or delivery guarantees. When published sources conflict, identify the conflicting passages and ask Bridge support to confirm the current behavior before relying on it.",
       "Custom Connections is the current name of the landing-page feature previously documented as Lead Capture. The existing /lead-capture documentation URLs, captureKey field, campaign-leads endpoint, and BRIDGE.CAMPAIGN_LEADS error identifiers are unchanged. This is a naming change, not a change to authentication or the API contract.",
-      "For a complete workflow, start with the task guides: /guides/first-conversation, /guides/send-attachments, /guides/send-template, /guides/agent-outbound, /guides/pagination, /guides/identifiers and /guides/responses. Read the endpoint contract as well as the recipe. Outbound requires an existing Contact, but does not require creating a separate Conversation first.",
+      "For a complete workflow, start with the task guides: /guides/first-conversation, /guides/send-attachments, /guides/send-template, /guides/agent-outbound, /guides/pagination, /guides/pipeline-records, /guides/identifiers and /guides/responses. Read the endpoint contract as well as the recipe. Outbound requires an existing Contact, but does not require creating a separate Conversation first.",
+      "Pipeline records are created only for an existing Contact (never upserted). POST /records, /move and /reopen require Idempotency-Key; PATCH, move and reopen take an optional expectedRevision in the body. Stage actions run every time a record enters a stage, including records created in bulk. Use /guides/pipeline-records and /webhooks/pipeline-records.",
       "forceSend=true permits reuse of an existing active conversation; it does not create a fresh one by ignoring it and it is not idempotency. Recovery of a released recoverable conversation can occur even with false. The LeadScout and Agents outbound routes have different line-selection and controller checks; use /guides/agent-outbound.",
       "For webhook HMAC, follow /webhooks/verifying-signatures exactly: the Python JSON serialization with sorted keys is signed; X-Bridge-Timestamp is not included in that signature. Do not claim a signed timestamp, raw-body signing, exactly-once delivery or a global event order. Use /webhooks/receive-events for durable acceptance and duplicates.",
       "A 201 message response, 202 handoff or 202 Custom Connections response is not a provider delivery receipt. Do not invent a polling endpoint from messageId, trackingId or requestId. REST validation parsing must tolerate the compatibility difference explained in /error-codes.",
@@ -55,7 +56,8 @@
                   "guides/send-attachments",
                   "guides/send-template",
                   "guides/agent-outbound",
-                  "guides/pagination"
+                  "guides/pagination",
+                  "guides/pipeline-records"
                 ]
               },
               {
@@ -81,7 +83,8 @@
               "webhooks/verifying-signatures",
               "webhooks/receive-events",
               "webhooks/configuration",
-              "webhooks/events"
+              "webhooks/events",
+              "webhooks/pipeline-records"
             ]
           },
           {
@@ -161,7 +164,8 @@
                   "es/guides/send-attachments",
                   "es/guides/send-template",
                   "es/guides/agent-outbound",
-                  "es/guides/pagination"
+                  "es/guides/pagination",
+                  "es/guides/pipeline-records"
                 ]
               },
               {
@@ -191,7 +195,8 @@
               "es/webhooks/verifying-signatures",
               "es/webhooks/receive-events",
               "es/webhooks/configuration",
-              "es/webhooks/events"
+              "es/webhooks/events",
+              "es/webhooks/pipeline-records"
             ]
           },
           {
@@ -272,7 +277,8 @@
                   "pt-br/guides/send-attachments",
                   "pt-br/guides/send-template",
                   "pt-br/guides/agent-outbound",
-                  "pt-br/guides/pagination"
+                  "pt-br/guides/pagination",
+                  "pt-br/guides/pipeline-records"
                 ]
               },
               {
@@ -302,7 +308,8 @@
               "pt-br/webhooks/verifying-signatures",
               "pt-br/webhooks/receive-events",
               "pt-br/webhooks/configuration",
-              "pt-br/webhooks/events"
+              "pt-br/webhooks/events",
+              "pt-br/webhooks/pipeline-records"
             ]
           },
           {

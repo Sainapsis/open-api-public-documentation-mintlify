@@ -5,107 +5,113 @@
   "baseUrl": "https://docs.bridge.new",
   "totals": {
     "locales": 3,
-    "pages": 150,
-    "editorialPages": 72,
-    "operationPages": 78,
+    "pages": 180,
+    "editorialPages": 78,
+    "operationPages": 102,
     "specs": 6
   },
   "byLocale": {
     "en": {
-      "pages": 50,
-      "editorialPages": 24,
-      "operationPages": 26
+      "pages": 60,
+      "editorialPages": 26,
+      "operationPages": 34
     },
     "es": {
-      "pages": 50,
-      "editorialPages": 24,
-      "operationPages": 26
+      "pages": 60,
+      "editorialPages": 26,
+      "operationPages": 34
     },
     "pt-br": {
-      "pages": 50,
-      "editorialPages": 24,
-      "operationPages": 26
+      "pages": 60,
+      "editorialPages": 26,
+      "operationPages": 34
     }
   },
   "inputs": {
     "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
-    "api-reference/openapi.yaml": "17118b230e17bebf391bfa44f03f097cfb0c3e0ab50a88a997a125634f7a5148",
+    "api-reference/openapi.yaml": "2d946b66267cc76a710cde40f7f3375d6225de839e354aa8c27ceadeda39c219",
     "changelog.mdx": "e9084e3294b5d4a359eab45b627c4db6dec026c430818960778d75ae2366eab2",
     "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
-    "docs.json": "ef1cb7e68c9fd91dde687999a26f89aa046e67c8326359c435c514abce7b968d",
-    "error-codes.mdx": "f321bf29af41956bdb6330501a481e10c69ea35d75b697aa1f30ea02dc04f08d",
+    "docs.json": "e2c6a32ea3a9e4f66b05e69692afd6a53235bd70e247473fbda83bdecf6afc5b",
+    "error-codes.mdx": "009f7d95a0590925a1ee8ceadb21e29c4c3c3b9c742473f02b5c738e3a4b91da",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
-    "es/api-reference/openapi.yaml": "44131c94325ca6c801f47fd974a79946bc4872b5a71e30f132e0d5b884e9020f",
+    "es/api-reference/openapi.yaml": "27bb0ed051ff30b5254bbaac8d4f8aa7ee1af9396cf3d9c33aa7910dc88f4499",
     "es/changelog.mdx": "b2d420cca846e287101c92623dbac4c485f0e11c4198653a80caa50f19d96f28",
     "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
-    "es/error-codes.mdx": "c5ecc132f274d45a56ee26bdc984780410912b086422b2c2946ec80bac3a9192",
+    "es/error-codes.mdx": "03180c0ece737aa40daa0731dcefb34162743ed13f095e612f624734e37a397b",
     "es/guides/agent-outbound.mdx": "4602116efdc7585fa63ce2cce355122d3c6583c0c542b644af395e08f0dcc45f",
     "es/guides/first-conversation.mdx": "eb152c9a23454466b70b82cba98fa7755a720db6edbed22ab382aac1130af147",
     "es/guides/identifiers.mdx": "5ecbe5a47e052c83de34391ef8d1fd83c73c561a28fe9777f3ae6ce7b9816442",
     "es/guides/pagination.mdx": "836fb8501a011883e58b457b9216e71b4056d4353f111143459784c4cbd7c70f",
+    "es/guides/pipeline-records.mdx": "e2a03942ac556f75cb336920a9062d64646040454dcb17e9afeca8f329defc8c",
     "es/guides/responses.mdx": "6cbe950fee4f2e2dbcf0a358c1f8964d48db20a56b274d7354f7626684eaba64",
     "es/guides/send-attachments.mdx": "276f2588132bb36f8d2af0615e78f7a5e945439c9318c81aac0aa7de6a8e53b1",
     "es/guides/send-template.mdx": "01ae1692e7264584b783e64c2563ba131e084bd42cbff16c0d09272dee4347af",
-    "es/index.mdx": "a479ed3fbf7d8a4a5d649659d676a7813b773ddff251485bd9774347b02ff9ab",
+    "es/index.mdx": "0387419b95c64f9be800811471a0145da1becf631d7a5d828617a07afd94bca6",
     "es/lead-capture/consent.mdx": "54f105a7a5411cf0c792e977821b9873c986ec2b1643ee9eed7d40a75631df2b",
     "es/lead-capture/errors.mdx": "31d3912e2db12220ba890b4e2cf915fe9934c68afcbe41c7862779da6c634354",
     "es/lead-capture/index.mdx": "d6a7271f6680820fb96ab22bf2c0d9653a02ae06b5c8be4e80f913dab979fd7e",
     "es/lead-capture/integration.mdx": "ef98f7b0bdf0b46bc0fa39a773788528cd13f841627fefbc4e2ee09b505c5d3d",
     "es/lead-capture/templates.mdx": "998d557640fef48aaa5fed8cd0eacb0a33eb23cba360a38edca42e3e2adfcc78",
-    "es/rate-limits.mdx": "b04b3550913fcf60ab64e24e0d282d0f1c61837272317b8a4ade9bc8696d1cb3",
+    "es/rate-limits.mdx": "b7cceb649a38f60f5c4c657f3b6e3f0d4157ba91de8b0f7e867bb92b7f05a2aa",
     "es/templates-and-parameters.mdx": "b84d3a81604d3a21781225e3b79c72ee65044d43eb42641eb334356a43f7da3b",
     "es/webhooks.mdx": "1c793a756a4e3b57244c441718d9e02346c5938a6e6bd0ac2b4a5e1bfe6d7000",
-    "es/webhooks/configuration.mdx": "5d7b1164e4cd3c87991b009ef1da93c42fd66e6bd45a65dfb74017dc3299f629",
-    "es/webhooks/events.mdx": "f260daf3b3bd933ee67784d7693461ce14f32dee5849747c3bf69f0b51c0e53f",
+    "es/webhooks/configuration.mdx": "f7ba13584ef3d8fa4028323e9de48822339f8ef2ec96231835aa8a0e1d992785",
+    "es/webhooks/events.mdx": "f910f3f08a7d9bc02dbf1bd7d3fd51dbf1a4ce0bbfa8f4e9a99d4eb6d8d74bc3",
+    "es/webhooks/pipeline-records.mdx": "df2013033b284165f1b7ecd69711b5f5d784e9b9e58c6508409cd52549101ac0",
     "es/webhooks/receive-events.mdx": "b5a296ca26ede4ecad0a9eef3db07d38c3c0e0f3758cd69e7b452af2acd40e0f",
     "es/webhooks/verifying-signatures.mdx": "d25a001254bb25140355c8b742ff6f154a1ba1b6b0e23359f23327bf043600e8",
     "guides/agent-outbound.mdx": "cb60fe30743d96163b1b724b4518dfb0a04fe003fc9b6c3bf14132cd9d86f8fe",
     "guides/first-conversation.mdx": "4682c6cc598460b265e24ca8d0c119863a29736e4fb81bef7cf033ba50ab00a6",
     "guides/identifiers.mdx": "4d087785aa7a1c61c4d0fa56272940dc43a7c32cb97c91996ed7117e06967125",
     "guides/pagination.mdx": "03f46cf534aeb21d11c5622224049a1095f6cb86a1815d3a97a1fbfb00bb8051",
+    "guides/pipeline-records.mdx": "4a5a24659e662d80e9b6e8d37b5fa3c04e4aa215cecbcd4d3bdf047c5356bafc",
     "guides/responses.mdx": "bb89ab581d6642f9ce4a3d43d58e4201c061b99b6cb3eebb7de7f52f648d5f67",
     "guides/send-attachments.mdx": "e87bffcc0533e84c06a6597ec4178861df02e1020079a7913251af249ca8e350",
     "guides/send-template.mdx": "c1368bcefd1f21d26290090e3acf023f81f2b89e12b3dbf9d6d54babf21e036c",
-    "index.mdx": "c64fc52a224f49562716236aadeabeb57a4eacb972089f8fa4d96d0df1a56996",
+    "index.mdx": "84473d015c838bd8ed4785fb85c6758ac102bb66d36e2abff04aacbad57f21f5",
     "lead-capture/consent.mdx": "5bda24afe5d4c3d01e5d8c118b22c926339304feac29cba80fb51d25a71a4c30",
     "lead-capture/errors.mdx": "b0897defce7672536ff037b972ae4db7f0611fee0c81c5a43d04457afed36ae5",
     "lead-capture/index.mdx": "abf13b9791519ece27bd2eb9908050afbc2bfc9959874a78aaeb6c08a083f5ab",
     "lead-capture/integration.mdx": "e41b09302ab3d26dcb1089158f3ef805e6ab5f1d1574bfa877dfbf9630651d03",
     "lead-capture/templates.mdx": "506d2ef49287c95004fcd43150af114e6ced5f39cc32caaa9e2566fcc101f66f",
     "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
-    "pt-br/api-reference/openapi.yaml": "6127964522812d40fd6f7a11628625ca021adb362dd7310c1d4884c52d1257f2",
+    "pt-br/api-reference/openapi.yaml": "391e64990fb97241f1b16b9c67f04f6b234635ad58beff84e2f18bca616a3ddd",
     "pt-br/changelog.mdx": "f5ebecd2c3c7ee00801d64520995d86ae544264cd272db0233d32fab4ad9c455",
     "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
-    "pt-br/error-codes.mdx": "0166227258b12cdcef1ef4c37d3f0a765c7cabb2d7079335f10b1da0f69d46e4",
+    "pt-br/error-codes.mdx": "7becb655b30c08a6f1b35914577129fde18a28304482c054c213f2ea3ff103c2",
     "pt-br/guides/agent-outbound.mdx": "b43380b51224c6d81fb6b0db9e2e0a9528987498badf91b231e6ab567185c157",
     "pt-br/guides/first-conversation.mdx": "d21f83a729a307d4a2d18e2e6c719854da15f222d3d4dc93071d02466340356c",
     "pt-br/guides/identifiers.mdx": "d6d17a99838659f8a3fe08817fcf54b38c12559b730acb2dd84bc42d166b8b90",
     "pt-br/guides/pagination.mdx": "394b5c681dd321375e1aacfe0e9ca9b81c5ca3cce900b516324b64372b400992",
+    "pt-br/guides/pipeline-records.mdx": "a4371c29dfd3069974da88a34dc50871ecfdfef6256f7349e24071164a3c4d6f",
     "pt-br/guides/responses.mdx": "d1b9b1306d9530b107a0c5b13f6d127a177e912984c08ffd0411c0a3065c2447",
     "pt-br/guides/send-attachments.mdx": "3e10ccd0c205762541af94297e30ec16b60a2d71ddb0a1e1543d3d77713905ef",
     "pt-br/guides/send-template.mdx": "c80473322f9940863989ce43395b7a82b6caa6ec7b516a76b0c720d1298f7f90",
-    "pt-br/index.mdx": "f30f20608635feffa22d1c566c40843d3b29215ecf7875c73fce49e7a621e5a9",
+    "pt-br/index.mdx": "6071ded879949061fee0b73c82cdef28c68165b22b3c4aac296349a86caec7c5",
     "pt-br/lead-capture/consent.mdx": "3cbfc6db2c724e435aac01b50eb94bba0e3ad40c012f2ea205fa2c9a6515eaf1",
     "pt-br/lead-capture/errors.mdx": "189a7d4172d2af033d7d211711e15d92d02c5278db066df4bc27c1f8c13890aa",
     "pt-br/lead-capture/index.mdx": "da3b1715a8c5a6c2b5b0d8c713d5d454945aeb164c184e7a51fd734ec0dff80f",
     "pt-br/lead-capture/integration.mdx": "8f11e6f732c6b5e68ade245b125ab4095718a999be7b87b8acfc1af4d12612aa",
     "pt-br/lead-capture/templates.mdx": "782779caa6f93f7c61ddc22742d0e7a4b33788e7bb51bf8a3ab18aa60d3bd899",
-    "pt-br/rate-limits.mdx": "55f5c118aa49db4f2f33b624b468c9cec8f7b1622b7308ebf94f701d8956ab56",
+    "pt-br/rate-limits.mdx": "c7d62081a9aa7030d6f9b340cca06048fae61b630485464f48d0d758b0191fe5",
     "pt-br/templates-and-parameters.mdx": "27b76d089945a1b5312bd925d5a5dd85631d8e55aacaca3cd7018f5f12d9faff",
     "pt-br/webhooks.mdx": "30c6bdff5c113b29818fb8afd531ee5455969f9b00d08298ddd327d9e12423f9",
-    "pt-br/webhooks/configuration.mdx": "3ddc354af0ed3e886620ed4e0d2cff1c5fe2cd5ab5a8719ba9dd6cb092e27139",
-    "pt-br/webhooks/events.mdx": "c536347e48ea4fca2b110f59995614c71d8c6667e156f40acf22f2b704c32545",
+    "pt-br/webhooks/configuration.mdx": "cb22d9ac6fe82ae86101300774804bcf05b1b4ffbad720ba3459e8f45cbda686",
+    "pt-br/webhooks/events.mdx": "d70150f1b1030cc53d461fac459584b256366dea5761cacdad9b63a9eef3b81d",
+    "pt-br/webhooks/pipeline-records.mdx": "369241c238456a21d67e739464dfcbe2bfc0536e2ae6276e62c1746d3de06566",
     "pt-br/webhooks/receive-events.mdx": "6998778bd21da5d3d1ba5877540bcc1cd9f7bd724a8a48347bc571b2c9946e08",
     "pt-br/webhooks/verifying-signatures.mdx": "27e126d6edbe017da7116c4001bafe6e555e3bd7d762eebae303177fedfa0dc0",
-    "rate-limits.mdx": "110dfae500b1545c77f8adde168eb3a071c5da58354a14c0078d91eadcfa233d",
-    "skill.md": "b89b5379faf505816aad291a2ddc3ea7b58f249aee4294b1959ee2a05f314746",
+    "rate-limits.mdx": "2086bce51e2186c53bf59abd724cbb063efe81b7714c4e31317c3c3ab78c63d1",
+    "skill.md": "bf5af1b6af36b2ea7ccd495b5827f5dcdab427c3df543a3ce0dc4f62ec6fe515",
     "templates-and-parameters.mdx": "aefdd33cb1660afc4b21aaa98570397534235989695177ed4bfe7808f46d1565",
     "webhooks.mdx": "8203de4edaaf8f317455300f712403850c7bab280d84d34b31fe3cd8ecdb88ab",
-    "webhooks/configuration.mdx": "d2788ec46367b9816e5ba94e97bb0b0053b7f5270159575464e49d65e2d2ba5f",
-    "webhooks/events.mdx": "054a801f7ee33be7c515cc23dc49545f2ab7ac4bdeddd3cbd4948ec2bbf3e00c",
+    "webhooks/configuration.mdx": "f8999b6de647a31bdbb6af5e53bb526080e8fc6bc0048625e51579d4663a87e3",
+    "webhooks/events.mdx": "4917baa7d41a854363bd49ab25d8ee4ef49e7fcb066e8fc2d518f1ba9d2c091d",
+    "webhooks/pipeline-records.mdx": "4517767453732dbda355b07851b8025d86397e8a0857f167912143707af5f2f6",
     "webhooks/receive-events.mdx": "d5dc25e5a92a13d8e99ea16b8fd4840dcbbab93eda6bc877f31008bac947a9a9",
     "webhooks/verifying-signatures.mdx": "d4dae049067563b56268f8c231b65136d75c8098b612c5b1184ea97f616392d3"
   },
@@ -176,6 +182,13 @@
     {
       "locale": "en",
       "kind": "page",
+      "route": "/guides/pipeline-records",
+      "source": "guides/pipeline-records.mdx",
+      "title": "Create and move pipeline records"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
       "route": "/guides/responses",
       "source": "guides/responses.mdx",
       "title": "Responses, errors, and retries"
@@ -242,6 +255,13 @@
       "route": "/webhooks/events",
       "source": "webhooks/events.mdx",
       "title": "Webhook events"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/webhooks/pipeline-records",
+      "source": "webhooks/pipeline-records.mdx",
+      "title": "Pipeline record events"
     },
     {
       "locale": "en",
@@ -506,6 +526,78 @@
     {
       "locale": "en",
       "kind": "operation",
+      "route": "/api-reference/pipelines-api/list-the-pipelines-of-a-workspace",
+      "source": "api-reference/openapi.yaml",
+      "title": "List the pipelines of a workspace",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/pipelines",
+      "operationId": "list_pipelines_bridge_api_v1_workspaces__workspaceId__pipelines_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes",
+      "source": "api-reference/openapi.yaml",
+      "title": "Retrieve a pipeline with its stages and attributes",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/pipelines/{pipelineId}",
+      "operationId": "retrieve_pipeline_bridge_api_v1_workspaces__workspaceId__pipelines__pipelineId__get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/pipeline-records-api/list-pipeline-records",
+      "source": "api-reference/openapi.yaml",
+      "title": "List pipeline records",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/records",
+      "operationId": "list_pipeline_records_bridge_api_v1_workspaces__workspaceId__records_get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/pipeline-records-api/create-a-pipeline-record",
+      "source": "api-reference/openapi.yaml",
+      "title": "Create a pipeline record",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records",
+      "operationId": "create_pipeline_record_bridge_api_v1_workspaces__workspaceId__records_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/pipeline-records-api/retrieve-a-pipeline-record",
+      "source": "api-reference/openapi.yaml",
+      "title": "Retrieve a pipeline record",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}",
+      "operationId": "retrieve_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__get"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/pipeline-records-api/update-a-pipeline-record",
+      "source": "api-reference/openapi.yaml",
+      "title": "Update a pipeline record",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}",
+      "operationId": "update_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__patch"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage",
+      "source": "api-reference/openapi.yaml",
+      "title": "Move a pipeline record to another stage",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/move",
+      "operationId": "move_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__move_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
+      "route": "/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record",
+      "source": "api-reference/openapi.yaml",
+      "title": "Reopen a closed pipeline record",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/reopen",
+      "operationId": "reopen_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__reopen_post"
+    },
+    {
+      "locale": "en",
+      "kind": "operation",
       "route": "/api-reference/campaign-leads/register-a-campaign-lead",
       "source": "api-reference/campaign-leads.openapi.yaml",
       "title": "Register a campaign lead",
@@ -578,6 +670,13 @@
     {
       "locale": "es",
       "kind": "page",
+      "route": "/es/guides/pipeline-records",
+      "source": "es/guides/pipeline-records.mdx",
+      "title": "Crea y mueve registros de pipeline"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
       "route": "/es/guides/responses",
       "source": "es/guides/responses.mdx",
       "title": "Respuestas, errores y reintentos"
@@ -644,6 +743,13 @@
       "route": "/es/webhooks/events",
       "source": "es/webhooks/events.mdx",
       "title": "Eventos de webhook"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
+      "route": "/es/webhooks/pipeline-records",
+      "source": "es/webhooks/pipeline-records.mdx",
+      "title": "Eventos de registros de pipeline"
     },
     {
       "locale": "es",
@@ -908,6 +1014,78 @@
     {
       "locale": "es",
       "kind": "operation",
+      "route": "/es/api-reference/pipelines-api/listar-los-pipelines-de-un-workspace",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Listar los pipelines de un workspace",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/pipelines",
+      "operationId": "list_pipelines_bridge_api_v1_workspaces__workspaceId__pipelines_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/pipelines-api/obtener-un-pipeline-con-sus-etapas-y-atributos",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener un pipeline con sus etapas y atributos",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/pipelines/{pipelineId}",
+      "operationId": "retrieve_pipeline_bridge_api_v1_workspaces__workspaceId__pipelines__pipelineId__get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/pipeline-records-api/listar-registros-de-pipeline",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Listar registros de pipeline",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/records",
+      "operationId": "list_pipeline_records_bridge_api_v1_workspaces__workspaceId__records_get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/pipeline-records-api/crear-un-registro-de-pipeline",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Crear un registro de pipeline",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records",
+      "operationId": "create_pipeline_record_bridge_api_v1_workspaces__workspaceId__records_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/pipeline-records-api/obtener-un-registro-de-pipeline",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Obtener un registro de pipeline",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}",
+      "operationId": "retrieve_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__get"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/pipeline-records-api/actualizar-un-registro-de-pipeline",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Actualizar un registro de pipeline",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}",
+      "operationId": "update_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__patch"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/pipeline-records-api/mover-un-registro-de-pipeline-a-otra-etapa",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Mover un registro de pipeline a otra etapa",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/move",
+      "operationId": "move_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__move_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
+      "route": "/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado",
+      "source": "es/api-reference/openapi.yaml",
+      "title": "Reabrir un registro de pipeline cerrado",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/reopen",
+      "operationId": "reopen_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__reopen_post"
+    },
+    {
+      "locale": "es",
+      "kind": "operation",
       "route": "/es/api-reference/campaign-leads/registrar-un-lead-de-campaña",
       "source": "es/api-reference/campaign-leads.openapi.yaml",
       "title": "Registrar un lead de campaña",
@@ -980,6 +1158,13 @@
     {
       "locale": "pt-br",
       "kind": "page",
+      "route": "/pt-br/guides/pipeline-records",
+      "source": "pt-br/guides/pipeline-records.mdx",
+      "title": "Crie e mova registros de pipeline"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
       "route": "/pt-br/guides/responses",
       "source": "pt-br/guides/responses.mdx",
       "title": "Respostas, erros e novas tentativas"
@@ -1046,6 +1231,13 @@
       "route": "/pt-br/webhooks/events",
       "source": "pt-br/webhooks/events.mdx",
       "title": "Eventos de webhook"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
+      "route": "/pt-br/webhooks/pipeline-records",
+      "source": "pt-br/webhooks/pipeline-records.mdx",
+      "title": "Eventos de registros de pipeline"
     },
     {
       "locale": "pt-br",
@@ -1310,6 +1502,78 @@
     {
       "locale": "pt-br",
       "kind": "operation",
+      "route": "/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Listar os pipelines de um workspace",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/pipelines",
+      "operationId": "list_pipelines_bridge_api_v1_workspaces__workspaceId__pipelines_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter um pipeline com suas etapas e atributos",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/pipelines/{pipelineId}",
+      "operationId": "retrieve_pipeline_bridge_api_v1_workspaces__workspaceId__pipelines__pipelineId__get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Listar registros de pipeline",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/records",
+      "operationId": "list_pipeline_records_bridge_api_v1_workspaces__workspaceId__records_get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Criar um registro de pipeline",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records",
+      "operationId": "create_pipeline_record_bridge_api_v1_workspaces__workspaceId__records_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Obter um registro de pipeline",
+      "methodPath": "get /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}",
+      "operationId": "retrieve_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__get"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Atualizar um registro de pipeline",
+      "methodPath": "patch /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}",
+      "operationId": "update_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__patch"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Mover um registro de pipeline para outra etapa",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/move",
+      "operationId": "move_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__move_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
+      "route": "/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado",
+      "source": "pt-br/api-reference/openapi.yaml",
+      "title": "Reabrir um registro de pipeline fechado",
+      "methodPath": "post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/reopen",
+      "operationId": "reopen_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__reopen_post"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "operation",
       "route": "/pt-br/api-reference/campaign-leads/registrar-um-lead-de-campanha",
       "source": "pt-br/api-reference/campaign-leads.openapi.yaml",
       "title": "Registrar um lead de campanha",
@@ -1323,8 +1587,8 @@
       "source": "api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "17118b230e17bebf391bfa44f03f097cfb0c3e0ab50a88a997a125634f7a5148",
-      "operationCount": 25
+      "sha256": "2d946b66267cc76a710cde40f7f3375d6225de839e354aa8c27ceadeda39c219",
+      "operationCount": 33
     },
     {
       "locale": "en",
@@ -1339,8 +1603,8 @@
       "source": "es/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/es/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "44131c94325ca6c801f47fd974a79946bc4872b5a71e30f132e0d5b884e9020f",
-      "operationCount": 25
+      "sha256": "27bb0ed051ff30b5254bbaac8d4f8aa7ee1af9396cf3d9c33aa7910dc88f4499",
+      "operationCount": 33
     },
     {
       "locale": "es",
@@ -1355,8 +1619,8 @@
       "source": "pt-br/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/pt-br/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "6127964522812d40fd6f7a11628625ca021adb362dd7310c1d4884c52d1257f2",
-      "operationCount": 25
+      "sha256": "391e64990fb97241f1b16b9c67f04f6b234635ad58beff84e2f18bca616a3ddd",
+      "operationCount": 33
     },
     {
       "locale": "pt-br",
@@ -1372,52 +1636,52 @@
       "source": "skill.md",
       "url": "https://docs.bridge.new/skill.md",
       "title": "Bridge integration guidance for AI agents",
-      "sha256": "b89b5379faf505816aad291a2ddc3ea7b58f249aee4294b1959ee2a05f314746"
+      "sha256": "bf5af1b6af36b2ea7ccd495b5827f5dcdab427c3df543a3ce0dc4f62ec6fe515"
     }
   ],
   "outputs": {
     "llms-en.json": {
-      "bytes": 31738,
-      "sha256": "482edc321484b6ee26eae70f0f1710cea1c25f77c848a0fa24b0e973023f49c3"
+      "bytes": 40551,
+      "sha256": "c5a574717e072f26ce863b2d8ab260d75c2dc3fbdf9883909d1c782f35bebf28"
     },
     "llms-full-en.json": {
-      "bytes": 251176,
-      "sha256": "94cb7067cea5ae3bad25128620ed47e8090d459bea89e266ebd5359cf8311693"
+      "bytes": 319406,
+      "sha256": "bd8bc5c24b4505996fe2fd0e8a26d4761d167fe990a57702410deecbf1af70c2"
     },
     "llms-es.json": {
-      "bytes": 34179,
-      "sha256": "5eaf17a880035653b6041966ee66c61ef144850c90f6a3984756df83157b8b61"
+      "bytes": 43647,
+      "sha256": "27a05a452cfa843eb7399ec99405f6086c24b6face8959b242b87f8a05fcb1ea"
     },
     "llms-full-es.json": {
-      "bytes": 270878,
-      "sha256": "a5912ee9c6d058ca5f34e60d04e6758ffb356b26503f98994ff85e7fd542c4df"
+      "bytes": 342213,
+      "sha256": "167855b5552d9193f2750b537623a28040ed5a1de1f7e0ff6c572cd1613e915f"
     },
     "llms-pt-br.json": {
-      "bytes": 34095,
-      "sha256": "b7d81d6cfbf5949896d7280a44edfb26fdfdbba1828d1a150b8339416db50ce3"
+      "bytes": 43598,
+      "sha256": "6418cae73ff4544a1c27de09431cf8766ec847c18ecc643847f9a21fcb5ffd68"
     },
     "llms-full-pt-br.json": {
-      "bytes": 269008,
-      "sha256": "fc599949a481aca90b13860fcd85671e05e5035258749571fa7e62c5f0f64a47"
+      "bytes": 340535,
+      "sha256": "7f51326f8e563a9a2f60cd2a97e16a7d732e21dac8d13bc62108b8ab1703ea19"
     },
     "llms.txt": {
-      "bytes": 40277,
-      "sha256": "62a48193c9bd2f1cf544952ff378daba83821501d01ff631ad22b5725f924231"
+      "bytes": 47545,
+      "sha256": "dce9776fa52dd1d23681a4b81a665fbf25f587cbe7409f02e05d62939122557f"
     },
     "llms-full.txt": {
-      "bytes": 701332,
-      "sha256": "4420d04d435a45b8b27371bc88c30639d57590017498b63de4af0758b2dcaa4c"
+      "bytes": 880059,
+      "sha256": "9471e96e94945dc514d6317f4b3bbbd0930f1cb2ac00ed21c5633dffe9639a2b"
     },
     "sitemap.xml": {
-      "bytes": 92257,
-      "sha256": "5ffab15d3836acbaec137ca97096ddcbd83ee799f0d3fb5c8369bf03c1c9703f"
+      "bytes": 113069,
+      "sha256": "8a5ceecda7970a1e508f8a58ec75275508b492f3cd0b6810c6f40b2b5da3e7e5"
     }
   },
   "sitemap": {
-    "canonicalCount": 150,
-    "familyCount": 50,
-    "operationFamilies": 26,
-    "editorialFamilies": 24,
+    "canonicalCount": 180,
+    "familyCount": 60,
+    "operationFamilies": 34,
+    "editorialFamilies": 26,
     "languages": [
       "en",
       "es",

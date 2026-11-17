@@ -111,6 +111,25 @@ Receba uma notificação depois que um e-mail for processado e o resumo por IA e
 
 - `email.updated`
 
+<a id="pipeline-record-notifications"></a>
+
+### Notificações de registros de pipeline
+
+<span className="bridge-version-badge">v1</span>
+
+Receba uma notificação para cada mudança de um registro de pipeline e para o resultado de cada ação de etapa. Consulte [Eventos de registros de pipeline](/pt-br/webhooks/pipeline-records).
+
+- `pipeline_record.created`
+- `pipeline_record.stage_changed`
+- `pipeline_record.closed`
+- `pipeline_record.updated`
+- `pipeline_record.reopened`
+- `pipeline_record.linked`
+- `pipeline_record.unlinked`
+- `pipeline_action.executed`
+- `pipeline_action.failed`
+- `pipeline_action.skipped`
+
 ---
 
 <a id="verifying-your-configuration"></a>

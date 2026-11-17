@@ -1,0 +1,803 @@
+---
+title: "Eventos de registros de pipeline"
+sidebarTitle: "Registros de pipeline"
+description: "Eventos de webhook de registros de pipeline e ações de etapa: tipos de evento, campos do payload, triggers, motivos de fechamento e códigos de resultado das ações."
+keywords: ["webhook", "pipeline", "registro de pipeline", "etapa", "ação de etapa", "skipReason", "failureReason", "CRM"]
+---
+
+<span className="bridge-version-badge">v1</span>
+
+Assine os eventos de registros de pipeline para saber de cada mudança de um registro de pipeline do seu workspace e do resultado de cada ação de etapa. Cada evento usa a [estrutura comum](/pt-br/webhooks/events#common-event-structure), e o seu `payload` traz o registro como fica depois da mudança.
+
+Use o [guia de registros de pipeline](/pt-br/guides/pipeline-records) quando o seu sistema também cria ou move registros pela API REST.
+
+---
+
+<a id="event-types"></a>
+
+## Tipos de evento
+
+| Tipo de evento | Entidade | Quando é enviado |
+| --- | --- | --- |
+| `pipeline_record.created` | `pipeline_record` | Um registro foi criado |
+| `pipeline_record.stage_changed` | `pipeline_record` | Um registro passou para outra etapa |
+| `pipeline_record.closed` | `pipeline_record` | A movimentação terminou em uma etapa final. Enviado logo depois do seu `pipeline_record.stage_changed`, com o mesmo payload |
+| `pipeline_record.updated` | `pipeline_record` | Os valores do registro mudaram |
+| `pipeline_record.reopened` | `pipeline_record` | Um registro fechado voltou para uma etapa aberta |
+| `pipeline_record.linked` | `pipeline_record` | Uma conversa foi vinculada ao registro |
+| `pipeline_record.unlinked` | `pipeline_record` | Uma conversa foi desvinculada do registro |
+| `pipeline_action.executed` | `pipeline_action` | Uma ação de etapa foi executada |
+| `pipeline_action.failed` | `pipeline_action` | Uma ação de etapa falhou. `action.failureReason` diz por quê |
+| `pipeline_action.skipped` | `pipeline_action` | Uma ação de etapa não se aplicava e não foi executada. `action.skipReason` diz por quê |
+
+Cada mudança produz um evento, exceto uma movimentação para uma etapa final, que produz dois: `pipeline_record.stage_changed` e depois `pipeline_record.closed`. Os dois trazem o mesmo `payload`; o `eventId` de `pipeline_record.closed` termina em `:closed`.
+
+---
+
+<a id="envelope"></a>
+
+## Estrutura
+
+| Campo | Valor |
+| --- | --- |
+| `eventId` | Identificador do evento. Use-o, junto com `workspaceId` e `eventType`, para descartar duplicados |
+| `eventType` | Um dos tipos de evento acima |
+| `entity` | `pipeline_record` ou `pipeline_action`, o prefixo de `eventType` |
+| `workspaceId` | O seu workspace |
+| `timestamp` | Quando a mudança foi registrada, em UTC com milissegundos, por exemplo `2026-11-09T14:03:12.345Z` |
+| `payload` | Os campos abaixo |
+
+---
+
+<a id="payload"></a>
+
+## Payload
+
+Os campos sem valor não aparecem no payload, exceto `record.values`, que está sempre presente.
+
+| Campo | Eventos | Significado |
+| --- | --- | --- |
+| `record.id` | Todos | Identificador do registro, o `id` da [API de registros de pipeline](/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline) |
+| `record.name` | Todos | Nome do registro |
+| `record.pipeline` | Todos | `id`, `version` e `label` do pipeline ao qual o registro pertence |
+| `record.stage` | Todos | `id`, `label` e `state` da etapa em que o registro fica depois da mudança. `state` é `OPEN` ou `FINAL` |
+| `record.contactId` | Todos | Contato ao qual o registro pertence |
+| `record.ownerId` | Quando o registro tem responsável | Usuário do Bridge responsável pelo registro |
+| `record.externalId` | Quando o registro tem um | O seu próprio identificador do registro |
+| `record.values` | Todos | Os valores dos atributos do registro. Consulte [Valores do registro](#record-values) |
+| `action` | `pipeline_action.*` | A ação de etapa e o seu resultado. Consulte [Eventos de ações de etapa](#stage-action-events) |
+| `previousStage` | Movimentações de etapa e `pipeline_record.reopened` | `id` da etapa que o registro deixou |
+| `reason` | Movimentações com motivo de fechamento | `id`, `label` e, quando houver, `note` do motivo de fechamento |
+| `trigger` | Todos | O que causou a mudança. Consulte [Triggers](#triggers) |
+| `conversationId`, `sessionId` | Quando a mudança aconteceu em uma conversa | A conversa e a sua sessão |
+| `author` | Todos | `id` e `type` de quem fez a mudança. As ações de etapa são feitas pelo sistema |
+
+<a id="record-values"></a>
+
+### Valores do registro
+
+`record.values` é uma lista com um item para cada atributo que tem valor: `{ "id", "label", "type", "value" }`. O `id` de um atributo nunca muda, então um atributo renomeado mantém o seu `id`. Leia os valores pelo `id` quando os armazenar.
+
+| `type` | `value` |
+| --- | --- |
+| `NUMBER`, `PERCENT`, `CURRENCY` | Número. `PERCENT` vai de 0 a 100. `CURRENCY` é um valor sem código de moeda |
+| `DATE` | Texto `YYYY-MM-DD` |
+| `TEXT` | Texto |
+| `LIST` | Texto, uma das opções do atributo |
+| `MULTI` | Lista de textos distintos, cada um uma das opções do atributo |
+
+Os valores registrados antes de o Bridge descrever os atributos chegam com `label` e `type` em `null`, depois dos descritos.
+
+<a id="triggers"></a>
+
+### Triggers
+
+| `trigger` | A mudança veio de |
+| --- | --- |
+| `ADVISOR` | Um usuário do Bridge trabalhando no app do Bridge |
+| `CONVERSATION_RELEASE` | Um usuário do Bridge que liberou uma conversa e fechou o seu registro ao mesmo tempo |
+| `API` | A [API REST](/pt-br/guides/pipeline-records) |
+| `ACTION` | Uma ação de etapa. Todos os eventos `pipeline_action.*` têm este trigger |
+| `INBOUND_SESSION` | Uma conversa iniciada por um contato, que criou o registro ou foi vinculada a ele |
+
+<a id="close-reasons"></a>
+
+### Motivos de fechamento
+
+`reason` aparece quando a movimentação trouxe um motivo de fechamento, por exemplo quando um registro é fechado como perdido com o motivo "Price". `reason.id` é o motivo de fechamento do pipeline, `reason.label` o seu texto e `reason.note` o texto livre escrito com ele. Uma movimentação para uma etapa final também pode não ter motivo de fechamento.
+
+---
+
+<a id="stage-action-events"></a>
+
+## Eventos de ações de etapa
+
+As ações de uma etapa são executadas **cada vez que um registro entra na etapa**: quando é criado nela, quando passa para ela e quando é reaberto nela. Isso inclui os registros criados em massa, então uma importação grande para uma etapa com ações produz um evento de ação para cada registro e ação.
+
+O objeto `action` de um evento `pipeline_action.*`:
+
+| Campo | Significado |
+| --- | --- |
+| `action.id` | A ação da etapa que foi executada |
+| `action.type` | `CREATE_TASK`, `CREATE_IN_PIPELINE`, `CLOSE_SESSION`, `SET_SESSION_PRIORITY` ou `TRANSFER_TO_TEAM` |
+| `action.refId` | Para o que a ação aponta: a tarefa ou o registro que ela criou ou, quando foi ignorada com `TASK_STILL_OPEN` ou `CONTACT_HAS_OPEN_RECORD`, a tarefa ou o registro que continua aberto |
+| `action.skipReason` | Só em `pipeline_action.skipped`: por que a ação não se aplicava |
+| `action.failureReason` | Só em `pipeline_action.failed`: por que a ação falhou |
+
+<Note>
+  `TRANSFER_TO_TEAM` ainda não é suportada. Uma etapa que ainda a tem produz `pipeline_action.failed` com `ACTION_NOT_SUPPORTED`, ou `pipeline_action.skipped` com `NO_OPEN_SESSION` quando o registro não tem uma conversa aberta.
+</Note>
+
+<a id="skip-reasons"></a>
+
+### Motivos para ignorar
+
+Uma ação ignorada é um resultado normal: a ação não se aplicava a este registro, então nada foi alterado. `skipReason` é sempre um código.
+
+| `skipReason` | Significado |
+| --- | --- |
+| `NO_OPEN_SESSION` | A ação precisa da conversa aberta do registro e o registro não tem nenhuma. Um `CREATE_TASK` para quem atende a conversa é ignorado assim só quando o registro nunca teve conversa |
+| `SESSION_CLOSED` | `SET_SESSION_PRIORITY`: a conversa foi fechada antes de a prioridade ser definida |
+| `ALREADY_RELEASED` | `CLOSE_SESSION`: a conversa já estava liberada |
+| `OTHER_OPEN_RECORDS` | `CLOSE_SESSION`: a conversa continua aberta porque o contato tem outro registro aberto |
+| `TASK_STILL_OPEN` | `CREATE_TASK`: a tarefa que esta ação criou em uma entrada anterior na etapa continua aberta, então não foi criada uma segunda tarefa. `action.refId` é essa tarefa |
+| `ASSIGNEE_NOT_RESOLVED` | `CREATE_TASK` para quem atende a conversa do registro: ninguém atendeu, depois de várias tentativas enquanto a conversa estava aberta, ou imediatamente se estava fechada |
+| `TEAM_HAS_NO_MEMBERS` | `CREATE_TASK` para uma equipe: a equipe não tem membros ativos |
+| `CONTACT_HAS_OPEN_RECORD` | `CREATE_IN_PIPELINE` para um pipeline que permite um só registro aberto por contato: o contato já tem um lá. `action.refId` é esse registro |
+
+<a id="failure-reasons"></a>
+
+### Motivos de falha
+
+`failureReason` é `CODE` ou `CODE: detail`. Decida pela parte antes dos dois-pontos; o detalhe ajuda o suporte e o seu texto pode mudar. O código é um destes:
+
+- Um código das próprias ações de etapa, da lista abaixo.
+- O código de erro do domínio do Bridge que recusou a ação, por exemplo `BRIDGE_TASK_0308` quando não foi possível criar a tarefa.
+- `HTTP_<status>`, quando esse domínio respondeu sem código de erro, por exemplo `HTTP_503`.
+
+| Código | Significado |
+| --- | --- |
+| `ACTION_NOT_SUPPORTED` | O tipo de ação ainda não é suportado, por exemplo `TRANSFER_TO_TEAM` |
+| `INVALID_ACTION_CONFIG` | Falta à ação uma configuração de que ela precisa, por exemplo o título de uma tarefa ou uma prioridade |
+| `TARGET_PIPELINE_NOT_FOUND` | `CREATE_IN_PIPELINE`: o pipeline de destino não existe mais |
+| `TARGET_STAGE_NOT_FOUND` | `CREATE_IN_PIPELINE`: a etapa de destino não é uma etapa regular da versão atual do pipeline de destino |
+| `CHAIN_LIMIT_REACHED` | `CREATE_IN_PIPELINE`: a cadeia de registros criados uns a partir dos outros já tem 10 registros |
+| `TEAM_NOT_FOUND` | `CREATE_TASK` para uma equipe: a equipe não existe mais ou está desativada |
+| `TEAM_TOO_LARGE` | `CREATE_TASK` para uma equipe: a equipe tem mais membros ativos do que uma tarefa comporta (48) |
+| `TIMEOUT` | O Bridge não respondeu a tempo, depois de várias tentativas |
+| `NETWORK_ERROR` | Não foi possível alcançar o Bridge, depois de várias tentativas |
+| `UNEXPECTED_ERROR` | Um erro inesperado, depois de várias tentativas |
+
+Novos códigos podem ser adicionados às duas listas. O significado de um código existente nunca muda, então trate um código desconhecido como "não foi executada" e continue processando.
+
+---
+
+<a id="delivery-and-ordering"></a>
+
+## Entrega e ordem
+
+- A entrega pode ser duplicada. Descarte os eventos repetidos como descrito em [Recebimento de eventos](/pt-br/webhooks/receive-events).
+- `pipeline_record.closed` é enviado depois do seu `pipeline_record.stage_changed`. Quando uma entrega é repetida, só o evento que não foi entregue é reenviado, então `pipeline_record.closed` pode chegar depois do seu `pipeline_record.stage_changed`.
+- Os eventos de registros diferentes não têm ordem. Para um registro, ordene os seus eventos por `timestamp`.
+- Os eventos `pipeline_action.*` chegam depois do `pipeline_record.created`, `pipeline_record.stage_changed` ou `pipeline_record.reopened` que executou as ações.
+- Os registros que existiam antes da assinatura aparecem com a sua próxima mudança.
+
+---
+
+<a id="example-payloads"></a>
+
+## Exemplos de payload
+
+<a id="record-event-examples"></a>
+
+### Exemplos de eventos de registro
+
+<CodeGroup>
+
+```json Created
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.created",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Stage changed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.stage_changed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14"
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Stage changed to final
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.stage_changed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+    },
+    "reason": {
+      "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+      "label": "Price",
+      "note": "The customer chose another offer"
+    },
+    "trigger": "CONVERSATION_RELEASE",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Closed
+{
+  "eventId": "b1d5e8a2c7f4:closed",
+  "eventType": "pipeline_record.closed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+    },
+    "reason": {
+      "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+      "label": "Price",
+      "note": "The customer chose another offer"
+    },
+    "trigger": "CONVERSATION_RELEASE",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Updated
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.updated",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Reopened
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.reopened",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14"
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Linked
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.linked",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Unlinked
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.unlinked",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+<a id="stage-action-event-examples"></a>
+
+### Exemplos de eventos de ações de etapa
+
+<CodeGroup>
+
+```json Executed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.executed",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "CREATE_TASK",
+      "refId": "2e9c5a7d-1f4b-4c68-9a03-7d5b1e8c4f26"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+```json Failed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.failed",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "TRANSFER_TO_TEAM",
+      "failureReason": "ACTION_NOT_SUPPORTED"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+```json Skipped
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.skipped",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "CLOSE_SESSION",
+      "skipReason": "NO_OPEN_SESSION"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+---
+
+<a id="related-topics"></a>
+
+## Tópicos relacionados
+
+- [Referência de eventos](/pt-br/webhooks/events)
+- [Guia de registros de pipeline](/pt-br/guides/pipeline-records)
+- [Recebimento de eventos](/pt-br/webhooks/receive-events)
+- [Configuração no console](/pt-br/webhooks/configuration)

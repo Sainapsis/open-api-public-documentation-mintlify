@@ -4,14 +4,14 @@ These generated files give HTTP-capable assistants direct access to all three do
 
 | Public file | Contents at the current reviewed source |
 | --- | --- |
-| `/llms.txt` | 150 page links: 50 English, 50 Spanish, 50 Brazilian Portuguese; six separate OpenAPI links; agent guidance and locale exports |
-| `/llms-full.txt` | Combined content of those 150 sources |
-| `/llms-en.json`, `/llms-es.json`, `/llms-pt-br.json` | Structured index with 50 page records and two OpenAPI links per language |
-| `/llms-full-en.json`, `/llms-full-es.json`, `/llms-full-pt-br.json` | 50 collected records per language; read each `pages[].contentMarkdown` string |
+| `/llms.txt` | 180 page links: 60 English, 60 Spanish, 60 Brazilian Portuguese; six separate OpenAPI links; agent guidance and locale exports |
+| `/llms-full.txt` | Combined content of those 180 sources |
+| `/llms-en.json`, `/llms-es.json`, `/llms-pt-br.json` | Structured index with 60 page records and two OpenAPI links per language |
+| `/llms-full-en.json`, `/llms-full-es.json`, `/llms-full-pt-br.json` | 60 collected records per language; read each `pages[].contentMarkdown` string |
 | `/llms-manifest.json` | Source/output SHA-256 fingerprints and the generated page/operation inventory |
-| `/sitemap.xml` | 150 canonical URLs with reciprocal English, Spanish, Brazilian Portuguese and English fallback alternates |
+| `/sitemap.xml` | 180 canonical URLs with reciprocal English, Spanish, Brazilian Portuguese and English fallback alternates |
 
-`skill.md` is linked separately as agent guidance and does not change the 150-page inventory. Collections contain editorial content and operation descriptions, **not every API schema**. Read the exact linked OpenAPI specification before generating a request. A larger corpus can exceed an assistant's context limit; the small index and individual `.md` pages are usually the better starting point.
+`skill.md` is linked separately as agent guidance and does not change the 180-page inventory. Collections contain editorial content and operation descriptions, **not every API schema**. Read the exact linked OpenAPI specification before generating a request. A larger corpus can exceed an assistant's context limit; the small index and individual `.md` pages are usually the better starting point.
 
 The two root TXT resources remain plain Markdown. Locale resources use JSON, which Mintlify supports on every plan; additional static TXT files require Enterprise. Each JSON has `formatVersion`, `format`, `language`, localized instructions, `schemaScope`, `pages` and `specs`. Index records contain `title`, `source`, `markdownUrl`, `description` and `kind`; collection records add `contentMarkdown`. Parse JSON before using that Markdown: escaped newlines and quotes decode back to their exact original characters. The full content is stored once per page, without a second duplicate corpus string.
 
@@ -34,7 +34,7 @@ The generator reads `docs.json`, the navigated MDX sources and the six OpenAPI s
 
 The generator writes only its named root TXT files, locale JSON files, XML sitemap and JSON manifest. It never rewrites MDX, configuration, schemas, code examples or contracts. Every fenced code block and inline code example is protected during component formatting, and tests compare the decoded JSON content with source code fences byte for byte. Notes, warnings, steps, tabs, cards and response-field text remain in the collection. Unknown components and visibility-conditioned content stop generation for review rather than silently dropping content. Restricted pages and authenticated configurations also require an explicit public-export review.
 
-The sitemap groups editorial translations by source path without the language prefix, and API translations by their source specification plus exact method/path. Translated titles are never used to guess equivalent pages. Every canonical URL lists itself and the other translations with `en`, `es`, `pt-BR` and English `x-default` alternates. Directory `index` aliases resolve to their parent canonical URL; no modification dates are invented. Missing translations or duplicate canonicals stop generation. Tests parse the XML independently with Python 3's standard library, including all 26 API translation families.
+The sitemap groups editorial translations by source path without the language prefix, and API translations by their source specification plus exact method/path. Translated titles are never used to guess equivalent pages. Every canonical URL lists itself and the other translations with `en`, `es`, `pt-BR` and English `x-default` alternates. Directory `index` aliases resolve to their parent canonical URL; no modification dates are invented. Missing translations or duplicate canonicals stop generation. Tests parse the XML independently with Python 3's standard library, including all 34 API translation families.
 
 Source and output hashes are deterministic and contain no generated timestamps. Raw specification hashes cover every byte, including properties literally named `description`, `examples` or `default`. Those hashes detect drift; the separate contract guard decides whether a source change preserves API signatures.
 

@@ -1,0 +1,245 @@
+---
+title: "Crie e mova registros de pipeline"
+sidebarTitle: "Registros de pipeline"
+description: "Crie registros de pipeline para contatos existentes, repita com segurança com Idempotency-Key, evite perder mudanças com expectedRevision e feche ou reabra registros."
+keywords: ["pipeline", "registro de pipeline", "oportunidade", "etapa", "Idempotency-Key", "expectedRevision", "externalId", "motivo de fechamento", "reasonId", "reabrir", "ações de etapa"]
+---
+
+Um registro de pipeline acompanha um trabalho com um contato, como uma oportunidade de venda, pelas etapas de um pipeline. Use esta receita para levar os registros do seu sistema para um pipeline do Bridge: crie-os, mude os seus valores, mova-os entre etapas, feche-os com um motivo e reabra-os. Para receber as mudanças feitas no Bridge, assine os [eventos de registros de pipeline](/pt-br/webhooks/pipeline-records).
+
+<a id="before-you-start"></a>
+
+## Antes de começar
+
+- Obtenha uma API Key de servidor em [Autenticação](/pt-br/credentials) e envie-a em `x-api-key`, como em qualquer outra operação. O `workspaceId` do caminho deve ser o workspace dessa key. Qualquer outro workspace é recusado com `403` `BRIDGE_CORE_0301`, e nada é lido nem escrito.
+- Os pipelines devem estar habilitados para o workspace. Caso contrário, todas as operações respondem `403` `BRIDGE_PIPELINE_0301`.
+- [Obtenha o pipeline](/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos) em que você escreve. Ele lista os valores de `stageId`, os ids de atributo que você usa como chaves de `values` e os motivos de fechamento ativos. [Liste os pipelines](/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace) para encontrar o id dele.
+
+```json 403 BRIDGE_CORE_0301
+{
+  "title": "You do not have permission to access this resource",
+  "status": 403,
+  "detail": "There exists a mismatch between the claims workspace and the provided workspace",
+  "code": "BRIDGE_CORE_0301"
+}
+```
+
+<a id="the-operations"></a>
+
+## As operações
+
+| Seu objetivo | Operação | `Idempotency-Key` | `expectedRevision` |
+| --- | --- | --- | --- |
+| Criar um registro | [`POST .../records`](/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline) | Obrigatória | Não aceita |
+| Buscar registros pelo seu id, por um contato ou por um pipeline | [`GET .../records`](/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline) | Não aceita | Não aceita |
+| Ler um registro | [`GET .../records/{recordId}`](/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline) | Não aceita | Não aceita |
+| Mudar o nome ou os valores | [`PATCH .../records/{recordId}`](/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline) | Não aceita | Opcional |
+| Movê-lo para outra etapa, ou fechá-lo | [`POST .../records/{recordId}/move`](/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa) | Obrigatória | Opcional |
+| Reabrir um registro fechado | [`POST .../records/{recordId}/reopen`](/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado) | Obrigatória | Opcional |
+
+`...` representa `/bridge/api/v1/workspaces/{workspaceId}`, no host da API REST `https://api-connect-us.bridge.new`.
+
+<a id="create-a-record"></a>
+
+## Crie um registro
+
+Indique o contato com exatamente um de `contact.id`, `contact.phone` ou `contact.email`. O Bridge encontra o contato do mesmo jeito que a [busca de contatos](/pt-br/api-reference/contacts-api/obter-contato-por-um-identificador); um contato mesclado com outro é resolvido para o contato que o substituiu. O contato nunca é criado: se ele não existe, a requisição falha com `404` `BRIDGE_EXTERNAL_0001`, então [crie o contato](/pt-br/api-reference/contacts-api/criar-contato) primeiro e tente de novo.
+
+Sem `pipelineId`, o registro vai para o pipeline padrão do workspace e, sem `stageId`, para a etapa inicial do pipeline. Uma etapa final é recusada na criação. Um pipeline configurado para não aceitar registros da API recusa a criação com `403` `BRIDGE_PIPELINE_0317`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-create" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contact": {
+      "phone": "+573001234567"
+    }
+  }'
+```
+
+Um registro criado responde `201` com um header `Location` e o registro. Guarde o `id` e o `revision` dele:
+
+```json 201
+{
+  "id": "record-1",
+  "pipelineId": "pipe-sales",
+  "pipelineVersion": 3,
+  "stageId": "stage-new",
+  "state": "OPEN",
+  "name": "Ana Gómez",
+  "values": {
+    "budget": 1500
+  },
+  "contact": {
+    "id": "contact-1"
+  },
+  "ownerId": null,
+  "source": "API",
+  "externalId": null,
+  "revision": 1,
+  "closeReason": null,
+  "closedAt": null,
+  "createdAt": "2026-11-11T15:00:00.000Z",
+  "updatedAt": "2026-11-11T15:00:00.000Z"
+}
+```
+
+```json 404 BRIDGE_EXTERNAL_0001
+{
+  "title": "The requested external user was not found",
+  "status": 404,
+  "detail": "External user was not found with PHONE and value +573001234567",
+  "code": "BRIDGE_EXTERNAL_0001",
+  "extra": {
+    "externalIdentificationType": "PHONE",
+    "externalIdentificationValue": "+573001234567"
+  }
+}
+```
+
+<a id="link-the-record-to-your-own-id"></a>
+
+### Vincule o registro ao seu próprio id
+
+Envie `externalId` com o id que o registro tem no seu sistema. Um pipeline tem **um registro por `externalId`**: uma segunda criação com o mesmo `externalId` no mesmo pipeline falha com `409` `BRIDGE_PIPELINE_0003`, e `extra.recordId` é o registro que já o tem. Leia esse registro em vez de criar outro. Para encontrá-lo depois, [liste os registros](/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline) com `externalId` (e `pipelineId` quando não for o pipeline padrão).
+
+O Bridge escolhe o id do registro; o corpo da requisição não tem um campo para defini-lo.
+
+```json 409 BRIDGE_PIPELINE_0003
+{
+  "title": "A record with this external id already exists in the pipeline",
+  "status": 409,
+  "code": "BRIDGE_PIPELINE_0003",
+  "extra": {
+    "recordId": "record-1",
+    "pipelineId": "pipe-sales",
+    "externalId": "ERP-1"
+  }
+}
+```
+
+<a id="one-open-record-per-contact"></a>
+
+### Um registro aberto por contato
+
+Um pipeline pode ser configurado no Bridge para que um contato tenha um só registro aberto por vez. Nesse pipeline, criar um registro para um contato que já tem um aberto falha com `409` `BRIDGE_PIPELINE_0318`, e `extra.openRecordId` é esse registro aberto: trabalhe nele. Registros fechados não contam, então um contato pode começar um registro novo depois que o anterior for fechado. Reabrir um registro falha do mesmo jeito quando o contato tem outro registro aberto no pipeline.
+
+```json 409 BRIDGE_PIPELINE_0318
+{
+  "title": "The contact already has an open record in this pipeline",
+  "status": 409,
+  "detail": "Contact 'contact-1' already has the open record 'record-open' in pipeline 'pipe-onboarding'",
+  "code": "BRIDGE_PIPELINE_0318",
+  "extra": {
+    "openRecordId": "record-open",
+    "pipelineId": "pipe-onboarding",
+    "externalUserId": "contact-1"
+  }
+}
+```
+
+<a id="retry-safely-with-idempotency-key"></a>
+
+## Repita com segurança com Idempotency-Key
+
+`POST .../records`, `POST .../move` e `POST .../reopen` exigem um header `Idempotency-Key` de 1 a 255 caracteres. Use uma key para cada mudança que você quer fazer e envie a mesma key quando repetir essa mudança.
+
+| Você envia | O Bridge responde |
+| --- | --- |
+| A mesma key e o mesmo corpo, depois que a primeira requisição terminou | O mesmo status (`201` ou `200`) com o header `Idempotent-Replayed: true`. O corpo é o registro **como está agora**, então pode já mostrar mudanças posteriores |
+| A mesma key com outro corpo, ou em outro registro ou operação | `422` `BRIDGE_PIPELINE_0402` |
+| A mesma key enquanto a primeira requisição ainda está em andamento | `409` `BRIDGE_PIPELINE_0401`. Tente de novo depois de uma pausa |
+| A mesma key depois que a primeira requisição falhou | A requisição é executada de novo: uma requisição que falhou libera a sua key |
+
+Uma key é mantida por **24 horas**; depois disso, a mesma key é executada como uma requisição nova. Todas as operações do workspace compartilham as keys, então não reutilize uma entre registros.
+
+<Warning>
+  Se uma requisição for interrompida antes de terminar, a key dela pode continuar respondendo `409` `BRIDGE_PIPELINE_0401` por até 24 horas. Tente de novo com uma key nova. Envie `externalId` ao criar registros, para que uma nova tentativa com outra key nunca crie um segundo registro.
+</Warning>
+
+<a id="avoid-overwriting-changes-with-expectedrevision"></a>
+
+## Evite sobrescrever mudanças com expectedRevision
+
+Cada registro tem um `revision` que sobe em um a cada mudança do registro. Envie o `revision` que você leu por último como `expectedRevision` no corpo de `PATCH`, `move` ou `reopen`. Se alguém mudou o registro nesse meio-tempo, a requisição falha com `409` `BRIDGE_PIPELINE_0101` e nada muda. `extra.currentRecord` é o registro como está agora: decida de novo a partir dele e tente outra vez com o `revision` dele.
+
+`expectedRevision` é opcional. Sem ele, a mudança se aplica ao registro como o Bridge o lê, e uma mudança feita no mesmo momento ainda pode fazê-la falhar com o mesmo `409`.
+
+```json PATCH
+{
+  "expectedRevision": 2,
+  "name": "Renamed"
+}
+```
+
+```json 409 BRIDGE_PIPELINE_0101
+{
+  "title": "The pipeline record was modified by another operation",
+  "status": 409,
+  "detail": "Pipeline record 'record-1' is at revision 4, the write expected 2",
+  "code": "BRIDGE_PIPELINE_0101",
+  "extra": {
+    "recordId": "record-1",
+    "expectedRevision": 2,
+    "currentRevision": 4,
+    "currentRecord": {
+      "id": "record-1",
+      "stageId": "stage-proposal",
+      "revision": 4
+    }
+  }
+}
+```
+
+`extra.currentRecord` traz o registro completo, com os mesmos campos da resposta `201` acima; o exemplo mostra só três.
+
+<a id="move-close-and-reopen"></a>
+
+## Mova, feche e reabra
+
+[Mova o registro](/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa) com o `stageId` de uma etapa da versão do pipeline que ele segue. Movê-lo para uma **etapa final o fecha**. Uma movimentação para uma etapa final pode levar `reasonId`, um dos motivos de fechamento ativos do pipeline, e um `reasonNote` de até 500 caracteres, que precisa de `reasonId`. O motivo de fechamento é opcional: sem ele, o registro é fechado com `closeReason: null`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records/$RECORD_ID/move" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-won" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "stageId": "stage-won",
+    "reasonId": "reason-price"
+  }'
+```
+
+A resposta é `200` com o registro. Um registro fechado tem `state: "FINAL"`, `closedAt` e, quando a movimentação levou um, `closeReason` com o `id`, o `label` e a `note` do motivo.
+
+| Problema | Resposta |
+| --- | --- |
+| O registro já está nessa etapa | `409` `BRIDGE_PIPELINE_0004` |
+| O registro está fechado | `409` `BRIDGE_PIPELINE_0306`: reabra-o primeiro |
+| A etapa não está na versão do pipeline do registro | `422` `BRIDGE_PIPELINE_0311`, com `errRecordStage` em `extra.errors` |
+| Um motivo ou nota de fechamento em uma movimentação para uma etapa aberta | `422` `BRIDGE_PIPELINE_0311`, com `errReasonOnlyFinal` em `extra.errors` |
+| O motivo de fechamento não existe, ou está desativado | `422` `BRIDGE_PIPELINE_0315`, ou `422` `BRIDGE_PIPELINE_0314` |
+| A etapa exige um contato completo | `422` `BRIDGE_PIPELINE_0305`; `extra.missing` diz o que falta ao contato |
+
+[Reabra um registro fechado](/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado) para levá-lo de volta à etapa aberta em que estava antes de ser fechado; o motivo de fechamento é apagado. Quando o histórico dele não cita nenhuma etapa aberta da sua versão, o registro vai para a etapa inicial do pipeline. O corpo é opcional e só aceita `expectedRevision`. Reabrir um registro aberto falha com `409` `BRIDGE_PIPELINE_0307`.
+
+<a id="stage-actions-run-on-every-entry"></a>
+
+## As ações de etapa são executadas em cada entrada
+
+<Warning>
+  Uma etapa pode ter ações, como criar uma tarefa ou criar um registro em outro pipeline. Elas são executadas **cada vez que um registro entra na etapa**: quando é criado nela, quando é movido para ela e quando é reaberto nela. Isso inclui cada registro que você cria pela API, então uma importação em massa para uma etapa com ações as executa uma vez por registro. Confira as ações da etapa antes de uma importação.
+</Warning>
+
+As ações são executadas depois que a API responde; a resposta não espera por elas. Os resultados chegam como [eventos de webhook `pipeline_action.*`](/pt-br/webhooks/pipeline-records#stage-action-events).
+
+<a id="errors-and-limits"></a>
+
+## Erros e limites
+
+- Todo erro responde um corpo `Problem`. Decida pelo `code`, não pelo `title`. Consulte os [códigos de erro de pipelines](/pt-br/error-codes#pipeline-error-codes) para cada código e o que fazer.
+- As operações de pipelines consomem a mesma cota que o resto da API: **50 requisições a cada 5 segundos por workspace**. Consulte [Limites de requisições](/pt-br/rate-limits).
