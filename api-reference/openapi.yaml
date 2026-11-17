@@ -5364,16 +5364,18 @@ components:
         callerMustSupply:
           type: boolean
           title: Caller must supply
-          description: Whether the caller must supply a value for this variable when
+          description: 'Whether the caller must supply a value for this variable when
             sending the template through `POST /agents/{agentId}/outbound` or `POST
             /leadscout/outbound`. For a template used when creating a conversation
             (`POST /conversations`), the server validates the variables on create.
-            False when Bridge fills it for the send, as follows. A recipient variable
-            (e.g. the Contact's first name) is filled when the Contact has a value
-            or the variable has a default; a sender variable or a custom variable
-            only when it has a non-blank default. True otherwise, e.g. a promo code
-            only the caller knows, or a sender name with no default (calls through
-            the integrations API have no person as sender).
+            False when Bridge fills it for the send: a recipient variable (e.g. the
+            Contact''s first name) when the Contact has a value or the variable has
+            a default; the organization name always; a sender variable, a custom variable,
+            a terms or privacy link or the conversation name only when it has a non-blank
+            default (a link or conversation name Bridge has is sent instead of the
+            default). True otherwise, e.g. a promo code only the caller knows, or
+            a sender name with no default (calls through the integrations API have
+            no person as sender). See [What Bridge fills](/templates-and-parameters#what-bridge-fills).'
           examples:
           - true
           - false

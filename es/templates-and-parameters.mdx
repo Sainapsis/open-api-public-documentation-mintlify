@@ -55,7 +55,7 @@ x-api-key: YOUR_API_KEY
 | --- | --- |
 | `key` | Nombre que debes usar en `parameters` |
 | `label` | Descripción de la variable legible para personas |
-| `callerMustSupply` | `true` cuando debes proporcionar un valor que no esté en blanco porque Bridge no puede completarla para el envío; `false` cuando Bridge la completa |
+| `callerMustSupply` | `true` cuando debes proporcionar un valor que no esté en blanco porque Bridge no puede completarla para el envío; `false` cuando Bridge la completa (los casos están en [Qué completa Bridge](#qué-completa-bridge)) |
 | `isCustom` | Indica si es una variable personalizada: un valor que solo tú conoces y que tiene un texto predeterminado |
 | `default` | Para una variable personalizada, texto enviado si no proporcionas un valor; `null` en los demás casos |
 
@@ -273,7 +273,7 @@ Bridge completa una variable en un envío cuando puede. De lo contrario, debes e
 | Personalizada (`isCustom: true`) | Su valor predeterminado, si no está en blanco | Debes enviarla |
 | Nombre de la organización | El nombre de la organización del espacio de trabajo | No hay nada que enviar: Bridge siempre la completa |
 | Enlace de términos o de privacidad | Solo cuando la variable tiene un valor predeterminado: Bridge envía entonces el enlace del espacio de trabajo si está configurado y, si no, el valor predeterminado | Sin valor predeterminado, debes enviarla |
-| Nombre de la conversación | Solo su valor predeterminado | Sin valor predeterminado, debes enviarla |
+| Nombre de la conversación | El nombre propio de la conversación si lo tiene; si no, el valor predeterminado de la variable | Sin valor predeterminado y sin nombre en la conversación, debes enviarla |
 
 `callerMustSupply: false` en una variable de destinatario supone que el contacto tiene ese valor. Cuando el contacto no lo tiene y la variable no tiene valor predeterminado, el envío responde `422` `BRIDGE_AI_LEADSCOUT_0019` con la variable en la lista, y puedes reintentar con el valor en `parameters`.
 

@@ -5656,16 +5656,20 @@ components:
         callerMustSupply:
           type: boolean
           title: Caller must supply
-          description: Indica se quem chama deve fornecer um valor para esta variável ao enviar
-            o template por `POST /agents/{agentId}/outbound` ou `POST /leadscout/outbound`.
-            Para um template usado ao criar uma conversa (`POST /conversations`), o servidor
-            valida as variáveis na criação. É false quando a Bridge a preenche para o envio,
-            conforme detalhado a seguir. Uma variável de destinatário (por exemplo, o primeiro
-            nome do contato) é preenchida quando o contato tem um valor ou a variável tem um
-            valor padrão; uma variável de remetente ou uma variável personalizada, somente quando
-            tem um valor padrão não vazio. Nos demais casos é true, por exemplo, um código promocional
-            conhecido apenas por quem chama, ou um nome de remetente sem valor padrão (as chamadas
-            pela API de integrações não têm nenhuma pessoa como remetente).
+          description: 'Indica se quem chama deve fornecer um valor para esta variável
+            ao enviar o template por meio de `POST /agents/{agentId}/outbound` ou
+            `POST /leadscout/outbound`. Para um template usado ao criar uma conversa
+            (`POST /conversations`), o servidor valida as variáveis na criação. É
+            false quando o Bridge a preenche para o envio: uma variável de destinatário
+            (por exemplo, o primeiro nome do Contato) quando o Contato tem um valor
+            ou a variável tem um valor padrão; o nome da organização, sempre; uma
+            variável de remetente, uma variável personalizada, um link de termos ou
+            privacidade ou o nome da conversa, somente quando tem um valor padrão
+            não vazio (se o Bridge tem um link ou um nome de conversa, ele o envia
+            no lugar do valor padrão). Nos demais casos é true, por exemplo, um código
+            promocional que só quem chama conhece, ou um nome de remetente sem valor
+            padrão (as chamadas pela API de integrações não têm nenhuma pessoa como
+            remetente). Consulte [O que o Bridge preenche](/pt-br/templates-and-parameters#o-que-o-bridge-preenche).'
           examples:
             - true
             - false

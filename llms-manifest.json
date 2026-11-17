@@ -29,14 +29,14 @@
   },
   "inputs": {
     "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
-    "api-reference/openapi.yaml": "a3b3b86b5a3d5fbc581694d6df9cc821018789aae174ae127c554d6057eaa36d",
+    "api-reference/openapi.yaml": "e2e1e4781210235272b3025e775c3dd97cfe875057234c4ff1a49370887f959b",
     "changelog.mdx": "e9084e3294b5d4a359eab45b627c4db6dec026c430818960778d75ae2366eab2",
     "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
     "docs.json": "ef1cb7e68c9fd91dde687999a26f89aa046e67c8326359c435c514abce7b968d",
     "error-codes.mdx": "5c8e1715994fe9deab860b25f5ced7917341046d348029f633549be01a58770d",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
-    "es/api-reference/openapi.yaml": "ea1c47e66011f938e8f00a61162d6c4110f9a182f7be6d3fca0f7c048a457f98",
+    "es/api-reference/openapi.yaml": "8ea03fa88c5247e81c0d2659f3e5b0b29c43d469a2b8ca05a7f048fc81b485b7",
     "es/changelog.mdx": "b2d420cca846e287101c92623dbac4c485f0e11c4198653a80caa50f19d96f28",
     "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
@@ -55,7 +55,7 @@
     "es/lead-capture/integration.mdx": "ef98f7b0bdf0b46bc0fa39a773788528cd13f841627fefbc4e2ee09b505c5d3d",
     "es/lead-capture/templates.mdx": "998d557640fef48aaa5fed8cd0eacb0a33eb23cba360a38edca42e3e2adfcc78",
     "es/rate-limits.mdx": "b04b3550913fcf60ab64e24e0d282d0f1c61837272317b8a4ade9bc8696d1cb3",
-    "es/templates-and-parameters.mdx": "19cff2f7a8c5748bd9b61f7d24937f2a9b1f2f94b2397352fd976e7d6024b174",
+    "es/templates-and-parameters.mdx": "0a932387d205bed64d75a83976fe93fc08b39477ae1f4b94704ce2ab19b459c4",
     "es/webhooks.mdx": "1c793a756a4e3b57244c441718d9e02346c5938a6e6bd0ac2b4a5e1bfe6d7000",
     "es/webhooks/configuration.mdx": "5d7b1164e4cd3c87991b009ef1da93c42fd66e6bd45a65dfb74017dc3299f629",
     "es/webhooks/events.mdx": "f260daf3b3bd933ee67784d7693461ce14f32dee5849747c3bf69f0b51c0e53f",
@@ -75,7 +75,7 @@
     "lead-capture/integration.mdx": "e41b09302ab3d26dcb1089158f3ef805e6ab5f1d1574bfa877dfbf9630651d03",
     "lead-capture/templates.mdx": "506d2ef49287c95004fcd43150af114e6ced5f39cc32caaa9e2566fcc101f66f",
     "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
-    "pt-br/api-reference/openapi.yaml": "b5f4c86283a36f82034f1648285513c54aaed45ae94c2cc7ad7bd46ba6b961a5",
+    "pt-br/api-reference/openapi.yaml": "a675b04a2ce489e87762a7137a812112de6f7dcda902358ea6f7192b741497b5",
     "pt-br/changelog.mdx": "f5ebecd2c3c7ee00801d64520995d86ae544264cd272db0233d32fab4ad9c455",
     "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
@@ -94,7 +94,7 @@
     "pt-br/lead-capture/integration.mdx": "8f11e6f732c6b5e68ade245b125ab4095718a999be7b87b8acfc1af4d12612aa",
     "pt-br/lead-capture/templates.mdx": "782779caa6f93f7c61ddc22742d0e7a4b33788e7bb51bf8a3ab18aa60d3bd899",
     "pt-br/rate-limits.mdx": "55f5c118aa49db4f2f33b624b468c9cec8f7b1622b7308ebf94f701d8956ab56",
-    "pt-br/templates-and-parameters.mdx": "acd3be7b3fa9cfd53fdb5103e84bf5728f1b2647301ea84d1dc8ac18c1899326",
+    "pt-br/templates-and-parameters.mdx": "28106e6586ec2d45cf72884ca65cba7a3483418c0721d296012d522f31d8eb72",
     "pt-br/webhooks.mdx": "30c6bdff5c113b29818fb8afd531ee5455969f9b00d08298ddd327d9e12423f9",
     "pt-br/webhooks/configuration.mdx": "3ddc354af0ed3e886620ed4e0d2cff1c5fe2cd5ab5a8719ba9dd6cb092e27139",
     "pt-br/webhooks/events.mdx": "c536347e48ea4fca2b110f59995614c71d8c6667e156f40acf22f2b704c32545",
@@ -102,7 +102,7 @@
     "pt-br/webhooks/verifying-signatures.mdx": "27e126d6edbe017da7116c4001bafe6e555e3bd7d762eebae303177fedfa0dc0",
     "rate-limits.mdx": "110dfae500b1545c77f8adde168eb3a071c5da58354a14c0078d91eadcfa233d",
     "skill.md": "b89b5379faf505816aad291a2ddc3ea7b58f249aee4294b1959ee2a05f314746",
-    "templates-and-parameters.mdx": "e3fcb7f4911fa7b0235a2981282470154ebb249578b2e74d7c316e2a6ad2b32d",
+    "templates-and-parameters.mdx": "98e9a9cc2dee41caeefd1131f267b0b925c08391227b7363c3ffc8af208b79d8",
     "webhooks.mdx": "8203de4edaaf8f317455300f712403850c7bab280d84d34b31fe3cd8ecdb88ab",
     "webhooks/configuration.mdx": "d2788ec46367b9816e5ba94e97bb0b0053b7f5270159575464e49d65e2d2ba5f",
     "webhooks/events.mdx": "054a801f7ee33be7c515cc23dc49545f2ab7ac4bdeddd3cbd4948ec2bbf3e00c",
@@ -1323,7 +1323,7 @@
       "source": "api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "a3b3b86b5a3d5fbc581694d6df9cc821018789aae174ae127c554d6057eaa36d",
+      "sha256": "e2e1e4781210235272b3025e775c3dd97cfe875057234c4ff1a49370887f959b",
       "operationCount": 25
     },
     {
@@ -1339,7 +1339,7 @@
       "source": "es/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/es/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "ea1c47e66011f938e8f00a61162d6c4110f9a182f7be6d3fca0f7c048a457f98",
+      "sha256": "8ea03fa88c5247e81c0d2659f3e5b0b29c43d469a2b8ca05a7f048fc81b485b7",
       "operationCount": 25
     },
     {
@@ -1355,7 +1355,7 @@
       "source": "pt-br/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/pt-br/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "b5f4c86283a36f82034f1648285513c54aaed45ae94c2cc7ad7bd46ba6b961a5",
+      "sha256": "a675b04a2ce489e87762a7137a812112de6f7dcda902358ea6f7192b741497b5",
       "operationCount": 25
     },
     {
@@ -1381,32 +1381,32 @@
       "sha256": "20a5f1d9d34720d9dee02185ed8725235a6275831ac0d3f964efda5e26a38b79"
     },
     "llms-full-en.json": {
-      "bytes": 260938,
-      "sha256": "ed4fe8bdf12a5990f554ffb8cad5b803b1afc9ef9f8707cf709c49d6ceb9b0b4"
+      "bytes": 261141,
+      "sha256": "3b5e78bf457428c4c2e5532d90cc507ca3f58fd8d2f658114680a0541262d2a0"
     },
     "llms-es.json": {
       "bytes": 36769,
       "sha256": "313979ee8be52c411fd5d91d042e655c83a1f0157e33b1f1ab5f5df0c7aa7763"
     },
     "llms-full-es.json": {
-      "bytes": 282163,
-      "sha256": "3a9e79d8ddc9d6de784131016a7dcf00fd8aa243cf685b07f6b4b4385dc23220"
+      "bytes": 282389,
+      "sha256": "6f82fb5324119b0fe29b3179c9f042b7f420726fdfc6433bd4cafd0771d88035"
     },
     "llms-pt-br.json": {
       "bytes": 36659,
       "sha256": "b5197af9d37bc7f6b8bf3735e674578f59b730f51605255587271446347dbfc8"
     },
     "llms-full-pt-br.json": {
-      "bytes": 280179,
-      "sha256": "d5b15c91c67acbb9472b3c126a54c4bfca3a4e3c64294c29ef6bc2c3a609683b"
+      "bytes": 280402,
+      "sha256": "1492347ba4e5dbb0c774d8f55e734c43a9376cffba1ffc2c1dd72db56fc35046"
     },
     "llms.txt": {
       "bytes": 40277,
       "sha256": "62a48193c9bd2f1cf544952ff378daba83821501d01ff631ad22b5725f924231"
     },
     "llms-full.txt": {
-      "bytes": 725730,
-      "sha256": "3dddd04809be2577422b914513e1d368551228195d9fed1d6d3c3547d7798796"
+      "bytes": 726382,
+      "sha256": "9a58286def89c30b5ec11278d06a8722216925f8402288460c620bacfbce9ad7"
     },
     "sitemap.xml": {
       "bytes": 92257,

@@ -5698,17 +5698,21 @@ components:
         callerMustSupply:
           type: boolean
           title: Caller must supply
-          description: Indica si quien llama debe proporcionar un valor para esta variable al
-            enviar la plantilla mediante `POST /agents/{agentId}/outbound` o `POST /leadscout/outbound`.
-            Para una plantilla usada al crear una conversación (`POST /conversations`), el servidor
-            valida las variables al crear. Es false cuando Bridge la rellena para el envío,
-            como se detalla a continuación. Una variable de destinatario (por ejemplo, el nombre
-            del contacto) se rellena cuando el contacto tiene un valor o la variable tiene un
-            valor predeterminado; una variable de remitente o una variable personalizada, solo
-            cuando tiene un valor predeterminado no vacío. En los demás casos es true, por ejemplo,
-            un código promocional que solo conoce quien llama, o un nombre de remitente sin
-            valor predeterminado (las llamadas a través de la API de integraciones no tienen
-            ninguna persona como remitente).
+          description: 'Indica si quien llama debe proporcionar un valor para esta
+            variable al enviar la plantilla mediante `POST /agents/{agentId}/outbound`
+            o `POST /leadscout/outbound`. Para una plantilla usada al crear una conversación
+            (`POST /conversations`), el servidor valida las variables al crear. Es
+            false cuando Bridge la rellena para el envío: una variable de destinatario
+            (por ejemplo, el nombre del contacto) cuando el contacto tiene un valor
+            o la variable tiene un valor predeterminado; el nombre de la organización,
+            siempre; una variable de remitente, una variable personalizada, un enlace
+            de términos o privacidad o el nombre de la conversación, solo cuando tiene
+            un valor predeterminado no vacío (si Bridge tiene un enlace o un nombre
+            de conversación, lo envía en lugar del valor predeterminado). En los demás
+            casos es true, por ejemplo, un código promocional que solo conoce quien
+            llama, o un nombre de remitente sin valor predeterminado (las llamadas
+            a través de la API de integraciones no tienen ninguna persona como remitente).
+            Consulta [Qué completa Bridge](/es/templates-and-parameters#qué-completa-bridge).'
           examples:
             - true
             - false

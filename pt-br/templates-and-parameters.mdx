@@ -55,7 +55,7 @@ x-api-key: YOUR_API_KEY
 | ----- | ------- |
 | `key` | O nome a usar em `parameters` |
 | `label` | Uma descrição da variável legível por pessoas |
-| `callerMustSupply` | `true` quando você precisa fornecer um valor não vazio porque o Bridge não consegue preenchê-la para o envio; `false` quando o Bridge a preenche |
+| `callerMustSupply` | `true` quando você precisa fornecer um valor não vazio porque o Bridge não consegue preenchê-la para o envio; `false` quando o Bridge a preenche (os casos estão em [O que o Bridge preenche](#o-que-o-bridge-preenche)) |
 | `isCustom` | Indica se a variável é personalizada: um valor que só você conhece, com um texto padrão |
 | `default` | Para uma variável personalizada, o texto enviado quando você não fornece um valor; `null` nos demais casos |
 
@@ -273,7 +273,7 @@ O Bridge preenche uma variável em um envio quando consegue. Caso contrário, vo
 | Personalizada (`isCustom: true`) | Seu valor padrão, quando não está vazio | Você precisa enviá-la |
 | Nome da organização | O nome da organização do workspace | Não há nada a enviar: o Bridge sempre a preenche |
 | Link de termos ou de privacidade | Somente quando a variável tem um valor padrão: o Bridge então envia o link do workspace, se estiver configurado, ou, caso contrário, o valor padrão | Sem valor padrão, você precisa enviá-la |
-| Nome da conversa | Somente o valor padrão | Sem valor padrão, você precisa enviá-la |
+| Nome da conversa | O nome próprio da conversa, quando ela tem um; caso contrário, o valor padrão da variável | Sem valor padrão e sem nome na conversa, você precisa enviá-la |
 
 `callerMustSupply: false` em uma variável de destinatário pressupõe que o Contato tenha esse valor. Quando o Contato não tem e a variável não tem valor padrão, o envio responde `422` `BRIDGE_AI_LEADSCOUT_0019` listando a variável, e você pode tentar novamente com o valor em `parameters`.
 
