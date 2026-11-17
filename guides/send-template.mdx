@@ -32,7 +32,7 @@ URL-encode the supplied ID or name. Read the response's `id`, `name`, `variables
 | `callerMustSupply: false`, not custom | Omit it to keep Bridge's per-Contact value. A supplied value replaces that value for every Contact. |
 | `isCustom: true` | Supply your value, or omit it or send it blank to use its `default`. |
 
-Use the agnostic `key`, never the display `label`, a Meta position, or an invented variable name. `driftWarning` is diagnostic and does not by itself block sending.
+Use the agnostic `key`, never the display `label`, a Meta position, or an invented variable name. A stale variable in `driftWarning` does not block sending, but a slot with a missing label does: re-sync or repair the template first.
 
 ## 2. Prepare your values
 

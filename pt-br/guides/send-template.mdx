@@ -36,7 +36,7 @@ Codifique o ID ou nome fornecido para uso na URL. Leia `id`, `name`, `variables`
 | `callerMustSupply: false`, não personalizada | Omita-a para manter o valor definido pelo Bridge para cada Contato. Um valor informado substitui esse valor para todos os Contatos. |
 | `isCustom: true` | Forneça seu valor ou omita-o ou envie-o vazio para usar o `default`. |
 
-Use a `key` agnóstica, nunca o `label` de exibição, uma posição da Meta ou um nome de variável inventado. `driftWarning` é diagnóstico e, por si só, não bloqueia o envio.
+Use a `key` agnóstica, nunca o `label` de exibição, uma posição da Meta ou um nome de variável inventado. Uma variável obsoleta em `driftWarning` não bloqueia o envio, mas um slot com rótulo ausente bloqueia: sincronize novamente ou repare primeiro o template.
 
 <a id="2-prepare-your-values"></a>
 

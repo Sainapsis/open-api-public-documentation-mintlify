@@ -1915,7 +1915,7 @@ paths:
       tags:
       - LeadScout API
       summary: Initiate a LeadScout outbound conversation with a known lead
-      description: "Start a LeadScout outbound conversation with a known Contact. The Contact must already exist. Bridge resolves a prospecting Agent for an eligible WhatsApp line. The template is referenced by template.id or template.name; the id wins when both are supplied. It must exist and be APPROVED, and any handoffOverride Bridge User must be valid.\n\nAn explicit contact.providerChannelId is respected. Without one, automatic selection prefers a free line, then a released recoverable conversation with this Contact, then an occupied active conversation only when forceSend=true. Availability is per Contact on each line, not global line occupancy.\n\nforceSend=true reuses an eligible active conversation; it does not ignore it or create a fresh one. A successful reuse returns alreadyInitiated=true and persists the new template and follow-ups. A recoverable released conversation can be recovered with either value, retains its ID, and returns recovered=true. Blocked and released nonrecoverable conversations are not made usable by this flag. The legacy route can reuse a conversation held by a human or another Agent; unlike Agents outbound, it does not enforce the requested-Agent controller check.\n\nA nonexpired open LeadScout session still blocks a new outbound request with 409 BRIDGE_AI_LEADSCOUT_0017; inability to finalize an expired session returns 409 BRIDGE_AI_LEADSCOUT_0018. Other validation still applies. Additional messages are persisted; persistence does not prove delivery or a wait for the lead to reply. A failed request can leave partial work, so do not treat forceSend as idempotency or blindly retry an uncertain result.\n\nTemplate parameter errors, all 422 and raised before anything is written:\n- `BRIDGE_AI_LEADSCOUT_0019`: a variable the caller must supply (`callerMustSupply: true` in `GET /templates/{templateId}`) is missing or blank. `extra.missingVariables` lists the keys as `[{key, label}]`. It also lists a variable Bridge fills when its value turns out empty for this send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.). Retry with that key in `parameters`.\n- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters` lists them.\n- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not a variable of the template. `extra.unknownKeys` lists it.\n- `BRIDGE_AI_LEADSCOUT_0025`: a value breaks WhatsApp's rules for a parameter (a line break, a tab, five or more consecutive spaces, or too long). `extra.invalidVariables` lists each offending variable as `[{key, label, reason}]`, sorted by key.\n\nSee [the complete outbound guide](/guides/agent-outbound) for the false/true matrix, response flags, differences from Agents outbound, errors and handoff."
+      description: "Start a LeadScout outbound conversation with a known Contact. The Contact must already exist. Bridge resolves a prospecting Agent for an eligible WhatsApp line. The template is referenced by template.id or template.name; the id wins when both are supplied. It must exist and be APPROVED, and any handoffOverride Bridge User must be valid.\n\nAn explicit contact.providerChannelId is respected. Without one, automatic selection prefers a free line, then a released recoverable conversation with this Contact, then an occupied active conversation only when forceSend=true. Availability is per Contact on each line, not global line occupancy.\n\nforceSend=true reuses an eligible active conversation; it does not ignore it or create a fresh one. A successful reuse returns alreadyInitiated=true and persists the new template and follow-ups. A recoverable released conversation can be recovered with either value, retains its ID, and returns recovered=true. Blocked and released nonrecoverable conversations are not made usable by this flag. The legacy route can reuse a conversation held by a human or another Agent; unlike Agents outbound, it does not enforce the requested-Agent controller check.\n\nA nonexpired open LeadScout session still blocks a new outbound request with 409 BRIDGE_AI_LEADSCOUT_0017; inability to finalize an expired session returns 409 BRIDGE_AI_LEADSCOUT_0018. Other validation still applies. Additional messages are persisted; persistence does not prove delivery or a wait for the lead to reply. A failed request can leave partial work, so do not treat forceSend as idempotency or blindly retry an uncertain result.\n\nTemplate parameter errors, all 422 and raised before anything is written:\n- `BRIDGE_AI_LEADSCOUT_0019`: a variable the caller must supply (`callerMustSupply: true` in `GET /templates/{templateId}`) is missing or blank. `extra.missingVariables` lists the keys as `[{key, label}]`. It also lists a variable Bridge fills when the value turns out empty for this send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.). Retry with that key in `parameters`.\n- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters` lists them.\n- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not a variable of the template. `extra.unknownKeys` lists it.\n- `BRIDGE_AI_LEADSCOUT_0025`: a value breaks WhatsApp's rules for a parameter (a line break, a tab, five or more consecutive spaces, or too long). `extra.invalidVariables` lists each offending variable as `[{key, label, reason}]`, sorted by key.\n\nSee [the complete outbound guide](/guides/agent-outbound) for the false/true matrix, response flags, differences from Agents outbound, errors and handoff."
       operationId: initiate_leadscout_outbound_bridge_api_v1_workspaces__workspaceId__leadscout_outbound_post
       security:
       - x-api-key: []
@@ -2698,7 +2698,7 @@ paths:
       tags:
       - Agents API
       summary: Start an outbound conversation with a Contact as a given Agent
-      description: "Start an outbound conversation with a known Contact, answered by the given Agent.\n\nWorks for LeadScout and Service Agents. The Contact is resolved first, then the Agent, which must exist in\nthe workspace and be available (see `GET /agents`). The template is referenced by `template.id` or\n`template.name` (the id wins when both are sent), must exist and be APPROVED, and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId` is unknown, the request fails\nwith 400 `BRIDGE_AI_LEADSCOUT_0016` only after the conversation was created or recovered, so a retry after\nthat error may answer differently. Body rules (`consent.status=GRANTED` without `capturedAt`, `template.media`\nwithout exactly one of `mediaId` or `url`) fail with 400 `BRIDGE_CORE_0103`.\n\nThe conversation opens on one of the Agent's active WhatsApp lines, controlled by the Agent, with the template\nas its first message. A line is picked in this order:\n- A free line.\n- Otherwise, a line holding a released conversation with this Contact that can be recovered. Recovering\n  returns `recovered=true` and replaces the previous outbound context and `agentContext`. This happens even\n  with `forceSend=false`.\n- Otherwise, when no line is free or recoverable: `forceSend=false` (default) fails with 409\n  `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reuses a line occupied by an active conversation with this\n  Contact, preferring one this Agent controls. If the chosen conversation is held by another Agent or a\n  Bridge User, the call fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006` and nothing is written. Release it\n  first, then retry. Lines whose conversation is blocked or was released without recovery are never used, so\n  if no line is occupied by an active conversation the call fails with 409 `BRIDGE_AI_LEADSCOUT_0008` even\n  with `forceSend=true`.\n\n`contact.providerChannelId` is a preference: the pinned line is used when it is free or recoverable;\notherwise the same order applies over all the Agent's lines. Among occupied lines, one this Agent controls\ncomes first; if none does, the pinned line is the one reused (and may fail with 0006).\n\nReusing a conversation depends on the Agent type:\n- LeadScout: if its LeadScout session is still open and not expired, the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra` carries `conversationId`, `sessionId` and `stage`). If an expired\n  session cannot be finalized, it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: an open, unexpired service session is continued; an expired one is closed as abandoned and a\n  new one opens.\n\nTemplate parameter errors, all 422 and raised before anything is written:\n- `BRIDGE_AI_LEADSCOUT_0019`: a variable the caller must supply (`callerMustSupply: true` in `GET /templates/{templateId}`) is missing or blank. `extra.missingVariables` lists the keys as `[{key, label}]`. It also lists a variable Bridge fills when its value turns out empty for this send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.). Retry with that key in `parameters`.\n- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters` lists them.\n- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not a variable of the template. `extra.unknownKeys` lists it.\n- `BRIDGE_AI_LEADSCOUT_0025`: a value breaks WhatsApp's rules for a parameter (a line break, a tab, five or more consecutive spaces, or too long). `extra.invalidVariables` lists each offending variable as `[{key, label, reason}]`, sorted by key.\n\nSee [the complete outbound guide](/guides/agent-outbound) for prerequisites, the forceSend decision table, recovery, partial work and safe retry decisions."
+      description: "Start an outbound conversation with a known Contact, answered by the given Agent.\n\nWorks for LeadScout and Service Agents. The Contact is resolved first, then the Agent, which must exist in\nthe workspace and be available (see `GET /agents`). The template is referenced by `template.id` or\n`template.name` (the id wins when both are sent), must exist and be APPROVED, and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId` is unknown, the request fails\nwith 400 `BRIDGE_AI_LEADSCOUT_0016` only after the conversation was created or recovered, so a retry after\nthat error may answer differently. Body rules (`consent.status=GRANTED` without `capturedAt`, `template.media`\nwithout exactly one of `mediaId` or `url`) fail with 400 `BRIDGE_CORE_0103`.\n\nThe conversation opens on one of the Agent's active WhatsApp lines, controlled by the Agent, with the template\nas its first message. A line is picked in this order:\n- A free line.\n- Otherwise, a line holding a released conversation with this Contact that can be recovered. Recovering\n  returns `recovered=true` and replaces the previous outbound context and `agentContext`. This happens even\n  with `forceSend=false`.\n- Otherwise, when no line is free or recoverable: `forceSend=false` (default) fails with 409\n  `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reuses a line occupied by an active conversation with this\n  Contact, preferring one this Agent controls. If the chosen conversation is held by another Agent or a\n  Bridge User, the call fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006` and nothing is written. Release it\n  first, then retry. Lines whose conversation is blocked or was released without recovery are never used, so\n  if no line is occupied by an active conversation the call fails with 409 `BRIDGE_AI_LEADSCOUT_0008` even\n  with `forceSend=true`.\n\n`contact.providerChannelId` is a preference: the pinned line is used when it is free or recoverable;\notherwise the same order applies over all the Agent's lines. Among occupied lines, one this Agent controls\ncomes first; if none does, the pinned line is the one reused (and may fail with 0006).\n\nReusing a conversation depends on the Agent type:\n- LeadScout: if its LeadScout session is still open and not expired, the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra` carries `conversationId`, `sessionId` and `stage`). If an expired\n  session cannot be finalized, it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: an open, unexpired service session is continued; an expired one is closed as abandoned and a\n  new one opens.\n\nTemplate parameter errors, all 422 and raised before anything is written:\n- `BRIDGE_AI_LEADSCOUT_0019`: a variable the caller must supply (`callerMustSupply: true` in `GET /templates/{templateId}`) is missing or blank. `extra.missingVariables` lists the keys as `[{key, label}]`. It also lists a variable Bridge fills when the value turns out empty for this send: a recipient variable whose Contact has no value and no default, or a value Bridge computed that WhatsApp would reject (line break, tab, etc.). Retry with that key in `parameters`.\n- `BRIDGE_AI_LEADSCOUT_0020`: `orderedParams` and `parameters` both supply the same slot. `extra.conflictingParameters` lists them.\n- `BRIDGE_AI_LEADSCOUT_0021`: a key in `parameters` is not a variable of the template. `extra.unknownKeys` lists it.\n- `BRIDGE_AI_LEADSCOUT_0025`: a value breaks WhatsApp's rules for a parameter (a line break, a tab, five or more consecutive spaces, or too long). `extra.invalidVariables` lists each offending variable as `[{key, label, reason}]`, sorted by key.\n\nSee [the complete outbound guide](/guides/agent-outbound) for prerequisites, the forceSend decision table, recovery, partial work and safe retry decisions."
       operationId: start_agent_outbound_bridge_api_v1_workspaces__workspaceId__agents__agentId__outbound_post
       security:
       - x-api-key: []
@@ -4665,10 +4665,11 @@ components:
             type: string
           type: array
           title: Ordered Parameters
-          description: Values for the template's variable slots by absolute position
-            (body slots first, then button slots), in order. Send a value for every
-            position, because Bridge does not skip positions it could fill. Use `parameters`
-            instead to send only the variables Bridge cannot fill.
+          description: 'Values for the template''s body variables, in order. It does
+            not cover button variables: send those in `parameters`, by key. Send a
+            value for every body position, because Bridge does not skip positions
+            it could fill. Use `parameters` instead to send only the variables Bridge
+            cannot fill.'
           examples:
           - - Maria
             - ACME
@@ -4678,7 +4679,7 @@ components:
           type: object
           title: Parameters
           description: Values keyed by the template's variable key (see GET /templates/{id}
-            for the key inventory), covering both body and button slots. Send the
+            for the key inventory), covering both body and button variables. Send the
             variables that `GET /templates/{id}` marks as caller-must-supply; omit the ones Bridge fills. For
             a variable Bridge fills, a blank or whitespace-only value counts as omitted;
             a value you send replaces Bridge's. For a variable you must supply, a
@@ -5263,8 +5264,9 @@ components:
         driftWarning:
           $ref: '#/components/schemas/TemplateDriftWarningResponse'
           title: Drift warning
-          description: Diagnostic-only declaration-vs-snapshot mismatch. Never blocks
-            a send.
+          description: Declaration-vs-snapshot mismatch. A stale variable never blocks
+            a send. A missing label means the template must be re-synced or repaired
+            before it can be sent.
       type: object
       required:
       - id
@@ -5311,22 +5313,21 @@ components:
             $ref: '#/components/schemas/TemplateVariableRef'
           type: array
           title: Missing labels
-          description: Required by the snapshot but not yet declared.
+          description: 'Required by the snapshot but not yet declared. The template
+            cannot be sent until it is re-synced or repaired: these slots are not
+            in `variables` and have no key you can send.'
       type: object
       required:
       - hasDrift
       title: TemplateDriftWarningResponse
-      description: 'Diagnostic-only mismatch between the declared variables and what
-        the Meta snapshot requires.
+      description: 'Mismatch between the declared variables and what the Meta snapshot
+        requires.
 
 
-        Per the authority rule, this never affects whether a send succeeds — the snapshot
-        alone
+        The snapshot alone decides what a send must cover. A stale variable never
+        blocks a send; a slot
 
-        decides that. It exists so a caller (or the console) can flag a template whose
-        labels need
-
-        refreshing after an edit made directly in WhatsApp Manager.'
+        with a missing label does, until the template is re-synced or repaired.'
     TemplateVariableRef:
       properties:
         key:
@@ -5364,12 +5365,15 @@ components:
           type: boolean
           title: Caller must supply
           description: Whether the caller must supply a value for this variable when
-            sending the template. False when Bridge fills it for the send, as follows. A recipient
-            variable (e.g. the Contact's first name) is filled when the Contact has a value or
-            the variable has a default; a sender variable or a custom variable only
-            when it has a non-blank default. True otherwise, e.g. a promo code only
-            the caller knows, or a sender name with no default (calls through the
-            integrations API have no person as sender).
+            sending the template through `POST /agents/{agentId}/outbound` or `POST
+            /leadscout/outbound`. For a template used when creating a conversation
+            (`POST /conversations`), the server validates the variables on create.
+            False when Bridge fills it for the send, as follows. A recipient variable
+            (e.g. the Contact's first name) is filled when the Contact has a value
+            or the variable has a default; a sender variable or a custom variable
+            only when it has a non-blank default. True otherwise, e.g. a promo code
+            only the caller knows, or a sender name with no default (calls through
+            the integrations API have no person as sender).
           examples:
           - true
           - false

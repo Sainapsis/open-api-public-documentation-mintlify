@@ -45,13 +45,13 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
-`driftWarning` is diagnostic only: it reports differences between the declared variables and Meta's template snapshot and never blocks a send. The table below describes each item in `variables`.
+`driftWarning` reports differences between the declared variables and Meta's template snapshot. A stale variable never blocks a send. A slot with a missing label (`missingLabels`) does: the template cannot be sent until it is re-synced or repaired, and that slot is not listed in `variables` because it has no key you can send. The table below describes each item in `variables`.
 
 | Field | Meaning |
 | ----- | ------- |
 | `key` | The name to use in `parameters` |
 | `label` | A human-readable description of the variable |
-| `callerMustSupply` | `true` when you must supply a non-blank value because Bridge has no source for it; `false` otherwise |
+| `callerMustSupply` | `true` when you must supply a non-blank value because Bridge cannot fill it for the send; `false` when Bridge fills it |
 | `isCustom` | Whether this is a custom variable: a value only you know, with a default text |
 | `default` | For a custom variable, the text sent when you send no value for it; `null` otherwise |
 
@@ -245,6 +245,9 @@ Bridge fills a variable for a send when it can. Otherwise you must send it, and 
 | Recipient, such as the Contact's first name | The Contact | The variable's default; with no default, you must send it |
 | Sender, such as the sender's first or last name | Its default only. A call through the Integrations API has no person as sender | With no default, you must send it |
 | Custom (`isCustom: true`) | Its default, when not blank | You must send it |
+| Organization name | The workspace's organization name | Nothing to send: Bridge always fills it |
+| Terms or privacy link | Only when the variable has a default: Bridge then sends the workspace's link if one is configured, otherwise the default | With no default, you must send it |
+| Conversation name | Its default only | With no default, you must send it |
 
 `callerMustSupply: false` on a recipient variable assumes the Contact has that value. When the Contact has none and the variable has no default, the send answers `422` `BRIDGE_AI_LEADSCOUT_0019` listing it, and you can retry with the value in `parameters`.
 
@@ -255,7 +258,7 @@ Bridge fills a variable for a send when it can. Otherwise you must send it, and 
 - For a variable Bridge fills, a blank or whitespace-only value counts as omitted.
 - For a variable you must send, a blank value is rejected like a missing one, with `422` `BRIDGE_AI_LEADSCOUT_0019`.
 
-`orderedParams` maps absolute positions in the template: send a value for every position, including the ones Bridge could fill. Use `parameters` to send only what Bridge cannot fill. Do not send the same slot in both (`0020`).
+`orderedParams` covers the template's body variables only, in order. It does not cover button variables: send those in `parameters`, by key. Send a value for every body position, including the ones Bridge could fill. Use `parameters` to send only what Bridge cannot fill. Do not send the same slot in both (`0020`).
 
 ### Example
 

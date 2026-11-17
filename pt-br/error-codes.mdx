@@ -146,9 +146,12 @@ Códigos de erro de operações de Agentes.
 | `BRIDGE_AI_LEADSCOUT_0016` | 400 | Erro de validação outbound |
 | `BRIDGE_AI_LEADSCOUT_0017` | 409 | A sessão mais recente não foi finalizada |
 | `BRIDGE_AI_LEADSCOUT_0018` | 409 | Não foi possível finalizar a sessão expirada antes de iniciar uma nova |
-| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Variáveis obrigatórias do template ausentes |
-| `BRIDGE_AI_LEADSCOUT_0020` | 422 | Fontes de parâmetros de template conflitantes para a mesma posição |
-| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Chave de parâmetro de template desconhecida |
+| `BRIDGE_AI_LEADSCOUT_0019` | 422 | Falta uma variável do template que quem chama deve fornecer, ou ela está vazia. `extra.missingVariables`: `[{key, label}]`. Também lista uma variável que o Bridge preenche quando o valor se mostra vazio para o envio: uma variável de destinatário cujo Contato não tem valor nem valor padrão, ou um valor calculado pelo Bridge que o WhatsApp rejeitaria (quebra de linha, tabulação etc.). Tente novamente com essa chave em `parameters` |
+| `BRIDGE_AI_LEADSCOUT_0020` | 422 | `orderedParams` e `parameters` fornecem a mesma posição. `extra.conflictingParameters` as lista |
+| `BRIDGE_AI_LEADSCOUT_0021` | 422 | Uma chave de `parameters` não é uma variável do template. `extra.unknownKeys` a lista |
+| `BRIDGE_AI_LEADSCOUT_0025` | 422 | Um valor de variável do template viola as regras do WhatsApp para um parâmetro: uma quebra de linha, uma tabulação, cinco ou mais espaços consecutivos ou comprimento excessivo. `extra.invalidVariables`: `[{key, label, reason}]`, ordenadas por chave |
+
+`POST .../leadscout/outbound` também retorna `0019`, `0020`, `0021` e `0025`, com o mesmo significado. Veja [Templates outbound](/pt-br/templates-and-parameters#outbound-templates).
 
 Em `POST .../agents/{agentId}/outbound`, erros `5xx` não contêm `code` nem `extra`.
 
