@@ -8,3 +8,7 @@ package-lock.json
 # Reproducible tooling for the public LLM exports
 !scripts/llm-tools/package.json
 !scripts/llm-tools/package-lock.json
+
+# Python bytecode
+__pycache__/
+*.pyc
