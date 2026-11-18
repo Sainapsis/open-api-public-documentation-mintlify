@@ -199,9 +199,9 @@ Idempotency-Key: erp-order-981-shipped
 }
 ```
 
-Envía `template.id`, el `id` que devuelve el paso 1: `GET .../templates/{templateId}` acepta el nombre de la plantilla y responde con su `id`. La solicitud no admite `template.name`: un cuerpo con `name` falla con `422`. Un `id` desconocido falla con `404`. `parameters` sigue las reglas de los pasos 1 y 2. Una plantilla cuyo encabezado es una imagen o un video envía ese archivo.
+Envía `template.id`, el `id` que devuelve el paso 1: `GET .../templates/{templateId}` acepta el nombre de la plantilla y responde con su `id`. La solicitud no admite `template.name`: un cuerpo con `name` falla con `422`. Un `id` desconocido falla con `404`. `parameters` sigue las reglas de los pasos 1 y 2. Una plantilla cuyo encabezado es una imagen, un video, un GIF o un documento PDF envía ese archivo.
 
-Para enviar tu propia imagen o video como encabezado de la plantilla (la imagen o el video que se muestra en la parte superior del mensaje), envía `template.media` con su `type` (`IMAGE`, `VIDEO` o `GIF`, el tipo del encabezado) y una fuente. Envía el `mediaId` de un archivo que subiste con `POST /bridge/api/v1/workspaces/{workspaceId}/files`, como en [Enviar PDF y otros adjuntos](/es/guides/send-attachments):
+Para enviar tu propio archivo como encabezado de la plantilla (la imagen, el video, el GIF o el documento PDF que se muestra en la parte superior del mensaje), envía `template.media` con su `type` (`IMAGE`, `VIDEO`, `GIF` o `DOCUMENT`, el tipo del encabezado) y una fuente. Envía el `mediaId` de un archivo que subiste con `POST /bridge/api/v1/workspaces/{workspaceId}/files`, como en [Enviar PDF y otros adjuntos](/es/guides/send-attachments):
 
 ```json
 {
@@ -235,7 +235,7 @@ O envía una `url` `https` pública del archivo:
 }
 ```
 
-`type` es obligatorio, y envías `mediaId` o `url`, nunca ambos. `type` debe ser el tipo del encabezado de la plantilla; si no, la solicitud falla con `BRIDGE_TEMPLATE_0012`. Con `mediaId`, el archivo subido también debe tener ese tipo, pertenecer a tu workspace y tener su carga terminada. Con `url`, Bridge descarga el archivo de forma asíncrona: el resultado de la descarga no forma parte de la respuesta `201`, y una descarga que falla no se informa en ella. Una plantilla con encabezado de imagen o de video que no tiene un archivo configurado necesita `media`. Dos solicitudes tienen el mismo cuerpo solo si también envían el mismo `type` y el mismo `mediaId` o `url`. WhatsApp aún puede rechazar, después del `201`, un archivo que supere los límites de encabezado.
+`type` es obligatorio, y envías `mediaId` o `url`, nunca ambos. `type` debe ser el tipo del encabezado de la plantilla; si no, la solicitud falla con `BRIDGE_TEMPLATE_0012`. Con `mediaId`, el archivo subido también debe tener ese tipo, pertenecer a tu workspace y tener su carga terminada. Con `url`, Bridge descarga el archivo de forma asíncrona: el resultado de la descarga no forma parte de la respuesta `201`, y una descarga que falla no se informa en ella. Un encabezado de documento debe ser un PDF: un archivo subido de otro formato de documento falla con `BRIDGE_TEMPLATE_0012`, y una `url` no se comprueba antes de la descarga. Una plantilla con encabezado multimedia (imagen, video, GIF o documento) que no tiene un archivo configurado necesita `media`. Dos solicitudes tienen el mismo cuerpo solo si también envían el mismo `type` y el mismo `mediaId` o `url`. WhatsApp aún puede rechazar, después del `201`, un archivo que supere los límites de encabezado.
 
 Una solicitud correcta responde `201`:
 
@@ -289,8 +289,8 @@ Bridge reserva el periodo de espera de cada contacto antes de guardar el mensaje
 | `BRIDGE_CONVERSATION_0406` | La plantilla es de marketing o de utilidad y un contacto de la conversación está dentro del periodo de espera promocional del workspace: otro envío ya lo tiene reservado. Bridge cuenta los envíos que registró o está registrando, no si WhatsApp los entregó. `extra.contactIds` lista esos contactos y `extra.retryAfterSeconds` es la espera más larga que queda, también en la cabecera `Retry-After`. No se envió nada a ningún contacto. Reintenta pasados esos segundos. |
 | `BRIDGE_TEMPLATE_0006` | La plantilla no está aprobada para la línea y el idioma de al menos un contacto de WhatsApp, o la línea de un contacto no tiene cuenta de WhatsApp Business. Usa una plantilla aprobada para la línea y el idioma de cada contacto de la conversación. |
 | `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Corrige los valores de la plantilla. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
-| `BRIDGE_TEMPLATE_0011`, `0012` | Corrige `template.media`: envíalo solo para una plantilla con encabezado de imagen o de video, con un `type` que coincida y, con `mediaId`, un archivo de ese tipo. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
-| `BRIDGE_TEMPLATE_0013` | La plantilla tiene un encabezado de imagen o de video y no hay archivo que enviar. Envía `template.media` o pide que se configure un archivo en la plantilla. Cuando `extra.expectedType` es `DOCUMENT`, Bridge no puede enviar encabezados de documento, con o sin `template.media`: usa otra plantilla. |
+| `BRIDGE_TEMPLATE_0011`, `0012` | Corrige `template.media`: envíalo solo para una plantilla con encabezado multimedia, con un `type` que coincida y, con `mediaId`, un archivo de ese tipo (un PDF para un encabezado `DOCUMENT`). La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
+| `BRIDGE_TEMPLATE_0013` | La plantilla tiene un encabezado multimedia (imagen, video, GIF o documento) y no hay archivo que enviar. Envía `template.media` o pide que se configure un archivo en la plantilla. |
 | `BRIDGE_PRELOAD_FILE_0001` | El `mediaId` no es un archivo de tu workspace. Sube el archivo como en [Enviar PDF y otros adjuntos](/es/guides/send-attachments) y envía el `mediaId` que devuelve. |
 | `BRIDGE_PRELOAD_FILE_0002` | El archivo aún no se puede usar. Si todavía se está subiendo, termina la carga y reintenta con el mismo `mediaId`. Si se canceló su carga, sube un archivo nuevo y envía el nuevo `mediaId`. |
 

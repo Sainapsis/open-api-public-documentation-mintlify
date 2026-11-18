@@ -34,13 +34,13 @@
     "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
     "docs.json": "e2c6a32ea3a9e4f66b05e69692afd6a53235bd70e247473fbda83bdecf6afc5b",
-    "error-codes.mdx": "4596aebb2e6fb1380b6fdfab682ac126ba142daec28b11bbfdbd53e1e604a6a7",
+    "error-codes.mdx": "7be22d8a55376e87b2926c307261f37cc67192e898a24dc214465e77e18f350d",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
     "es/api-reference/openapi.yaml": "27bb0ed051ff30b5254bbaac8d4f8aa7ee1af9396cf3d9c33aa7910dc88f4499",
     "es/changelog.mdx": "b2d420cca846e287101c92623dbac4c485f0e11c4198653a80caa50f19d96f28",
     "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
-    "es/error-codes.mdx": "30aeea690c5d2322a2e177b0b3de08802f922308b06ed720ba0741ff5a314c93",
+    "es/error-codes.mdx": "aa5e828d5594a6d03370f2451812831314a0ef88efb874da973da7adae06deac",
     "es/guides/agent-outbound.mdx": "4602116efdc7585fa63ce2cce355122d3c6583c0c542b644af395e08f0dcc45f",
     "es/guides/first-conversation.mdx": "eb152c9a23454466b70b82cba98fa7755a720db6edbed22ab382aac1130af147",
     "es/guides/identifiers.mdx": "62b179df86934fe07beb8f38c7abd5dc78f04ad16b13cda05d21a440db0fe4c6",
@@ -48,7 +48,7 @@
     "es/guides/pipeline-records.mdx": "e2a03942ac556f75cb336920a9062d64646040454dcb17e9afeca8f329defc8c",
     "es/guides/responses.mdx": "ec6472f801f2c30985670f14e526c942ec405c7a5b511c984a86452dadd2ef65",
     "es/guides/send-attachments.mdx": "276f2588132bb36f8d2af0615e78f7a5e945439c9318c81aac0aa7de6a8e53b1",
-    "es/guides/send-template.mdx": "5d1699e0a46002467ee0e76fd756bd21f6e3b4d1171d6f64d4820704e96dc479",
+    "es/guides/send-template.mdx": "e90c8a7de441c87809afa7129baa4a47017796785918c35851e6f0196a252666",
     "es/index.mdx": "0387419b95c64f9be800811471a0145da1becf631d7a5d828617a07afd94bca6",
     "es/lead-capture/consent.mdx": "54f105a7a5411cf0c792e977821b9873c986ec2b1643ee9eed7d40a75631df2b",
     "es/lead-capture/errors.mdx": "31d3912e2db12220ba890b4e2cf915fe9934c68afcbe41c7862779da6c634354",
@@ -70,7 +70,7 @@
     "guides/pipeline-records.mdx": "4a5a24659e662d80e9b6e8d37b5fa3c04e4aa215cecbcd4d3bdf047c5356bafc",
     "guides/responses.mdx": "ee381ff3273d77f7b3d8cfc41c2b3c8b2b13ac9332462762cbe99be845fb02a4",
     "guides/send-attachments.mdx": "e87bffcc0533e84c06a6597ec4178861df02e1020079a7913251af249ca8e350",
-    "guides/send-template.mdx": "c5549878979a73162df873bb79c472b86755e464e464d4da3db05be6d84a0319",
+    "guides/send-template.mdx": "563a8e66081f28969a50349f9298bde6d8125a3d865696091dad973cb49e7867",
     "index.mdx": "84473d015c838bd8ed4785fb85c6758ac102bb66d36e2abff04aacbad57f21f5",
     "lead-capture/consent.mdx": "5bda24afe5d4c3d01e5d8c118b22c926339304feac29cba80fb51d25a71a4c30",
     "lead-capture/errors.mdx": "b0897defce7672536ff037b972ae4db7f0611fee0c81c5a43d04457afed36ae5",
@@ -82,7 +82,7 @@
     "pt-br/changelog.mdx": "f5ebecd2c3c7ee00801d64520995d86ae544264cd272db0233d32fab4ad9c455",
     "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
-    "pt-br/error-codes.mdx": "9669cbbfc73403e221e576744c7bc34e9b26cb45a5ae1e24a3921f3fc727617e",
+    "pt-br/error-codes.mdx": "f8262af8fff53a316a87bc5c4de035bf8883da89dcac1d1e052e34518ccfb90b",
     "pt-br/guides/agent-outbound.mdx": "b43380b51224c6d81fb6b0db9e2e0a9528987498badf91b231e6ab567185c157",
     "pt-br/guides/first-conversation.mdx": "d21f83a729a307d4a2d18e2e6c719854da15f222d3d4dc93071d02466340356c",
     "pt-br/guides/identifiers.mdx": "323dfe5a024987b03d1322ff5f8cfbdc853a727c50a399b1f97436624d8fb1bd",
@@ -90,7 +90,7 @@
     "pt-br/guides/pipeline-records.mdx": "a4371c29dfd3069974da88a34dc50871ecfdfef6256f7349e24071164a3c4d6f",
     "pt-br/guides/responses.mdx": "9f29f253f80f867eafd50ad3a8b014fda9e8440eb5f3c0e11d9a94241c96ad11",
     "pt-br/guides/send-attachments.mdx": "3e10ccd0c205762541af94297e30ec16b60a2d71ddb0a1e1543d3d77713905ef",
-    "pt-br/guides/send-template.mdx": "8efdd86446d66e0ad8b79bcbf2af543ffc38d4bf0ed5145b2a8366459b50e28f",
+    "pt-br/guides/send-template.mdx": "6abfc46a9e664adb05fa6fe27e085506cbed674e7640cc5ba71987ea8b09320d",
     "pt-br/index.mdx": "6071ded879949061fee0b73c82cdef28c68165b22b3c4aac296349a86caec7c5",
     "pt-br/lead-capture/consent.mdx": "3cbfc6db2c724e435aac01b50eb94bba0e3ad40c012f2ea205fa2c9a6515eaf1",
     "pt-br/lead-capture/errors.mdx": "189a7d4172d2af033d7d211711e15d92d02c5278db066df4bc27c1f8c13890aa",
@@ -1645,32 +1645,32 @@
       "sha256": "6ab8fec7880d3dd1c2b9b481037f1595ff50059d11ca36837ede5139e6f80e58"
     },
     "llms-full-en.json": {
-      "bytes": 339008,
-      "sha256": "e797fc4a1723af54839be19ac31111e0bcb27e5554c1bb81a5c0e14e8472dde2"
+      "bytes": 339206,
+      "sha256": "007ff883b482a1407184ed0e5fe391415f00dae280797c46f211942124f10c96"
     },
     "llms-es.json": {
       "bytes": 43666,
       "sha256": "70d8272aa057fa85a2b90697d64260ce03fc24096bf108552155a98cf82ff7c1"
     },
     "llms-full-es.json": {
-      "bytes": 363300,
-      "sha256": "ff89814fba6aa0204e822e70b4511d79feef808722d1bb6b74664de3e7cb9fec"
+      "bytes": 363544,
+      "sha256": "99caed381afcf937ed963b0ed04cb07086f70bb38202730e20512fdddeea75fa"
     },
     "llms-pt-br.json": {
       "bytes": 43616,
       "sha256": "7b7d57895665ba0cf1c6412fec6fc23e938c0b4aad48dfa1b2a696e36b0ffd1a"
     },
     "llms-full-pt-br.json": {
-      "bytes": 361508,
-      "sha256": "bbfb6aeb7741c0f5c6b486e1cb566e09d4bec9bf760b5f691ebd051ef8e524f4"
+      "bytes": 361733,
+      "sha256": "4d6eb2e754b9a5b58a8c9f1440eceb7b5aa1b862e838c87d9318b87e74c226e8"
     },
     "llms.txt": {
       "bytes": 47609,
       "sha256": "acaacab24bb650182ed9f3f31b40ddd42a60d09950da3f08b6738d955f608223"
     },
     "llms-full.txt": {
-      "bytes": 940944,
-      "sha256": "0635d5c27525e0857a4012033d27082b0322279af8f2e8658cc6f5c343d4fe02"
+      "bytes": 941611,
+      "sha256": "8a02eae41de0df32b40f7ceecf1f8009c4186b222c46f3726c3ba6de9c13e4c8"
     },
     "sitemap.xml": {
       "bytes": 113069,

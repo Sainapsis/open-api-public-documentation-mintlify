@@ -187,9 +187,9 @@ Idempotency-Key: erp-order-981-shipped
 }
 ```
 
-Send `template.id`, the `id` that step 1 returns: `GET .../templates/{templateId}` accepts the template's name and answers with its `id`. The request takes no `template.name`: a body with `name` fails with `422`. An unknown `id` fails with `404`. `parameters` follows the rules of steps 1 and 2. A template whose header is an image or video sends that file.
+Send `template.id`, the `id` that step 1 returns: `GET .../templates/{templateId}` accepts the template's name and answers with its `id`. The request takes no `template.name`: a body with `name` fails with `422`. An unknown `id` fails with `404`. `parameters` follows the rules of steps 1 and 2. A template whose header is an image, video, GIF or PDF document sends that file.
 
-To send your own image or video as the template's header (the image or video shown at the top of the message) instead, send `template.media` with its `type` (`IMAGE`, `VIDEO` or `GIF`, the type of the header) and one source. Send the `mediaId` of a file you uploaded with `POST /bridge/api/v1/workspaces/{workspaceId}/files`, as in [Send PDFs and other attachments](/guides/send-attachments):
+To send your own file as the template's header (the image, video, GIF or PDF document shown at the top of the message) instead, send `template.media` with its `type` (`IMAGE`, `VIDEO`, `GIF` or `DOCUMENT`, the type of the header) and one source. Send the `mediaId` of a file you uploaded with `POST /bridge/api/v1/workspaces/{workspaceId}/files`, as in [Send PDFs and other attachments](/guides/send-attachments):
 
 ```json
 {
@@ -223,7 +223,7 @@ Or send a public `https` `url` of the file:
 }
 ```
 
-`type` is required, and you send `mediaId` or `url`, never both. `type` must be the type of the template's header, or the request fails with `BRIDGE_TEMPLATE_0012`; with `mediaId`, the uploaded file must have that type too, and it must belong to your workspace with its upload finished. With `url`, Bridge downloads the file asynchronously: the result of the download is not part of the `201` response, and a download that fails is not reported in it. A template with an image or video header and no file configured on it needs `media`. Two requests have the same body only when they also send the same `type` and the same `mediaId` or `url`. WhatsApp can still refuse a file larger than its header limits after the `201`.
+`type` is required, and you send `mediaId` or `url`, never both. `type` must be the type of the template's header, or the request fails with `BRIDGE_TEMPLATE_0012`; with `mediaId`, the uploaded file must have that type too, and it must belong to your workspace with its upload finished. With `url`, Bridge downloads the file asynchronously: the result of the download is not part of the `201` response, and a download that fails is not reported in it. A document header must be a PDF: an uploaded file of another document format fails with `BRIDGE_TEMPLATE_0012`, and a `url` is not checked before the download. A template with a media header (image, video, GIF or document) and no file configured on it needs `media`. Two requests have the same body only when they also send the same `type` and the same `mediaId` or `url`. WhatsApp can still refuse a file larger than its header limits after the `201`.
 
 A successful request answers `201`:
 
@@ -277,8 +277,8 @@ Bridge reserves each Contact's cooldown before it stores the message, so two mar
 | `BRIDGE_CONVERSATION_0406` | The template is a marketing or utility template and a Contact of the Conversation is inside the workspace's promotional cooldown: another send already holds it. Bridge counts the sends it recorded or is recording, not whether WhatsApp delivered them. `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left, also in the `Retry-After` header. Nothing was sent to any Contact. Retry after that many seconds. |
 | `BRIDGE_TEMPLATE_0006` | The template is not approved for the line and language of at least one WhatsApp Contact, or a Contact's line has no WhatsApp Business account. Use a template approved for the line and language of every Contact of the Conversation. |
 | `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Fix the template values. The [error reference](/error-codes#template-error-codes) lists each one. |
-| `BRIDGE_TEMPLATE_0011`, `0012` | Fix `template.media`: send it only for a template with an image or video header, with a `type` that matches it, and with `mediaId` a file of that type. The [error reference](/error-codes#template-error-codes) lists each one. |
-| `BRIDGE_TEMPLATE_0013` | The template has an image or video header and no file to send. Send `template.media`, or ask for a file to be configured on the template. When `extra.expectedType` is `DOCUMENT`, Bridge cannot send document headers, with or without `template.media`: use another template. |
+| `BRIDGE_TEMPLATE_0011`, `0012` | Fix `template.media`: send it only for a template with a media header, with a `type` that matches it, and with `mediaId` a file of that type (a PDF for a `DOCUMENT` header). The [error reference](/error-codes#template-error-codes) lists each one. |
+| `BRIDGE_TEMPLATE_0013` | The template has a media header (image, video, GIF or document) and no file to send. Send `template.media`, or ask for a file to be configured on the template. |
 | `BRIDGE_PRELOAD_FILE_0001` | The `mediaId` is not a file of your workspace. Upload the file as in [Send PDFs and other attachments](/guides/send-attachments) and send the `mediaId` it returns. |
 | `BRIDGE_PRELOAD_FILE_0002` | The file is not usable yet. If it is still uploading, finish the upload and retry with the same `mediaId`. If its upload was cancelled, upload a new file and send the new `mediaId`. |
 
