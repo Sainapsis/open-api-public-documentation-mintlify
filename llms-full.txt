@@ -14,7 +14,8 @@ Read these public sources directly by HTTP; no MCP configuration or Bridge crede
 - Before generating an API request, read the relevant OpenAPI specification or the individual endpoint Markdown page. llms-full.txt collects guides and endpoint descriptions; it does not embed every request and response schema. The REST and Custom Connections contracts are separate.
 - Preserve the published host, method, path, operationId, authentication, headers, parameter and field names, types, formats, required and nullable fields, enums, defaults, limits, and response codes. Do not invent identifiers, fields, retry rules, or delivery guarantees. When published sources conflict, identify the conflicting passages and ask Bridge support to confirm the current behavior before relying on it.
 - Custom Connections is the current name of the landing-page feature previously documented as Lead Capture. The existing /lead-capture documentation URLs, captureKey field, campaign-leads endpoint, and BRIDGE.CAMPAIGN_LEADS error identifiers are unchanged. This is a naming change, not a change to authentication or the API contract.
-- For a complete workflow, start with the task guides: /guides/first-conversation, /guides/send-attachments, /guides/send-template, /guides/agent-outbound, /guides/pagination, /guides/identifiers and /guides/responses. Read the endpoint contract as well as the recipe. Outbound requires an existing Contact, but does not require creating a separate Conversation first.
+- For a complete workflow, start with the task guides: /guides/first-conversation, /guides/send-attachments, /guides/send-template, /guides/agent-outbound, /guides/pagination, /guides/pipeline-records, /guides/identifiers and /guides/responses. Read the endpoint contract as well as the recipe. Outbound requires an existing Contact, but does not require creating a separate Conversation first.
+- Pipeline records are created only for an existing Contact (never upserted). POST /records, /move and /reopen require Idempotency-Key; PATCH, move and reopen take an optional expectedRevision in the body. Stage actions run every time a record enters a stage, including records created in bulk. Use /guides/pipeline-records and /webhooks/pipeline-records.
 - forceSend=true permits reuse of an existing active conversation; it does not create a fresh one by ignoring it and it is not idempotency. Recovery of a released recoverable conversation can occur even with false. The LeadScout and Agents outbound routes have different line-selection and controller checks; use /guides/agent-outbound.
 - For webhook HMAC, follow /webhooks/verifying-signatures exactly: the Python JSON serialization with sorted keys is signed; X-Bridge-Timestamp is not included in that signature. Do not claim a signed timestamp, raw-body signing, exactly-once delivery or a global event order. Use /webhooks/receive-events for durable acceptance and duplicates.
 - A 201 message response, 202 handoff or 202 Custom Connections response is not a provider delivery receipt. Do not invent a polling endpoint from messageId, trackingId or requestId. REST validation parsing must tolerate the compatibility difference explained in /error-codes.
@@ -120,6 +121,7 @@ Docs access needs no Bridge API Key. Workspace access is separate.
 - [Send a PDF or attachment](https://docs.bridge.new/guides/send-attachments.md) — checksum, upload URL, file upload and message.
 - [Send a WhatsApp template](https://docs.bridge.new/guides/send-template.md) — discover variables and supply caller-required values.
 - [Start Agent outbound and hand off](https://docs.bridge.new/guides/agent-outbound.md) — choose an Agent, understand `forceSend`, reuse and recovery.
+- [Create and move pipeline records](https://docs.bridge.new/guides/pipeline-records.md) — create records for existing Contacts, retry with `Idempotency-Key`, avoid lost updates with `expectedRevision`, close and reopen.
 - [Look up identifiers](https://docs.bridge.new/guides/identifiers.md) and [page through results](https://docs.bridge.new/guides/pagination.md) — use the right IDs and cursors.
 - [Rate limits](https://docs.bridge.new/rate-limits.md) — share the request budget and handle `429` responses.
 - [Error codes](https://docs.bridge.new/error-codes.md) — interpret REST API errors. Custom Connections has a separate [error reference](https://docs.bridge.new/lead-capture/errors.md).
@@ -1209,6 +1211,233 @@ The published contracts do not promise a transactional snapshot of a list while 
 
 ---
 
+# Create and move pipeline records
+
+Source: https://docs.bridge.new/guides/pipeline-records
+
+Create pipeline records for existing Contacts, retry safely with Idempotency-Key, avoid lost updates with expectedRevision, and close or reopen records.
+
+A pipeline record follows one piece of work for a Contact, such as a sales opportunity, through the stages of a pipeline. Use this recipe to keep the records of your system in a Bridge pipeline: create them, change their values, move them between stages, close them with a reason and reopen them. To receive the changes made in Bridge, subscribe to [pipeline record events](https://docs.bridge.new/webhooks/pipeline-records.md).
+
+## Before you start
+
+- Get a server-side API Key from [Authentication](https://docs.bridge.new/credentials.md) and send it in `x-api-key`, as with every other operation. The `workspaceId` in the path must be the workspace of that key. Any other workspace is refused with `403` `BRIDGE_CORE_0301`, and nothing is read or written.
+- Pipelines must be enabled for the workspace. Otherwise every operation answers `403` `BRIDGE_PIPELINE_0301`.
+- [Retrieve the pipeline](https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes.md) you write to. It lists the `stageId` values, the attribute ids you use as `values` keys and the active close reasons. [List the pipelines](https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace.md) to find its id.
+
+```json 403 BRIDGE_CORE_0301
+{
+  "title": "You do not have permission to access this resource",
+  "status": 403,
+  "detail": "There exists a mismatch between the claims workspace and the provided workspace",
+  "code": "BRIDGE_CORE_0301"
+}
+```
+
+## The operations
+
+| Your goal | Operation | `Idempotency-Key` | `expectedRevision` |
+| --- | --- | --- | --- |
+| Create a record | [`POST .../records`](https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record.md) | Required | Not accepted |
+| Find records by your id, a Contact or a pipeline | [`GET .../records`](https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records.md) | Not accepted | Not accepted |
+| Read one record | [`GET .../records/{recordId}`](https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record.md) | Not accepted | Not accepted |
+| Change its name or values | [`PATCH .../records/{recordId}`](https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record.md) | Not accepted | Optional |
+| Move it to another stage, or close it | [`POST .../records/{recordId}/move`](https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage.md) | Required | Optional |
+| Reopen a closed record | [`POST .../records/{recordId}/reopen`](https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record.md) | Required | Optional |
+
+`...` stands for `/bridge/api/v1/workspaces/{workspaceId}`, on the REST API host `https://api-connect-us.bridge.new`.
+
+## Create a record
+
+Name the Contact with exactly one of `contact.id`, `contact.phone` or `contact.email`. Bridge finds the Contact the same way as [contact lookup](https://docs.bridge.new/api-reference/contacts-api/retrieve-a-contact-by-an-identifier.md); a Contact merged into another one resolves to the Contact that replaced it. The Contact is never created: when it does not exist the request fails with `404` `BRIDGE_EXTERNAL_0001`, so [create the Contact](https://docs.bridge.new/api-reference/contacts-api/create-a-new-contact.md) first and retry.
+
+Without `pipelineId` the record goes to the workspace's default pipeline, and without `stageId` to the pipeline's initial stage. A final stage is refused at creation. A pipeline set not to accept records from the API refuses the creation with `403` `BRIDGE_PIPELINE_0317`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-create" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contact": {
+      "phone": "+573001234567"
+    }
+  }'
+```
+
+A created record answers `201` with a `Location` header and the record. Keep its `id` and its `revision`:
+
+```json 201
+{
+  "id": "record-1",
+  "pipelineId": "pipe-sales",
+  "pipelineVersion": 3,
+  "stageId": "stage-new",
+  "state": "OPEN",
+  "name": "Ana Gómez",
+  "values": {
+    "budget": 1500
+  },
+  "contact": {
+    "id": "contact-1"
+  },
+  "ownerId": null,
+  "source": "API",
+  "externalId": null,
+  "revision": 1,
+  "closeReason": null,
+  "closedAt": null,
+  "createdAt": "2026-11-11T15:00:00.000Z",
+  "updatedAt": "2026-11-11T15:00:00.000Z"
+}
+```
+
+```json 404 BRIDGE_EXTERNAL_0001
+{
+  "title": "The requested external user was not found",
+  "status": 404,
+  "detail": "External user was not found with PHONE and value +573001234567",
+  "code": "BRIDGE_EXTERNAL_0001",
+  "extra": {
+    "externalIdentificationType": "PHONE",
+    "externalIdentificationValue": "+573001234567"
+  }
+}
+```
+
+### Link the record to your own id
+
+Send `externalId` with the id the record has in your system. A pipeline holds **one record per `externalId`**: a second creation with the same `externalId` in the same pipeline fails with `409` `BRIDGE_PIPELINE_0003`, and `extra.recordId` is the record that already has it. Read that record instead of creating another one. To find it later, [list records](https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records.md) with `externalId` (and `pipelineId` when it is not the default pipeline).
+
+The record id is chosen by Bridge; the request body has no field to set it.
+
+```json 409 BRIDGE_PIPELINE_0003
+{
+  "title": "A record with this external id already exists in the pipeline",
+  "status": 409,
+  "code": "BRIDGE_PIPELINE_0003",
+  "extra": {
+    "recordId": "record-1",
+    "pipelineId": "pipe-sales",
+    "externalId": "ERP-1"
+  }
+}
+```
+
+### One open record per Contact
+
+A pipeline can be set in Bridge to allow a Contact only one open record at a time. In such a pipeline, creating a record for a Contact that already has an open one fails with `409` `BRIDGE_PIPELINE_0318`, and `extra.openRecordId` is that open record: work on it instead. Closed records do not count, so a Contact can start a new record once the previous one is closed. Reopening a record fails the same way when the Contact has another open record in the pipeline.
+
+```json 409 BRIDGE_PIPELINE_0318
+{
+  "title": "The contact already has an open record in this pipeline",
+  "status": 409,
+  "detail": "Contact 'contact-1' already has the open record 'record-open' in pipeline 'pipe-onboarding'",
+  "code": "BRIDGE_PIPELINE_0318",
+  "extra": {
+    "openRecordId": "record-open",
+    "pipelineId": "pipe-onboarding",
+    "externalUserId": "contact-1"
+  }
+}
+```
+
+## Retry safely with Idempotency-Key
+
+`POST .../records`, `POST .../move` and `POST .../reopen` require an `Idempotency-Key` header of 1 to 255 characters. Use one key per change you want to make, and send the same key when you retry that change.
+
+| You send | Bridge answers |
+| --- | --- |
+| The same key and the same body, after the first request finished | The same status (`201` or `200`) with the header `Idempotent-Replayed: true`. The body is the record **as it is now**, so it can already show later changes |
+| The same key with a different body, or on another record or operation | `422` `BRIDGE_PIPELINE_0402` |
+| The same key while the first request is still running | `409` `BRIDGE_PIPELINE_0401`. Retry after a pause |
+| The same key after the first request failed | The request runs again: a failed request frees its key |
+
+A key is kept for **24 hours**; after that the same key runs as a new request. Keys are shared by every operation of the workspace, so do not reuse one across records.
+
+**Warning**
+
+  If a request is cut off before it finishes, its key can keep answering `409` `BRIDGE_PIPELINE_0401` for up to 24 hours. Retry with a new key. Send `externalId` when you create records, so that a retry with a new key can never create a second record.
+
+## Avoid overwriting changes with expectedRevision
+
+Every record has a `revision` that goes up by one each time the record changes. Send the `revision` you last read as `expectedRevision` in the body of `PATCH`, `move` or `reopen`. If someone changed the record in the meantime, the request fails with `409` `BRIDGE_PIPELINE_0101` and changes nothing. `extra.currentRecord` is the record as it is now: decide again from it and retry with its `revision`.
+
+`expectedRevision` is optional. Without it, the change applies to the record as Bridge reads it, and a change made at the same moment can still fail it with the same `409`.
+
+```json PATCH
+{
+  "expectedRevision": 2,
+  "name": "Renamed"
+}
+```
+
+```json 409 BRIDGE_PIPELINE_0101
+{
+  "title": "The pipeline record was modified by another operation",
+  "status": 409,
+  "detail": "Pipeline record 'record-1' is at revision 4, the write expected 2",
+  "code": "BRIDGE_PIPELINE_0101",
+  "extra": {
+    "recordId": "record-1",
+    "expectedRevision": 2,
+    "currentRevision": 4,
+    "currentRecord": {
+      "id": "record-1",
+      "stageId": "stage-proposal",
+      "revision": 4
+    }
+  }
+}
+```
+
+`extra.currentRecord` holds the whole record, with the same fields as the `201` response above; the example shows only three of them.
+
+## Move, close and reopen
+
+[Move the record](https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage.md) with the `stageId` of a stage of the pipeline version it follows. Moving it to a **final stage closes it**. A move to a final stage can carry `reasonId`, one of the active close reasons of the pipeline, and a `reasonNote` of up to 500 characters, which needs `reasonId`. The close reason is optional: without one, the record closes with `closeReason: null`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records/$RECORD_ID/move" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-won" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "stageId": "stage-won",
+    "reasonId": "reason-price"
+  }'
+```
+
+The answer is `200` with the record. A closed record has `state: "FINAL"`, `closedAt` and, when the move carried one, `closeReason` with the `id`, `label` and `note` of the reason.
+
+| Problem | Answer |
+| --- | --- |
+| The record is already in that stage | `409` `BRIDGE_PIPELINE_0004` |
+| The record is closed | `409` `BRIDGE_PIPELINE_0306`: reopen it first |
+| The stage is not in the record's pipeline version | `422` `BRIDGE_PIPELINE_0311`, with `errRecordStage` in `extra.errors` |
+| A close reason or note on a move to an open stage | `422` `BRIDGE_PIPELINE_0311`, with `errReasonOnlyFinal` in `extra.errors` |
+| The close reason does not exist, or is retired | `422` `BRIDGE_PIPELINE_0315`, or `422` `BRIDGE_PIPELINE_0314` |
+| The stage requires a complete Contact | `422` `BRIDGE_PIPELINE_0305`; `extra.missing` names what the Contact lacks |
+
+[Reopen a closed record](https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record.md) to take it back to the open stage it was in before it was closed; its close reason is cleared. When its history names no open stage of its version, the record goes to the pipeline's initial stage. The body is optional and only takes `expectedRevision`. Reopening an open record fails with `409` `BRIDGE_PIPELINE_0307`.
+
+## Stage actions run on every entry
+
+**Warning**
+
+  A stage can have actions, such as creating a task or creating a record in another pipeline. They run **every time a record enters the stage**: when it is created in the stage, when it is moved to it and when it is reopened into it. That includes every record you create through the API, so a bulk import into a stage with actions runs them once per record. Check the actions of the stage before an import.
+
+The actions run after the API answers; the response does not wait for them. Their results arrive as [`pipeline_action.*` webhook events](https://docs.bridge.new/webhooks/pipeline-records.md#stage-action-events).
+
+## Errors and limits
+
+- Every error answers a `Problem` body. Branch on `code`, not on `title`. See [Pipeline error codes](https://docs.bridge.new/error-codes.md#pipeline-error-codes) for each code and what to do.
+- The pipelines operations draw from the same budget as the rest of the API: **50 requests every 5 seconds per workspace**. See [Rate limits](https://docs.bridge.new/rate-limits.md).
+
+---
+
 # Responses, errors, and retries
 
 Source: https://docs.bridge.new/guides/responses
@@ -1592,6 +1821,8 @@ That distinction shows up when you read:
 
 So page size decides the cost of a full sweep. Walking 500 contacts costs 5 requests at 100 per page, and 25 requests at 20 per page — same data, five times the budget.
 
+The pipelines operations draw from the same budget. A retry with the same `Idempotency-Key` counts as a new request, even when Bridge answers with the result of the first one.
+
 **Note**
 
   Prefer the largest page size an endpoint accepts when you are reading a list in full, and read a single resource by its id when you already know which one you need.
@@ -1917,6 +2148,43 @@ Error codes for internal user operations.
 | `BRIDGE_INTERNAL_0003` | Inactive Internal User | One or more internal users are inactive in the workspace; check the user status in the workspace settings |
 | `BRIDGE_INTERNAL_0004` | Internal User Without Configured Field | Internal user does not have configured field; check the workspace or internal information settings |
 | `BRIDGE_INTERNAL_0101` | Internal User Does Not Support Operation | The internal user does not support this operation |
+
+## Pipeline Error Codes
+
+Error codes for the pipelines and pipeline records operations. See [Create and move pipeline records](https://docs.bridge.new/guides/pipeline-records.md) for the full workflow.
+
+| Code | Status | Title | When it happens and what to do |
+| ---- | ------ | ----- | ------------------------------ |
+| `BRIDGE_PIPELINE_0001` | 404 | Pipeline Record Not Found | The record does not exist in your workspace. Check the `recordId` |
+| `BRIDGE_PIPELINE_0003` | 409 | Pipeline Record External Id Taken | The pipeline already has a record with this `externalId`. `extra.recordId` is that record: read it instead of creating another |
+| `BRIDGE_PIPELINE_0004` | 409 | Pipeline Record Already In Stage | The record is already in the stage of the move. Nothing to do |
+| `BRIDGE_PIPELINE_0101` | 409 | Pipeline Record Revision Conflict | The record changed after the `revision` you sent as `expectedRevision`. `extra.currentRecord` is the record as it is now: decide again and retry with its `revision` |
+| `BRIDGE_PIPELINE_0201` | 404 | Pipeline Not Found | The pipeline does not exist in your workspace. [List the pipelines](https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace.md) to find its id |
+| `BRIDGE_PIPELINE_0301` | 403 | Pipelines Disabled | Pipelines are not enabled for the workspace. Ask the workspace administrator |
+| `BRIDGE_PIPELINE_0305` | 422 | Contact Incomplete | The stage requires a complete Contact. `extra.missing` names what is missing: complete the Contact, then retry |
+| `BRIDGE_PIPELINE_0306` | 409 | Pipeline Record Not Open | The record is closed. Reopen it before moving it |
+| `BRIDGE_PIPELINE_0307` | 409 | Pipeline Record Not Final | Only a closed record can be reopened |
+| `BRIDGE_PIPELINE_0311` | 422 | Pipeline Record Validation Failed | The record is not valid. `extra.errors` lists every problem, each with `path`, `code` and `message` |
+| `BRIDGE_PIPELINE_0314` | 422 | Close Reason Retired | The close reason is retired. Use an active one from the pipeline |
+| `BRIDGE_PIPELINE_0315` | 422 | Close Reason Not Found | The close reason does not exist in the pipeline |
+| `BRIDGE_PIPELINE_0317` | 403 | Pipeline Entry Disabled | The pipeline does not accept records created through the API |
+| `BRIDGE_PIPELINE_0318` | 409 | Contact Has Open Record | The pipeline allows one open record per Contact and the Contact already has one. `extra.openRecordId` is that record: work on it instead |
+| `BRIDGE_PIPELINE_0401` | 409 | Idempotency Request In Progress | A request with this `Idempotency-Key` is still running. Retry after a pause; if it keeps failing, retry with a new key |
+| `BRIDGE_PIPELINE_0402` | 422 | Idempotency Key Reused | The `Idempotency-Key` was already used with a different request. Use a new key for a new change |
+
+`BRIDGE_PIPELINE_0311` codes in `extra.errors[].code`:
+
+| Code | Meaning |
+| ---- | ------- |
+| `errRecordStage` | The stage is not in the record's pipeline version, or is a final stage at creation |
+| `errRecordName` | The name is missing, blank or longer than 200 characters |
+| `errRecordValue` | A value does not match its attribute's type |
+| `errRecordValueKey` | A `values` key is not an attribute of the record in the pipeline version |
+| `errRecordNoChange` | The update changes nothing |
+| `errReasonNote` | `reasonNote` is too long or was sent without `reasonId` |
+| `errReasonOnlyFinal` | A close reason or note was sent on a move to an open stage |
+
+The pipelines operations also return `403` `BRIDGE_CORE_0301` when the `workspaceId` in the path is not the workspace of the API Key, `404` `BRIDGE_EXTERNAL_0001` when the Contact does not exist, `404` `BRIDGE_WORKSPACE_0001`, `400` `BRIDGE_CORE_0104` for an invalid cursor, and `429` `BRIDGE_RATE_LIMIT_0001`.
 
 ## Provider Channel Error Codes
 
@@ -2518,6 +2786,23 @@ v1
 Receive a notification once an email has been processed and the AI summary is available. Emails are not deleted, so only the `email.updated` event is emitted.
 
 - `email.updated`
+
+### Pipeline Record Notifications
+
+v1
+
+Receive a notification for every change to a pipeline record and for the result of every stage action. See [Pipeline record events](https://docs.bridge.new/webhooks/pipeline-records.md).
+
+- `pipeline_record.created`
+- `pipeline_record.stage_changed`
+- `pipeline_record.closed`
+- `pipeline_record.updated`
+- `pipeline_record.reopened`
+- `pipeline_record.linked`
+- `pipeline_record.unlinked`
+- `pipeline_action.executed`
+- `pipeline_action.failed`
+- `pipeline_action.skipped`
 
 ---
 
@@ -3248,6 +3533,95 @@ The `sentFromBridge` field indicates direction: true for outbound emails sent fr
 
 ---
 
+## Pipeline Record Notifications
+
+v1
+
+Triggered when a pipeline record changes and when a stage action runs. [Pipeline record events](https://docs.bridge.new/webhooks/pipeline-records.md) describes every field, trigger, close reason and action result code, with an example for each event type.
+
+  
+
+### Event types
+
+    | Event Type | Description |
+    | --- | --- |
+    | `pipeline_record.created` | A record was created |
+    | `pipeline_record.stage_changed` | A record moved to another stage |
+    | `pipeline_record.closed` | A record moved into a final stage; sent right after its `pipeline_record.stage_changed` |
+    | `pipeline_record.updated` | The record's values changed |
+    | `pipeline_record.reopened` | A closed record went back to an open stage |
+    | `pipeline_record.linked` | A conversation was linked to the record |
+    | `pipeline_record.unlinked` | A conversation was unlinked from the record |
+    | `pipeline_action.executed` | A stage action ran |
+    | `pipeline_action.failed` | A stage action failed |
+    | `pipeline_action.skipped` | A stage action did not apply and did not run |
+  
+
+  
+
+### Example payload
+
+    ```json
+    {
+      "eventId": "b1d5e8a2c7f4:closed",
+      "eventType": "pipeline_record.closed",
+      "entity": "pipeline_record",
+      "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+      "timestamp": "2026-11-09T14:03:12.345Z",
+      "payload": {
+        "record": {
+          "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+          "name": "ACME - Licenses 2027",
+          "pipeline": {
+            "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+            "version": 3,
+            "label": "B2B Sales"
+          },
+          "stage": {
+            "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+            "label": "Lost",
+            "state": "FINAL"
+          },
+          "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+          "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+          "externalId": "CRM-88412",
+          "values": [
+            {
+              "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+              "label": "Amount",
+              "type": "CURRENCY",
+              "value": 12500000
+            },
+            {
+              "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+              "label": "Probability",
+              "type": "PERCENT",
+              "value": 62.5
+            }
+          ]
+        },
+        "previousStage": {
+          "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+        },
+        "reason": {
+          "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+          "label": "Price",
+          "note": "The customer chose another offer"
+        },
+        "trigger": "CONVERSATION_RELEASE",
+        "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+        "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+        "author": {
+          "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+          "type": "CORE_USER"
+        }
+      }
+    }
+    ```
+  
+
+---
+
 ## Notes
 
 - Bridge may add new event categories in the future.
@@ -3261,6 +3635,778 @@ The `sentFromBridge` field indicates direction: true for outbound emails sent fr
 - [Overview](https://docs.bridge.new/webhooks.md)
 - [Verifying Signatures](https://docs.bridge.new/webhooks/verifying-signatures.md)
 - [Console Configuration](https://docs.bridge.new/webhooks/configuration.md)
+- [Pipeline record events](https://docs.bridge.new/webhooks/pipeline-records.md)
+
+---
+
+# Pipeline record events
+
+Source: https://docs.bridge.new/webhooks/pipeline-records
+
+Webhook events for pipeline records and stage actions: event types, payload fields, triggers, close reasons and action result codes.
+
+v1
+
+Subscribe to pipeline record events to learn about every change to a pipeline record in your workspace and about the result of every stage action. Each event uses the [common envelope](https://docs.bridge.new/webhooks/events.md#common-event-structure), and its `payload` carries the record as it is after the change.
+
+Use the [pipeline records guide](https://docs.bridge.new/guides/pipeline-records.md) when your system also creates or moves records through the REST API.
+
+---
+
+## Event types
+
+| Event Type | Entity | When it is sent |
+| --- | --- | --- |
+| `pipeline_record.created` | `pipeline_record` | A record was created |
+| `pipeline_record.stage_changed` | `pipeline_record` | A record moved to another stage |
+| `pipeline_record.closed` | `pipeline_record` | The move landed in a final stage. Sent right after its `pipeline_record.stage_changed`, with the same payload |
+| `pipeline_record.updated` | `pipeline_record` | The record's values changed |
+| `pipeline_record.reopened` | `pipeline_record` | A closed record went back to an open stage |
+| `pipeline_record.linked` | `pipeline_record` | A conversation was linked to the record |
+| `pipeline_record.unlinked` | `pipeline_record` | A conversation was unlinked from the record |
+| `pipeline_action.executed` | `pipeline_action` | A stage action ran |
+| `pipeline_action.failed` | `pipeline_action` | A stage action failed. `action.failureReason` says why |
+| `pipeline_action.skipped` | `pipeline_action` | A stage action did not apply and did not run. `action.skipReason` says why |
+
+Each change produces one event, except a move into a final stage, which produces two: `pipeline_record.stage_changed`, then `pipeline_record.closed`. Both carry the same `payload`; the `eventId` of `pipeline_record.closed` ends in `:closed`.
+
+---
+
+## Envelope
+
+| Field | Value |
+| --- | --- |
+| `eventId` | Identifier of the event. Use it, with `workspaceId` and `eventType`, to discard duplicates |
+| `eventType` | One of the event types above |
+| `entity` | `pipeline_record` or `pipeline_action`, the prefix of `eventType` |
+| `workspaceId` | Your workspace |
+| `timestamp` | When the change was recorded, in UTC with milliseconds, for example `2026-11-09T14:03:12.345Z` |
+| `payload` | The fields below |
+
+---
+
+## Payload
+
+Fields without a value are left out of the payload, except `record.values`, which is always present.
+
+| Field | Events | Meaning |
+| --- | --- | --- |
+| `record.id` | All | Record identifier, the `id` of the [pipeline records API](https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record.md) |
+| `record.name` | All | Record name |
+| `record.pipeline` | All | `id`, `version` and `label` of the pipeline the record belongs to |
+| `record.stage` | All | `id`, `label` and `state` of the stage the record is in after the change. `state` is `OPEN` or `FINAL` |
+| `record.contactId` | All | Contact the record belongs to |
+| `record.ownerId` | When the record has an owner | Bridge User who owns the record |
+| `record.externalId` | When the record has one | Your own identifier for the record |
+| `record.values` | All | The record's attribute values. See [Record values](https://docs.bridge.new/webhooks/pipeline-records.md#record-values) |
+| `action` | `pipeline_action.*` | The stage action and its result. See [Stage action events](https://docs.bridge.new/webhooks/pipeline-records.md#stage-action-events) |
+| `previousStage` | Stage moves and `pipeline_record.reopened` | `id` of the stage the record left |
+| `reason` | Moves that carried a close reason | `id`, `label` and, when there is one, `note` of the close reason |
+| `trigger` | All | What caused the change. See [Triggers](https://docs.bridge.new/webhooks/pipeline-records.md#triggers) |
+| `conversationId`, `sessionId` | When the change happened in a conversation | The conversation and its session |
+| `author` | All | `id` and `type` of who made the change. Stage actions are made by the system |
+
+### Record values
+
+`record.values` is a list with one item per attribute that has a value: `{ "id", "label", "type", "value" }`. The `id` of an attribute never changes, so a renamed attribute keeps its `id`. Read values by `id` when you store them.
+
+| `type` | `value` |
+| --- | --- |
+| `NUMBER`, `PERCENT`, `CURRENCY` | Number. `PERCENT` goes from 0 to 100. `CURRENCY` is an amount with no currency code |
+| `DATE` | String `YYYY-MM-DD` |
+| `TEXT` | String |
+| `LIST` | String, one of the attribute's options |
+| `MULTI` | List of distinct strings, each one of the attribute's options |
+
+Values recorded before Bridge described the attributes arrive with `label` and `type` set to `null`, after the described ones.
+
+### Triggers
+
+| `trigger` | The change came from |
+| --- | --- |
+| `ADVISOR` | A Bridge User working in the Bridge app |
+| `CONVERSATION_RELEASE` | A Bridge User releasing a conversation and closing its record at the same time |
+| `API` | The [REST API](https://docs.bridge.new/guides/pipeline-records.md) |
+| `ACTION` | A stage action. Every `pipeline_action.*` event has this trigger |
+| `INBOUND_SESSION` | A conversation started by a contact, which created the record or was linked to it |
+
+### Close reasons
+
+`reason` is present when the move carried a close reason, for example when a record is closed as lost with the reason "Price". `reason.id` is the close reason of the pipeline, `reason.label` its text and `reason.note` the free text written with it. A move into a final stage can also have no close reason.
+
+---
+
+## Stage action events
+
+The actions of a stage run **every time a record enters the stage**: when it is created in it, when it moves to it and when it is reopened into it. That includes records created in bulk, so a large import into a stage with actions produces one action event per record and action.
+
+The `action` object of a `pipeline_action.*` event:
+
+| Field | Meaning |
+| --- | --- |
+| `action.id` | The action of the stage that ran |
+| `action.type` | `CREATE_TASK`, `CREATE_IN_PIPELINE`, `CLOSE_SESSION`, `SET_SESSION_PRIORITY` or `TRANSFER_TO_TEAM` |
+| `action.refId` | What the action points to: the task or record it created, or, when it was skipped with `TASK_STILL_OPEN` or `CONTACT_HAS_OPEN_RECORD`, the task or record that is still open |
+| `action.skipReason` | Only on `pipeline_action.skipped`: why the action did not apply |
+| `action.failureReason` | Only on `pipeline_action.failed`: why the action failed |
+
+**Note**
+
+  `TRANSFER_TO_TEAM` is not supported yet. A stage that still holds it produces `pipeline_action.failed` with `ACTION_NOT_SUPPORTED`, or `pipeline_action.skipped` with `NO_OPEN_SESSION` when the record has no open conversation.
+
+### Skip reasons
+
+A skipped action is a normal outcome: the action did not apply to this record, so nothing was changed. `skipReason` is always a code.
+
+| `skipReason` | Meaning |
+| --- | --- |
+| `NO_OPEN_SESSION` | The action needs the record's open conversation and the record has none. A `CREATE_TASK` for whoever attends the conversation is skipped this way only when the record never had a conversation |
+| `SESSION_CLOSED` | `SET_SESSION_PRIORITY`: the conversation closed before the priority could be set |
+| `ALREADY_RELEASED` | `CLOSE_SESSION`: the conversation had already been released |
+| `OTHER_OPEN_RECORDS` | `CLOSE_SESSION`: the conversation stays open because the contact has another open record |
+| `TASK_STILL_OPEN` | `CREATE_TASK`: the task this action created on an earlier entry into the stage is still open, so no second task was created. `action.refId` is that task |
+| `ASSIGNEE_NOT_RESOLVED` | `CREATE_TASK` for whoever attends the record's conversation: nobody did, after several retries while the conversation was open, or at once when it was closed |
+| `TEAM_HAS_NO_MEMBERS` | `CREATE_TASK` for a team: the team has no active members |
+| `CONTACT_HAS_OPEN_RECORD` | `CREATE_IN_PIPELINE` into a pipeline that allows one open record per contact: the contact already has one there. `action.refId` is that record |
+
+### Failure reasons
+
+`failureReason` is `CODE` or `CODE: detail`. Switch on the part before the colon; the detail helps support and its text can change. The code is one of:
+
+- A code of the stage actions themselves, listed below.
+- The error code of the Bridge domain that refused the action, for example `BRIDGE_TASK_0308` when the task could not be created.
+- `HTTP_<status>`, when that domain answered with no error code, for example `HTTP_503`.
+
+| Code | Meaning |
+| --- | --- |
+| `ACTION_NOT_SUPPORTED` | The action type is not supported yet, for example `TRANSFER_TO_TEAM` |
+| `INVALID_ACTION_CONFIG` | The action is missing a setting it needs, for example a task title or a priority |
+| `TARGET_PIPELINE_NOT_FOUND` | `CREATE_IN_PIPELINE`: the target pipeline no longer exists |
+| `TARGET_STAGE_NOT_FOUND` | `CREATE_IN_PIPELINE`: the target stage is not a regular stage of the target pipeline's current version |
+| `CHAIN_LIMIT_REACHED` | `CREATE_IN_PIPELINE`: the chain of records created from one another already holds 10 records |
+| `TEAM_NOT_FOUND` | `CREATE_TASK` for a team: the team no longer exists or is disabled |
+| `TEAM_TOO_LARGE` | `CREATE_TASK` for a team: the team has more active members than a task can hold (48) |
+| `TIMEOUT` | Bridge did not answer in time, after several retries |
+| `NETWORK_ERROR` | Bridge could not be reached, after several retries |
+| `UNEXPECTED_ERROR` | An unexpected error, after several retries |
+
+New codes can be added to both lists. The meaning of an existing code never changes, so treat an unknown code as "did not run" and keep processing.
+
+---
+
+## Delivery and ordering
+
+- Delivery can be duplicated. Discard repeated events as described in [Receive events](https://docs.bridge.new/webhooks/receive-events.md).
+- `pipeline_record.closed` is sent after its `pipeline_record.stage_changed`. When a delivery is retried, only the event that was not delivered is sent again, so `pipeline_record.closed` can arrive later than its `pipeline_record.stage_changed`.
+- Events of different records are not ordered. For one record, order its events by `timestamp`.
+- `pipeline_action.*` events arrive after the `pipeline_record.created`, `pipeline_record.stage_changed` or `pipeline_record.reopened` that ran the actions.
+- Records that existed before you subscribed appear with their next change.
+
+---
+
+## Example payloads
+
+### Record event examples
+
+```json Created
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.created",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Stage changed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.stage_changed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14"
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Stage changed to final
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.stage_changed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+    },
+    "reason": {
+      "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+      "label": "Price",
+      "note": "The customer chose another offer"
+    },
+    "trigger": "CONVERSATION_RELEASE",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Closed
+{
+  "eventId": "b1d5e8a2c7f4:closed",
+  "eventType": "pipeline_record.closed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+    },
+    "reason": {
+      "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+      "label": "Price",
+      "note": "The customer chose another offer"
+    },
+    "trigger": "CONVERSATION_RELEASE",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Updated
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.updated",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Reopened
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.reopened",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14"
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Linked
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.linked",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Unlinked
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.unlinked",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+
+### Stage action event examples
+
+```json Executed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.executed",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "CREATE_TASK",
+      "refId": "2e9c5a7d-1f4b-4c68-9a03-7d5b1e8c4f26"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+```json Failed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.failed",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "TRANSFER_TO_TEAM",
+      "failureReason": "ACTION_NOT_SUPPORTED"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+```json Skipped
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.skipped",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "CLOSE_SESSION",
+      "skipReason": "NO_OPEN_SESSION"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+
+---
+
+## Related Topics
+
+- [Event reference](https://docs.bridge.new/webhooks/events.md)
+- [Pipeline records guide](https://docs.bridge.new/guides/pipeline-records.md)
+- [Receive events](https://docs.bridge.new/webhooks/receive-events.md)
+- [Console configuration](https://docs.bridge.new/webhooks/configuration.md)
 
 ---
 
@@ -4308,6 +5454,192 @@ This corpus contains guides and operation descriptions. It does not embed every 
 
 ---
 
+# List the pipelines of a workspace
+
+Source: https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace
+
+**Operation reference:** `get /bridge/api/v1/workspaces/{workspaceId}/pipelines`
+
+**operationId:** `list_pipelines_bridge_api_v1_workspaces__workspaceId__pipelines_get`
+
+List the active pipelines of the workspace, sorted by label.
+
+`isDefault` marks the pipeline `POST /records` uses when no `pipelineId` is sent, and `acceptsApiRecords`
+whether a pipeline takes records created through this API.
+
+[Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
+
+This corpus contains guides and operation descriptions. It does not embed every request and response schema. Read the linked OpenAPI contract before generating a request.
+
+---
+
+# Retrieve a pipeline with its stages and attributes
+
+Source: https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes
+
+**Operation reference:** `get /bridge/api/v1/workspaces/{workspaceId}/pipelines/{pipelineId}`
+
+**operationId:** `retrieve_pipeline_bridge_api_v1_workspaces__workspaceId__pipelines__pipelineId__get`
+
+Get an active pipeline with its current version: stages in order, attributes and active close reasons.
+
+Use it to know which `stageId` and `values` keys `POST /records` accepts.
+
+[Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
+
+This corpus contains guides and operation descriptions. It does not embed every request and response schema. Read the linked OpenAPI contract before generating a request.
+
+---
+
+# List pipeline records
+
+Source: https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records
+
+**Operation reference:** `get /bridge/api/v1/workspaces/{workspaceId}/records`
+
+**operationId:** `list_pipeline_records_bridge_api_v1_workspaces__workspaceId__records_get`
+
+List records of the workspace, most recently updated first, found in exactly one way.
+
+- `externalId`, with an optional `pipelineId` (the default pipeline otherwise): the one record your system
+  created with that id, or none. No cursor follows.
+- One of `contactId`, `contactPhone` or `contactEmail`: the records of that contact, optionally narrowed to a
+  `pipelineId` and a `stageId`. The narrowing applies to each page read, so a page may hold fewer than
+  `limit` records, or none, while a `cursor` still follows it: keep reading until `cursor` is null.
+- `pipelineId` alone: the records of that pipeline, optionally narrowed to a `stageId`.
+
+Any other combination fails with 422.
+
+[Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
+
+This corpus contains guides and operation descriptions. It does not embed every request and response schema. Read the linked OpenAPI contract before generating a request.
+
+---
+
+# Create a pipeline record
+
+Source: https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record
+
+**Operation reference:** `post /bridge/api/v1/workspaces/{workspaceId}/records`
+
+**operationId:** `create_pipeline_record_bridge_api_v1_workspaces__workspaceId__records_post`
+
+Create a record of a contact in a pipeline, such as a sales opportunity.
+
+The contact is given by exactly one of `id`, `phone` or `email` and must exist: it is never created (404
+`BRIDGE_EXTERNAL_0001`). `pipelineId` defaults to the workspace's default pipeline and `stageId` to the
+pipeline's initial stage. A missing or blank `name` defaults to the contact's full name, then its cellphone,
+then its email. Only open stages are accepted, and only `RECORD`-scope attributes of the pipeline's current
+version in `values` (a `null`, a blank text or an empty list is left out); every problem found is listed in `extra.errors` of the 422
+`BRIDGE_PIPELINE_0311`. When the stage the record starts in requires a complete contact (first name, last name,
+cellphone and every required custom attribute of the workspace), an incomplete one fails with 422
+`BRIDGE_PIPELINE_0305`, whose `extra.missing` names what it lacks. A second record with the same `externalId`
+in the pipeline fails with 409 `BRIDGE_PIPELINE_0003`, whose `extra.recordId` is the existing record.
+
+`Idempotency-Key` is required. Retrying with the same key and body answers 201 with the first record and
+`Idempotent-Replayed: true`. The same key with a different body fails with 422 `BRIDGE_PIPELINE_0402`, and
+while the first request is still running with 409 `BRIDGE_PIPELINE_0401`. When the request fails, the key is
+freed and can be retried. If the first request was cut off before it finished, its key keeps answering 409
+`BRIDGE_PIPELINE_0401` for up to 24 hours: retry with a new key, and send `externalId` so that a retry never
+creates a second record.
+
+[Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
+
+This corpus contains guides and operation descriptions. It does not embed every request and response schema. Read the linked OpenAPI contract before generating a request.
+
+---
+
+# Retrieve a pipeline record
+
+Source: https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record
+
+**Operation reference:** `get /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}`
+
+**operationId:** `retrieve_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__get`
+
+Get a record of the workspace by its id.
+
+[Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
+
+This corpus contains guides and operation descriptions. It does not embed every request and response schema. Read the linked OpenAPI contract before generating a request.
+
+---
+
+# Update a pipeline record
+
+Source: https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record
+
+**Operation reference:** `patch /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}`
+
+**operationId:** `update_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__patch`
+
+Change the name or some values of a record, open or closed.
+
+Only the fields sent change: a missing `name` keeps the name, and the attributes left out of `values` keep their
+value; a `null`, a blank text or an empty list removes a value. A record always has a name, so a `null` or blank
+`name` fails like any other invalid field. Every problem found is listed in `extra.errors` of the 422
+`BRIDGE_PIPELINE_0311`, which is also the answer to a body that changes nothing. A change that leaves the record
+as it is writes nothing and answers the record. With `expectedRevision`, a record changed since you read it fails
+with 409 `BRIDGE_PIPELINE_0101`, whose `extra.currentRecord` is the record as it is now.
+
+[Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
+
+This corpus contains guides and operation descriptions. It does not embed every request and response schema. Read the linked OpenAPI contract before generating a request.
+
+---
+
+# Move a pipeline record to another stage
+
+Source: https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage
+
+**Operation reference:** `post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/move`
+
+**operationId:** `move_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__move_post`
+
+Move an open record to another stage of the pipeline version it follows; a final stage closes it.
+
+A stage that is not in that version, such as one of another pipeline, fails with 422 `BRIDGE_PIPELINE_0311`
+(`errRecordStage`), and the stage the record is already in with 409 `BRIDGE_PIPELINE_0004`. A closed record
+fails with 409 `BRIDGE_PIPELINE_0306`: reopen it first. When the stage requires a complete contact, an
+incomplete one fails with 422 `BRIDGE_PIPELINE_0305`. A move to a final stage may carry an active `reasonId`
+of the pipeline (422 `BRIDGE_PIPELINE_0315` when it does not exist, `BRIDGE_PIPELINE_0314` when it is retired)
+and a `reasonNote`; without one the record closes with no reason. A reason or a note on a move to an open
+stage fails with 422 `BRIDGE_PIPELINE_0311`. With `expectedRevision`, a record changed since you read it fails
+with 409 `BRIDGE_PIPELINE_0101`, whose `extra.currentRecord` is the record as it is now.
+
+`Idempotency-Key` is required and works like on `POST /records`: a retry with the same key and body answers the
+record with `Idempotent-Replayed: true`, as it is now. The same key on another record or operation fails with
+422 `BRIDGE_PIPELINE_0402`.
+
+[Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
+
+This corpus contains guides and operation descriptions. It does not embed every request and response schema. Read the linked OpenAPI contract before generating a request.
+
+---
+
+# Reopen a closed pipeline record
+
+Source: https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record
+
+**Operation reference:** `post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/reopen`
+
+**operationId:** `reopen_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__reopen_post`
+
+Take a closed record back to the open stage it was in before it was closed, and clear its close reason.
+
+When its history names no open stage of its version, the record goes to the pipeline's initial stage. An open
+record fails with 409 `BRIDGE_PIPELINE_0307`. When that stage requires a complete contact, an incomplete one
+fails with 422 `BRIDGE_PIPELINE_0305`. The body is optional; with `expectedRevision`, a record changed since you
+read it fails with 409 `BRIDGE_PIPELINE_0101`, whose `extra.currentRecord` is the record as it is now.
+
+`Idempotency-Key` is required and works like on `POST /records/{recordId}/move`.
+
+[Exact OpenAPI contract](https://docs.bridge.new/api-reference/openapi.yaml)
+
+This corpus contains guides and operation descriptions. It does not embed every request and response schema. Read the linked OpenAPI contract before generating a request.
+
+---
+
 # Register a campaign lead
 
 Source: https://docs.bridge.new/api-reference/campaign-leads/register-a-campaign-lead
@@ -4404,6 +5736,7 @@ Leer la documentación no requiere una clave de API de Bridge. El acceso al espa
 - [Envía un PDF u otro adjunto](https://docs.bridge.new/es/guides/send-attachments.md): checksum, URL de carga, carga del archivo y mensaje.
 - [Envía una plantilla de WhatsApp](https://docs.bridge.new/es/guides/send-template.md): consulta las variables y proporciona los valores que debe aportar quien hace la solicitud.
 - [Inicia una conversación saliente con un agente y transfiérela](https://docs.bridge.new/es/guides/agent-outbound.md): elige un agente y entiende `forceSend`, la reutilización y la recuperación.
+- [Crea y mueve registros de pipeline](https://docs.bridge.new/es/guides/pipeline-records.md): crea registros para contactos existentes, reintenta con `Idempotency-Key`, evita perder cambios con `expectedRevision`, cierra y reabre.
 - [Consulta los identificadores](https://docs.bridge.new/es/guides/identifiers.md) y [recorre los resultados paginados](https://docs.bridge.new/es/guides/pagination.md): usa los IDs y cursores correctos.
 - [Límites de solicitudes](https://docs.bridge.new/es/rate-limits.md): administra el presupuesto compartido y maneja respuestas `429`.
 - [Códigos de error](https://docs.bridge.new/es/error-codes.md): interpreta los errores de la API REST. Custom Connections tiene su propia [referencia de errores](https://docs.bridge.new/es/lead-capture/errors.md).
@@ -5495,6 +6828,237 @@ Los contratos publicados no prometen una instantánea transaccional del listado 
 
 ---
 
+# Crea y mueve registros de pipeline
+
+Source: https://docs.bridge.new/es/guides/pipeline-records
+
+Crea registros de pipeline para contactos existentes, reintenta con seguridad con Idempotency-Key, evita perder cambios con expectedRevision y cierra o reabre registros.
+
+Un registro de pipeline sigue un trabajo con un contacto, como una oportunidad de venta, a lo largo de las etapas de un pipeline. Usa esta receta para llevar los registros de tu sistema a un pipeline de Bridge: créalos, cambia sus valores, muévelos entre etapas, ciérralos con un motivo y reábrelos. Para recibir los cambios hechos en Bridge, suscríbete a los [eventos de registros de pipeline](https://docs.bridge.new/es/webhooks/pipeline-records.md).
+
+## Antes de empezar
+
+- Obtén una API Key de servidor en [Autenticación](https://docs.bridge.new/es/credentials.md) y envíala en `x-api-key`, como en cualquier otra operación. El `workspaceId` de la ruta debe ser el workspace de esa key. Cualquier otro workspace se rechaza con `403` `BRIDGE_CORE_0301`, y no se lee ni se escribe nada.
+- Los pipelines deben estar habilitados para el workspace. Si no, todas las operaciones responden `403` `BRIDGE_PIPELINE_0301`.
+- [Obtén el pipeline](https://docs.bridge.new/es/api-reference/pipelines-api/obtener-un-pipeline-con-sus-etapas-y-atributos.md) en el que escribes. Lista los valores de `stageId`, los ids de atributo que usas como claves de `values` y los motivos de cierre activos. [Lista los pipelines](https://docs.bridge.new/es/api-reference/pipelines-api/listar-los-pipelines-de-un-workspace.md) para encontrar su id.
+
+```json 403 BRIDGE_CORE_0301
+{
+  "title": "You do not have permission to access this resource",
+  "status": 403,
+  "detail": "There exists a mismatch between the claims workspace and the provided workspace",
+  "code": "BRIDGE_CORE_0301"
+}
+```
+
+
+## Las operaciones
+
+| Tu objetivo | Operación | `Idempotency-Key` | `expectedRevision` |
+| --- | --- | --- | --- |
+| Crear un registro | [`POST .../records`](https://docs.bridge.new/es/api-reference/pipeline-records-api/crear-un-registro-de-pipeline.md) | Obligatoria | No se acepta |
+| Buscar registros por tu id, un contacto o un pipeline | [`GET .../records`](https://docs.bridge.new/es/api-reference/pipeline-records-api/listar-registros-de-pipeline.md) | No se acepta | No se acepta |
+| Leer un registro | [`GET .../records/{recordId}`](https://docs.bridge.new/es/api-reference/pipeline-records-api/obtener-un-registro-de-pipeline.md) | No se acepta | No se acepta |
+| Cambiar su nombre o sus valores | [`PATCH .../records/{recordId}`](https://docs.bridge.new/es/api-reference/pipeline-records-api/actualizar-un-registro-de-pipeline.md) | No se acepta | Opcional |
+| Moverlo a otra etapa, o cerrarlo | [`POST .../records/{recordId}/move`](https://docs.bridge.new/es/api-reference/pipeline-records-api/mover-un-registro-de-pipeline-a-otra-etapa.md) | Obligatoria | Opcional |
+| Reabrir un registro cerrado | [`POST .../records/{recordId}/reopen`](https://docs.bridge.new/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado.md) | Obligatoria | Opcional |
+
+`...` representa `/bridge/api/v1/workspaces/{workspaceId}`, en el host de la API REST `https://api-connect-us.bridge.new`.
+
+## Crea un registro
+
+Indica el contacto con exactamente uno de `contact.id`, `contact.phone` o `contact.email`. Bridge encuentra el contacto igual que la [búsqueda de contactos](https://docs.bridge.new/es/api-reference/contacts-api/obtener-contacto-por-un-identificador.md); un contacto fusionado con otro se resuelve al contacto que lo reemplazó. El contacto nunca se crea: si no existe, la solicitud falla con `404` `BRIDGE_EXTERNAL_0001`, así que [crea el contacto](https://docs.bridge.new/es/api-reference/contacts-api/crear-contacto.md) primero y reintenta.
+
+Sin `pipelineId`, el registro va al pipeline predeterminado del workspace, y sin `stageId`, a la etapa inicial del pipeline. Al crear no se acepta una etapa final. Un pipeline configurado para no aceptar registros de la API rechaza la creación con `403` `BRIDGE_PIPELINE_0317`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-create" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contact": {
+      "phone": "+573001234567"
+    }
+  }'
+```
+
+Un registro creado responde `201` con un header `Location` y el registro. Guarda su `id` y su `revision`:
+
+```json 201
+{
+  "id": "record-1",
+  "pipelineId": "pipe-sales",
+  "pipelineVersion": 3,
+  "stageId": "stage-new",
+  "state": "OPEN",
+  "name": "Ana Gómez",
+  "values": {
+    "budget": 1500
+  },
+  "contact": {
+    "id": "contact-1"
+  },
+  "ownerId": null,
+  "source": "API",
+  "externalId": null,
+  "revision": 1,
+  "closeReason": null,
+  "closedAt": null,
+  "createdAt": "2026-11-11T15:00:00.000Z",
+  "updatedAt": "2026-11-11T15:00:00.000Z"
+}
+```
+
+```json 404 BRIDGE_EXTERNAL_0001
+{
+  "title": "The requested external user was not found",
+  "status": 404,
+  "detail": "External user was not found with PHONE and value +573001234567",
+  "code": "BRIDGE_EXTERNAL_0001",
+  "extra": {
+    "externalIdentificationType": "PHONE",
+    "externalIdentificationValue": "+573001234567"
+  }
+}
+```
+
+
+### Vincula el registro con tu propio id
+
+Envía `externalId` con el id que tiene el registro en tu sistema. Un pipeline tiene **un registro por `externalId`**: una segunda creación con el mismo `externalId` en el mismo pipeline falla con `409` `BRIDGE_PIPELINE_0003`, y `extra.recordId` es el registro que ya lo tiene. Lee ese registro en vez de crear otro. Para encontrarlo después, [lista los registros](https://docs.bridge.new/es/api-reference/pipeline-records-api/listar-registros-de-pipeline.md) con `externalId` (y `pipelineId` cuando no es el pipeline predeterminado).
+
+Bridge elige el id del registro; el cuerpo de la solicitud no tiene un campo para fijarlo.
+
+```json 409 BRIDGE_PIPELINE_0003
+{
+  "title": "A record with this external id already exists in the pipeline",
+  "status": 409,
+  "code": "BRIDGE_PIPELINE_0003",
+  "extra": {
+    "recordId": "record-1",
+    "pipelineId": "pipe-sales",
+    "externalId": "ERP-1"
+  }
+}
+```
+
+
+### Un registro abierto por contacto
+
+Un pipeline puede configurarse en Bridge para que un contacto tenga un solo registro abierto a la vez. En ese pipeline, crear un registro para un contacto que ya tiene uno abierto falla con `409` `BRIDGE_PIPELINE_0318`, y `extra.openRecordId` es ese registro abierto: trabaja sobre él. Los registros cerrados no cuentan, así que un contacto puede empezar un registro nuevo cuando el anterior está cerrado. Reabrir un registro falla de la misma forma cuando el contacto tiene otro registro abierto en el pipeline.
+
+```json 409 BRIDGE_PIPELINE_0318
+{
+  "title": "The contact already has an open record in this pipeline",
+  "status": 409,
+  "detail": "Contact 'contact-1' already has the open record 'record-open' in pipeline 'pipe-onboarding'",
+  "code": "BRIDGE_PIPELINE_0318",
+  "extra": {
+    "openRecordId": "record-open",
+    "pipelineId": "pipe-onboarding",
+    "externalUserId": "contact-1"
+  }
+}
+```
+
+
+## Reintenta con seguridad con Idempotency-Key
+
+`POST .../records`, `POST .../move` y `POST .../reopen` exigen un header `Idempotency-Key` de 1 a 255 caracteres. Usa una key por cada cambio que quieras hacer y envía la misma key cuando reintentes ese cambio.
+
+| Envías | Bridge responde |
+| --- | --- |
+| La misma key y el mismo cuerpo, después de que terminó la primera solicitud | El mismo status (`201` o `200`) con el header `Idempotent-Replayed: true`. El cuerpo es el registro **como está ahora**, así que puede mostrar cambios posteriores |
+| La misma key con otro cuerpo, o en otro registro u operación | `422` `BRIDGE_PIPELINE_0402` |
+| La misma key mientras la primera solicitud sigue en curso | `409` `BRIDGE_PIPELINE_0401`. Reintenta después de una pausa |
+| La misma key después de que falló la primera solicitud | La solicitud se ejecuta de nuevo: una solicitud fallida libera su key |
+
+Una key se guarda **24 horas**; después, la misma key se ejecuta como una solicitud nueva. Todas las operaciones del workspace comparten las keys, así que no reutilices una entre registros.
+
+**Advertencia**
+
+  Si una solicitud se corta antes de terminar, su key puede seguir respondiendo `409` `BRIDGE_PIPELINE_0401` hasta por 24 horas. Reintenta con una key nueva. Envía `externalId` cuando crees registros, para que un reintento con una key nueva nunca cree un segundo registro.
+
+## Evita sobrescribir cambios con expectedRevision
+
+Cada registro tiene un `revision` que sube en uno cada vez que el registro cambia. Envía el `revision` que leíste por última vez como `expectedRevision` en el cuerpo de `PATCH`, `move` o `reopen`. Si alguien cambió el registro mientras tanto, la solicitud falla con `409` `BRIDGE_PIPELINE_0101` y no cambia nada. `extra.currentRecord` es el registro como está ahora: decide de nuevo a partir de él y reintenta con su `revision`.
+
+`expectedRevision` es opcional. Sin él, el cambio se aplica al registro tal como Bridge lo lee, y un cambio hecho en el mismo momento todavía puede hacerlo fallar con el mismo `409`.
+
+```json PATCH
+{
+  "expectedRevision": 2,
+  "name": "Renamed"
+}
+```
+
+```json 409 BRIDGE_PIPELINE_0101
+{
+  "title": "The pipeline record was modified by another operation",
+  "status": 409,
+  "detail": "Pipeline record 'record-1' is at revision 4, the write expected 2",
+  "code": "BRIDGE_PIPELINE_0101",
+  "extra": {
+    "recordId": "record-1",
+    "expectedRevision": 2,
+    "currentRevision": 4,
+    "currentRecord": {
+      "id": "record-1",
+      "stageId": "stage-proposal",
+      "revision": 4
+    }
+  }
+}
+```
+
+`extra.currentRecord` trae el registro completo, con los mismos campos que la respuesta `201` de arriba; el ejemplo muestra solo tres.
+
+## Mueve, cierra y reabre
+
+[Mueve el registro](https://docs.bridge.new/es/api-reference/pipeline-records-api/mover-un-registro-de-pipeline-a-otra-etapa.md) con el `stageId` de una etapa de la versión del pipeline que sigue. Moverlo a una **etapa final lo cierra**. Un movimiento a una etapa final puede llevar `reasonId`, uno de los motivos de cierre activos del pipeline, y un `reasonNote` de hasta 500 caracteres, que necesita `reasonId`. El motivo de cierre es opcional: sin él, el registro se cierra con `closeReason: null`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records/$RECORD_ID/move" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-won" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "stageId": "stage-won",
+    "reasonId": "reason-price"
+  }'
+```
+
+La respuesta es `200` con el registro. Un registro cerrado tiene `state: "FINAL"`, `closedAt` y, cuando el movimiento llevó uno, `closeReason` con el `id`, `label` y `note` del motivo.
+
+| Problema | Respuesta |
+| --- | --- |
+| El registro ya está en esa etapa | `409` `BRIDGE_PIPELINE_0004` |
+| El registro está cerrado | `409` `BRIDGE_PIPELINE_0306`: reábrelo primero |
+| La etapa no está en la versión del pipeline del registro | `422` `BRIDGE_PIPELINE_0311`, con `errRecordStage` en `extra.errors` |
+| Un motivo o nota de cierre en un movimiento a una etapa abierta | `422` `BRIDGE_PIPELINE_0311`, con `errReasonOnlyFinal` en `extra.errors` |
+| El motivo de cierre no existe, o está retirado | `422` `BRIDGE_PIPELINE_0315`, o `422` `BRIDGE_PIPELINE_0314` |
+| La etapa exige un contacto completo | `422` `BRIDGE_PIPELINE_0305`; `extra.missing` dice qué le falta al contacto |
+
+[Reabre un registro cerrado](https://docs.bridge.new/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado.md) para devolverlo a la etapa abierta en la que estaba antes de cerrarse; su motivo de cierre se borra. Cuando su historial no nombra ninguna etapa abierta de su versión, el registro va a la etapa inicial del pipeline. El cuerpo es opcional y solo acepta `expectedRevision`. Reabrir un registro abierto falla con `409` `BRIDGE_PIPELINE_0307`.
+
+## Las acciones de etapa corren en cada entrada
+
+**Advertencia**
+
+  Una etapa puede tener acciones, como crear una tarea o crear un registro en otro pipeline. Corren **cada vez que un registro entra a la etapa**: cuando se crea en ella, cuando se mueve a ella y cuando se reabre en ella. Eso incluye cada registro que creas con la API, así que una importación masiva a una etapa con acciones las corre una vez por registro. Revisa las acciones de la etapa antes de una importación.
+
+Las acciones corren después de que la API responde; la respuesta no las espera. Sus resultados llegan como [eventos de webhook `pipeline_action.*`](https://docs.bridge.new/es/webhooks/pipeline-records.md#stage-action-events).
+
+## Errores y límites
+
+- Todo error responde un cuerpo `Problem`. Decide según `code`, no según `title`. Consulta los [códigos de error de pipelines](https://docs.bridge.new/es/error-codes.md#pipeline-error-codes) para cada código y qué hacer.
+- Las operaciones de pipelines consumen el mismo presupuesto que el resto de la API: **50 solicitudes cada 5 segundos por workspace**. Consulta [Límites de solicitudes](https://docs.bridge.new/es/rate-limits.md).
+
+---
+
 # Respuestas, errores y reintentos
 
 Source: https://docs.bridge.new/es/guides/responses
@@ -5880,6 +7444,8 @@ La diferencia se ve al leer:
 
 Por eso el tamaño de página determina el costo de recorrer todo el listado. Leer 500 contactos cuesta 5 solicitudes con páginas de 100 y 25 solicitudes con páginas de 20: los mismos datos consumen cinco veces más presupuesto.
 
+Las operaciones de pipelines consumen el mismo presupuesto. Un reintento con la misma `Idempotency-Key` cuenta como una solicitud nueva, aunque Bridge responda con el resultado de la primera.
+
 **Nota**
 
   Prefiere el mayor tamaño de página que admita el endpoint al leer una lista completa. Cuando ya sabes qué recurso necesitas, consúltalo directamente por ID.
@@ -6205,6 +7771,43 @@ Errores de las operaciones de usuarios internos.
 | `BRIDGE_INTERNAL_0003` | Inactive Internal User | Uno o más usuarios internos están inactivos en el espacio de trabajo; revisa su estado en la configuración |
 | `BRIDGE_INTERNAL_0004` | Internal User Without Configured Field | El usuario interno no tiene un campo configurado; revisa la configuración del espacio de trabajo o de información interna |
 | `BRIDGE_INTERNAL_0101` | Internal User Does Not Support Operation | El usuario interno no admite esta operación |
+
+## Códigos de error de pipelines
+
+Errores de las operaciones de pipelines y registros de pipeline. Consulta [Crea y mueve registros de pipeline](https://docs.bridge.new/es/guides/pipeline-records.md) para el flujo completo.
+
+| Código | Status | Referencia en inglés | Cuándo ocurre y qué hacer |
+| --- | --- | --- | --- |
+| `BRIDGE_PIPELINE_0001` | 404 | Pipeline Record Not Found | El registro no existe en tu workspace. Revisa el `recordId` |
+| `BRIDGE_PIPELINE_0003` | 409 | Pipeline Record External Id Taken | El pipeline ya tiene un registro con este `externalId`. `extra.recordId` es ese registro: léelo en vez de crear otro |
+| `BRIDGE_PIPELINE_0004` | 409 | Pipeline Record Already In Stage | El registro ya está en la etapa del movimiento. No hay nada que hacer |
+| `BRIDGE_PIPELINE_0101` | 409 | Pipeline Record Revision Conflict | El registro cambió después del `revision` que enviaste como `expectedRevision`. `extra.currentRecord` es el registro como está ahora: decide de nuevo y reintenta con su `revision` |
+| `BRIDGE_PIPELINE_0201` | 404 | Pipeline Not Found | El pipeline no existe en tu workspace. [Lista los pipelines](https://docs.bridge.new/es/api-reference/pipelines-api/listar-los-pipelines-de-un-workspace.md) para encontrar su id |
+| `BRIDGE_PIPELINE_0301` | 403 | Pipelines Disabled | Los pipelines no están habilitados para el workspace. Consulta con quien administra el workspace |
+| `BRIDGE_PIPELINE_0305` | 422 | Contact Incomplete | La etapa exige un contacto completo. `extra.missing` dice qué falta: completa el contacto y reintenta |
+| `BRIDGE_PIPELINE_0306` | 409 | Pipeline Record Not Open | El registro está cerrado. Reábrelo antes de moverlo |
+| `BRIDGE_PIPELINE_0307` | 409 | Pipeline Record Not Final | Solo se puede reabrir un registro cerrado |
+| `BRIDGE_PIPELINE_0311` | 422 | Pipeline Record Validation Failed | El registro no es válido. `extra.errors` lista cada problema, cada uno con `path`, `code` y `message` |
+| `BRIDGE_PIPELINE_0314` | 422 | Close Reason Retired | El motivo de cierre está retirado. Usa uno activo del pipeline |
+| `BRIDGE_PIPELINE_0315` | 422 | Close Reason Not Found | El motivo de cierre no existe en el pipeline |
+| `BRIDGE_PIPELINE_0317` | 403 | Pipeline Entry Disabled | El pipeline no acepta registros creados con la API |
+| `BRIDGE_PIPELINE_0318` | 409 | Contact Has Open Record | El pipeline permite un registro abierto por contacto y el contacto ya tiene uno. `extra.openRecordId` es ese registro: trabaja sobre él |
+| `BRIDGE_PIPELINE_0401` | 409 | Idempotency Request In Progress | Una solicitud con esta `Idempotency-Key` sigue en curso. Reintenta después de una pausa; si sigue fallando, reintenta con una key nueva |
+| `BRIDGE_PIPELINE_0402` | 422 | Idempotency Key Reused | La `Idempotency-Key` ya se usó con otra solicitud. Usa una key nueva para un cambio nuevo |
+
+Códigos de `BRIDGE_PIPELINE_0311` en `extra.errors[].code`:
+
+| Código | Significado |
+| --- | --- |
+| `errRecordStage` | La etapa no está en la versión del pipeline del registro, o es una etapa final al crear |
+| `errRecordName` | El nombre falta, está en blanco o tiene más de 200 caracteres |
+| `errRecordValue` | Un valor no coincide con el tipo de su atributo |
+| `errRecordValueKey` | Una clave de `values` no es un atributo del registro en la versión del pipeline |
+| `errRecordNoChange` | La actualización no cambia nada |
+| `errReasonNote` | `reasonNote` es demasiado largo o se envió sin `reasonId` |
+| `errReasonOnlyFinal` | Se envió un motivo o nota de cierre en un movimiento a una etapa abierta |
+
+Las operaciones de pipelines también responden `403` `BRIDGE_CORE_0301` cuando el `workspaceId` de la ruta no es el workspace de la API Key, `404` `BRIDGE_EXTERNAL_0001` cuando el contacto no existe, `404` `BRIDGE_WORKSPACE_0001`, `400` `BRIDGE_CORE_0104` para un cursor inválido y `429` `BRIDGE_RATE_LIMIT_0001`.
 
 ## Códigos de error de canales de proveedor
 
@@ -6806,6 +8409,23 @@ v1
 Recibe una notificación cuando se ha procesado un correo y está disponible su resumen de IA. Los correos no se eliminan, por lo que solo se emite `email.updated`.
 
 - `email.updated`
+
+### Notificaciones de registros de pipeline
+
+v1
+
+Recibe una notificación por cada cambio de un registro de pipeline y por el resultado de cada acción de etapa. Consulta [Eventos de registros de pipeline](https://docs.bridge.new/es/webhooks/pipeline-records.md).
+
+- `pipeline_record.created`
+- `pipeline_record.stage_changed`
+- `pipeline_record.closed`
+- `pipeline_record.updated`
+- `pipeline_record.reopened`
+- `pipeline_record.linked`
+- `pipeline_record.unlinked`
+- `pipeline_action.executed`
+- `pipeline_action.failed`
+- `pipeline_action.skipped`
 
 ---
 
@@ -7535,6 +9155,95 @@ El campo `sentFromBridge` indica la dirección: true para correos salientes envi
 
 ---
 
+## Notificaciones de registros de pipeline
+
+v1
+
+Se envían cuando cambia un registro de pipeline y cuando corre una acción de etapa. [Eventos de registros de pipeline](https://docs.bridge.new/es/webhooks/pipeline-records.md) describe cada campo, `trigger`, motivo de cierre y código de resultado de las acciones, con un ejemplo de cada tipo de evento.
+
+  
+
+### Tipos de eventos
+
+    | Tipo de evento | Descripción |
+    | --- | --- |
+    | `pipeline_record.created` | Se creó un registro |
+    | `pipeline_record.stage_changed` | Un registro pasó a otra etapa |
+    | `pipeline_record.closed` | Un registro pasó a una etapa final; se envía justo después de su `pipeline_record.stage_changed` |
+    | `pipeline_record.updated` | Cambiaron los valores del registro |
+    | `pipeline_record.reopened` | Un registro cerrado volvió a una etapa abierta |
+    | `pipeline_record.linked` | Se vinculó una conversación al registro |
+    | `pipeline_record.unlinked` | Se desvinculó una conversación del registro |
+    | `pipeline_action.executed` | Corrió una acción de etapa |
+    | `pipeline_action.failed` | Falló una acción de etapa |
+    | `pipeline_action.skipped` | Una acción de etapa no aplicaba y no corrió |
+  
+
+  
+
+### Ejemplo de cuerpo
+
+    ```json
+    {
+      "eventId": "b1d5e8a2c7f4:closed",
+      "eventType": "pipeline_record.closed",
+      "entity": "pipeline_record",
+      "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+      "timestamp": "2026-11-09T14:03:12.345Z",
+      "payload": {
+        "record": {
+          "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+          "name": "ACME - Licenses 2027",
+          "pipeline": {
+            "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+            "version": 3,
+            "label": "B2B Sales"
+          },
+          "stage": {
+            "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+            "label": "Lost",
+            "state": "FINAL"
+          },
+          "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+          "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+          "externalId": "CRM-88412",
+          "values": [
+            {
+              "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+              "label": "Amount",
+              "type": "CURRENCY",
+              "value": 12500000
+            },
+            {
+              "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+              "label": "Probability",
+              "type": "PERCENT",
+              "value": 62.5
+            }
+          ]
+        },
+        "previousStage": {
+          "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+        },
+        "reason": {
+          "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+          "label": "Price",
+          "note": "The customer chose another offer"
+        },
+        "trigger": "CONVERSATION_RELEASE",
+        "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+        "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+        "author": {
+          "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+          "type": "CORE_USER"
+        }
+      }
+    }
+    ```
+  
+
+---
+
 ## Notas
 
 - Bridge puede agregar nuevas categorías de eventos en el futuro.
@@ -7547,6 +9256,778 @@ El campo `sentFromBridge` indica la dirección: true para correos salientes envi
 
 - [Descripción general](https://docs.bridge.new/es/webhooks.md)
 - [Verificar firmas](https://docs.bridge.new/es/webhooks/verifying-signatures.md)
+- [Configuración en la consola](https://docs.bridge.new/es/webhooks/configuration.md)
+- [Eventos de registros de pipeline](https://docs.bridge.new/es/webhooks/pipeline-records.md)
+
+---
+
+# Eventos de registros de pipeline
+
+Source: https://docs.bridge.new/es/webhooks/pipeline-records
+
+Eventos de webhook de registros de pipeline y acciones de etapa: tipos de evento, campos del payload, triggers, motivos de cierre y códigos de resultado de las acciones.
+
+v1
+
+Suscríbete a los eventos de registros de pipeline para enterarte de cada cambio de un registro de pipeline de tu workspace y del resultado de cada acción de etapa. Cada evento usa la [estructura común](https://docs.bridge.new/es/webhooks/events.md#common-event-structure), y su `payload` trae el registro como queda después del cambio.
+
+Usa la [guía de registros de pipeline](https://docs.bridge.new/es/guides/pipeline-records.md) cuando tu sistema también crea o mueve registros con la API REST.
+
+---
+
+## Tipos de evento
+
+| Tipo de evento | Entidad | Cuándo se envía |
+| --- | --- | --- |
+| `pipeline_record.created` | `pipeline_record` | Se creó un registro |
+| `pipeline_record.stage_changed` | `pipeline_record` | Un registro pasó a otra etapa |
+| `pipeline_record.closed` | `pipeline_record` | El movimiento terminó en una etapa final. Se envía justo después de su `pipeline_record.stage_changed`, con el mismo payload |
+| `pipeline_record.updated` | `pipeline_record` | Cambiaron los valores del registro |
+| `pipeline_record.reopened` | `pipeline_record` | Un registro cerrado volvió a una etapa abierta |
+| `pipeline_record.linked` | `pipeline_record` | Se vinculó una conversación al registro |
+| `pipeline_record.unlinked` | `pipeline_record` | Se desvinculó una conversación del registro |
+| `pipeline_action.executed` | `pipeline_action` | Corrió una acción de etapa |
+| `pipeline_action.failed` | `pipeline_action` | Falló una acción de etapa. `action.failureReason` dice por qué |
+| `pipeline_action.skipped` | `pipeline_action` | Una acción de etapa no aplicaba y no corrió. `action.skipReason` dice por qué |
+
+Cada cambio produce un evento, salvo un movimiento a una etapa final, que produce dos: `pipeline_record.stage_changed` y luego `pipeline_record.closed`. Los dos traen el mismo `payload`; el `eventId` de `pipeline_record.closed` termina en `:closed`.
+
+---
+
+## Estructura
+
+| Campo | Valor |
+| --- | --- |
+| `eventId` | Identificador del evento. Úsalo, junto con `workspaceId` y `eventType`, para descartar duplicados |
+| `eventType` | Uno de los tipos de evento de arriba |
+| `entity` | `pipeline_record` o `pipeline_action`, el prefijo de `eventType` |
+| `workspaceId` | Tu workspace |
+| `timestamp` | Cuándo se registró el cambio, en UTC con milisegundos, por ejemplo `2026-11-09T14:03:12.345Z` |
+| `payload` | Los campos de abajo |
+
+---
+
+## Payload
+
+Los campos sin valor no aparecen en el payload, salvo `record.values`, que siempre está.
+
+| Campo | Eventos | Significado |
+| --- | --- | --- |
+| `record.id` | Todos | Identificador del registro, el `id` de la [API de registros de pipeline](https://docs.bridge.new/es/api-reference/pipeline-records-api/obtener-un-registro-de-pipeline.md) |
+| `record.name` | Todos | Nombre del registro |
+| `record.pipeline` | Todos | `id`, `version` y `label` del pipeline al que pertenece el registro |
+| `record.stage` | Todos | `id`, `label` y `state` de la etapa en la que queda el registro después del cambio. `state` es `OPEN` o `FINAL` |
+| `record.contactId` | Todos | Contacto al que pertenece el registro |
+| `record.ownerId` | Cuando el registro tiene responsable | Usuario de Bridge responsable del registro |
+| `record.externalId` | Cuando el registro tiene uno | Tu propio identificador del registro |
+| `record.values` | Todos | Los valores de los atributos del registro. Consulta [Valores del registro](https://docs.bridge.new/es/webhooks/pipeline-records.md#record-values) |
+| `action` | `pipeline_action.*` | La acción de etapa y su resultado. Consulta [Eventos de acciones de etapa](https://docs.bridge.new/es/webhooks/pipeline-records.md#stage-action-events) |
+| `previousStage` | Movimientos de etapa y `pipeline_record.reopened` | `id` de la etapa que dejó el registro |
+| `reason` | Movimientos con motivo de cierre | `id`, `label` y, cuando lo hay, `note` del motivo de cierre |
+| `trigger` | Todos | Qué causó el cambio. Consulta [Triggers](https://docs.bridge.new/es/webhooks/pipeline-records.md#triggers) |
+| `conversationId`, `sessionId` | Cuando el cambio ocurrió en una conversación | La conversación y su sesión |
+| `author` | Todos | `id` y `type` de quien hizo el cambio. Las acciones de etapa las hace el sistema |
+
+### Valores del registro
+
+`record.values` es una lista con un elemento por cada atributo que tiene valor: `{ "id", "label", "type", "value" }`. El `id` de un atributo nunca cambia, así que un atributo renombrado conserva su `id`. Lee los valores por `id` cuando los guardes.
+
+| `type` | `value` |
+| --- | --- |
+| `NUMBER`, `PERCENT`, `CURRENCY` | Número. `PERCENT` va de 0 a 100. `CURRENCY` es un monto sin código de moneda |
+| `DATE` | Texto `YYYY-MM-DD` |
+| `TEXT` | Texto |
+| `LIST` | Texto, una de las opciones del atributo |
+| `MULTI` | Lista de textos distintos, cada uno una de las opciones del atributo |
+
+Los valores registrados antes de que Bridge describiera los atributos llegan con `label` y `type` en `null`, después de los descritos.
+
+### Triggers
+
+| `trigger` | El cambio vino de |
+| --- | --- |
+| `ADVISOR` | Un usuario de Bridge trabajando en la app de Bridge |
+| `CONVERSATION_RELEASE` | Un usuario de Bridge que liberó una conversación y cerró su registro al mismo tiempo |
+| `API` | La [API REST](https://docs.bridge.new/es/guides/pipeline-records.md) |
+| `ACTION` | Una acción de etapa. Todos los eventos `pipeline_action.*` tienen este trigger |
+| `INBOUND_SESSION` | Una conversación iniciada por un contacto, que creó el registro o se vinculó a él |
+
+### Motivos de cierre
+
+`reason` aparece cuando el movimiento trajo un motivo de cierre, por ejemplo cuando un registro se cierra como perdido con el motivo "Price". `reason.id` es el motivo de cierre del pipeline, `reason.label` su texto y `reason.note` el texto libre escrito con él. Un movimiento a una etapa final también puede no tener motivo de cierre.
+
+---
+
+## Eventos de acciones de etapa
+
+Las acciones de una etapa corren **cada vez que un registro entra a la etapa**: cuando se crea en ella, cuando pasa a ella y cuando se reabre en ella. Eso incluye los registros creados de forma masiva, así que una importación grande a una etapa con acciones produce un evento de acción por cada registro y acción.
+
+El objeto `action` de un evento `pipeline_action.*`:
+
+| Campo | Significado |
+| --- | --- |
+| `action.id` | La acción de la etapa que corrió |
+| `action.type` | `CREATE_TASK`, `CREATE_IN_PIPELINE`, `CLOSE_SESSION`, `SET_SESSION_PRIORITY` o `TRANSFER_TO_TEAM` |
+| `action.refId` | A qué apunta la acción: la tarea o el registro que creó o, cuando se omitió con `TASK_STILL_OPEN` o `CONTACT_HAS_OPEN_RECORD`, la tarea o el registro que sigue abierto |
+| `action.skipReason` | Solo en `pipeline_action.skipped`: por qué la acción no aplicaba |
+| `action.failureReason` | Solo en `pipeline_action.failed`: por qué falló la acción |
+
+**Nota**
+
+  `TRANSFER_TO_TEAM` todavía no está soportada. Una etapa que aún la tiene produce `pipeline_action.failed` con `ACTION_NOT_SUPPORTED`, o `pipeline_action.skipped` con `NO_OPEN_SESSION` cuando el registro no tiene una conversación abierta.
+
+### Motivos de omisión
+
+Una acción omitida es un resultado normal: la acción no aplicaba a este registro, así que no se cambió nada. `skipReason` siempre es un código.
+
+| `skipReason` | Significado |
+| --- | --- |
+| `NO_OPEN_SESSION` | La acción necesita la conversación abierta del registro y el registro no tiene ninguna. Un `CREATE_TASK` para quien atiende la conversación se omite así solo cuando el registro nunca tuvo conversación |
+| `SESSION_CLOSED` | `SET_SESSION_PRIORITY`: la conversación se cerró antes de poder fijar la prioridad |
+| `ALREADY_RELEASED` | `CLOSE_SESSION`: la conversación ya estaba liberada |
+| `OTHER_OPEN_RECORDS` | `CLOSE_SESSION`: la conversación sigue abierta porque el contacto tiene otro registro abierto |
+| `TASK_STILL_OPEN` | `CREATE_TASK`: la tarea que esta acción creó en una entrada anterior a la etapa sigue abierta, así que no se creó una segunda tarea. `action.refId` es esa tarea |
+| `ASSIGNEE_NOT_RESOLVED` | `CREATE_TASK` para quien atiende la conversación del registro: nadie la atendió, después de varios reintentos mientras la conversación estaba abierta, o de inmediato si estaba cerrada |
+| `TEAM_HAS_NO_MEMBERS` | `CREATE_TASK` para un equipo: el equipo no tiene miembros activos |
+| `CONTACT_HAS_OPEN_RECORD` | `CREATE_IN_PIPELINE` hacia un pipeline que permite un solo registro abierto por contacto: el contacto ya tiene uno ahí. `action.refId` es ese registro |
+
+### Motivos de falla
+
+`failureReason` es `CODE` o `CODE: detail`. Decide según la parte antes de los dos puntos; el detalle sirve para soporte y su texto puede cambiar. El código es uno de estos:
+
+- Un código propio de las acciones de etapa, de la lista de abajo.
+- El código de error del dominio de Bridge que rechazó la acción, por ejemplo `BRIDGE_TASK_0308` cuando no se pudo crear la tarea.
+- `HTTP_<status>`, cuando ese dominio respondió sin código de error, por ejemplo `HTTP_503`.
+
+| Código | Significado |
+| --- | --- |
+| `ACTION_NOT_SUPPORTED` | El tipo de acción todavía no está soportado, por ejemplo `TRANSFER_TO_TEAM` |
+| `INVALID_ACTION_CONFIG` | A la acción le falta un ajuste que necesita, por ejemplo el título de una tarea o una prioridad |
+| `TARGET_PIPELINE_NOT_FOUND` | `CREATE_IN_PIPELINE`: el pipeline de destino ya no existe |
+| `TARGET_STAGE_NOT_FOUND` | `CREATE_IN_PIPELINE`: la etapa de destino no es una etapa regular de la versión actual del pipeline de destino |
+| `CHAIN_LIMIT_REACHED` | `CREATE_IN_PIPELINE`: la cadena de registros creados unos a partir de otros ya tiene 10 registros |
+| `TEAM_NOT_FOUND` | `CREATE_TASK` para un equipo: el equipo ya no existe o está deshabilitado |
+| `TEAM_TOO_LARGE` | `CREATE_TASK` para un equipo: el equipo tiene más miembros activos de los que admite una tarea (48) |
+| `TIMEOUT` | Bridge no respondió a tiempo, después de varios reintentos |
+| `NETWORK_ERROR` | No se pudo llegar a Bridge, después de varios reintentos |
+| `UNEXPECTED_ERROR` | Un error inesperado, después de varios reintentos |
+
+Se pueden agregar códigos nuevos a las dos listas. El significado de un código existente nunca cambia, así que trata un código desconocido como "no corrió" y sigue procesando.
+
+---
+
+## Entrega y orden
+
+- La entrega puede duplicarse. Descarta los eventos repetidos como se describe en [Recepción de eventos](https://docs.bridge.new/es/webhooks/receive-events.md).
+- `pipeline_record.closed` se envía después de su `pipeline_record.stage_changed`. Cuando se reintenta una entrega, solo se vuelve a enviar el evento que no se entregó, así que `pipeline_record.closed` puede llegar más tarde que su `pipeline_record.stage_changed`.
+- Los eventos de registros distintos no tienen orden. Para un registro, ordena sus eventos por `timestamp`.
+- Los eventos `pipeline_action.*` llegan después del `pipeline_record.created`, `pipeline_record.stage_changed` o `pipeline_record.reopened` que corrió las acciones.
+- Los registros que existían antes de suscribirte aparecen con su siguiente cambio.
+
+---
+
+## Ejemplos de payload
+
+### Ejemplos de eventos de registro
+
+```json Created
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.created",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Stage changed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.stage_changed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14"
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Stage changed to final
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.stage_changed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+    },
+    "reason": {
+      "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+      "label": "Price",
+      "note": "The customer chose another offer"
+    },
+    "trigger": "CONVERSATION_RELEASE",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Closed
+{
+  "eventId": "b1d5e8a2c7f4:closed",
+  "eventType": "pipeline_record.closed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+    },
+    "reason": {
+      "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+      "label": "Price",
+      "note": "The customer chose another offer"
+    },
+    "trigger": "CONVERSATION_RELEASE",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Updated
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.updated",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Reopened
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.reopened",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14"
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Linked
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.linked",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Unlinked
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.unlinked",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+
+### Ejemplos de eventos de acciones de etapa
+
+```json Executed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.executed",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "CREATE_TASK",
+      "refId": "2e9c5a7d-1f4b-4c68-9a03-7d5b1e8c4f26"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+```json Failed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.failed",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "TRANSFER_TO_TEAM",
+      "failureReason": "ACTION_NOT_SUPPORTED"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+```json Skipped
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.skipped",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "CLOSE_SESSION",
+      "skipReason": "NO_OPEN_SESSION"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+
+---
+
+## Temas relacionados
+
+- [Referencia de eventos](https://docs.bridge.new/es/webhooks/events.md)
+- [Guía de registros de pipeline](https://docs.bridge.new/es/guides/pipeline-records.md)
+- [Recepción de eventos](https://docs.bridge.new/es/webhooks/receive-events.md)
 - [Configuración en la consola](https://docs.bridge.new/es/webhooks/configuration.md)
 
 ---
@@ -8496,6 +10977,193 @@ Este corpus contiene guías y descripciones de operaciones. No incluye todos los
 
 ---
 
+# Listar los pipelines de un workspace
+
+Source: https://docs.bridge.new/es/api-reference/pipelines-api/listar-los-pipelines-de-un-workspace
+
+**Referencia de la operación:** `get /bridge/api/v1/workspaces/{workspaceId}/pipelines`
+
+**operationId:** `list_pipelines_bridge_api_v1_workspaces__workspaceId__pipelines_get`
+
+Lista los pipelines activos del workspace, ordenados por etiqueta.
+
+`isDefault` marca el pipeline que usa `POST /records` cuando no se envía `pipelineId`, y `acceptsApiRecords`
+indica si un pipeline admite registros creados mediante esta API.
+
+[Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
+
+Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.
+
+---
+
+# Obtener un pipeline con sus etapas y atributos
+
+Source: https://docs.bridge.new/es/api-reference/pipelines-api/obtener-un-pipeline-con-sus-etapas-y-atributos
+
+**Referencia de la operación:** `get /bridge/api/v1/workspaces/{workspaceId}/pipelines/{pipelineId}`
+
+**operationId:** `retrieve_pipeline_bridge_api_v1_workspaces__workspaceId__pipelines__pipelineId__get`
+
+Obtiene un pipeline activo con su versión actual: etapas en orden, atributos y motivos de cierre activos.
+
+Úsalo para saber qué `stageId` y qué claves de `values` acepta `POST /records`.
+
+[Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
+
+Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.
+
+---
+
+# Listar registros de pipeline
+
+Source: https://docs.bridge.new/es/api-reference/pipeline-records-api/listar-registros-de-pipeline
+
+**Referencia de la operación:** `get /bridge/api/v1/workspaces/{workspaceId}/records`
+
+**operationId:** `list_pipeline_records_bridge_api_v1_workspaces__workspaceId__records_get`
+
+Lista los registros del workspace, del actualizado más recientemente al más antiguo, que se buscan de una sola forma.
+
+- `externalId`, con un `pipelineId` opcional (el pipeline predeterminado en caso contrario): el único registro que
+  tu sistema creó con ese id, o ninguno. No sigue ningún cursor.
+- Uno de `contactId`, `contactPhone` o `contactEmail`: los registros de ese contacto, opcionalmente acotados a un
+  `pipelineId` y a un `stageId`. El acotamiento se aplica a cada página leída, por lo que una página puede tener menos
+  registros que `limit`, o ninguno, mientras aún siga un `cursor`: sigue leyendo hasta que `cursor` sea null.
+- Solo `pipelineId`: los registros de ese pipeline, opcionalmente acotados a un `stageId`.
+
+Cualquier otra combinación falla con 422.
+
+[Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
+
+Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.
+
+---
+
+# Crear un registro de pipeline
+
+Source: https://docs.bridge.new/es/api-reference/pipeline-records-api/crear-un-registro-de-pipeline
+
+**Referencia de la operación:** `post /bridge/api/v1/workspaces/{workspaceId}/records`
+
+**operationId:** `create_pipeline_record_bridge_api_v1_workspaces__workspaceId__records_post`
+
+Crea un registro de un contacto en un pipeline, como una oportunidad de venta.
+
+El contacto se indica con exactamente uno de `id`, `phone` o `email` y debe existir: nunca se crea (404
+`BRIDGE_EXTERNAL_0001`). `pipelineId` toma por defecto el pipeline predeterminado del workspace y `stageId` la
+etapa inicial del pipeline. Un `name` ausente o vacío toma por defecto el nombre completo del contacto, luego su
+celular y luego su correo electrónico. Solo se aceptan etapas abiertas, y solo atributos de alcance `RECORD` de la
+versión actual del pipeline en `values` (un `null`, un texto vacío o una lista vacía se omite); cada problema
+encontrado se lista en `extra.errors` del 422
+`BRIDGE_PIPELINE_0311`. Cuando la etapa en la que empieza el registro exige un contacto completo (nombre, apellido,
+celular y cada atributo personalizado obligatorio del workspace), uno incompleto falla con 422
+`BRIDGE_PIPELINE_0305`, cuyo `extra.missing` indica lo que le falta. Un segundo registro con el mismo `externalId`
+en el pipeline falla con 409 `BRIDGE_PIPELINE_0003`, cuyo `extra.recordId` es el registro existente.
+
+`Idempotency-Key` es obligatorio. Reintentar con la misma clave y el mismo cuerpo responde 201 con el primer registro y
+`Idempotent-Replayed: true`. La misma clave con un cuerpo distinto falla con 422 `BRIDGE_PIPELINE_0402`, y
+mientras la primera solicitud sigue en curso, con 409 `BRIDGE_PIPELINE_0401`. Cuando la solicitud falla, la clave se
+libera y puede reintentarse. Si la primera solicitud se cortó antes de terminar, su clave sigue respondiendo 409
+`BRIDGE_PIPELINE_0401` hasta por 24 horas: reintenta con una clave nueva y envía `externalId` para que un reintento nunca
+cree un segundo registro.
+
+[Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
+
+Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.
+
+---
+
+# Obtener un registro de pipeline
+
+Source: https://docs.bridge.new/es/api-reference/pipeline-records-api/obtener-un-registro-de-pipeline
+
+**Referencia de la operación:** `get /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}`
+
+**operationId:** `retrieve_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__get`
+
+Obtiene un registro del workspace por su id.
+
+[Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
+
+Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.
+
+---
+
+# Actualizar un registro de pipeline
+
+Source: https://docs.bridge.new/es/api-reference/pipeline-records-api/actualizar-un-registro-de-pipeline
+
+**Referencia de la operación:** `patch /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}`
+
+**operationId:** `update_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__patch`
+
+Cambia el nombre o algunos valores de un registro, abierto o cerrado.
+
+Solo cambian los campos enviados: un `name` ausente conserva el nombre, y los atributos omitidos de `values` conservan su
+valor; un `null`, un texto vacío o una lista vacía elimina un valor. Un registro siempre tiene nombre, por lo que un `name`
+`null` o vacío falla como cualquier otro campo inválido. Cada problema encontrado se lista en `extra.errors` del 422
+`BRIDGE_PIPELINE_0311`, que también es la respuesta a un cuerpo que no cambia nada. Un cambio que deja el registro
+tal como está no escribe nada y responde el registro. Con `expectedRevision`, un registro modificado desde que lo leíste falla
+con 409 `BRIDGE_PIPELINE_0101`, cuyo `extra.currentRecord` es el registro tal como está ahora.
+
+[Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
+
+Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.
+
+---
+
+# Mover un registro de pipeline a otra etapa
+
+Source: https://docs.bridge.new/es/api-reference/pipeline-records-api/mover-un-registro-de-pipeline-a-otra-etapa
+
+**Referencia de la operación:** `post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/move`
+
+**operationId:** `move_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__move_post`
+
+Mueve un registro abierto a otra etapa de la versión del pipeline que sigue; una etapa final lo cierra.
+
+Una etapa que no está en esa versión, como una de otro pipeline, falla con 422 `BRIDGE_PIPELINE_0311`
+(`errRecordStage`), y la etapa en la que el registro ya está, con 409 `BRIDGE_PIPELINE_0004`. Un registro cerrado
+falla con 409 `BRIDGE_PIPELINE_0306`: reábrelo primero. Cuando la etapa exige un contacto completo, uno
+incompleto falla con 422 `BRIDGE_PIPELINE_0305`. Un movimiento a una etapa final puede llevar un `reasonId` activo
+del pipeline (422 `BRIDGE_PIPELINE_0315` cuando no existe, `BRIDGE_PIPELINE_0314` cuando está retirado)
+y un `reasonNote`; sin uno, el registro se cierra sin motivo. Un motivo o una nota en un movimiento a una etapa
+abierta falla con 422 `BRIDGE_PIPELINE_0311`. Con `expectedRevision`, un registro modificado desde que lo leíste falla
+con 409 `BRIDGE_PIPELINE_0101`, cuyo `extra.currentRecord` es el registro tal como está ahora.
+
+`Idempotency-Key` es obligatorio y funciona como en `POST /records`: un reintento con la misma clave y el mismo cuerpo responde
+con el registro y `Idempotent-Replayed: true`, tal como está ahora. La misma clave en otro registro u operación falla con
+422 `BRIDGE_PIPELINE_0402`.
+
+[Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
+
+Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.
+
+---
+
+# Reabrir un registro de pipeline cerrado
+
+Source: https://docs.bridge.new/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado
+
+**Referencia de la operación:** `post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/reopen`
+
+**operationId:** `reopen_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__reopen_post`
+
+Devuelve un registro cerrado a la etapa abierta en la que estaba antes de cerrarse y borra su motivo de cierre.
+
+Cuando su historial no indica ninguna etapa abierta de su versión, el registro pasa a la etapa inicial del pipeline. Un registro
+abierto falla con 409 `BRIDGE_PIPELINE_0307`. Cuando esa etapa exige un contacto completo, uno incompleto
+falla con 422 `BRIDGE_PIPELINE_0305`. El cuerpo es opcional; con `expectedRevision`, un registro modificado desde que lo
+leíste falla con 409 `BRIDGE_PIPELINE_0101`, cuyo `extra.currentRecord` es el registro tal como está ahora.
+
+`Idempotency-Key` es obligatorio y funciona como en `POST /records/{recordId}/move`.
+
+[Contrato OpenAPI exacto](https://docs.bridge.new/es/api-reference/openapi.yaml)
+
+Este corpus contiene guías y descripciones de operaciones. No incluye todos los esquemas de solicitud y respuesta. Lee el contrato OpenAPI enlazado antes de generar una solicitud.
+
+---
+
 # Registrar un lead de campaña
 
 Source: https://docs.bridge.new/es/api-reference/campaign-leads/registrar-un-lead-de-campa%C3%B1a
@@ -8592,6 +11260,7 @@ O acesso à documentação não exige chave de API do Bridge. O acesso ao worksp
 - [Envie um PDF ou anexo](https://docs.bridge.new/pt-br/guides/send-attachments.md) — checksum, URL de upload, envio do arquivo e mensagem.
 - [Envie um template de WhatsApp](https://docs.bridge.new/pt-br/guides/send-template.md) — descubra as variáveis e forneça os valores exigidos do integrador.
 - [Inicie uma conversa com um Agente e transfira o atendimento](https://docs.bridge.new/pt-br/guides/agent-outbound.md) — escolha o Agente e entenda `forceSend`, reutilização e recuperação.
+- [Crie e mova registros de pipeline](https://docs.bridge.new/pt-br/guides/pipeline-records.md) — crie registros para contatos existentes, repita com `Idempotency-Key`, evite perder mudanças com `expectedRevision`, feche e reabra.
 - [Consulte identificadores](https://docs.bridge.new/pt-br/guides/identifiers.md) e [percorra os resultados paginados](https://docs.bridge.new/pt-br/guides/pagination.md) — use os IDs e cursores corretos.
 - [Limites de requisições](https://docs.bridge.new/pt-br/rate-limits.md) — compartilhe a cota de requisições e trate respostas `429`.
 - [Códigos de erro](https://docs.bridge.new/pt-br/error-codes.md) — interprete os erros da API REST. Custom Connections tem uma [referência de erros](https://docs.bridge.new/pt-br/lead-capture/errors.md) separada.
@@ -9683,6 +12352,237 @@ Os contratos publicados não garantem uma visão transacionalmente consistente d
 
 ---
 
+# Crie e mova registros de pipeline
+
+Source: https://docs.bridge.new/pt-br/guides/pipeline-records
+
+Crie registros de pipeline para contatos existentes, repita com segurança com Idempotency-Key, evite perder mudanças com expectedRevision e feche ou reabra registros.
+
+Um registro de pipeline acompanha um trabalho com um contato, como uma oportunidade de venda, pelas etapas de um pipeline. Use esta receita para levar os registros do seu sistema para um pipeline do Bridge: crie-os, mude os seus valores, mova-os entre etapas, feche-os com um motivo e reabra-os. Para receber as mudanças feitas no Bridge, assine os [eventos de registros de pipeline](https://docs.bridge.new/pt-br/webhooks/pipeline-records.md).
+
+## Antes de começar
+
+- Obtenha uma API Key de servidor em [Autenticação](https://docs.bridge.new/pt-br/credentials.md) e envie-a em `x-api-key`, como em qualquer outra operação. O `workspaceId` do caminho deve ser o workspace dessa key. Qualquer outro workspace é recusado com `403` `BRIDGE_CORE_0301`, e nada é lido nem escrito.
+- Os pipelines devem estar habilitados para o workspace. Caso contrário, todas as operações respondem `403` `BRIDGE_PIPELINE_0301`.
+- [Obtenha o pipeline](https://docs.bridge.new/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos.md) em que você escreve. Ele lista os valores de `stageId`, os ids de atributo que você usa como chaves de `values` e os motivos de fechamento ativos. [Liste os pipelines](https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace.md) para encontrar o id dele.
+
+```json 403 BRIDGE_CORE_0301
+{
+  "title": "You do not have permission to access this resource",
+  "status": 403,
+  "detail": "There exists a mismatch between the claims workspace and the provided workspace",
+  "code": "BRIDGE_CORE_0301"
+}
+```
+
+
+## As operações
+
+| Seu objetivo | Operação | `Idempotency-Key` | `expectedRevision` |
+| --- | --- | --- | --- |
+| Criar um registro | [`POST .../records`](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline.md) | Obrigatória | Não aceita |
+| Buscar registros pelo seu id, por um contato ou por um pipeline | [`GET .../records`](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline.md) | Não aceita | Não aceita |
+| Ler um registro | [`GET .../records/{recordId}`](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline.md) | Não aceita | Não aceita |
+| Mudar o nome ou os valores | [`PATCH .../records/{recordId}`](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline.md) | Não aceita | Opcional |
+| Movê-lo para outra etapa, ou fechá-lo | [`POST .../records/{recordId}/move`](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa.md) | Obrigatória | Opcional |
+| Reabrir um registro fechado | [`POST .../records/{recordId}/reopen`](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado.md) | Obrigatória | Opcional |
+
+`...` representa `/bridge/api/v1/workspaces/{workspaceId}`, no host da API REST `https://api-connect-us.bridge.new`.
+
+## Crie um registro
+
+Indique o contato com exatamente um de `contact.id`, `contact.phone` ou `contact.email`. O Bridge encontra o contato do mesmo jeito que a [busca de contatos](https://docs.bridge.new/pt-br/api-reference/contacts-api/obter-contato-por-um-identificador.md); um contato mesclado com outro é resolvido para o contato que o substituiu. O contato nunca é criado: se ele não existe, a requisição falha com `404` `BRIDGE_EXTERNAL_0001`, então [crie o contato](https://docs.bridge.new/pt-br/api-reference/contacts-api/criar-contato.md) primeiro e tente de novo.
+
+Sem `pipelineId`, o registro vai para o pipeline padrão do workspace e, sem `stageId`, para a etapa inicial do pipeline. Uma etapa final é recusada na criação. Um pipeline configurado para não aceitar registros da API recusa a criação com `403` `BRIDGE_PIPELINE_0317`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-create" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "contact": {
+      "phone": "+573001234567"
+    }
+  }'
+```
+
+Um registro criado responde `201` com um header `Location` e o registro. Guarde o `id` e o `revision` dele:
+
+```json 201
+{
+  "id": "record-1",
+  "pipelineId": "pipe-sales",
+  "pipelineVersion": 3,
+  "stageId": "stage-new",
+  "state": "OPEN",
+  "name": "Ana Gómez",
+  "values": {
+    "budget": 1500
+  },
+  "contact": {
+    "id": "contact-1"
+  },
+  "ownerId": null,
+  "source": "API",
+  "externalId": null,
+  "revision": 1,
+  "closeReason": null,
+  "closedAt": null,
+  "createdAt": "2026-11-11T15:00:00.000Z",
+  "updatedAt": "2026-11-11T15:00:00.000Z"
+}
+```
+
+```json 404 BRIDGE_EXTERNAL_0001
+{
+  "title": "The requested external user was not found",
+  "status": 404,
+  "detail": "External user was not found with PHONE and value +573001234567",
+  "code": "BRIDGE_EXTERNAL_0001",
+  "extra": {
+    "externalIdentificationType": "PHONE",
+    "externalIdentificationValue": "+573001234567"
+  }
+}
+```
+
+
+### Vincule o registro ao seu próprio id
+
+Envie `externalId` com o id que o registro tem no seu sistema. Um pipeline tem **um registro por `externalId`**: uma segunda criação com o mesmo `externalId` no mesmo pipeline falha com `409` `BRIDGE_PIPELINE_0003`, e `extra.recordId` é o registro que já o tem. Leia esse registro em vez de criar outro. Para encontrá-lo depois, [liste os registros](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline.md) com `externalId` (e `pipelineId` quando não for o pipeline padrão).
+
+O Bridge escolhe o id do registro; o corpo da requisição não tem um campo para defini-lo.
+
+```json 409 BRIDGE_PIPELINE_0003
+{
+  "title": "A record with this external id already exists in the pipeline",
+  "status": 409,
+  "code": "BRIDGE_PIPELINE_0003",
+  "extra": {
+    "recordId": "record-1",
+    "pipelineId": "pipe-sales",
+    "externalId": "ERP-1"
+  }
+}
+```
+
+
+### Um registro aberto por contato
+
+Um pipeline pode ser configurado no Bridge para que um contato tenha um só registro aberto por vez. Nesse pipeline, criar um registro para um contato que já tem um aberto falha com `409` `BRIDGE_PIPELINE_0318`, e `extra.openRecordId` é esse registro aberto: trabalhe nele. Registros fechados não contam, então um contato pode começar um registro novo depois que o anterior for fechado. Reabrir um registro falha do mesmo jeito quando o contato tem outro registro aberto no pipeline.
+
+```json 409 BRIDGE_PIPELINE_0318
+{
+  "title": "The contact already has an open record in this pipeline",
+  "status": 409,
+  "detail": "Contact 'contact-1' already has the open record 'record-open' in pipeline 'pipe-onboarding'",
+  "code": "BRIDGE_PIPELINE_0318",
+  "extra": {
+    "openRecordId": "record-open",
+    "pipelineId": "pipe-onboarding",
+    "externalUserId": "contact-1"
+  }
+}
+```
+
+
+## Repita com segurança com Idempotency-Key
+
+`POST .../records`, `POST .../move` e `POST .../reopen` exigem um header `Idempotency-Key` de 1 a 255 caracteres. Use uma key para cada mudança que você quer fazer e envie a mesma key quando repetir essa mudança.
+
+| Você envia | O Bridge responde |
+| --- | --- |
+| A mesma key e o mesmo corpo, depois que a primeira requisição terminou | O mesmo status (`201` ou `200`) com o header `Idempotent-Replayed: true`. O corpo é o registro **como está agora**, então pode já mostrar mudanças posteriores |
+| A mesma key com outro corpo, ou em outro registro ou operação | `422` `BRIDGE_PIPELINE_0402` |
+| A mesma key enquanto a primeira requisição ainda está em andamento | `409` `BRIDGE_PIPELINE_0401`. Tente de novo depois de uma pausa |
+| A mesma key depois que a primeira requisição falhou | A requisição é executada de novo: uma requisição que falhou libera a sua key |
+
+Uma key é mantida por **24 horas**; depois disso, a mesma key é executada como uma requisição nova. Todas as operações do workspace compartilham as keys, então não reutilize uma entre registros.
+
+**Aviso**
+
+  Se uma requisição for interrompida antes de terminar, a key dela pode continuar respondendo `409` `BRIDGE_PIPELINE_0401` por até 24 horas. Tente de novo com uma key nova. Envie `externalId` ao criar registros, para que uma nova tentativa com outra key nunca crie um segundo registro.
+
+## Evite sobrescrever mudanças com expectedRevision
+
+Cada registro tem um `revision` que sobe em um a cada mudança do registro. Envie o `revision` que você leu por último como `expectedRevision` no corpo de `PATCH`, `move` ou `reopen`. Se alguém mudou o registro nesse meio-tempo, a requisição falha com `409` `BRIDGE_PIPELINE_0101` e nada muda. `extra.currentRecord` é o registro como está agora: decida de novo a partir dele e tente outra vez com o `revision` dele.
+
+`expectedRevision` é opcional. Sem ele, a mudança se aplica ao registro como o Bridge o lê, e uma mudança feita no mesmo momento ainda pode fazê-la falhar com o mesmo `409`.
+
+```json PATCH
+{
+  "expectedRevision": 2,
+  "name": "Renamed"
+}
+```
+
+```json 409 BRIDGE_PIPELINE_0101
+{
+  "title": "The pipeline record was modified by another operation",
+  "status": 409,
+  "detail": "Pipeline record 'record-1' is at revision 4, the write expected 2",
+  "code": "BRIDGE_PIPELINE_0101",
+  "extra": {
+    "recordId": "record-1",
+    "expectedRevision": 2,
+    "currentRevision": 4,
+    "currentRecord": {
+      "id": "record-1",
+      "stageId": "stage-proposal",
+      "revision": 4
+    }
+  }
+}
+```
+
+`extra.currentRecord` traz o registro completo, com os mesmos campos da resposta `201` acima; o exemplo mostra só três.
+
+## Mova, feche e reabra
+
+[Mova o registro](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa.md) com o `stageId` de uma etapa da versão do pipeline que ele segue. Movê-lo para uma **etapa final o fecha**. Uma movimentação para uma etapa final pode levar `reasonId`, um dos motivos de fechamento ativos do pipeline, e um `reasonNote` de até 500 caracteres, que precisa de `reasonId`. O motivo de fechamento é opcional: sem ele, o registro é fechado com `closeReason: null`.
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE_ID/records/$RECORD_ID/move" \
+  --header "x-api-key: $BRIDGE_API_KEY" \
+  --header "Idempotency-Key: erp-opp-981-won" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "stageId": "stage-won",
+    "reasonId": "reason-price"
+  }'
+```
+
+A resposta é `200` com o registro. Um registro fechado tem `state: "FINAL"`, `closedAt` e, quando a movimentação levou um, `closeReason` com o `id`, o `label` e a `note` do motivo.
+
+| Problema | Resposta |
+| --- | --- |
+| O registro já está nessa etapa | `409` `BRIDGE_PIPELINE_0004` |
+| O registro está fechado | `409` `BRIDGE_PIPELINE_0306`: reabra-o primeiro |
+| A etapa não está na versão do pipeline do registro | `422` `BRIDGE_PIPELINE_0311`, com `errRecordStage` em `extra.errors` |
+| Um motivo ou nota de fechamento em uma movimentação para uma etapa aberta | `422` `BRIDGE_PIPELINE_0311`, com `errReasonOnlyFinal` em `extra.errors` |
+| O motivo de fechamento não existe, ou está desativado | `422` `BRIDGE_PIPELINE_0315`, ou `422` `BRIDGE_PIPELINE_0314` |
+| A etapa exige um contato completo | `422` `BRIDGE_PIPELINE_0305`; `extra.missing` diz o que falta ao contato |
+
+[Reabra um registro fechado](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado.md) para levá-lo de volta à etapa aberta em que estava antes de ser fechado; o motivo de fechamento é apagado. Quando o histórico dele não cita nenhuma etapa aberta da sua versão, o registro vai para a etapa inicial do pipeline. O corpo é opcional e só aceita `expectedRevision`. Reabrir um registro aberto falha com `409` `BRIDGE_PIPELINE_0307`.
+
+## As ações de etapa são executadas em cada entrada
+
+**Aviso**
+
+  Uma etapa pode ter ações, como criar uma tarefa ou criar um registro em outro pipeline. Elas são executadas **cada vez que um registro entra na etapa**: quando é criado nela, quando é movido para ela e quando é reaberto nela. Isso inclui cada registro que você cria pela API, então uma importação em massa para uma etapa com ações as executa uma vez por registro. Confira as ações da etapa antes de uma importação.
+
+As ações são executadas depois que a API responde; a resposta não espera por elas. Os resultados chegam como [eventos de webhook `pipeline_action.*`](https://docs.bridge.new/pt-br/webhooks/pipeline-records.md#stage-action-events).
+
+## Erros e limites
+
+- Todo erro responde um corpo `Problem`. Decida pelo `code`, não pelo `title`. Consulte os [códigos de erro de pipelines](https://docs.bridge.new/pt-br/error-codes.md#pipeline-error-codes) para cada código e o que fazer.
+- As operações de pipelines consomem a mesma cota que o resto da API: **50 requisições a cada 5 segundos por workspace**. Consulte [Limites de requisições](https://docs.bridge.new/pt-br/rate-limits.md).
+
+---
+
 # Respostas, erros e novas tentativas
 
 Source: https://docs.bridge.new/pt-br/guides/responses
@@ -10068,6 +12968,8 @@ Essa diferença aparece nas leituras:
 
 Por isso, o tamanho da página determina o custo de uma leitura completa. Percorrer 500 contatos custa cinco requisições com 100 por página e 25 requisições com 20 por página: os mesmos dados, com cinco vezes mais consumo de cota.
 
+As operações de pipelines consomem a mesma cota. Uma nova tentativa com a mesma `Idempotency-Key` conta como uma requisição nova, mesmo quando o Bridge responde com o resultado da primeira.
+
 **Nota**
 
   Prefira o maior tamanho de página aceito pelo endpoint quando precisar ler a lista inteira. Se já souber qual recurso procura, leia-o diretamente pelo ID.
@@ -10393,6 +13295,43 @@ Códigos das operações de usuários internos.
 | `BRIDGE_INTERNAL_0003` | Usuário interno inativo | Um ou mais usuários internos estão inativos; confira o status do usuário nas configurações do workspace |
 | `BRIDGE_INTERNAL_0004` | Campo não configurado no usuário interno | O usuário interno não tem um campo configurado; confira as configurações do workspace ou das informações internas |
 | `BRIDGE_INTERNAL_0101` | Operação não aceita pelo usuário interno | O usuário interno não aceita essa operação |
+
+## Códigos de erro de pipelines
+
+Códigos das operações de pipelines e registros de pipeline. Consulte [Crie e mova registros de pipeline](https://docs.bridge.new/pt-br/guides/pipeline-records.md) para o fluxo completo.
+
+| Código | Status | Título | Quando acontece e o que fazer |
+| ---- | ------ | ----- | ------------------------------ |
+| `BRIDGE_PIPELINE_0001` | 404 | Registro de pipeline não encontrado | O registro não existe no seu workspace. Confira o `recordId` |
+| `BRIDGE_PIPELINE_0003` | 409 | External id do registro já usado | O pipeline já tem um registro com este `externalId`. `extra.recordId` é esse registro: leia-o em vez de criar outro |
+| `BRIDGE_PIPELINE_0004` | 409 | Registro já está na etapa | O registro já está na etapa da movimentação. Não há nada a fazer |
+| `BRIDGE_PIPELINE_0101` | 409 | Conflito de revisão do registro | O registro mudou depois do `revision` que você enviou como `expectedRevision`. `extra.currentRecord` é o registro como está agora: decida de novo e tente outra vez com o `revision` dele |
+| `BRIDGE_PIPELINE_0201` | 404 | Pipeline não encontrado | O pipeline não existe no seu workspace. [Liste os pipelines](https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace.md) para encontrar o id dele |
+| `BRIDGE_PIPELINE_0301` | 403 | Pipelines desativados | Os pipelines não estão habilitados para o workspace. Fale com quem administra o workspace |
+| `BRIDGE_PIPELINE_0305` | 422 | Contato incompleto | A etapa exige um contato completo. `extra.missing` diz o que falta: complete o contato e tente de novo |
+| `BRIDGE_PIPELINE_0306` | 409 | Registro não está aberto | O registro está fechado. Reabra-o antes de movê-lo |
+| `BRIDGE_PIPELINE_0307` | 409 | Registro não está fechado | Só um registro fechado pode ser reaberto |
+| `BRIDGE_PIPELINE_0311` | 422 | Validação do registro falhou | O registro não é válido. `extra.errors` lista cada problema, cada um com `path`, `code` e `message` |
+| `BRIDGE_PIPELINE_0314` | 422 | Motivo de fechamento desativado | O motivo de fechamento está desativado. Use um ativo do pipeline |
+| `BRIDGE_PIPELINE_0315` | 422 | Motivo de fechamento não encontrado | O motivo de fechamento não existe no pipeline |
+| `BRIDGE_PIPELINE_0317` | 403 | Entrada no pipeline desativada | O pipeline não aceita registros criados pela API |
+| `BRIDGE_PIPELINE_0318` | 409 | Contato já tem registro aberto | O pipeline permite um registro aberto por contato e o contato já tem um. `extra.openRecordId` é esse registro: trabalhe nele |
+| `BRIDGE_PIPELINE_0401` | 409 | Requisição idempotente em andamento | Uma requisição com esta `Idempotency-Key` ainda está em andamento. Tente de novo depois de uma pausa; se continuar falhando, tente com uma key nova |
+| `BRIDGE_PIPELINE_0402` | 422 | Chave de idempotência reutilizada | A `Idempotency-Key` já foi usada com outra requisição. Use uma key nova para uma mudança nova |
+
+Códigos de `BRIDGE_PIPELINE_0311` em `extra.errors[].code`:
+
+| Código | Significado |
+| ---- | ------- |
+| `errRecordStage` | A etapa não está na versão do pipeline do registro, ou é uma etapa final na criação |
+| `errRecordName` | O nome está ausente, em branco ou tem mais de 200 caracteres |
+| `errRecordValue` | Um valor não corresponde ao tipo do seu atributo |
+| `errRecordValueKey` | Uma chave de `values` não é um atributo do registro na versão do pipeline |
+| `errRecordNoChange` | A atualização não muda nada |
+| `errReasonNote` | `reasonNote` é longo demais ou foi enviado sem `reasonId` |
+| `errReasonOnlyFinal` | Um motivo ou nota de fechamento foi enviado em uma movimentação para uma etapa aberta |
+
+As operações de pipelines também respondem `403` `BRIDGE_CORE_0301` quando o `workspaceId` do caminho não é o workspace da API Key, `404` `BRIDGE_EXTERNAL_0001` quando o contato não existe, `404` `BRIDGE_WORKSPACE_0001`, `400` `BRIDGE_CORE_0104` para um cursor inválido e `429` `BRIDGE_RATE_LIMIT_0001`.
 
 ## Códigos de erro de canais de provedor
 
@@ -10994,6 +13933,23 @@ v1
 Receba uma notificação depois que um e-mail for processado e o resumo por IA estiver disponível. E-mails não são excluídos, portanto somente o evento `email.updated` é emitido.
 
 - `email.updated`
+
+### Notificações de registros de pipeline
+
+v1
+
+Receba uma notificação para cada mudança de um registro de pipeline e para o resultado de cada ação de etapa. Consulte [Eventos de registros de pipeline](https://docs.bridge.new/pt-br/webhooks/pipeline-records.md).
+
+- `pipeline_record.created`
+- `pipeline_record.stage_changed`
+- `pipeline_record.closed`
+- `pipeline_record.updated`
+- `pipeline_record.reopened`
+- `pipeline_record.linked`
+- `pipeline_record.unlinked`
+- `pipeline_action.executed`
+- `pipeline_action.failed`
+- `pipeline_action.skipped`
 
 ---
 
@@ -11723,6 +14679,95 @@ O campo `sentFromBridge` indica a direção: true para e-mails enviados pelo wor
 
 ---
 
+## Notificações de registros de pipeline
+
+v1
+
+Enviadas quando um registro de pipeline muda e quando uma ação de etapa é executada. [Eventos de registros de pipeline](https://docs.bridge.new/pt-br/webhooks/pipeline-records.md) descreve cada campo, `trigger`, motivo de fechamento e código de resultado das ações, com um exemplo de cada tipo de evento.
+
+  
+
+### Tipos de evento
+
+    | Tipo de evento | Descrição |
+    | --- | --- |
+    | `pipeline_record.created` | Um registro foi criado |
+    | `pipeline_record.stage_changed` | Um registro passou para outra etapa |
+    | `pipeline_record.closed` | Um registro passou para uma etapa final; enviado logo depois do seu `pipeline_record.stage_changed` |
+    | `pipeline_record.updated` | Os valores do registro mudaram |
+    | `pipeline_record.reopened` | Um registro fechado voltou para uma etapa aberta |
+    | `pipeline_record.linked` | Uma conversa foi vinculada ao registro |
+    | `pipeline_record.unlinked` | Uma conversa foi desvinculada do registro |
+    | `pipeline_action.executed` | Uma ação de etapa foi executada |
+    | `pipeline_action.failed` | Uma ação de etapa falhou |
+    | `pipeline_action.skipped` | Uma ação de etapa não se aplicava e não foi executada |
+  
+
+  
+
+### Exemplo de payload
+
+    ```json
+    {
+      "eventId": "b1d5e8a2c7f4:closed",
+      "eventType": "pipeline_record.closed",
+      "entity": "pipeline_record",
+      "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+      "timestamp": "2026-11-09T14:03:12.345Z",
+      "payload": {
+        "record": {
+          "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+          "name": "ACME - Licenses 2027",
+          "pipeline": {
+            "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+            "version": 3,
+            "label": "B2B Sales"
+          },
+          "stage": {
+            "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+            "label": "Lost",
+            "state": "FINAL"
+          },
+          "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+          "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+          "externalId": "CRM-88412",
+          "values": [
+            {
+              "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+              "label": "Amount",
+              "type": "CURRENCY",
+              "value": 12500000
+            },
+            {
+              "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+              "label": "Probability",
+              "type": "PERCENT",
+              "value": 62.5
+            }
+          ]
+        },
+        "previousStage": {
+          "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+        },
+        "reason": {
+          "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+          "label": "Price",
+          "note": "The customer chose another offer"
+        },
+        "trigger": "CONVERSATION_RELEASE",
+        "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+        "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+        "author": {
+          "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+          "type": "CORE_USER"
+        }
+      }
+    }
+    ```
+  
+
+---
+
 ## Observações
 
 - O Bridge pode acrescentar novas categorias de eventos no futuro.
@@ -11735,6 +14780,778 @@ O campo `sentFromBridge` indica a direção: true para e-mails enviados pelo wor
 
 - [Visão geral](https://docs.bridge.new/pt-br/webhooks.md)
 - [Verificação de assinaturas](https://docs.bridge.new/pt-br/webhooks/verifying-signatures.md)
+- [Configuração no console](https://docs.bridge.new/pt-br/webhooks/configuration.md)
+- [Eventos de registros de pipeline](https://docs.bridge.new/pt-br/webhooks/pipeline-records.md)
+
+---
+
+# Eventos de registros de pipeline
+
+Source: https://docs.bridge.new/pt-br/webhooks/pipeline-records
+
+Eventos de webhook de registros de pipeline e ações de etapa: tipos de evento, campos do payload, triggers, motivos de fechamento e códigos de resultado das ações.
+
+v1
+
+Assine os eventos de registros de pipeline para saber de cada mudança de um registro de pipeline do seu workspace e do resultado de cada ação de etapa. Cada evento usa a [estrutura comum](https://docs.bridge.new/pt-br/webhooks/events.md#common-event-structure), e o seu `payload` traz o registro como fica depois da mudança.
+
+Use o [guia de registros de pipeline](https://docs.bridge.new/pt-br/guides/pipeline-records.md) quando o seu sistema também cria ou move registros pela API REST.
+
+---
+
+## Tipos de evento
+
+| Tipo de evento | Entidade | Quando é enviado |
+| --- | --- | --- |
+| `pipeline_record.created` | `pipeline_record` | Um registro foi criado |
+| `pipeline_record.stage_changed` | `pipeline_record` | Um registro passou para outra etapa |
+| `pipeline_record.closed` | `pipeline_record` | A movimentação terminou em uma etapa final. Enviado logo depois do seu `pipeline_record.stage_changed`, com o mesmo payload |
+| `pipeline_record.updated` | `pipeline_record` | Os valores do registro mudaram |
+| `pipeline_record.reopened` | `pipeline_record` | Um registro fechado voltou para uma etapa aberta |
+| `pipeline_record.linked` | `pipeline_record` | Uma conversa foi vinculada ao registro |
+| `pipeline_record.unlinked` | `pipeline_record` | Uma conversa foi desvinculada do registro |
+| `pipeline_action.executed` | `pipeline_action` | Uma ação de etapa foi executada |
+| `pipeline_action.failed` | `pipeline_action` | Uma ação de etapa falhou. `action.failureReason` diz por quê |
+| `pipeline_action.skipped` | `pipeline_action` | Uma ação de etapa não se aplicava e não foi executada. `action.skipReason` diz por quê |
+
+Cada mudança produz um evento, exceto uma movimentação para uma etapa final, que produz dois: `pipeline_record.stage_changed` e depois `pipeline_record.closed`. Os dois trazem o mesmo `payload`; o `eventId` de `pipeline_record.closed` termina em `:closed`.
+
+---
+
+## Estrutura
+
+| Campo | Valor |
+| --- | --- |
+| `eventId` | Identificador do evento. Use-o, junto com `workspaceId` e `eventType`, para descartar duplicados |
+| `eventType` | Um dos tipos de evento acima |
+| `entity` | `pipeline_record` ou `pipeline_action`, o prefixo de `eventType` |
+| `workspaceId` | O seu workspace |
+| `timestamp` | Quando a mudança foi registrada, em UTC com milissegundos, por exemplo `2026-11-09T14:03:12.345Z` |
+| `payload` | Os campos abaixo |
+
+---
+
+## Payload
+
+Os campos sem valor não aparecem no payload, exceto `record.values`, que está sempre presente.
+
+| Campo | Eventos | Significado |
+| --- | --- | --- |
+| `record.id` | Todos | Identificador do registro, o `id` da [API de registros de pipeline](https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline.md) |
+| `record.name` | Todos | Nome do registro |
+| `record.pipeline` | Todos | `id`, `version` e `label` do pipeline ao qual o registro pertence |
+| `record.stage` | Todos | `id`, `label` e `state` da etapa em que o registro fica depois da mudança. `state` é `OPEN` ou `FINAL` |
+| `record.contactId` | Todos | Contato ao qual o registro pertence |
+| `record.ownerId` | Quando o registro tem responsável | Usuário do Bridge responsável pelo registro |
+| `record.externalId` | Quando o registro tem um | O seu próprio identificador do registro |
+| `record.values` | Todos | Os valores dos atributos do registro. Consulte [Valores do registro](https://docs.bridge.new/pt-br/webhooks/pipeline-records.md#record-values) |
+| `action` | `pipeline_action.*` | A ação de etapa e o seu resultado. Consulte [Eventos de ações de etapa](https://docs.bridge.new/pt-br/webhooks/pipeline-records.md#stage-action-events) |
+| `previousStage` | Movimentações de etapa e `pipeline_record.reopened` | `id` da etapa que o registro deixou |
+| `reason` | Movimentações com motivo de fechamento | `id`, `label` e, quando houver, `note` do motivo de fechamento |
+| `trigger` | Todos | O que causou a mudança. Consulte [Triggers](https://docs.bridge.new/pt-br/webhooks/pipeline-records.md#triggers) |
+| `conversationId`, `sessionId` | Quando a mudança aconteceu em uma conversa | A conversa e a sua sessão |
+| `author` | Todos | `id` e `type` de quem fez a mudança. As ações de etapa são feitas pelo sistema |
+
+### Valores do registro
+
+`record.values` é uma lista com um item para cada atributo que tem valor: `{ "id", "label", "type", "value" }`. O `id` de um atributo nunca muda, então um atributo renomeado mantém o seu `id`. Leia os valores pelo `id` quando os armazenar.
+
+| `type` | `value` |
+| --- | --- |
+| `NUMBER`, `PERCENT`, `CURRENCY` | Número. `PERCENT` vai de 0 a 100. `CURRENCY` é um valor sem código de moeda |
+| `DATE` | Texto `YYYY-MM-DD` |
+| `TEXT` | Texto |
+| `LIST` | Texto, uma das opções do atributo |
+| `MULTI` | Lista de textos distintos, cada um uma das opções do atributo |
+
+Os valores registrados antes de o Bridge descrever os atributos chegam com `label` e `type` em `null`, depois dos descritos.
+
+### Triggers
+
+| `trigger` | A mudança veio de |
+| --- | --- |
+| `ADVISOR` | Um usuário do Bridge trabalhando no app do Bridge |
+| `CONVERSATION_RELEASE` | Um usuário do Bridge que liberou uma conversa e fechou o seu registro ao mesmo tempo |
+| `API` | A [API REST](https://docs.bridge.new/pt-br/guides/pipeline-records.md) |
+| `ACTION` | Uma ação de etapa. Todos os eventos `pipeline_action.*` têm este trigger |
+| `INBOUND_SESSION` | Uma conversa iniciada por um contato, que criou o registro ou foi vinculada a ele |
+
+### Motivos de fechamento
+
+`reason` aparece quando a movimentação trouxe um motivo de fechamento, por exemplo quando um registro é fechado como perdido com o motivo "Price". `reason.id` é o motivo de fechamento do pipeline, `reason.label` o seu texto e `reason.note` o texto livre escrito com ele. Uma movimentação para uma etapa final também pode não ter motivo de fechamento.
+
+---
+
+## Eventos de ações de etapa
+
+As ações de uma etapa são executadas **cada vez que um registro entra na etapa**: quando é criado nela, quando passa para ela e quando é reaberto nela. Isso inclui os registros criados em massa, então uma importação grande para uma etapa com ações produz um evento de ação para cada registro e ação.
+
+O objeto `action` de um evento `pipeline_action.*`:
+
+| Campo | Significado |
+| --- | --- |
+| `action.id` | A ação da etapa que foi executada |
+| `action.type` | `CREATE_TASK`, `CREATE_IN_PIPELINE`, `CLOSE_SESSION`, `SET_SESSION_PRIORITY` ou `TRANSFER_TO_TEAM` |
+| `action.refId` | Para o que a ação aponta: a tarefa ou o registro que ela criou ou, quando foi ignorada com `TASK_STILL_OPEN` ou `CONTACT_HAS_OPEN_RECORD`, a tarefa ou o registro que continua aberto |
+| `action.skipReason` | Só em `pipeline_action.skipped`: por que a ação não se aplicava |
+| `action.failureReason` | Só em `pipeline_action.failed`: por que a ação falhou |
+
+**Nota**
+
+  `TRANSFER_TO_TEAM` ainda não é suportada. Uma etapa que ainda a tem produz `pipeline_action.failed` com `ACTION_NOT_SUPPORTED`, ou `pipeline_action.skipped` com `NO_OPEN_SESSION` quando o registro não tem uma conversa aberta.
+
+### Motivos para ignorar
+
+Uma ação ignorada é um resultado normal: a ação não se aplicava a este registro, então nada foi alterado. `skipReason` é sempre um código.
+
+| `skipReason` | Significado |
+| --- | --- |
+| `NO_OPEN_SESSION` | A ação precisa da conversa aberta do registro e o registro não tem nenhuma. Um `CREATE_TASK` para quem atende a conversa é ignorado assim só quando o registro nunca teve conversa |
+| `SESSION_CLOSED` | `SET_SESSION_PRIORITY`: a conversa foi fechada antes de a prioridade ser definida |
+| `ALREADY_RELEASED` | `CLOSE_SESSION`: a conversa já estava liberada |
+| `OTHER_OPEN_RECORDS` | `CLOSE_SESSION`: a conversa continua aberta porque o contato tem outro registro aberto |
+| `TASK_STILL_OPEN` | `CREATE_TASK`: a tarefa que esta ação criou em uma entrada anterior na etapa continua aberta, então não foi criada uma segunda tarefa. `action.refId` é essa tarefa |
+| `ASSIGNEE_NOT_RESOLVED` | `CREATE_TASK` para quem atende a conversa do registro: ninguém atendeu, depois de várias tentativas enquanto a conversa estava aberta, ou imediatamente se estava fechada |
+| `TEAM_HAS_NO_MEMBERS` | `CREATE_TASK` para uma equipe: a equipe não tem membros ativos |
+| `CONTACT_HAS_OPEN_RECORD` | `CREATE_IN_PIPELINE` para um pipeline que permite um só registro aberto por contato: o contato já tem um lá. `action.refId` é esse registro |
+
+### Motivos de falha
+
+`failureReason` é `CODE` ou `CODE: detail`. Decida pela parte antes dos dois-pontos; o detalhe ajuda o suporte e o seu texto pode mudar. O código é um destes:
+
+- Um código das próprias ações de etapa, da lista abaixo.
+- O código de erro do domínio do Bridge que recusou a ação, por exemplo `BRIDGE_TASK_0308` quando não foi possível criar a tarefa.
+- `HTTP_<status>`, quando esse domínio respondeu sem código de erro, por exemplo `HTTP_503`.
+
+| Código | Significado |
+| --- | --- |
+| `ACTION_NOT_SUPPORTED` | O tipo de ação ainda não é suportado, por exemplo `TRANSFER_TO_TEAM` |
+| `INVALID_ACTION_CONFIG` | Falta à ação uma configuração de que ela precisa, por exemplo o título de uma tarefa ou uma prioridade |
+| `TARGET_PIPELINE_NOT_FOUND` | `CREATE_IN_PIPELINE`: o pipeline de destino não existe mais |
+| `TARGET_STAGE_NOT_FOUND` | `CREATE_IN_PIPELINE`: a etapa de destino não é uma etapa regular da versão atual do pipeline de destino |
+| `CHAIN_LIMIT_REACHED` | `CREATE_IN_PIPELINE`: a cadeia de registros criados uns a partir dos outros já tem 10 registros |
+| `TEAM_NOT_FOUND` | `CREATE_TASK` para uma equipe: a equipe não existe mais ou está desativada |
+| `TEAM_TOO_LARGE` | `CREATE_TASK` para uma equipe: a equipe tem mais membros ativos do que uma tarefa comporta (48) |
+| `TIMEOUT` | O Bridge não respondeu a tempo, depois de várias tentativas |
+| `NETWORK_ERROR` | Não foi possível alcançar o Bridge, depois de várias tentativas |
+| `UNEXPECTED_ERROR` | Um erro inesperado, depois de várias tentativas |
+
+Novos códigos podem ser adicionados às duas listas. O significado de um código existente nunca muda, então trate um código desconhecido como "não foi executada" e continue processando.
+
+---
+
+## Entrega e ordem
+
+- A entrega pode ser duplicada. Descarte os eventos repetidos como descrito em [Recebimento de eventos](https://docs.bridge.new/pt-br/webhooks/receive-events.md).
+- `pipeline_record.closed` é enviado depois do seu `pipeline_record.stage_changed`. Quando uma entrega é repetida, só o evento que não foi entregue é reenviado, então `pipeline_record.closed` pode chegar depois do seu `pipeline_record.stage_changed`.
+- Os eventos de registros diferentes não têm ordem. Para um registro, ordene os seus eventos por `timestamp`.
+- Os eventos `pipeline_action.*` chegam depois do `pipeline_record.created`, `pipeline_record.stage_changed` ou `pipeline_record.reopened` que executou as ações.
+- Os registros que existiam antes da assinatura aparecem com a sua próxima mudança.
+
+---
+
+## Exemplos de payload
+
+### Exemplos de eventos de registro
+
+```json Created
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.created",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Stage changed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.stage_changed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14"
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Stage changed to final
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.stage_changed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+    },
+    "reason": {
+      "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+      "label": "Price",
+      "note": "The customer chose another offer"
+    },
+    "trigger": "CONVERSATION_RELEASE",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Closed
+{
+  "eventId": "b1d5e8a2c7f4:closed",
+  "eventType": "pipeline_record.closed",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+    },
+    "reason": {
+      "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+      "label": "Price",
+      "note": "The customer chose another offer"
+    },
+    "trigger": "CONVERSATION_RELEASE",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Updated
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.updated",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Reopened
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.reopened",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "previousStage": {
+      "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14"
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Linked
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.linked",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+```json Unlinked
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_record.unlinked",
+  "entity": "pipeline_record",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40",
+        "label": "Negotiation",
+        "state": "OPEN"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "trigger": "ADVISOR",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "type": "CORE_USER"
+    }
+  }
+}
+```
+
+
+### Exemplos de eventos de ações de etapa
+
+```json Executed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.executed",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "CREATE_TASK",
+      "refId": "2e9c5a7d-1f4b-4c68-9a03-7d5b1e8c4f26"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+```json Failed
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.failed",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "TRANSFER_TO_TEAM",
+      "failureReason": "ACTION_NOT_SUPPORTED"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+```json Skipped
+{
+  "eventId": "b1d5e8a2c7f4",
+  "eventType": "pipeline_action.skipped",
+  "entity": "pipeline_action",
+  "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+  "timestamp": "2026-11-09T14:03:12.345Z",
+  "payload": {
+    "record": {
+      "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+      "name": "ACME - Licenses 2027",
+      "pipeline": {
+        "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+        "version": 3,
+        "label": "B2B Sales"
+      },
+      "stage": {
+        "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+        "label": "Lost",
+        "state": "FINAL"
+      },
+      "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+      "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+      "externalId": "CRM-88412",
+      "values": [
+        {
+          "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+          "label": "Amount",
+          "type": "CURRENCY",
+          "value": 12500000
+        },
+        {
+          "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+          "label": "Probability",
+          "type": "PERCENT",
+          "value": 62.5
+        }
+      ]
+    },
+    "action": {
+      "id": "6d1b8e4f-3a7c-4f92-b5e0-9c2d7a4f8b31",
+      "type": "CLOSE_SESSION",
+      "skipReason": "NO_OPEN_SESSION"
+    },
+    "trigger": "ACTION",
+    "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+    "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+    "author": {
+      "id": "pipelines-action-engine",
+      "type": "CORE_SYSTEM"
+    }
+  }
+}
+```
+
+
+---
+
+## Tópicos relacionados
+
+- [Referência de eventos](https://docs.bridge.new/pt-br/webhooks/events.md)
+- [Guia de registros de pipeline](https://docs.bridge.new/pt-br/guides/pipeline-records.md)
+- [Recebimento de eventos](https://docs.bridge.new/pt-br/webhooks/receive-events.md)
 - [Configuração no console](https://docs.bridge.new/pt-br/webhooks/configuration.md)
 
 ---
@@ -12677,6 +16494,193 @@ A reutilização de uma conversa depende do tipo de Agent:
 - Service Agent: uma sessão de serviço aberta e não expirada continua; uma sessão expirada é encerrada como abandonada e uma nova é aberta.
 
 Consulte [o guia completo de saída](https://docs.bridge.new/pt-br/guides/agent-outbound.md) para os pré-requisitos, a tabela de decisão de forceSend, a recuperação, o trabalho parcial e as decisões seguras de nova tentativa.
+
+[Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
+
+Este corpus contém guias e descrições de operações. Ele não inclui todos os schemas de requisição e resposta. Leia o contrato OpenAPI vinculado antes de gerar uma requisição.
+
+---
+
+# Listar os pipelines de um workspace
+
+Source: https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace
+
+**Referência da operação:** `get /bridge/api/v1/workspaces/{workspaceId}/pipelines`
+
+**operationId:** `list_pipelines_bridge_api_v1_workspaces__workspaceId__pipelines_get`
+
+Lista os pipelines ativos do workspace, ordenados por rótulo.
+
+`isDefault` marca o pipeline que `POST /records` usa quando `pipelineId` não é enviado, e `acceptsApiRecords`
+indica se um pipeline aceita registros criados por esta API.
+
+[Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
+
+Este corpus contém guias e descrições de operações. Ele não inclui todos os schemas de requisição e resposta. Leia o contrato OpenAPI vinculado antes de gerar uma requisição.
+
+---
+
+# Obter um pipeline com suas etapas e atributos
+
+Source: https://docs.bridge.new/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos
+
+**Referência da operação:** `get /bridge/api/v1/workspaces/{workspaceId}/pipelines/{pipelineId}`
+
+**operationId:** `retrieve_pipeline_bridge_api_v1_workspaces__workspaceId__pipelines__pipelineId__get`
+
+Obtém um pipeline ativo com sua versão atual: etapas em ordem, atributos e motivos de fechamento ativos.
+
+Use-o para saber quais `stageId` e quais chaves de `values` o `POST /records` aceita.
+
+[Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
+
+Este corpus contém guias e descrições de operações. Ele não inclui todos os schemas de requisição e resposta. Leia o contrato OpenAPI vinculado antes de gerar uma requisição.
+
+---
+
+# Listar registros de pipeline
+
+Source: https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline
+
+**Referência da operação:** `get /bridge/api/v1/workspaces/{workspaceId}/records`
+
+**operationId:** `list_pipeline_records_bridge_api_v1_workspaces__workspaceId__records_get`
+
+Lista os registros do workspace, do atualizado mais recentemente ao mais antigo, buscados de uma única forma.
+
+- `externalId`, com um `pipelineId` opcional (o pipeline padrão, caso contrário): o único registro que
+  seu sistema criou com esse id, ou nenhum. Nenhum cursor é retornado.
+- Um de `contactId`, `contactPhone` ou `contactEmail`: os registros desse contato, opcionalmente restritos a um
+  `pipelineId` e a um `stageId`. A restrição se aplica a cada página lida, então uma página pode ter menos
+  registros que `limit`, ou nenhum, enquanto ainda há um `cursor`: continue lendo até que `cursor` seja null.
+- Apenas `pipelineId`: os registros desse pipeline, opcionalmente restritos a um `stageId`.
+
+Qualquer outra combinação falha com 422.
+
+[Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
+
+Este corpus contém guias e descrições de operações. Ele não inclui todos os schemas de requisição e resposta. Leia o contrato OpenAPI vinculado antes de gerar uma requisição.
+
+---
+
+# Criar um registro de pipeline
+
+Source: https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline
+
+**Referência da operação:** `post /bridge/api/v1/workspaces/{workspaceId}/records`
+
+**operationId:** `create_pipeline_record_bridge_api_v1_workspaces__workspaceId__records_post`
+
+Cria um registro de um contato em um pipeline, como uma oportunidade de venda.
+
+O contato é informado por exatamente um de `id`, `phone` ou `email` e precisa existir: nunca é criado (404
+`BRIDGE_EXTERNAL_0001`). `pipelineId` assume por padrão o pipeline padrão do workspace e `stageId` a
+etapa inicial do pipeline. Um `name` ausente ou em branco assume por padrão o nome completo do contato, depois seu
+celular e depois seu e-mail. Só são aceitas etapas abertas, e só atributos de escopo `RECORD` da
+versão atual do pipeline em `values` (um `null`, um texto em branco ou uma lista vazia é omitido); cada problema
+encontrado é listado em `extra.errors` do 422
+`BRIDGE_PIPELINE_0311`. Quando a etapa em que o registro começa exige um contato completo (nome, sobrenome,
+celular e todo atributo personalizado obrigatório do workspace), um contato incompleto falha com 422
+`BRIDGE_PIPELINE_0305`, cujo `extra.missing` indica o que falta. Um segundo registro com o mesmo `externalId`
+no pipeline falha com 409 `BRIDGE_PIPELINE_0003`, cujo `extra.recordId` é o registro existente.
+
+`Idempotency-Key` é obrigatório. Repetir com a mesma chave e o mesmo corpo responde 201 com o primeiro registro e
+`Idempotent-Replayed: true`. A mesma chave com um corpo diferente falha com 422 `BRIDGE_PIPELINE_0402`, e
+enquanto a primeira solicitação ainda está em andamento, com 409 `BRIDGE_PIPELINE_0401`. Quando a solicitação falha, a chave é
+liberada e pode ser reutilizada. Se a primeira solicitação foi interrompida antes de terminar, sua chave continua respondendo 409
+`BRIDGE_PIPELINE_0401` por até 24 horas: tente de novo com uma chave nova e envie `externalId` para que uma nova tentativa nunca
+crie um segundo registro.
+
+[Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
+
+Este corpus contém guias e descrições de operações. Ele não inclui todos os schemas de requisição e resposta. Leia o contrato OpenAPI vinculado antes de gerar uma requisição.
+
+---
+
+# Obter um registro de pipeline
+
+Source: https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline
+
+**Referência da operação:** `get /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}`
+
+**operationId:** `retrieve_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__get`
+
+Obtém um registro do workspace pelo seu id.
+
+[Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
+
+Este corpus contém guias e descrições de operações. Ele não inclui todos os schemas de requisição e resposta. Leia o contrato OpenAPI vinculado antes de gerar uma requisição.
+
+---
+
+# Atualizar um registro de pipeline
+
+Source: https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline
+
+**Referência da operação:** `patch /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}`
+
+**operationId:** `update_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__patch`
+
+Altera o nome ou alguns valores de um registro, aberto ou fechado.
+
+Só os campos enviados mudam: um `name` ausente mantém o nome, e os atributos omitidos de `values` mantêm seu
+valor; um `null`, um texto em branco ou uma lista vazia remove um valor. Um registro sempre tem nome, então um `name`
+`null` ou em branco falha como qualquer outro campo inválido. Cada problema encontrado é listado em `extra.errors` do 422
+`BRIDGE_PIPELINE_0311`, que também é a resposta a um corpo que não altera nada. Uma alteração que deixa o registro
+como está não grava nada e responde o registro. Com `expectedRevision`, um registro alterado desde que você o leu falha
+com 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro como está agora.
+
+[Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
+
+Este corpus contém guias e descrições de operações. Ele não inclui todos os schemas de requisição e resposta. Leia o contrato OpenAPI vinculado antes de gerar uma requisição.
+
+---
+
+# Mover um registro de pipeline para outra etapa
+
+Source: https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa
+
+**Referência da operação:** `post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/move`
+
+**operationId:** `move_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__move_post`
+
+Move um registro aberto para outra etapa da versão do pipeline que ele segue; uma etapa final o fecha.
+
+Uma etapa que não está nessa versão, como uma de outro pipeline, falha com 422 `BRIDGE_PIPELINE_0311`
+(`errRecordStage`), e a etapa em que o registro já está, com 409 `BRIDGE_PIPELINE_0004`. Um registro fechado
+falha com 409 `BRIDGE_PIPELINE_0306`: reabra-o primeiro. Quando a etapa exige um contato completo, um contato
+incompleto falha com 422 `BRIDGE_PIPELINE_0305`. Uma movimentação para uma etapa final pode levar um `reasonId` ativo
+do pipeline (422 `BRIDGE_PIPELINE_0315` quando não existe, `BRIDGE_PIPELINE_0314` quando está desativado)
+e um `reasonNote`; sem um motivo, o registro é fechado sem motivo. Um motivo ou uma nota em uma movimentação para uma etapa
+aberta falha com 422 `BRIDGE_PIPELINE_0311`. Com `expectedRevision`, um registro alterado desde que você o leu falha
+com 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro como está agora.
+
+`Idempotency-Key` é obrigatório e funciona como em `POST /records`: uma nova tentativa com a mesma chave e o mesmo corpo responde
+com o registro e `Idempotent-Replayed: true`, como está agora. A mesma chave em outro registro ou operação falha com
+422 `BRIDGE_PIPELINE_0402`.
+
+[Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
+
+Este corpus contém guias e descrições de operações. Ele não inclui todos os schemas de requisição e resposta. Leia o contrato OpenAPI vinculado antes de gerar uma requisição.
+
+---
+
+# Reabrir um registro de pipeline fechado
+
+Source: https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado
+
+**Referência da operação:** `post /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/reopen`
+
+**operationId:** `reopen_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__reopen_post`
+
+Devolve um registro fechado à etapa aberta em que estava antes de ser fechado e limpa seu motivo de fechamento.
+
+Quando seu histórico não indica nenhuma etapa aberta da sua versão, o registro vai para a etapa inicial do pipeline. Um registro
+aberto falha com 409 `BRIDGE_PIPELINE_0307`. Quando essa etapa exige um contato completo, um contato incompleto
+falha com 422 `BRIDGE_PIPELINE_0305`. O corpo é opcional; com `expectedRevision`, um registro alterado desde que você o
+leu falha com 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro como está agora.
+
+`Idempotency-Key` é obrigatório e funciona como em `POST /records/{recordId}/move`.
 
 [Contrato OpenAPI exato](https://docs.bridge.new/pt-br/api-reference/openapi.yaml)
 

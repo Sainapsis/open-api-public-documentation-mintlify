@@ -87,6 +87,8 @@ Essa diferença aparece nas leituras:
 
 Por isso, o tamanho da página determina o custo de uma leitura completa. Percorrer 500 contatos custa cinco requisições com 100 por página e 25 requisições com 20 por página: os mesmos dados, com cinco vezes mais consumo de cota.
 
+As operações de pipelines consomem a mesma cota. Uma nova tentativa com a mesma `Idempotency-Key` conta como uma requisição nova, mesmo quando o Bridge responde com o resultado da primeira.
+
 <Note>
   Prefira o maior tamanho de página aceito pelo endpoint quando precisar ler a lista inteira. Se já souber qual recurso procura, leia-o diretamente pelo ID.
 </Note>

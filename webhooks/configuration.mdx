@@ -94,6 +94,23 @@ Receive a notification once an email has been processed and the AI summary is av
 
 - `email.updated`
 
+### Pipeline Record Notifications
+
+<span className="bridge-version-badge">v1</span>
+
+Receive a notification for every change to a pipeline record and for the result of every stage action. See [Pipeline record events](/webhooks/pipeline-records).
+
+- `pipeline_record.created`
+- `pipeline_record.stage_changed`
+- `pipeline_record.closed`
+- `pipeline_record.updated`
+- `pipeline_record.reopened`
+- `pipeline_record.linked`
+- `pipeline_record.unlinked`
+- `pipeline_action.executed`
+- `pipeline_action.failed`
+- `pipeline_action.skipped`
+
 ---
 
 ## Verifying Your Configuration

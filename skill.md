@@ -34,8 +34,10 @@ Read the task guide and the relevant operation/schema before generating a reques
 | Send a PDF or other attachment | [Attachments](https://docs.bridge.new/guides/send-attachments.md) |
 | Discover and supply template variables | [Templates](https://docs.bridge.new/guides/send-template.md) |
 | Agent outbound, conversation reuse and handoff | [Agent outbound](https://docs.bridge.new/guides/agent-outbound.md) |
+| Create, move, close and reopen pipeline records | [Pipeline records](https://docs.bridge.new/guides/pipeline-records.md) |
 | Find IDs, paginate results and interpret acceptance | [Identifiers](https://docs.bridge.new/guides/identifiers.md), [pagination](https://docs.bridge.new/guides/pagination.md), [responses](https://docs.bridge.new/guides/responses.md) |
 | Verify and receive webhook events | [Signatures](https://docs.bridge.new/webhooks/verifying-signatures.md), [durable receiver](https://docs.bridge.new/webhooks/receive-events.md) |
+| Pipeline record and stage action webhook events | [Pipeline record events](https://docs.bridge.new/webhooks/pipeline-records.md) |
 | Landing-page lead capture | [Custom Connections](https://docs.bridge.new/lead-capture/integration.md) |
 | Error diagnosis | [REST errors](https://docs.bridge.new/error-codes.md), [Custom Connections errors](https://docs.bridge.new/lead-capture/errors.md) |
 

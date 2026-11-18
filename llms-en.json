@@ -87,6 +87,13 @@
       "kind": "page"
     },
     {
+      "title": "Create and move pipeline records",
+      "source": "https://docs.bridge.new/guides/pipeline-records",
+      "markdownUrl": "https://docs.bridge.new/guides/pipeline-records.md",
+      "description": "Create pipeline records for existing Contacts, retry safely with Idempotency-Key, avoid lost updates with expectedRevision, and close or reopen records.",
+      "kind": "page"
+    },
+    {
       "title": "Responses, errors, and retries",
       "source": "https://docs.bridge.new/guides/responses",
       "markdownUrl": "https://docs.bridge.new/guides/responses.md",
@@ -154,6 +161,13 @@
       "source": "https://docs.bridge.new/webhooks/events",
       "markdownUrl": "https://docs.bridge.new/webhooks/events.md",
       "description": "Event families, payload examples and subscription versions for Bridge webhooks.",
+      "kind": "page"
+    },
+    {
+      "title": "Pipeline record events",
+      "source": "https://docs.bridge.new/webhooks/pipeline-records",
+      "markdownUrl": "https://docs.bridge.new/webhooks/pipeline-records.md",
+      "description": "Webhook events for pipeline records and stage actions: event types, payload fields, triggers, close reasons and action result codes.",
       "kind": "page"
     },
     {
@@ -364,6 +378,62 @@
       "source": "https://docs.bridge.new/api-reference/agents-api/start-an-outbound-conversation-with-a-contact-as-a-given-agent",
       "markdownUrl": "https://docs.bridge.new/api-reference/agents-api/start-an-outbound-conversation-with-a-contact-as-a-given-agent.md",
       "description": "Start an outbound conversation with a known Contact, answered by the given Agent.\n\nWorks for LeadScout and Service Agents. The Contact is resolved first, then the Agent, which must exist in\nthe workspace and be available (see `GET /agents`). The template is referenced by `template.id` or\n`template.name` (the id wins when both are sent), must exist and be APPROVED, and a\n`handoffOverride` Bridge User must be valid. If `template.media.mediaId` is unknown, the request fails\nwith 400 `BRIDGE_AI_LEADSCOUT_0016` only after the conversation was created or recovered, so a retry after\nthat error may answer differently. Body rules (`consent.status=GRANTED` without `capturedAt`, `template.media`\nwithout exactly one of `mediaId` or `url`) fail with 400 `BRIDGE_CORE_0103`.\n\nThe conversation opens on one of the Agent's active WhatsApp lines, controlled by the Agent, with the template\nas its first message. A line is picked in this order:\n- A free line.\n- Otherwise, a line holding a released conversation with this Contact that can be recovered. Recovering\n  returns `recovered=true` and replaces the previous outbound context and `agentContext`. This happens even\n  with `forceSend=false`.\n- Otherwise, when no line is free or recoverable: `forceSend=false` (default) fails with 409\n  `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reuses a line occupied by an active conversation with this\n  Contact, preferring one this Agent controls. If the chosen conversation is held by another Agent or a\n  Bridge User, the call fails with 409 `BRIDGE_AI_AGENT_OUTBOUND_0006` and nothing is written. Release it\n  first, then retry. Lines whose conversation is blocked or was released without recovery are never used, so\n  if no line is occupied by an active conversation the call fails with 409 `BRIDGE_AI_LEADSCOUT_0008` even\n  with `forceSend=true`.\n\n`contact.providerChannelId` is a preference: the pinned line is used when it is free or recoverable;\notherwise the same order applies over all the Agent's lines. Among occupied lines, one this Agent controls\ncomes first; if none does, the pinned line is the one reused (and may fail with 0006).\n\nReusing a conversation depends on the Agent type:\n- LeadScout: if its LeadScout session is still open and not expired, the call fails with 409\n  `BRIDGE_AI_LEADSCOUT_0017` (`extra` carries `conversationId`, `sessionId` and `stage`). If an expired\n  session cannot be finalized, it fails with 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: an open, unexpired service session is continued; an expired one is closed as abandoned and a\n  new one opens.\n\nSee [the complete outbound guide](/guides/agent-outbound) for prerequisites, the forceSend decision table, recovery, partial work and safe retry decisions.",
+      "kind": "operation"
+    },
+    {
+      "title": "List the pipelines of a workspace",
+      "source": "https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace",
+      "markdownUrl": "https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace.md",
+      "description": "List the active pipelines of the workspace, sorted by label.\n\n`isDefault` marks the pipeline `POST /records` uses when no `pipelineId` is sent, and `acceptsApiRecords`\nwhether a pipeline takes records created through this API.",
+      "kind": "operation"
+    },
+    {
+      "title": "Retrieve a pipeline with its stages and attributes",
+      "source": "https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes",
+      "markdownUrl": "https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes.md",
+      "description": "Get an active pipeline with its current version: stages in order, attributes and active close reasons.\n\nUse it to know which `stageId` and `values` keys `POST /records` accepts.",
+      "kind": "operation"
+    },
+    {
+      "title": "List pipeline records",
+      "source": "https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records",
+      "markdownUrl": "https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records.md",
+      "description": "List records of the workspace, most recently updated first, found in exactly one way.\n\n- `externalId`, with an optional `pipelineId` (the default pipeline otherwise): the one record your system\n  created with that id, or none. No cursor follows.\n- One of `contactId`, `contactPhone` or `contactEmail`: the records of that contact, optionally narrowed to a\n  `pipelineId` and a `stageId`. The narrowing applies to each page read, so a page may hold fewer than\n  `limit` records, or none, while a `cursor` still follows it: keep reading until `cursor` is null.\n- `pipelineId` alone: the records of that pipeline, optionally narrowed to a `stageId`.\n\nAny other combination fails with 422.",
+      "kind": "operation"
+    },
+    {
+      "title": "Create a pipeline record",
+      "source": "https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record",
+      "markdownUrl": "https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record.md",
+      "description": "Create a record of a contact in a pipeline, such as a sales opportunity.\n\nThe contact is given by exactly one of `id`, `phone` or `email` and must exist: it is never created (404\n`BRIDGE_EXTERNAL_0001`). `pipelineId` defaults to the workspace's default pipeline and `stageId` to the\npipeline's initial stage. A missing or blank `name` defaults to the contact's full name, then its cellphone,\nthen its email. Only open stages are accepted, and only `RECORD`-scope attributes of the pipeline's current\nversion in `values` (a `null`, a blank text or an empty list is left out); every problem found is listed in `extra.errors` of the 422\n`BRIDGE_PIPELINE_0311`. When the stage the record starts in requires a complete contact (first name, last name,\ncellphone and every required custom attribute of the workspace), an incomplete one fails with 422\n`BRIDGE_PIPELINE_0305`, whose `extra.missing` names what it lacks. A second record with the same `externalId`\nin the pipeline fails with 409 `BRIDGE_PIPELINE_0003`, whose `extra.recordId` is the existing record.\n\n`Idempotency-Key` is required. Retrying with the same key and body answers 201 with the first record and\n`Idempotent-Replayed: true`. The same key with a different body fails with 422 `BRIDGE_PIPELINE_0402`, and\nwhile the first request is still running with 409 `BRIDGE_PIPELINE_0401`. When the request fails, the key is\nfreed and can be retried. If the first request was cut off before it finished, its key keeps answering 409\n`BRIDGE_PIPELINE_0401` for up to 24 hours: retry with a new key, and send `externalId` so that a retry never\ncreates a second record.",
+      "kind": "operation"
+    },
+    {
+      "title": "Retrieve a pipeline record",
+      "source": "https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record",
+      "markdownUrl": "https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record.md",
+      "description": "Get a record of the workspace by its id.",
+      "kind": "operation"
+    },
+    {
+      "title": "Update a pipeline record",
+      "source": "https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record",
+      "markdownUrl": "https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record.md",
+      "description": "Change the name or some values of a record, open or closed.\n\nOnly the fields sent change: a missing `name` keeps the name, and the attributes left out of `values` keep their\nvalue; a `null`, a blank text or an empty list removes a value. A record always has a name, so a `null` or blank\n`name` fails like any other invalid field. Every problem found is listed in `extra.errors` of the 422\n`BRIDGE_PIPELINE_0311`, which is also the answer to a body that changes nothing. A change that leaves the record\nas it is writes nothing and answers the record. With `expectedRevision`, a record changed since you read it fails\nwith 409 `BRIDGE_PIPELINE_0101`, whose `extra.currentRecord` is the record as it is now.",
+      "kind": "operation"
+    },
+    {
+      "title": "Move a pipeline record to another stage",
+      "source": "https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage",
+      "markdownUrl": "https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage.md",
+      "description": "Move an open record to another stage of the pipeline version it follows; a final stage closes it.\n\nA stage that is not in that version, such as one of another pipeline, fails with 422 `BRIDGE_PIPELINE_0311`\n(`errRecordStage`), and the stage the record is already in with 409 `BRIDGE_PIPELINE_0004`. A closed record\nfails with 409 `BRIDGE_PIPELINE_0306`: reopen it first. When the stage requires a complete contact, an\nincomplete one fails with 422 `BRIDGE_PIPELINE_0305`. A move to a final stage may carry an active `reasonId`\nof the pipeline (422 `BRIDGE_PIPELINE_0315` when it does not exist, `BRIDGE_PIPELINE_0314` when it is retired)\nand a `reasonNote`; without one the record closes with no reason. A reason or a note on a move to an open\nstage fails with 422 `BRIDGE_PIPELINE_0311`. With `expectedRevision`, a record changed since you read it fails\nwith 409 `BRIDGE_PIPELINE_0101`, whose `extra.currentRecord` is the record as it is now.\n\n`Idempotency-Key` is required and works like on `POST /records`: a retry with the same key and body answers the\nrecord with `Idempotent-Replayed: true`, as it is now. The same key on another record or operation fails with\n422 `BRIDGE_PIPELINE_0402`.",
+      "kind": "operation"
+    },
+    {
+      "title": "Reopen a closed pipeline record",
+      "source": "https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record",
+      "markdownUrl": "https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record.md",
+      "description": "Take a closed record back to the open stage it was in before it was closed, and clear its close reason.\n\nWhen its history names no open stage of its version, the record goes to the pipeline's initial stage. An open\nrecord fails with 409 `BRIDGE_PIPELINE_0307`. When that stage requires a complete contact, an incomplete one\nfails with 422 `BRIDGE_PIPELINE_0305`. The body is optional; with `expectedRevision`, a record changed since you\nread it fails with 409 `BRIDGE_PIPELINE_0101`, whose `extra.currentRecord` is the record as it is now.\n\n`Idempotency-Key` is required and works like on `POST /records/{recordId}/move`.",
       "kind": "operation"
     },
     {

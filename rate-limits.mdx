@@ -79,6 +79,8 @@ That distinction shows up when you read:
 
 So page size decides the cost of a full sweep. Walking 500 contacts costs 5 requests at 100 per page, and 25 requests at 20 per page — same data, five times the budget.
 
+The pipelines operations draw from the same budget. A retry with the same `Idempotency-Key` counts as a new request, even when Bridge answers with the result of the first one.
+
 <Note>
   Prefer the largest page size an endpoint accepts when you are reading a list in full, and read a single resource by its id when you already know which one you need.
 </Note>

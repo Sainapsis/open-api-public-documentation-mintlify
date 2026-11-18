@@ -228,6 +228,43 @@ Error codes for internal user operations.
 | `BRIDGE_INTERNAL_0004` | Internal User Without Configured Field | Internal user does not have configured field; check the workspace or internal information settings |
 | `BRIDGE_INTERNAL_0101` | Internal User Does Not Support Operation | The internal user does not support this operation |
 
+## Pipeline Error Codes
+
+Error codes for the pipelines and pipeline records operations. See [Create and move pipeline records](/guides/pipeline-records) for the full workflow.
+
+| Code | Status | Title | When it happens and what to do |
+| ---- | ------ | ----- | ------------------------------ |
+| `BRIDGE_PIPELINE_0001` | 404 | Pipeline Record Not Found | The record does not exist in your workspace. Check the `recordId` |
+| `BRIDGE_PIPELINE_0003` | 409 | Pipeline Record External Id Taken | The pipeline already has a record with this `externalId`. `extra.recordId` is that record: read it instead of creating another |
+| `BRIDGE_PIPELINE_0004` | 409 | Pipeline Record Already In Stage | The record is already in the stage of the move. Nothing to do |
+| `BRIDGE_PIPELINE_0101` | 409 | Pipeline Record Revision Conflict | The record changed after the `revision` you sent as `expectedRevision`. `extra.currentRecord` is the record as it is now: decide again and retry with its `revision` |
+| `BRIDGE_PIPELINE_0201` | 404 | Pipeline Not Found | The pipeline does not exist in your workspace. [List the pipelines](/api-reference/pipelines-api/list-the-pipelines-of-a-workspace) to find its id |
+| `BRIDGE_PIPELINE_0301` | 403 | Pipelines Disabled | Pipelines are not enabled for the workspace. Ask the workspace administrator |
+| `BRIDGE_PIPELINE_0305` | 422 | Contact Incomplete | The stage requires a complete Contact. `extra.missing` names what is missing: complete the Contact, then retry |
+| `BRIDGE_PIPELINE_0306` | 409 | Pipeline Record Not Open | The record is closed. Reopen it before moving it |
+| `BRIDGE_PIPELINE_0307` | 409 | Pipeline Record Not Final | Only a closed record can be reopened |
+| `BRIDGE_PIPELINE_0311` | 422 | Pipeline Record Validation Failed | The record is not valid. `extra.errors` lists every problem, each with `path`, `code` and `message` |
+| `BRIDGE_PIPELINE_0314` | 422 | Close Reason Retired | The close reason is retired. Use an active one from the pipeline |
+| `BRIDGE_PIPELINE_0315` | 422 | Close Reason Not Found | The close reason does not exist in the pipeline |
+| `BRIDGE_PIPELINE_0317` | 403 | Pipeline Entry Disabled | The pipeline does not accept records created through the API |
+| `BRIDGE_PIPELINE_0318` | 409 | Contact Has Open Record | The pipeline allows one open record per Contact and the Contact already has one. `extra.openRecordId` is that record: work on it instead |
+| `BRIDGE_PIPELINE_0401` | 409 | Idempotency Request In Progress | A request with this `Idempotency-Key` is still running. Retry after a pause; if it keeps failing, retry with a new key |
+| `BRIDGE_PIPELINE_0402` | 422 | Idempotency Key Reused | The `Idempotency-Key` was already used with a different request. Use a new key for a new change |
+
+`BRIDGE_PIPELINE_0311` codes in `extra.errors[].code`:
+
+| Code | Meaning |
+| ---- | ------- |
+| `errRecordStage` | The stage is not in the record's pipeline version, or is a final stage at creation |
+| `errRecordName` | The name is missing, blank or longer than 200 characters |
+| `errRecordValue` | A value does not match its attribute's type |
+| `errRecordValueKey` | A `values` key is not an attribute of the record in the pipeline version |
+| `errRecordNoChange` | The update changes nothing |
+| `errReasonNote` | `reasonNote` is too long or was sent without `reasonId` |
+| `errReasonOnlyFinal` | A close reason or note was sent on a move to an open stage |
+
+The pipelines operations also return `403` `BRIDGE_CORE_0301` when the `workspaceId` in the path is not the workspace of the API Key, `404` `BRIDGE_EXTERNAL_0001` when the Contact does not exist, `404` `BRIDGE_WORKSPACE_0001`, `400` `BRIDGE_CORE_0104` for an invalid cursor, and `429` `BRIDGE_RATE_LIMIT_0001`.
+
 ## Provider Channel Error Codes
 
 Error codes for provider channel operations.

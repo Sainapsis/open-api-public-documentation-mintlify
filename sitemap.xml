@@ -190,6 +190,27 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/guides/pagination" />
   </url>
   <url>
+    <loc>https://docs.bridge.new/guides/pipeline-records</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/guides/pipeline-records" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/guides/pipeline-records</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/guides/pipeline-records" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/guides/pipeline-records</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/guides/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/guides/pipeline-records" />
+  </url>
+  <url>
     <loc>https://docs.bridge.new/guides/responses</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/guides/responses" />
     <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/guides/responses" />
@@ -398,6 +419,27 @@
     <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/webhooks/events" />
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/webhooks/events" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/webhooks/events" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/webhooks/pipeline-records</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/webhooks/pipeline-records" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/webhooks/pipeline-records</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/webhooks/pipeline-records" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/webhooks/pipeline-records</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/webhooks/pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/webhooks/pipeline-records" />
   </url>
   <url>
     <loc>https://docs.bridge.new/lead-capture</loc>
@@ -1028,6 +1070,174 @@
     <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/agents-api/iniciar-conversaci%C3%B3n-saliente-con-un-contact-como-agent-espec%C3%ADfico" />
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/agents-api/iniciar-conversa-de-sa%C3%ADda-com-um-contact-como-agent-espec%C3%ADfico" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/agents-api/start-an-outbound-conversation-with-a-contact-as-a-given-agent" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipelines-api/listar-los-pipelines-de-un-workspace" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/api-reference/pipelines-api/listar-los-pipelines-de-un-workspace</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipelines-api/listar-los-pipelines-de-un-workspace" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipelines-api/listar-los-pipelines-de-un-workspace" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipelines-api/list-the-pipelines-of-a-workspace" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipelines-api/obtener-un-pipeline-con-sus-etapas-y-atributos" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/api-reference/pipelines-api/obtener-un-pipeline-con-sus-etapas-y-atributos</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipelines-api/obtener-un-pipeline-con-sus-etapas-y-atributos" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipelines-api/obtener-un-pipeline-con-sus-etapas-y-atributos" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipelines-api/retrieve-a-pipeline-with-its-stages-and-attributes" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/listar-registros-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/api-reference/pipeline-records-api/listar-registros-de-pipeline</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/listar-registros-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/listar-registros-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/list-pipeline-records" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/crear-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/api-reference/pipeline-records-api/crear-un-registro-de-pipeline</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/crear-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/crear-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/create-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/obtener-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/api-reference/pipeline-records-api/obtener-un-registro-de-pipeline</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/obtener-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/obtener-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/retrieve-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/actualizar-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/api-reference/pipeline-records-api/actualizar-un-registro-de-pipeline</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/actualizar-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/actualizar-un-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/update-a-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/mover-un-registro-de-pipeline-a-otra-etapa" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/api-reference/pipeline-records-api/mover-un-registro-de-pipeline-a-otra-etapa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/mover-un-registro-de-pipeline-a-otra-etapa" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/mover-un-registro-de-pipeline-a-otra-etapa" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/move-a-pipeline-record-to-another-stage" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record" />
   </url>
   <url>
     <loc>https://docs.bridge.new/api-reference/campaign-leads/register-a-campaign-lead</loc>

@@ -3158,6 +3158,1240 @@ paths:
                     code: BRIDGE_RATE_LIMIT_0001
               schema:
                 $ref: "#/components/schemas/Problem"
+  /bridge/api/v1/workspaces/{workspaceId}/pipelines:
+    get:
+      tags:
+      - Pipelines API
+      summary: Listar os pipelines de um workspace
+      description: 'Lista os pipelines ativos do workspace, ordenados por rótulo.
+
+
+        `isDefault` marca o pipeline que `POST /records` usa quando `pipelineId` não
+        é enviado, e `acceptsApiRecords`
+
+        indica se um pipeline aceita registros criados por esta API.'
+      operationId: list_pipelines_bridge_api_v1_workspaces__workspaceId__pipelines_get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Identificador único do workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Identificador único do workspace (UUID v4).
+      responses:
+        '200':
+          description: Resposta bem-sucedida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelinesResponseList'
+        '429':
+          description: Muitas solicitações
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Acesso proibido
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+                PIPELINES_DISABLED:
+                  value:
+                    title: Pipelines Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/pipelines/{pipelineId}:
+    get:
+      tags:
+      - Pipelines API
+      summary: Obter um pipeline com suas etapas e atributos
+      description: 'Obtém um pipeline ativo com sua versão atual: etapas em ordem,
+        atributos e motivos de fechamento ativos.
+
+
+        Use-o para saber quais `stageId` e quais chaves de `values` o `POST /records`
+        aceita.'
+      operationId: retrieve_pipeline_bridge_api_v1_workspaces__workspaceId__pipelines__pipelineId__get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Identificador único do workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Identificador único do workspace (UUID v4).
+      - name: pipelineId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Identificador único do pipeline, conforme `GET /pipelines`.
+          examples:
+          - 5d0b8f8e-3c1a-4a4e-9a57-2f6f3e1c9b10
+          title: Pipelineid
+        description: Identificador único do pipeline, conforme `GET /pipelines`.
+      responses:
+        '200':
+          description: Resposta bem-sucedida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineDetailResponse'
+        '429':
+          description: Muitas solicitações
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Acesso proibido
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+                PIPELINES_DISABLED:
+                  value:
+                    title: Pipelines Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              examples:
+                PIPELINE_NOT_FOUND:
+                  value:
+                    title: Pipeline Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0201
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /bridge/api/v1/workspaces/{workspaceId}/records:
+    post:
+      tags:
+      - Pipeline Records API
+      summary: Criar um registro de pipeline
+      description: 'Cria um registro de um contato em um pipeline, como uma oportunidade
+        de venda.
+
+
+        O contato é informado por exatamente um de `id`, `phone` ou `email` e precisa
+        existir: nunca é criado (404
+
+        `BRIDGE_EXTERNAL_0001`). `pipelineId` assume por padrão o pipeline padrão
+        do workspace e `stageId` a
+
+        etapa inicial do pipeline. Um `name` ausente ou em branco assume por padrão
+        o nome completo do contato, depois seu
+
+        celular e depois seu e-mail. Só são aceitas etapas abertas, e só atributos
+        de escopo `RECORD` da
+
+        versão atual do pipeline em `values` (um `null`, um texto em branco ou uma
+        lista vazia é omitido); cada problema
+
+        encontrado é listado em `extra.errors` do 422
+
+        `BRIDGE_PIPELINE_0311`. Quando a etapa em que o registro começa exige um contato
+        completo (nome, sobrenome,
+
+        celular e todo atributo personalizado obrigatório do workspace), um contato
+        incompleto falha com 422
+
+        `BRIDGE_PIPELINE_0305`, cujo `extra.missing` indica o que falta. Um segundo
+        registro com o mesmo `externalId`
+
+        no pipeline falha com 409 `BRIDGE_PIPELINE_0003`, cujo `extra.recordId` é
+        o registro existente.
+
+
+        `Idempotency-Key` é obrigatório. Repetir com a mesma chave e o mesmo corpo
+        responde 201 com o primeiro registro e
+
+        `Idempotent-Replayed: true`. A mesma chave com um corpo diferente falha com
+        422 `BRIDGE_PIPELINE_0402`, e
+
+        enquanto a primeira solicitação ainda está em andamento, com 409 `BRIDGE_PIPELINE_0401`.
+        Quando a solicitação falha, a chave é
+
+        liberada e pode ser reutilizada. Se a primeira solicitação foi interrompida
+        antes de terminar, sua chave continua respondendo 409
+
+        `BRIDGE_PIPELINE_0401` por até 24 horas: tente de novo com uma chave nova
+        e envie `externalId` para que uma nova tentativa nunca
+
+        crie um segundo registro.'
+      operationId: create_pipeline_record_bridge_api_v1_workspaces__workspaceId__records_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Identificador único do workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Identificador único do workspace (UUID v4).
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 'Uma chave que você escolhe para cada registro a criar, como
+            o id de operação do seu sistema. Envie a mesma chave ao repetir a solicitação:
+            por 24 horas ela responde com o registro que a primeira solicitação criou.'
+          examples:
+          - erp-opp-981-create
+          title: Idempotency-Key
+        description: 'Uma chave que você escolhe para cada registro a criar, como
+          o id de operação do seu sistema. Envie a mesma chave ao repetir a solicitação:
+          por 24 horas ela responde com o registro que a primeira solicitação criou.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePipelineRecordBody'
+              description: Corpo da solicitação para criar um registro de pipeline.
+      responses:
+        '201':
+          description: O registro foi criado, ou uma solicitação anterior com a mesma
+            chave o criou.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRecordResponse'
+          headers:
+            Location:
+              description: URL do registro.
+              schema:
+                type: string
+            Idempotent-Replayed:
+              description: '`true` quando o registro vem de uma solicitação anterior
+                com a mesma chave.'
+              schema:
+                type: string
+                enum:
+                - 'true'
+        '429':
+          description: Muitas solicitações
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Conteúdo não processável
+          content:
+            application/json:
+              examples:
+                INVALID_FIELD_FORMAT:
+                  value:
+                    title: Invalid Field Format
+                    status: 422
+                    code: BRIDGE_CORE_0101
+                PIPELINE_RECORD_VALIDATION_FAILED:
+                  value:
+                    title: Pipeline Record Validation Failed
+                    status: 422
+                    code: BRIDGE_PIPELINE_0311
+                CONTACT_INCOMPLETE:
+                  value:
+                    title: Contact Incomplete
+                    status: 422
+                    code: BRIDGE_PIPELINE_0305
+                IDEMPOTENCY_KEY_REUSED:
+                  value:
+                    title: Idempotency Key Reused
+                    status: 422
+                    code: BRIDGE_PIPELINE_0402
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Acesso proibido
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+                PIPELINES_DISABLED:
+                  value:
+                    title: Pipelines Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0301
+                PIPELINE_ENTRY_DISABLED:
+                  value:
+                    title: Pipeline Entry Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0317
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+                PIPELINE_NOT_FOUND:
+                  value:
+                    title: Pipeline Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0201
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflito
+          content:
+            application/json:
+              examples:
+                PIPELINE_RECORD_EXTERNAL_ID_TAKEN:
+                  value:
+                    title: Pipeline Record External Id Taken
+                    status: 409
+                    code: BRIDGE_PIPELINE_0003
+                IDEMPOTENCY_REQUEST_IN_PROGRESS:
+                  value:
+                    title: Idempotency Request In Progress
+                    status: 409
+                    code: BRIDGE_PIPELINE_0401
+              schema:
+                $ref: '#/components/schemas/Problem'
+    get:
+      tags:
+      - Pipeline Records API
+      summary: Listar registros de pipeline
+      description: "Lista os registros do workspace, do atualizado mais recentemente\
+        \ ao mais antigo, buscados de uma única forma.\n\n- `externalId`, com um `pipelineId`\
+        \ opcional (o pipeline padrão, caso contrário): o único registro que\n  seu\
+        \ sistema criou com esse id, ou nenhum. Nenhum cursor é retornado.\n- Um de\
+        \ `contactId`, `contactPhone` ou `contactEmail`: os registros desse contato,\
+        \ opcionalmente restritos a um\n  `pipelineId` e a um `stageId`. A restrição\
+        \ se aplica a cada página lida, então uma página pode ter menos\n  registros\
+        \ que `limit`, ou nenhum, enquanto ainda há um `cursor`: continue lendo até\
+        \ que `cursor` seja null.\n- Apenas `pipelineId`: os registros desse pipeline,\
+        \ opcionalmente restritos a um `stageId`.\n\nQualquer outra combinação falha\
+        \ com 422."
+      operationId: list_pipeline_records_bridge_api_v1_workspaces__workspaceId__records_get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Identificador único do workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Identificador único do workspace (UUID v4).
+      - name: externalId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          description: Id do registro no seu sistema.
+          examples:
+          - ERP-OPP-981
+          title: Externalid
+        description: Id do registro no seu sistema.
+      - name: contactId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Id do contato cujos registros serão listados.
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+          title: Contactid
+        description: Id do contato cujos registros serão listados.
+      - name: contactPhone
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 320
+          - type: 'null'
+          description: Celular do contato cujos registros serão listados, interpretado
+            como o `GET /contacts/lookup` o interpreta.
+          examples:
+          - '+573001234567'
+          title: Contactphone
+        description: Celular do contato cujos registros serão listados, interpretado
+          como o `GET /contacts/lookup` o interpreta.
+      - name: contactEmail
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 320
+          - type: 'null'
+          description: E-mail do contato cujos registros serão listados, interpretado
+            como o `GET /contacts/lookup` o interpreta.
+          examples:
+          - john.doe@example.com
+          title: Contactemail
+        description: E-mail do contato cujos registros serão listados, interpretado
+          como o `GET /contacts/lookup` o interpreta.
+      - name: pipelineId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          description: Pipeline dos registros.
+          examples:
+          - 5d0b8f8e-3c1a-4a4e-9a57-2f6f3e1c9b10
+          title: Pipelineid
+        description: Pipeline dos registros.
+      - name: stageId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          description: Etapa dos registros; requer `pipelineId`.
+          examples:
+          - stage-new
+          title: Stageid
+        description: Etapa dos registros; requer `pipelineId`.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Número de registros por página.
+          default: 25
+          title: Limit
+        description: Número de registros por página.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Cursor recebido em uma solicitação anterior para obter a próxima
+            página.
+          title: Cursor
+        description: Cursor recebido em uma solicitação anterior para obter a próxima
+          página.
+      responses:
+        '200':
+          description: Resposta bem-sucedida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRecordsResponseList'
+        '429':
+          description: Muitas solicitações
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Conteúdo não processável
+          content:
+            application/json:
+              examples:
+                INVALID_FIELD_FORMAT:
+                  value:
+                    title: Invalid Field Format
+                    status: 422
+                    code: BRIDGE_CORE_0101
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Solicitação inválida
+          content:
+            application/json:
+              examples:
+                INVALID_CURSOR:
+                  value:
+                    title: Invalid Cursor
+                    status: 400
+                    code: BRIDGE_CORE_0104
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Acesso proibido
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+                PIPELINES_DISABLED:
+                  value:
+                    title: Pipelines Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              examples:
+                WORKSPACE_NOT_FOUND:
+                  value:
+                    title: Workspace Not Found
+                    status: 404
+                    code: BRIDGE_WORKSPACE_0001
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+                PIPELINE_NOT_FOUND:
+                  value:
+                    title: Pipeline Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0201
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}:
+    get:
+      tags:
+      - Pipeline Records API
+      summary: Obter um registro de pipeline
+      description: Obtém um registro do workspace pelo seu id.
+      operationId: retrieve_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__get
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Identificador único do workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Identificador único do workspace (UUID v4).
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Identificador único do registro de pipeline.
+          examples:
+          - 0d3c7f0e-5a43-5c0e-9f53-1f6a4b2e7d11
+          title: Recordid
+        description: Identificador único do registro de pipeline.
+      responses:
+        '200':
+          description: Resposta bem-sucedida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRecordResponse'
+        '429':
+          description: Muitas solicitações
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Acesso proibido
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+                PIPELINES_DISABLED:
+                  value:
+                    title: Pipelines Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              examples:
+                PIPELINE_RECORD_NOT_FOUND:
+                  value:
+                    title: Pipeline Record Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Pipeline Records API
+      summary: Atualizar um registro de pipeline
+      description: 'Altera o nome ou alguns valores de um registro, aberto ou fechado.
+
+
+        Só os campos enviados mudam: um `name` ausente mantém o nome, e os atributos
+        omitidos de `values` mantêm seu
+
+        valor; um `null`, um texto em branco ou uma lista vazia remove um valor. Um
+        registro sempre tem nome, então um `name`
+
+        `null` ou em branco falha como qualquer outro campo inválido. Cada problema
+        encontrado é listado em `extra.errors` do 422
+
+        `BRIDGE_PIPELINE_0311`, que também é a resposta a um corpo que não altera
+        nada. Uma alteração que deixa o registro
+
+        como está não grava nada e responde o registro. Com `expectedRevision`, um
+        registro alterado desde que você o leu falha
+
+        com 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro como
+        está agora.'
+      operationId: update_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__patch
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Identificador único do workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Identificador único do workspace (UUID v4).
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Identificador único do registro de pipeline.
+          examples:
+          - 0d3c7f0e-5a43-5c0e-9f53-1f6a4b2e7d11
+          title: Recordid
+        description: Identificador único do registro de pipeline.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePipelineRecordBody'
+              description: Corpo da solicitação para alterar o nome ou alguns valores
+                de um registro de pipeline.
+      responses:
+        '200':
+          description: Resposta bem-sucedida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRecordResponse'
+        '429':
+          description: Muitas solicitações
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Conteúdo não processável
+          content:
+            application/json:
+              examples:
+                INVALID_FIELD_FORMAT:
+                  value:
+                    title: Invalid Field Format
+                    status: 422
+                    code: BRIDGE_CORE_0101
+                PIPELINE_RECORD_VALIDATION_FAILED:
+                  value:
+                    title: Pipeline Record Validation Failed
+                    status: 422
+                    code: BRIDGE_PIPELINE_0311
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Acesso proibido
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+                PIPELINES_DISABLED:
+                  value:
+                    title: Pipelines Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              examples:
+                PIPELINE_RECORD_NOT_FOUND:
+                  value:
+                    title: Pipeline Record Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0001
+                PIPELINE_NOT_FOUND:
+                  value:
+                    title: Pipeline Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0201
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflito
+          content:
+            application/json:
+              examples:
+                PIPELINE_RECORD_REVISION_CONFLICT:
+                  value:
+                    title: Pipeline Record Revision Conflict
+                    status: 409
+                    code: BRIDGE_PIPELINE_0101
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/move:
+    post:
+      tags:
+      - Pipeline Records API
+      summary: Mover um registro de pipeline para outra etapa
+      description: 'Move um registro aberto para outra etapa da versão do pipeline
+        que ele segue; uma etapa final o fecha.
+
+
+        Uma etapa que não está nessa versão, como uma de outro pipeline, falha com
+        422 `BRIDGE_PIPELINE_0311`
+
+        (`errRecordStage`), e a etapa em que o registro já está, com 409 `BRIDGE_PIPELINE_0004`.
+        Um registro fechado
+
+        falha com 409 `BRIDGE_PIPELINE_0306`: reabra-o primeiro. Quando a etapa exige
+        um contato completo, um contato
+
+        incompleto falha com 422 `BRIDGE_PIPELINE_0305`. Uma movimentação para uma
+        etapa final pode levar um `reasonId` ativo
+
+        do pipeline (422 `BRIDGE_PIPELINE_0315` quando não existe, `BRIDGE_PIPELINE_0314`
+        quando está desativado)
+
+        e um `reasonNote`; sem um motivo, o registro é fechado sem motivo. Um motivo
+        ou uma nota em uma movimentação para uma etapa
+
+        aberta falha com 422 `BRIDGE_PIPELINE_0311`. Com `expectedRevision`, um registro
+        alterado desde que você o leu falha
+
+        com 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro como
+        está agora.
+
+
+        `Idempotency-Key` é obrigatório e funciona como em `POST /records`: uma nova
+        tentativa com a mesma chave e o mesmo corpo responde
+
+        com o registro e `Idempotent-Replayed: true`, como está agora. A mesma chave
+        em outro registro ou operação falha com
+
+        422 `BRIDGE_PIPELINE_0402`.'
+      operationId: move_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__move_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Identificador único do workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Identificador único do workspace (UUID v4).
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Identificador único do registro de pipeline.
+          examples:
+          - 0d3c7f0e-5a43-5c0e-9f53-1f6a4b2e7d11
+          title: Recordid
+        description: Identificador único do registro de pipeline.
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 'Uma chave que você escolhe para cada alteração, como o id
+            de operação do seu sistema. Envie a mesma chave ao repetir a solicitação:
+            por 24 horas ela responde com o registro que a primeira solicitação alterou.'
+          examples:
+          - erp-opp-981-won
+          title: Idempotency-Key
+        description: 'Uma chave que você escolhe para cada alteração, como o id de
+          operação do seu sistema. Envie a mesma chave ao repetir a solicitação: por
+          24 horas ela responde com o registro que a primeira solicitação alterou.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovePipelineRecordBody'
+              description: Corpo da solicitação para mover um registro de pipeline
+                para outra etapa do seu pipeline.
+      responses:
+        '200':
+          description: O registro como fica após a alteração, ou após uma solicitação
+            anterior com a mesma chave.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRecordResponse'
+          headers:
+            Idempotent-Replayed:
+              description: '`true` quando a alteração foi feita por uma solicitação
+                anterior com a mesma chave.'
+              schema:
+                type: string
+                enum:
+                - 'true'
+        '429':
+          description: Muitas solicitações
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Conteúdo não processável
+          content:
+            application/json:
+              examples:
+                INVALID_FIELD_FORMAT:
+                  value:
+                    title: Invalid Field Format
+                    status: 422
+                    code: BRIDGE_CORE_0101
+                CONTACT_INCOMPLETE:
+                  value:
+                    title: Contact Incomplete
+                    status: 422
+                    code: BRIDGE_PIPELINE_0305
+                IDEMPOTENCY_KEY_REUSED:
+                  value:
+                    title: Idempotency Key Reused
+                    status: 422
+                    code: BRIDGE_PIPELINE_0402
+                PIPELINE_RECORD_VALIDATION_FAILED:
+                  value:
+                    title: Pipeline Record Validation Failed
+                    status: 422
+                    code: BRIDGE_PIPELINE_0311
+                CLOSE_REASON_RETIRED:
+                  value:
+                    title: Close Reason Retired
+                    status: 422
+                    code: BRIDGE_PIPELINE_0314
+                CLOSE_REASON_NOT_FOUND:
+                  value:
+                    title: Close Reason Not Found
+                    status: 422
+                    code: BRIDGE_PIPELINE_0315
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Acesso proibido
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+                PIPELINES_DISABLED:
+                  value:
+                    title: Pipelines Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              examples:
+                PIPELINE_RECORD_NOT_FOUND:
+                  value:
+                    title: Pipeline Record Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0001
+                PIPELINE_NOT_FOUND:
+                  value:
+                    title: Pipeline Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0201
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflito
+          content:
+            application/json:
+              examples:
+                PIPELINE_RECORD_REVISION_CONFLICT:
+                  value:
+                    title: Pipeline Record Revision Conflict
+                    status: 409
+                    code: BRIDGE_PIPELINE_0101
+                IDEMPOTENCY_REQUEST_IN_PROGRESS:
+                  value:
+                    title: Idempotency Request In Progress
+                    status: 409
+                    code: BRIDGE_PIPELINE_0401
+                PIPELINE_RECORD_NOT_OPEN:
+                  value:
+                    title: Pipeline Record Not Open
+                    status: 409
+                    code: BRIDGE_PIPELINE_0306
+                PIPELINE_RECORD_ALREADY_IN_STAGE:
+                  value:
+                    title: Pipeline Record Already In Stage
+                    status: 409
+                    code: BRIDGE_PIPELINE_0004
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /bridge/api/v1/workspaces/{workspaceId}/records/{recordId}/reopen:
+    post:
+      tags:
+      - Pipeline Records API
+      summary: Reabrir um registro de pipeline fechado
+      description: 'Devolve um registro fechado à etapa aberta em que estava antes
+        de ser fechado e limpa seu motivo de fechamento.
+
+
+        Quando seu histórico não indica nenhuma etapa aberta da sua versão, o registro
+        vai para a etapa inicial do pipeline. Um registro
+
+        aberto falha com 409 `BRIDGE_PIPELINE_0307`. Quando essa etapa exige um contato
+        completo, um contato incompleto
+
+        falha com 422 `BRIDGE_PIPELINE_0305`. O corpo é opcional; com `expectedRevision`,
+        um registro alterado desde que você o
+
+        leu falha com 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro
+        como está agora.
+
+
+        `Idempotency-Key` é obrigatório e funciona como em `POST /records/{recordId}/move`.'
+      operationId: reopen_pipeline_record_bridge_api_v1_workspaces__workspaceId__records__recordId__reopen_post
+      security:
+      - x-api-key: []
+      parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Identificador único do workspace (UUID v4).
+          examples:
+          - b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234
+          title: Workspaceid
+        description: Identificador único do workspace (UUID v4).
+      - name: recordId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Identificador único do registro de pipeline.
+          examples:
+          - 0d3c7f0e-5a43-5c0e-9f53-1f6a4b2e7d11
+          title: Recordid
+        description: Identificador único do registro de pipeline.
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 'Uma chave que você escolhe para cada alteração, como o id
+            de operação do seu sistema. Envie a mesma chave ao repetir a solicitação:
+            por 24 horas ela responde com o registro que a primeira solicitação alterou.'
+          examples:
+          - erp-opp-981-won
+          title: Idempotency-Key
+        description: 'Uma chave que você escolhe para cada alteração, como o id de
+          operação do seu sistema. Envie a mesma chave ao repetir a solicitação: por
+          24 horas ela responde com o registro que a primeira solicitação alterou.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/ReopenPipelineRecordBody'
+              - type: 'null'
+              description: Corpo da solicitação para reabrir um registro de pipeline
+                fechado.
+              title: Body
+      responses:
+        '200':
+          description: O registro como fica após a alteração, ou após uma solicitação
+            anterior com a mesma chave.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRecordResponse'
+          headers:
+            Idempotent-Replayed:
+              description: '`true` quando a alteração foi feita por uma solicitação
+                anterior com a mesma chave.'
+              schema:
+                type: string
+                enum:
+                - 'true'
+        '429':
+          description: Muitas solicitações
+          content:
+            application/json:
+              examples:
+                WORKSPACE_BUDGET_EXHAUSTED:
+                  value:
+                    title: Too Many Requests
+                    status: 429
+                    code: BRIDGE_RATE_LIMIT_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Conteúdo não processável
+          content:
+            application/json:
+              examples:
+                INVALID_FIELD_FORMAT:
+                  value:
+                    title: Invalid Field Format
+                    status: 422
+                    code: BRIDGE_CORE_0101
+                CONTACT_INCOMPLETE:
+                  value:
+                    title: Contact Incomplete
+                    status: 422
+                    code: BRIDGE_PIPELINE_0305
+                IDEMPOTENCY_KEY_REUSED:
+                  value:
+                    title: Idempotency Key Reused
+                    status: 422
+                    code: BRIDGE_PIPELINE_0402
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Acesso proibido
+          content:
+            application/json:
+              examples:
+                FORBIDDEN:
+                  value:
+                    title: Forbidden
+                    status: 403
+                    code: BRIDGE_CORE_0301
+                PIPELINES_DISABLED:
+                  value:
+                    title: Pipelines Disabled
+                    status: 403
+                    code: BRIDGE_PIPELINE_0301
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Não encontrado
+          content:
+            application/json:
+              examples:
+                PIPELINE_RECORD_NOT_FOUND:
+                  value:
+                    title: Pipeline Record Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0001
+                PIPELINE_NOT_FOUND:
+                  value:
+                    title: Pipeline Not Found
+                    status: 404
+                    code: BRIDGE_PIPELINE_0201
+                EXTERNAL_USER_NOT_FOUND:
+                  value:
+                    title: External User Not Found
+                    status: 404
+                    code: BRIDGE_EXTERNAL_0001
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflito
+          content:
+            application/json:
+              examples:
+                PIPELINE_RECORD_REVISION_CONFLICT:
+                  value:
+                    title: Pipeline Record Revision Conflict
+                    status: 409
+                    code: BRIDGE_PIPELINE_0101
+                IDEMPOTENCY_REQUEST_IN_PROGRESS:
+                  value:
+                    title: Idempotency Request In Progress
+                    status: 409
+                    code: BRIDGE_PIPELINE_0401
+                PIPELINE_RECORD_NOT_FINAL:
+                  value:
+                    title: Pipeline Record Not Final
+                    status: 409
+                    code: BRIDGE_PIPELINE_0307
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
   schemas:
     AgentConfigStatus:
@@ -4103,6 +5337,75 @@ components:
       type: object
       title: CreateParticipantsOnConversationRequest
       description: Corpo da solicitação de participantes ao criar uma conversa.
+    CreatePipelineRecordBody:
+      properties:
+        contact:
+          $ref: '#/components/schemas/RecordContactRequest'
+          title: Contact
+          description: O contato ao qual o registro pertence, informado por exatamente
+            um de `id`, `phone` ou `email`.
+        pipelineId:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Pipeline Identifier
+          description: Pipeline em que o registro será criado. Por padrão, o pipeline
+            padrão do workspace.
+          examples:
+          - 5d0b8f8e-3c1a-4a4e-9a57-2f6f3e1c9b10
+        stageId:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Stage Identifier
+          description: Etapa em que o registro começa. Por padrão, a etapa inicial
+            do pipeline; uma etapa final é recusada. Os requisitos da etapa se aplicam,
+            como um contato completo.
+          examples:
+          - stage-new
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+          description: Nome do registro, de até 200 caracteres. Se ausente ou em branco,
+            usa-se o nome completo do contato, depois seu celular e depois seu e-mail.
+          examples:
+          - Acme renewal 2027
+        externalId:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: External Identifier
+          description: Id do registro no seu sistema, único por pipeline. Um segundo
+            registro com o mesmo `externalId` no mesmo pipeline é recusado com 409
+            e o id do registro existente.
+          examples:
+          - ERP-OPP-981
+        values:
+          additionalProperties: true
+          type: object
+          title: Values
+          description: Valores dos atributos do registro, indexados por id de atributo.
+            Só são aceitos atributos de escopo `RECORD` da versão atual do pipeline,
+            cada um verificado conforme seu tipo (`TEXT` até 2000 caracteres); um
+            valor `null`, um texto em branco e uma lista vazia são omitidos.
+          examples:
+          - budget: 15000000
+            closeDate: '2026-12-15'
+            segment: Retail
+      additionalProperties: false
+      type: object
+      required:
+      - contact
+      title: CreatePipelineRecordBody
+      description: Corpo da solicitação para criar um registro de pipeline.
     CustomAttributeResponse:
       properties:
         key:
@@ -5156,6 +6459,57 @@ components:
         - messageId
       title: MessageResponse
       description: Corpo da resposta para operações com mensagens.
+    MovePipelineRecordBody:
+      properties:
+        expectedRevision:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Expected Revision
+          description: A `revision` do registro que você leu por último. Quando deixa
+            de ser a atual, a alteração falha com 409 `BRIDGE_PIPELINE_0101` e o registro
+            atual em `extra.currentRecord`. Sem ela, a alteração se aplica ao registro
+            como a solicitação o lê, então outra alteração feita no mesmo instante
+            ainda pode fazê-la falhar com esse 409.
+          examples:
+          - 3
+        stageId:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Stage Identifier
+          description: Etapa para a qual o registro será movido, da versão do pipeline
+            que o registro segue. Uma etapa final fecha o registro. Os requisitos
+            da etapa se aplicam, como um contato completo.
+          examples:
+          - stage-won
+        reasonId:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: Close Reason Identifier
+          description: Motivo de fechamento ativo do pipeline, conforme `GET /pipelines/{pipelineId}`.
+            Apenas para uma movimentação para uma etapa final, e opcional nesse caso.
+          examples:
+          - reason-price
+        reasonNote:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Close Reason Note
+          description: Texto livre que explica o motivo de fechamento, de até 500
+            caracteres. Requer `reasonId`.
+          examples:
+          - Chose a cheaper provider
+      additionalProperties: false
+      type: object
+      required:
+      - stageId
+      title: MovePipelineRecordBody
+      description: Corpo da solicitação para mover um registro de pipeline para outra
+        etapa do seu pipeline.
     OnboardingTemplateRequest:
       properties:
         templateId:
@@ -5389,6 +6743,428 @@ components:
       title: ParticipantOperationsRequest
       description: Corpo da solicitação de operações sobre participantes ao atualizar
         uma conversa.
+    PipelinesResponseList:
+      properties:
+        pipelines:
+          items:
+            $ref: '#/components/schemas/PipelineResponse'
+          type: array
+          title: Pipelines
+          description: Pipelines ativos do workspace.
+      type: object
+      required:
+      - pipelines
+      title: PipelinesResponseList
+      description: Corpo da resposta para listar pipelines.
+    PipelineStageResponse:
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: Identificador único da etapa dentro do pipeline.
+          examples:
+          - stage-new
+        label:
+          type: string
+          title: Label
+          description: Nome da etapa como exibido no Bridge.
+          examples:
+          - New
+        order:
+          type: integer
+          title: Order
+          description: Posição da etapa no pipeline, começando em 1.
+          examples:
+          - 1
+        final:
+          type: boolean
+          title: Final
+          description: Indica se um registro nesta etapa está fechado. Não é possível
+            criar um registro em uma etapa final.
+          examples:
+          - false
+        outcome:
+          anyOf:
+          - $ref: '#/components/schemas/PipelineStageOutcome'
+          - type: 'null'
+          title: Outcome
+          description: 'Resultado que uma etapa final representa: `FAVORABLE` ou `UNFAVORABLE`;
+            null para uma etapa aberta.'
+          examples:
+          - null
+          - FAVORABLE
+      type: object
+      required:
+      - id
+      - label
+      - order
+      - final
+      title: PipelineStageResponse
+      description: Uma etapa da versão atual do pipeline.
+    PipelineStageOutcome:
+      type: string
+      enum:
+      - FAVORABLE
+      - UNFAVORABLE
+      title: PipelineStageOutcome
+    PipelineResponse:
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: Identificador único do pipeline.
+          examples:
+          - 5d0b8f8e-3c1a-4a4e-9a57-2f6f3e1c9b10
+        label:
+          type: string
+          title: Label
+          description: Nome do pipeline como exibido no Bridge.
+          examples:
+          - Sales
+        isDefault:
+          type: boolean
+          title: Is Default
+          description: Indica se um registro criado sem `pipelineId` vai para este
+            pipeline.
+          examples:
+          - true
+        currentVersion:
+          type: integer
+          title: Current Version
+          description: Versão do pipeline que os novos registros seguem.
+          examples:
+          - 3
+        acceptsApiRecords:
+          type: boolean
+          title: Accepts API Records
+          description: Indica se é possível criar registros neste pipeline pela API.
+          examples:
+          - true
+      type: object
+      required:
+      - id
+      - label
+      - isDefault
+      - currentVersion
+      - acceptsApiRecords
+      title: PipelineResponse
+      description: Um pipeline do workspace.
+    PipelineRecordsResponseList:
+      properties:
+        records:
+          items:
+            $ref: '#/components/schemas/PipelineRecordResponse'
+          type: array
+          title: Records
+          description: Registros da página, do atualizado mais recentemente ao mais
+            antigo.
+        cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cursor
+          description: Envie-o como `cursor` para obter a próxima página; null na
+            última página.
+      type: object
+      required:
+      - records
+      title: PipelineRecordsResponseList
+      description: Corpo da resposta para listar registros de pipeline.
+    PipelineRecordState:
+      type: string
+      enum:
+      - OPEN
+      - FINAL
+      title: PipelineRecordState
+    PipelineRecordSource:
+      type: string
+      enum:
+      - ADVISOR
+      - API
+      - INBOUND_SESSION
+      - FROM_PIPELINE
+      title: PipelineRecordSource
+    PipelineRecordResponse:
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: Identificador único do registro.
+          examples:
+          - 0d3c7f0e-5a43-5c0e-9f53-1f6a4b2e7d11
+        pipelineId:
+          type: string
+          title: Pipeline Identifier
+          description: Pipeline ao qual o registro pertence.
+          examples:
+          - 5d0b8f8e-3c1a-4a4e-9a57-2f6f3e1c9b10
+        pipelineVersion:
+          type: integer
+          title: Pipeline Version
+          description: Versão do pipeline que o registro segue.
+          examples:
+          - 3
+        stageId:
+          type: string
+          title: Stage Identifier
+          description: Etapa em que o registro está.
+          examples:
+          - stage-new
+        state:
+          $ref: '#/components/schemas/PipelineRecordState'
+          title: State
+          description: '`OPEN` enquanto o registro está em uma etapa aberta, `FINAL`
+            quando está em uma etapa final.'
+          examples:
+          - OPEN
+        name:
+          type: string
+          title: Name
+          description: Nome do registro.
+          examples:
+          - Acme renewal 2027
+        values:
+          additionalProperties: true
+          type: object
+          title: Values
+          description: Valores dos atributos do registro, indexados por id de atributo.
+          examples:
+          - budget: 15000000
+            closeDate: '2026-12-15'
+        contact:
+          $ref: '#/components/schemas/RecordContactResponse'
+          title: Contact
+          description: O contato ao qual o registro pertence.
+        ownerId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Owner Identifier
+          description: Id do Usuário do Bridge responsável pelo registro. Resolva-o
+            com `GET /users/{userId}`.
+          examples:
+          - null
+        source:
+          $ref: '#/components/schemas/PipelineRecordSource'
+          title: Source
+          description: 'Como o registro foi criado: `API`, `ADVISOR`, `INBOUND_SESSION`
+            ou `FROM_PIPELINE`.'
+          examples:
+          - API
+        externalId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Identifier
+          description: O id do registro no seu sistema, quando foi criado com um.
+          examples:
+          - ERP-OPP-981
+        revision:
+          type: integer
+          title: Revision
+          description: Aumenta em um a cada vez que o registro muda.
+          examples:
+          - 1
+        closeReason:
+          anyOf:
+          - $ref: '#/components/schemas/RecordCloseReasonResponse'
+          - type: 'null'
+          title: Close Reason
+          description: Motivo com o qual o registro foi fechado; null enquanto está
+            aberto ou quando foi fechado sem motivo.
+        closedAt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Closed At
+          description: Quando o registro chegou a uma etapa final; null enquanto está
+            aberto.
+          examples:
+          - null
+        createdAt:
+          type: string
+          title: Created At
+          description: Quando o registro foi criado.
+          examples:
+          - '2026-11-11T15:00:00.000Z'
+        updatedAt:
+          type: string
+          title: Updated At
+          description: Quando o registro mudou pela última vez.
+          examples:
+          - '2026-11-11T15:00:00.000Z'
+      type: object
+      required:
+      - id
+      - pipelineId
+      - pipelineVersion
+      - stageId
+      - state
+      - name
+      - contact
+      - source
+      - revision
+      - createdAt
+      - updatedAt
+      title: PipelineRecordResponse
+      description: Um registro de um pipeline, como uma oportunidade de venda de um
+        contato.
+    PipelineDetailResponse:
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: Identificador único do pipeline.
+          examples:
+          - 5d0b8f8e-3c1a-4a4e-9a57-2f6f3e1c9b10
+        label:
+          type: string
+          title: Label
+          description: Nome do pipeline como exibido no Bridge.
+          examples:
+          - Sales
+        isDefault:
+          type: boolean
+          title: Is Default
+          description: Indica se um registro criado sem `pipelineId` vai para este
+            pipeline.
+          examples:
+          - true
+        currentVersion:
+          type: integer
+          title: Current Version
+          description: Versão do pipeline que os novos registros seguem.
+          examples:
+          - 3
+        acceptsApiRecords:
+          type: boolean
+          title: Accepts API Records
+          description: Indica se é possível criar registros neste pipeline pela API.
+          examples:
+          - true
+        initialStageId:
+          type: string
+          title: Initial Stage Identifier
+          description: Etapa em que um registro criado sem `stageId` começa.
+          examples:
+          - stage-new
+        stages:
+          items:
+            $ref: '#/components/schemas/PipelineStageResponse'
+          type: array
+          title: Stages
+          description: Etapas da versão atual, em ordem.
+        attributes:
+          items:
+            $ref: '#/components/schemas/PipelineAttributeResponse'
+          type: array
+          title: Attributes
+          description: Atributos da versão atual.
+        closeReasons:
+          items:
+            $ref: '#/components/schemas/PipelineCloseReasonResponse'
+          type: array
+          title: Close Reasons
+          description: Motivos com os quais um registro pode ser fechado; os motivos
+            desativados são omitidos.
+      type: object
+      required:
+      - id
+      - label
+      - isDefault
+      - currentVersion
+      - acceptsApiRecords
+      - initialStageId
+      - stages
+      title: PipelineDetailResponse
+      description: Um pipeline do workspace com as etapas e os atributos da sua versão
+        atual.
+    PipelineCloseReasonResponse:
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: Identificador único do motivo de fechamento.
+          examples:
+          - reason-price
+        label:
+          type: string
+          title: Label
+          description: Nome do motivo de fechamento como exibido no Bridge.
+          examples:
+          - Price too high
+      type: object
+      required:
+      - id
+      - label
+      title: PipelineCloseReasonResponse
+      description: Um motivo com o qual um registro do pipeline pode ser fechado.
+    PipelineAttributeType:
+      type: string
+      enum:
+      - NUMBER
+      - PERCENT
+      - CURRENCY
+      - DATE
+      - TEXT
+      - LIST
+      - MULTI
+      title: PipelineAttributeType
+    PipelineAttributeScope:
+      type: string
+      enum:
+      - STAGE
+      - RECORD
+      title: PipelineAttributeScope
+    PipelineAttributeResponse:
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: Identificador único do atributo; a chave a usar em `values`
+            de um registro.
+          examples:
+          - budget
+        label:
+          type: string
+          title: Label
+          description: Nome do atributo como exibido no Bridge.
+          examples:
+          - Budget
+        type:
+          $ref: '#/components/schemas/PipelineAttributeType'
+          title: Type
+          description: 'O que o valor do atributo contém: `NUMBER` e `CURRENCY` (um
+            número), `PERCENT` (um número de 0 a 100), `DATE` (`YYYY-MM-DD`), `TEXT`
+            (uma string), `LIST` (um de `options`) ou `MULTI` (uma lista de `options`
+            distintas).'
+          examples:
+          - CURRENCY
+        scope:
+          $ref: '#/components/schemas/PipelineAttributeScope'
+          title: Scope
+          description: '`RECORD` quando cada registro tem um valor, que pode ser enviado
+            em `values`; `STAGE` caso contrário.'
+          examples:
+          - RECORD
+        options:
+          items:
+            type: string
+          type: array
+          title: Options
+          description: Valores permitidos de um atributo `LIST` ou `MULTI`; vazio
+            para os outros tipos.
+          examples:
+          - - Retail
+            - Wholesale
+      type: object
+      required:
+      - id
+      - label
+      - type
+      - scope
+      title: PipelineAttributeResponse
+      description: Um campo que os registros ou as etapas do pipeline têm.
     PreloadedFileRequest:
       properties:
         name:
@@ -5585,6 +7361,86 @@ components:
         - providerChannels
       title: ProviderChannelResponse
       description: Corpo da resposta para operações com canais de provedores.
+    RecordContactResponse:
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: Id do contato. Resolva-o com `GET /contacts/{contactId}`.
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+      type: object
+      required:
+      - id
+      title: RecordContactResponse
+      description: O contato ao qual um registro pertence.
+    RecordContactRequest:
+      properties:
+        id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Identifier
+          description: Id do contato, conforme retornado pela API de Contatos.
+          examples:
+          - 4e362e2b-67b2-4a7e-a9df-e9ecf9141be8
+        phone:
+          anyOf:
+          - type: string
+            maxLength: 320
+            minLength: 1
+          - type: 'null'
+          title: Phone
+          description: 'Celular do contato, interpretado como o `GET /contacts/lookup`
+            o interpreta: um número sem código de país é interpretado no país padrão
+            do workspace.'
+          examples:
+          - '+573001234567'
+        email:
+          anyOf:
+          - type: string
+            maxLength: 320
+            minLength: 1
+          - type: 'null'
+          title: Email
+          description: E-mail do contato, interpretado como o `GET /contacts/lookup`
+            o interpreta.
+          examples:
+          - john.doe@example.com
+      additionalProperties: false
+      type: object
+      title: RecordContactRequest
+      description: O contato ao qual o registro pertence, informado por exatamente
+        um de seus identificadores. O contato nunca é criado.
+    RecordCloseReasonResponse:
+      properties:
+        id:
+          type: string
+          title: Identifier
+          description: Id do motivo de fechamento, conforme `GET /pipelines/{pipelineId}`.
+          examples:
+          - reason-price
+        label:
+          type: string
+          title: Label
+          description: Nome do motivo de fechamento quando o registro foi fechado.
+          examples:
+          - Price too high
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+          description: Texto livre escrito quando o registro foi fechado.
+          examples:
+          - null
+      type: object
+      required:
+      - id
+      - label
+      title: RecordCloseReasonResponse
+      description: O motivo com o qual um registro fechado foi fechado.
     ReleaseConversationBody:
       properties:
         reason:
@@ -5599,6 +7455,25 @@ components:
       type: object
       title: ReleaseConversationBody
       description: Corpo do POST para liberar uma conversa. O motivo é opcional.
+    ReopenPipelineRecordBody:
+      properties:
+        expectedRevision:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Expected Revision
+          description: A `revision` do registro que você leu por último. Quando deixa
+            de ser a atual, a alteração falha com 409 `BRIDGE_PIPELINE_0101` e o registro
+            atual em `extra.currentRecord`. Sem ela, a alteração se aplica ao registro
+            como a solicitação o lê, então outra alteração feita no mesmo instante
+            ainda pode fazê-la falhar com esse 409.
+          examples:
+          - 3
+      additionalProperties: false
+      type: object
+      title: ReopenPipelineRecordBody
+      description: Corpo da solicitação para reabrir um registro de pipeline fechado.
     TemplateDiscoveryResponse:
       properties:
         id:
@@ -5874,6 +7749,46 @@ components:
       type: object
       title: UpdateConversation
       description: Corpo da solicitação para atualizar uma conversa existente.
+    UpdatePipelineRecordBody:
+      properties:
+        expectedRevision:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Expected Revision
+          description: A `revision` do registro que você leu por último. Quando deixa
+            de ser a atual, a alteração falha com 409 `BRIDGE_PIPELINE_0101` e o registro
+            atual em `extra.currentRecord`. Sem ela, a alteração se aplica ao registro
+            como a solicitação o lê, então outra alteração feita no mesmo instante
+            ainda pode fazê-la falhar com esse 409.
+          examples:
+          - 3
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+          description: 'Novo nome do registro, de até 200 caracteres. Omita-o para
+            manter o atual. Um registro sempre tem nome: `null` ou um texto em branco
+            falha com 422 `BRIDGE_PIPELINE_0311` (`errRecordName`).'
+          examples:
+          - Acme renewal 2027 - expanded
+        values:
+          additionalProperties: true
+          type: object
+          title: Values
+          description: Valores a alterar, indexados por id de atributo; os atributos
+            omitidos mantêm seu valor. Um `null`, um texto em branco ou uma lista
+            vazia remove o valor. Só são aceitos atributos de escopo `RECORD` da versão
+            que o registro segue, cada um verificado conforme seu tipo.
+          examples:
+          - budget: 18000000
+      additionalProperties: false
+      type: object
+      title: UpdatePipelineRecordBody
+      description: Corpo da solicitação para alterar o nome ou alguns valores de um
+        registro de pipeline.
     UserStatusFilter:
       type: string
       enum:

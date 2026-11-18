@@ -87,6 +87,8 @@ La diferencia se ve al leer:
 
 Por eso el tamaño de página determina el costo de recorrer todo el listado. Leer 500 contactos cuesta 5 solicitudes con páginas de 100 y 25 solicitudes con páginas de 20: los mismos datos consumen cinco veces más presupuesto.
 
+Las operaciones de pipelines consumen el mismo presupuesto. Un reintento con la misma `Idempotency-Key` cuenta como una solicitud nueva, aunque Bridge responda con el resultado de la primera.
+
 <Note>
   Prefiere el mayor tamaño de página que admita el endpoint al leer una lista completa. Cuando ya sabes qué recurso necesitas, consúltalo directamente por ID.
 </Note>

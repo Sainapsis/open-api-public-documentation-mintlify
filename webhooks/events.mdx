@@ -661,6 +661,90 @@ The `sentFromBridge` field indicates direction: true for outbound emails sent fr
 
 ---
 
+## Pipeline Record Notifications
+
+<span className="bridge-version-badge">v1</span>
+
+Triggered when a pipeline record changes and when a stage action runs. [Pipeline record events](/webhooks/pipeline-records) describes every field, trigger, close reason and action result code, with an example for each event type.
+
+<Tabs>
+  <Tab title="Event types">
+    | Event Type | Description |
+    | --- | --- |
+    | `pipeline_record.created` | A record was created |
+    | `pipeline_record.stage_changed` | A record moved to another stage |
+    | `pipeline_record.closed` | A record moved into a final stage; sent right after its `pipeline_record.stage_changed` |
+    | `pipeline_record.updated` | The record's values changed |
+    | `pipeline_record.reopened` | A closed record went back to an open stage |
+    | `pipeline_record.linked` | A conversation was linked to the record |
+    | `pipeline_record.unlinked` | A conversation was unlinked from the record |
+    | `pipeline_action.executed` | A stage action ran |
+    | `pipeline_action.failed` | A stage action failed |
+    | `pipeline_action.skipped` | A stage action did not apply and did not run |
+  </Tab>
+  <Tab title="Example payload">
+    ```json
+    {
+      "eventId": "b1d5e8a2c7f4:closed",
+      "eventType": "pipeline_record.closed",
+      "entity": "pipeline_record",
+      "workspaceId": "3b1f6c2e-9a4d-4e7b-8c21-5d0f7a9e1b42",
+      "timestamp": "2026-11-09T14:03:12.345Z",
+      "payload": {
+        "record": {
+          "id": "9c4e2a71-3f58-4b0d-a6e2-1d7b8c5f0e93",
+          "name": "ACME - Licenses 2027",
+          "pipeline": {
+            "id": "f2a8d1c4-6b3e-4f9a-b7d0-2c5e8a1f4d36",
+            "version": 3,
+            "label": "B2B Sales"
+          },
+          "stage": {
+            "id": "7b2e5c9a-0d4f-4a83-8c61-5f9b3d2e7a14",
+            "label": "Lost",
+            "state": "FINAL"
+          },
+          "contactId": "a71c5e3d-2b9f-4d08-8e46-0f3a9b7c1d52",
+          "ownerId": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+          "externalId": "CRM-88412",
+          "values": [
+            {
+              "id": "8d3f1a6c-2e7b-4c95-a1d4-6f0b9e3c7a28",
+              "label": "Amount",
+              "type": "CURRENCY",
+              "value": 12500000
+            },
+            {
+              "id": "b5e9c2a7-4d1f-4b83-9e60-1c7a3f8d5b42",
+              "label": "Probability",
+              "type": "PERCENT",
+              "value": 62.5
+            }
+          ]
+        },
+        "previousStage": {
+          "id": "1a6d9f3b-4c8e-4b27-9f05-3e7c1a8d6b40"
+        },
+        "reason": {
+          "id": "4f8a2d6c-9e1b-4d75-a3c0-2b6e8f4a1d97",
+          "label": "Price",
+          "note": "The customer chose another offer"
+        },
+        "trigger": "CONVERSATION_RELEASE",
+        "conversationId": "c8e1a4f7-5d2b-4c96-a0e3-9b7f2d6c1a58",
+        "sessionId": "e3f9b6d2-7a1c-4e85-b4f0-8d2a5c9e3b16",
+        "author": {
+          "id": "d4b2f8a6-1e7c-4a39-b5d0-6c8e2f1a9b74",
+          "type": "CORE_USER"
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+---
+
 ## Notes
 
 - Bridge may add new event categories in the future.
@@ -674,3 +758,4 @@ The `sentFromBridge` field indicates direction: true for outbound emails sent fr
 - [Overview](/webhooks)
 - [Verifying Signatures](/webhooks/verifying-signatures)
 - [Console Configuration](/webhooks/configuration)
+- [Pipeline record events](/webhooks/pipeline-records)

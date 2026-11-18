@@ -87,6 +87,13 @@
       "kind": "page"
     },
     {
+      "title": "Crie e mova registros de pipeline",
+      "source": "https://docs.bridge.new/pt-br/guides/pipeline-records",
+      "markdownUrl": "https://docs.bridge.new/pt-br/guides/pipeline-records.md",
+      "description": "Crie registros de pipeline para contatos existentes, repita com segurança com Idempotency-Key, evite perder mudanças com expectedRevision e feche ou reabra registros.",
+      "kind": "page"
+    },
+    {
       "title": "Respostas, erros e novas tentativas",
       "source": "https://docs.bridge.new/pt-br/guides/responses",
       "markdownUrl": "https://docs.bridge.new/pt-br/guides/responses.md",
@@ -154,6 +161,13 @@
       "source": "https://docs.bridge.new/pt-br/webhooks/events",
       "markdownUrl": "https://docs.bridge.new/pt-br/webhooks/events.md",
       "description": "Famílias de eventos, exemplos de payload e versões de assinatura dos webhooks do Bridge.",
+      "kind": "page"
+    },
+    {
+      "title": "Eventos de registros de pipeline",
+      "source": "https://docs.bridge.new/pt-br/webhooks/pipeline-records",
+      "markdownUrl": "https://docs.bridge.new/pt-br/webhooks/pipeline-records.md",
+      "description": "Eventos de webhook de registros de pipeline e ações de etapa: tipos de evento, campos do payload, triggers, motivos de fechamento e códigos de resultado das ações.",
       "kind": "page"
     },
     {
@@ -364,6 +378,62 @@
       "source": "https://docs.bridge.new/pt-br/api-reference/agents-api/iniciar-conversa-de-sa%C3%ADda-com-um-contact-como-agent-espec%C3%ADfico",
       "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/agents-api/iniciar-conversa-de-sa%C3%ADda-com-um-contact-como-agent-espec%C3%ADfico.md",
       "description": "Inicia uma conversa de saída com um Contact conhecido, atendida pelo Agent indicado.\n\nFunciona com Agents LeadScout e Service. Primeiro é resolvido o Contact e depois o Agent, que deve existir no workspace e estar disponível (consulte `GET /agents`). O template é referenciado por `template.id` ou `template.name` (id tem precedência quando ambos são enviados), deve existir e estar APPROVED, e qualquer Bridge User de `handoffOverride` deve ser válido. Se `template.media.mediaId` for desconhecido, a solicitação falha com 400 `BRIDGE_AI_LEADSCOUT_0016` somente depois de a conversa ser criada ou recuperada, portanto uma nova tentativa após esse erro pode responder de forma diferente. As regras do corpo (`consent.status=GRANTED` sem `capturedAt`, ou `template.media` sem exatamente um de `mediaId` ou `url`) falham com 400 `BRIDGE_CORE_0103`.\n\nA conversa é aberta em uma das linhas ativas de WhatsApp do Agent, sob seu controle, com o template como primeira mensagem. A linha é escolhida nesta ordem:\n- Uma linha livre.\n- Caso contrário, uma linha com uma conversa liberada recuperável com este Contact. A recuperação retorna `recovered=true` e substitui o contexto de saída anterior e `agentContext`. Isso acontece mesmo com `forceSend=false`.\n- Se nenhuma linha estiver livre ou for recuperável: `forceSend=false` (padrão) falha com 409 `BRIDGE_AI_LEADSCOUT_0008`; `forceSend=true` reutiliza uma linha ocupada por uma conversa ativa com este Contact, dando preferência a uma controlada por este Agent. Se a conversa escolhida for controlada por outro Agent ou por um Bridge User, a chamada falha com 409 `BRIDGE_AI_AGENT_OUTBOUND_0006` e nada é gravado. Libere-a primeiro e tente novamente. Linhas cuja conversa está bloqueada ou foi liberada sem recuperação nunca são usadas; assim, se nenhuma linha estiver ocupada por uma conversa ativa, a chamada falha com 409 `BRIDGE_AI_LEADSCOUT_0008` mesmo com `forceSend=true`.\n\n`contact.providerChannelId` é uma preferência: a linha indicada é usada quando está livre ou é recuperável; caso contrário, a mesma ordem é aplicada entre todas as linhas do Agent. Entre as linhas ocupadas, uma controlada por este Agent tem prioridade; se nenhuma for, a linha indicada é reutilizada (e pode falhar com 0006).\n\nA reutilização de uma conversa depende do tipo de Agent:\n- LeadScout: se sua sessão do LeadScout ainda estiver aberta e não expirada, a chamada falha com 409 `BRIDGE_AI_LEADSCOUT_0017` (`extra` inclui `conversationId`, `sessionId` e `stage`). Se uma sessão expirada não puder ser finalizada, falha com 409 `BRIDGE_AI_LEADSCOUT_0018`.\n- Service Agent: uma sessão de serviço aberta e não expirada continua; uma sessão expirada é encerrada como abandonada e uma nova é aberta.\n\nConsulte [o guia completo de saída](/pt-br/guides/agent-outbound) para os pré-requisitos, a tabela de decisão de forceSend, a recuperação, o trabalho parcial e as decisões seguras de nova tentativa.",
+      "kind": "operation"
+    },
+    {
+      "title": "Listar os pipelines de um workspace",
+      "source": "https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace",
+      "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace.md",
+      "description": "Lista os pipelines ativos do workspace, ordenados por rótulo.\n\n`isDefault` marca o pipeline que `POST /records` usa quando `pipelineId` não é enviado, e `acceptsApiRecords`\nindica se um pipeline aceita registros criados por esta API.",
+      "kind": "operation"
+    },
+    {
+      "title": "Obter um pipeline com suas etapas e atributos",
+      "source": "https://docs.bridge.new/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos",
+      "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/pipelines-api/obter-um-pipeline-com-suas-etapas-e-atributos.md",
+      "description": "Obtém um pipeline ativo com sua versão atual: etapas em ordem, atributos e motivos de fechamento ativos.\n\nUse-o para saber quais `stageId` e quais chaves de `values` o `POST /records` aceita.",
+      "kind": "operation"
+    },
+    {
+      "title": "Listar registros de pipeline",
+      "source": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline",
+      "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/listar-registros-de-pipeline.md",
+      "description": "Lista os registros do workspace, do atualizado mais recentemente ao mais antigo, buscados de uma única forma.\n\n- `externalId`, com um `pipelineId` opcional (o pipeline padrão, caso contrário): o único registro que\n  seu sistema criou com esse id, ou nenhum. Nenhum cursor é retornado.\n- Um de `contactId`, `contactPhone` ou `contactEmail`: os registros desse contato, opcionalmente restritos a um\n  `pipelineId` e a um `stageId`. A restrição se aplica a cada página lida, então uma página pode ter menos\n  registros que `limit`, ou nenhum, enquanto ainda há um `cursor`: continue lendo até que `cursor` seja null.\n- Apenas `pipelineId`: os registros desse pipeline, opcionalmente restritos a um `stageId`.\n\nQualquer outra combinação falha com 422.",
+      "kind": "operation"
+    },
+    {
+      "title": "Criar um registro de pipeline",
+      "source": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline",
+      "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/criar-um-registro-de-pipeline.md",
+      "description": "Cria um registro de um contato em um pipeline, como uma oportunidade de venda.\n\nO contato é informado por exatamente um de `id`, `phone` ou `email` e precisa existir: nunca é criado (404\n`BRIDGE_EXTERNAL_0001`). `pipelineId` assume por padrão o pipeline padrão do workspace e `stageId` a\netapa inicial do pipeline. Um `name` ausente ou em branco assume por padrão o nome completo do contato, depois seu\ncelular e depois seu e-mail. Só são aceitas etapas abertas, e só atributos de escopo `RECORD` da\nversão atual do pipeline em `values` (um `null`, um texto em branco ou uma lista vazia é omitido); cada problema\nencontrado é listado em `extra.errors` do 422\n`BRIDGE_PIPELINE_0311`. Quando a etapa em que o registro começa exige um contato completo (nome, sobrenome,\ncelular e todo atributo personalizado obrigatório do workspace), um contato incompleto falha com 422\n`BRIDGE_PIPELINE_0305`, cujo `extra.missing` indica o que falta. Um segundo registro com o mesmo `externalId`\nno pipeline falha com 409 `BRIDGE_PIPELINE_0003`, cujo `extra.recordId` é o registro existente.\n\n`Idempotency-Key` é obrigatório. Repetir com a mesma chave e o mesmo corpo responde 201 com o primeiro registro e\n`Idempotent-Replayed: true`. A mesma chave com um corpo diferente falha com 422 `BRIDGE_PIPELINE_0402`, e\nenquanto a primeira solicitação ainda está em andamento, com 409 `BRIDGE_PIPELINE_0401`. Quando a solicitação falha, a chave é\nliberada e pode ser reutilizada. Se a primeira solicitação foi interrompida antes de terminar, sua chave continua respondendo 409\n`BRIDGE_PIPELINE_0401` por até 24 horas: tente de novo com uma chave nova e envie `externalId` para que uma nova tentativa nunca\ncrie um segundo registro.",
+      "kind": "operation"
+    },
+    {
+      "title": "Obter um registro de pipeline",
+      "source": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline",
+      "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/obter-um-registro-de-pipeline.md",
+      "description": "Obtém um registro do workspace pelo seu id.",
+      "kind": "operation"
+    },
+    {
+      "title": "Atualizar um registro de pipeline",
+      "source": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline",
+      "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/atualizar-um-registro-de-pipeline.md",
+      "description": "Altera o nome ou alguns valores de um registro, aberto ou fechado.\n\nSó os campos enviados mudam: um `name` ausente mantém o nome, e os atributos omitidos de `values` mantêm seu\nvalor; um `null`, um texto em branco ou uma lista vazia remove um valor. Um registro sempre tem nome, então um `name`\n`null` ou em branco falha como qualquer outro campo inválido. Cada problema encontrado é listado em `extra.errors` do 422\n`BRIDGE_PIPELINE_0311`, que também é a resposta a um corpo que não altera nada. Uma alteração que deixa o registro\ncomo está não grava nada e responde o registro. Com `expectedRevision`, um registro alterado desde que você o leu falha\ncom 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro como está agora.",
+      "kind": "operation"
+    },
+    {
+      "title": "Mover um registro de pipeline para outra etapa",
+      "source": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa",
+      "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/mover-um-registro-de-pipeline-para-outra-etapa.md",
+      "description": "Move um registro aberto para outra etapa da versão do pipeline que ele segue; uma etapa final o fecha.\n\nUma etapa que não está nessa versão, como uma de outro pipeline, falha com 422 `BRIDGE_PIPELINE_0311`\n(`errRecordStage`), e a etapa em que o registro já está, com 409 `BRIDGE_PIPELINE_0004`. Um registro fechado\nfalha com 409 `BRIDGE_PIPELINE_0306`: reabra-o primeiro. Quando a etapa exige um contato completo, um contato\nincompleto falha com 422 `BRIDGE_PIPELINE_0305`. Uma movimentação para uma etapa final pode levar um `reasonId` ativo\ndo pipeline (422 `BRIDGE_PIPELINE_0315` quando não existe, `BRIDGE_PIPELINE_0314` quando está desativado)\ne um `reasonNote`; sem um motivo, o registro é fechado sem motivo. Um motivo ou uma nota em uma movimentação para uma etapa\naberta falha com 422 `BRIDGE_PIPELINE_0311`. Com `expectedRevision`, um registro alterado desde que você o leu falha\ncom 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro como está agora.\n\n`Idempotency-Key` é obrigatório e funciona como em `POST /records`: uma nova tentativa com a mesma chave e o mesmo corpo responde\ncom o registro e `Idempotent-Replayed: true`, como está agora. A mesma chave em outro registro ou operação falha com\n422 `BRIDGE_PIPELINE_0402`.",
+      "kind": "operation"
+    },
+    {
+      "title": "Reabrir um registro de pipeline fechado",
+      "source": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado",
+      "markdownUrl": "https://docs.bridge.new/pt-br/api-reference/pipeline-records-api/reabrir-um-registro-de-pipeline-fechado.md",
+      "description": "Devolve um registro fechado à etapa aberta em que estava antes de ser fechado e limpa seu motivo de fechamento.\n\nQuando seu histórico não indica nenhuma etapa aberta da sua versão, o registro vai para a etapa inicial do pipeline. Um registro\naberto falha com 409 `BRIDGE_PIPELINE_0307`. Quando essa etapa exige um contato completo, um contato incompleto\nfalha com 422 `BRIDGE_PIPELINE_0305`. O corpo é opcional; com `expectedRevision`, um registro alterado desde que você o\nleu falha com 409 `BRIDGE_PIPELINE_0101`, cujo `extra.currentRecord` é o registro como está agora.\n\n`Idempotency-Key` é obrigatório e funciona como em `POST /records/{recordId}/move`.",
       "kind": "operation"
     },
     {

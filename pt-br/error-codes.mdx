@@ -254,6 +254,45 @@ Códigos das operações de usuários internos.
 | `BRIDGE_INTERNAL_0004` | Campo não configurado no usuário interno | O usuário interno não tem um campo configurado; confira as configurações do workspace ou das informações internas |
 | `BRIDGE_INTERNAL_0101` | Operação não aceita pelo usuário interno | O usuário interno não aceita essa operação |
 
+<a id="pipeline-error-codes"></a>
+
+## Códigos de erro de pipelines
+
+Códigos das operações de pipelines e registros de pipeline. Consulte [Crie e mova registros de pipeline](/pt-br/guides/pipeline-records) para o fluxo completo.
+
+| Código | Status | Título | Quando acontece e o que fazer |
+| ---- | ------ | ----- | ------------------------------ |
+| `BRIDGE_PIPELINE_0001` | 404 | Registro de pipeline não encontrado | O registro não existe no seu workspace. Confira o `recordId` |
+| `BRIDGE_PIPELINE_0003` | 409 | External id do registro já usado | O pipeline já tem um registro com este `externalId`. `extra.recordId` é esse registro: leia-o em vez de criar outro |
+| `BRIDGE_PIPELINE_0004` | 409 | Registro já está na etapa | O registro já está na etapa da movimentação. Não há nada a fazer |
+| `BRIDGE_PIPELINE_0101` | 409 | Conflito de revisão do registro | O registro mudou depois do `revision` que você enviou como `expectedRevision`. `extra.currentRecord` é o registro como está agora: decida de novo e tente outra vez com o `revision` dele |
+| `BRIDGE_PIPELINE_0201` | 404 | Pipeline não encontrado | O pipeline não existe no seu workspace. [Liste os pipelines](/pt-br/api-reference/pipelines-api/listar-os-pipelines-de-um-workspace) para encontrar o id dele |
+| `BRIDGE_PIPELINE_0301` | 403 | Pipelines desativados | Os pipelines não estão habilitados para o workspace. Fale com quem administra o workspace |
+| `BRIDGE_PIPELINE_0305` | 422 | Contato incompleto | A etapa exige um contato completo. `extra.missing` diz o que falta: complete o contato e tente de novo |
+| `BRIDGE_PIPELINE_0306` | 409 | Registro não está aberto | O registro está fechado. Reabra-o antes de movê-lo |
+| `BRIDGE_PIPELINE_0307` | 409 | Registro não está fechado | Só um registro fechado pode ser reaberto |
+| `BRIDGE_PIPELINE_0311` | 422 | Validação do registro falhou | O registro não é válido. `extra.errors` lista cada problema, cada um com `path`, `code` e `message` |
+| `BRIDGE_PIPELINE_0314` | 422 | Motivo de fechamento desativado | O motivo de fechamento está desativado. Use um ativo do pipeline |
+| `BRIDGE_PIPELINE_0315` | 422 | Motivo de fechamento não encontrado | O motivo de fechamento não existe no pipeline |
+| `BRIDGE_PIPELINE_0317` | 403 | Entrada no pipeline desativada | O pipeline não aceita registros criados pela API |
+| `BRIDGE_PIPELINE_0318` | 409 | Contato já tem registro aberto | O pipeline permite um registro aberto por contato e o contato já tem um. `extra.openRecordId` é esse registro: trabalhe nele |
+| `BRIDGE_PIPELINE_0401` | 409 | Requisição idempotente em andamento | Uma requisição com esta `Idempotency-Key` ainda está em andamento. Tente de novo depois de uma pausa; se continuar falhando, tente com uma key nova |
+| `BRIDGE_PIPELINE_0402` | 422 | Chave de idempotência reutilizada | A `Idempotency-Key` já foi usada com outra requisição. Use uma key nova para uma mudança nova |
+
+Códigos de `BRIDGE_PIPELINE_0311` em `extra.errors[].code`:
+
+| Código | Significado |
+| ---- | ------- |
+| `errRecordStage` | A etapa não está na versão do pipeline do registro, ou é uma etapa final na criação |
+| `errRecordName` | O nome está ausente, em branco ou tem mais de 200 caracteres |
+| `errRecordValue` | Um valor não corresponde ao tipo do seu atributo |
+| `errRecordValueKey` | Uma chave de `values` não é um atributo do registro na versão do pipeline |
+| `errRecordNoChange` | A atualização não muda nada |
+| `errReasonNote` | `reasonNote` é longo demais ou foi enviado sem `reasonId` |
+| `errReasonOnlyFinal` | Um motivo ou nota de fechamento foi enviado em uma movimentação para uma etapa aberta |
+
+As operações de pipelines também respondem `403` `BRIDGE_CORE_0301` quando o `workspaceId` do caminho não é o workspace da API Key, `404` `BRIDGE_EXTERNAL_0001` quando o contato não existe, `404` `BRIDGE_WORKSPACE_0001`, `400` `BRIDGE_CORE_0104` para um cursor inválido e `429` `BRIDGE_RATE_LIMIT_0001`.
+
 <a id="provider-channel-error-codes"></a>
 
 ## Códigos de erro de canais de provedor
