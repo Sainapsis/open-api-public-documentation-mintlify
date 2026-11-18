@@ -240,9 +240,13 @@ Retain `messageId`. `201` means Bridge stored the Message for sending; [Response
 
 ### The opening template and the promotional cooldown
 
-A Conversation can have no opening template yet, for example one started by email. A marketing or utility template sent into it becomes its opening template, and the Conversation then accepts any template. Until then, a template of another category is refused with `BRIDGE_CONVERSATION_0609`. If two requests try to open the same Conversation at once, one of them is refused with `BRIDGE_CONVERSATION_0613`: retry it in a few seconds.
+A Conversation can have no opening template yet, for example one started by a call or an email. A marketing or utility template sent into it becomes its opening template. Until then, a template of another category is refused with `BRIDGE_CONVERSATION_0609`. If two requests try to open the same Conversation at once, one of them is refused with `BRIDGE_CONVERSATION_0613`: retry it in a few seconds.
 
-A marketing or utility template is also subject to the workspace's promotional cooldown, the same setting that throttles these sends in Bridge. If any Contact of the Conversation received one inside that period, the request fails with `BRIDGE_CONVERSATION_0406` and sends nothing to any Contact: `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left. Each successful send is recorded for every Contact, so it counts toward the cooldown like a send from the Bridge app.
+Once the Conversation has its opening template, every template still passes the usual checks: the promotional cooldown (`BRIDGE_CONVERSATION_0406`), an opening template that is still being sent (`BRIDGE_CONVERSATION_0613`), the Contact's consent and WhatsApp approval.
+
+A marketing or utility template is also subject to the workspace's promotional cooldown, the same setting that throttles these sends in Bridge. A workspace that has not configured its cooldown settings has none. If Bridge already sent one to any Contact of the Conversation inside that period, the request fails with `BRIDGE_CONVERSATION_0406` and sends nothing to any Contact: `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left, also in the `Retry-After` header. Bridge counts the sends it recorded, not whether WhatsApp delivered them. Each successful send is recorded for every Contact, so it counts toward the cooldown like a send from the Bridge app.
+
+Bridge reserves each Contact's cooldown before it stores the message, so two requests to this operation that arrive at the same time cannot both send: one of them gets `BRIDGE_CONVERSATION_0406`.
 
 ### Retry with the same key
 
@@ -267,10 +271,10 @@ A marketing or utility template is also subject to the workspace's promotional c
 | `BRIDGE_CONVERSATION_0011` | An Agent is handling the Conversation. Check it with `GET .../conversations/{conversationId}` and retry when its `status` is `ACTIVE`. |
 | `BRIDGE_CONVERSATION_0004` | The Conversation is not active. Retry only when its `status` is `ACTIVE`. |
 | `BRIDGE_CONVERSATION_0609` | The Conversation has no opening template yet and this template is not a marketing or utility template. Send a marketing or utility template: it becomes the opening template. |
-| `BRIDGE_CONVERSATION_0613` | Another request is sending the Conversation's opening template, or that template is still being sent. Retry in a few seconds: the block lasts at most 120 seconds after the opening template was created. |
+| `BRIDGE_CONVERSATION_0613` | Another request is opening the Conversation with its opening template, or that template is still being sent. Retry in a few seconds: the block lasts at most 120 seconds after the opening template was created. |
 | `BRIDGE_CONVERSATION_0201` | The Conversation has no WhatsApp Contact. Send into a Conversation that has one: `GET .../conversations/{conversationId}` lists its participants. |
 | `BRIDGE_COMMERCIAL_CONSENT_0203` | A Contact does not accept messages Bridge starts. Do not retry: stop sending templates into this Conversation until the Contact accepts messages again. The [error reference](/error-codes#commercial-consent-error-codes) says when it happens. |
-| `BRIDGE_CONVERSATION_0406` | The template is a marketing or utility template and a Contact of the Conversation already received one inside the workspace's promotional cooldown. `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left. Nothing was sent to any Contact. Retry after `retryAfterSeconds` seconds. |
+| `BRIDGE_CONVERSATION_0406` | The template is a marketing or utility template and a Contact of the Conversation was already sent one inside the workspace's promotional cooldown. Bridge counts the sends it recorded, not whether WhatsApp delivered them. `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left, also in the `Retry-After` header. Nothing was sent to any Contact. Retry after that many seconds. |
 | `BRIDGE_TEMPLATE_0006` | The template is not approved for the line and language of at least one WhatsApp Contact, or a Contact's line has no WhatsApp Business account. Use a template approved for the line and language of every Contact of the Conversation. |
 | `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Fix the template values. The [error reference](/error-codes#template-error-codes) lists each one. |
 | `BRIDGE_TEMPLATE_0011`, `0012` | Fix `template.media`: send it only for a template with an image or video header, with a `type` that matches it, and with `mediaId` a file of that type. The [error reference](/error-codes#template-error-codes) lists each one. |
