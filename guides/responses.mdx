@@ -12,6 +12,7 @@ The HTTP status and response body describe the operation you called. They do not
 | Operation | Published success | What to do with it |
 | --- | --- | --- |
 | Create a message | `201`, with `messageId` | Retain the message ID. The published response does not include a provider delivery receipt; do not label it delivered from this response alone. |
+| Send a template into a Conversation | `201`, with `messageId` | Retain the message ID. It means Bridge stored the Message for sending: the published response does not include a provider delivery receipt, so do not label it delivered. After a timeout, retry with the same `Idempotency-Key`: a replay answers `201` with `Idempotent-Replayed: true`. |
 | Release a conversation | `204`, with no response body | Treat it as success and do not call a JSON parser on the empty body. |
 | Request LeadScout handoff | `202`, with `trackingId`, `conversationId`, `status`, and `assignees` | Retain the correlation ID. Assignment is asynchronous; assignees echo the request and do not prove that downstream resolution or assignment completed. |
 | Submit a Custom Connections lead | `202`, with `requestId` | Retain the request ID. Show that the lead was accepted; the opening WhatsApp message is sent later by a separate service. |

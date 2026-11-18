@@ -1,7 +1,7 @@
 ---
 title: "Elige y completa una plantilla de WhatsApp"
 sidebarTitle: "Guía de plantillas"
-description: "Consulta una plantilla por ID o nombre, proporciona sus claves de variables independientes del proveedor y usa el ID devuelto en una solicitud de conversación."
+description: "Consulta una plantilla por ID o nombre, proporciona sus claves de variables independientes del proveedor y úsala para abrir una conversación o para enviarla a una que ya existe."
 ---
 
 Usa esta guía cuando quieras abrir una conversación con una plantilla específica de WhatsApp. La [referencia detallada de plantillas](/es/templates-and-parameters) explica las reglas de validación y todos los errores de plantilla documentados.
@@ -157,3 +157,84 @@ Las comprobaciones locales detectan claves desconocidas o faltantes. Bridge real
 | `BRIDGE_CONVERSATION_0608` | Pídele a un administrador que cambie la secuencia de plantillas de inicio del espacio de trabajo. Cambiar los valores de tu plantilla no resuelve este error de configuración. |
 
 Consulta la [referencia completa de errores de plantillas](/es/templates-and-parameters#errors) para los errores de aprobación, pertenencia, parámetros no admitidos y solicitudes mal formadas. No reintentes automáticamente una solicitud de conversación que agotó el tiempo de espera: primero determina su resultado.
+
+<a id="send-a-template-into-an-existing-conversation"></a>
+
+## Envía una plantilla a una conversación existente
+
+Usa `POST .../conversations/{conversationId}/send-template` para enviar una plantilla de proveedor a una conversación que ya existe, por ejemplo una actualización de pedido a un contacto con el que ya hablas. Bridge escribe un mensaje, que leen todos los contactos de WhatsApp de la conversación. El remitente es el sistema, no un Usuario de Bridge.
+
+| Qué quieres hacer | Qué usar |
+| --- | --- |
+| Iniciar una conversación, o recuperar una liberada, y abrirla con una plantilla | `POST .../conversations` con `onboardingTemplates`, como en los pasos 1 a 3 |
+| Enviar una plantilla a una conversación que ya está abierta | `POST .../conversations/{conversationId}/send-template` |
+
+`send-template` nunca inicia ni recupera una conversación.
+
+### Antes de enviar
+
+- La conversación está abierta. Se rechaza una conversación liberada o bloqueada, una eliminada o una que atiende un Agente. `GET .../conversations/{conversationId}` devuelve su `status`.
+- La conversación tiene al menos un contacto de WhatsApp y ya envió su plantilla inicial.
+- La plantilla es una plantilla de proveedor de tu workspace, aprobada para la línea de la conversación en el idioma en que Bridge la envía a cada contacto. Consulta sus variables como en el paso 1.
+- Tienes una `Idempotency-Key` para este envío.
+
+### Envíala
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/send-template
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+Idempotency-Key: erp-order-981-shipped
+```
+
+```json
+{
+  "template": {
+    "id": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+    "parameters": {
+      "order_number": "A-10492",
+      "delivery_date": "October 3"
+    }
+  }
+}
+```
+
+Envía `template.id`, o `template.name` si no tienes el id. Cuando `id` está presente es la única búsqueda: un `id` desconocido falla con `404` aunque `name` coincida con una plantilla. `parameters` sigue las reglas de los pasos 1 y 2. Una plantilla con multimedia en el encabezado envía esa multimedia.
+
+Una solicitud correcta responde `201`:
+
+```json
+{
+  "conversationId": "7d4a1f2e-3b5c-4d6e-8f9a-0b1c2d3e4f5a",
+  "messageId": "b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234",
+  "templateId": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+  "templateName": "order_shipped_promo"
+}
+```
+
+Conserva `messageId`. `201` significa que Bridge guardó el mensaje para enviarlo; [Respuestas y reintentos](/es/guides/responses) explica qué no te dice.
+
+### Reintenta con la misma clave
+
+`Idempotency-Key` es obligatoria, de 1 a 255 caracteres, y Bridge la conserva 24 horas. Usa una clave nueva para cada envío y reutilízala solo para reintentar ese envío. Dos solicitudes tienen el mismo cuerpo cuando nombran la misma plantilla y los mismos `parameters`: un `parameters` ausente y `{}` son lo mismo, y `name` no influye cuando `id` está presente.
+
+| Situación | Resultado | Qué hacer |
+| --- | --- | --- |
+| Misma clave, mismo cuerpo | `201` con el primer mensaje y `Idempotent-Replayed: true` | No se envió nada dos veces. Conserva `messageId`. |
+| Misma clave, cuerpo distinto | `422` `BRIDGE_CORE_1202` | Usa una clave nueva para el cuerpo nuevo. |
+| Misma clave mientras la primera solicitud sigue en curso | `409` `BRIDGE_CORE_1201` | Reintenta con la misma clave después de una pausa. |
+| La primera solicitud falló antes de guardar nada | Bridge libera la clave | Corrige la causa y reintenta con la misma clave. |
+| La primera solicitud se interrumpió después de guardar el mensaje | `409` `BRIDGE_CORE_1201` hasta por 24 horas | El mensaje puede existir. La API no tiene una operación para listar mensajes: pídele a un Usuario de Bridge que revise la conversación antes de enviar de nuevo con una clave nueva. |
+
+### Si se rechaza la solicitud
+
+| Error | Qué hacer |
+| --- | --- |
+| `BRIDGE_CONVERSATION_0007` | La conversación fue liberada. Vuelve a iniciarla con `POST .../conversations`. |
+| `BRIDGE_CONVERSATION_0011` | Un Agente está atendiendo la conversación. Consúltala con `GET .../conversations/{conversationId}` y reintenta cuando su `status` sea `ACTIVE`. |
+| `BRIDGE_CONVERSATION_0004` | La conversación no está activa. Reintenta solo cuando su `status` sea `ACTIVE`. |
+| `BRIDGE_CONVERSATION_0613` | La plantilla inicial aún se está enviando. Reintenta en unos segundos. |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | Un contacto no acepta mensajes que inicia Bridge. La [referencia de errores](/es/error-codes#commercial-consent-error-codes) explica cuándo ocurre. |
+| `BRIDGE_TEMPLATE_0006`, `0007`, `0009`, `0010` | Corrige la plantilla o sus valores. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
+
+Una solicitud rechazada con uno de estos códigos no envió nada. Todos los códigos, incluidos `BRIDGE_TEMPLATE_0001`, `BRIDGE_CONVERSATION_0001` y `BRIDGE_CONVERSATION_0201`, están en [Códigos de error](/es/error-codes).

@@ -1,7 +1,7 @@
 ---
 title: "Choose and fill a WhatsApp template"
 sidebarTitle: "Template recipe"
-description: "Discover a template by ID or name, supply its agnostic variable keys, and use its returned ID in a Conversation request."
+description: "Discover a template by ID or name, supply its agnostic variable keys, and use it to open a Conversation or to send it into one that already exists."
 ---
 
 Use this recipe when you want a Conversation to open with a particular WhatsApp template. The detailed [template reference](/templates-and-parameters) explains validation rules and every documented template error.
@@ -147,3 +147,82 @@ The local checks catch unknown and missing keys. Bridge still performs its own v
 | `BRIDGE_CONVERSATION_0608` | Ask a workspace administrator to change the configured onboarding sequence. Changing your template values does not fix this configuration error. |
 
 Read the [complete template error reference](/templates-and-parameters#errors) for approval, ownership, unsupported parameters, and malformed requests. Do not retry a timed-out Conversation request automatically: determine its outcome first.
+
+## Send a template into an existing Conversation
+
+Use `POST .../conversations/{conversationId}/send-template` to send one provider template into a Conversation that already exists, such as an order update to a Contact you already talk to. Bridge writes one Message, read by every WhatsApp Contact of the Conversation. The sender is the system, not a Bridge User.
+
+| You want to | Use |
+| --- | --- |
+| Start a Conversation, or recover a released one, and open it with a template | `POST .../conversations` with `onboardingTemplates`, as in steps 1 to 3 |
+| Send a template into a Conversation that is already open | `POST .../conversations/{conversationId}/send-template` |
+
+`send-template` never starts or recovers a Conversation.
+
+### Before you send
+
+- The Conversation is open. A released or blocked Conversation, a deleted one, or one an Agent is handling is refused. `GET .../conversations/{conversationId}` returns its `status`.
+- The Conversation has at least one WhatsApp Contact, and its opening template has been sent.
+- The template is a provider template of your workspace, approved for the Conversation's line in the language Bridge sends to each Contact. Discover its variables as in step 1.
+- You have an `Idempotency-Key` for this send.
+
+### Send it
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/send-template
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+Idempotency-Key: erp-order-981-shipped
+```
+
+```json
+{
+  "template": {
+    "id": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+    "parameters": {
+      "order_number": "A-10492",
+      "delivery_date": "October 3"
+    }
+  }
+}
+```
+
+Send `template.id`, or `template.name` when you have no id. When `id` is present it is the only lookup: an unknown `id` fails with `404` even if `name` matches a template. `parameters` follows the rules of steps 1 and 2. A template with header media sends that media.
+
+A successful request answers `201`:
+
+```json
+{
+  "conversationId": "7d4a1f2e-3b5c-4d6e-8f9a-0b1c2d3e4f5a",
+  "messageId": "b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234",
+  "templateId": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+  "templateName": "order_shipped_promo"
+}
+```
+
+Retain `messageId`. `201` means Bridge stored the Message for sending; [Responses and retries](/guides/responses) explains what it does not tell you.
+
+### Retry with the same key
+
+`Idempotency-Key` is required, 1 to 255 characters, and Bridge keeps it for 24 hours. Use a new key for each send and reuse it only to retry that send. Two requests have the same body when they name the same template and the same `parameters`: an absent `parameters` and `{}` are the same, and `name` plays no part when `id` is present.
+
+| Situation | Result | What to do |
+| --- | --- | --- |
+| Same key, same body | `201` with the first Message and `Idempotent-Replayed: true` | Nothing was sent twice. Keep `messageId`. |
+| Same key, different body | `422` `BRIDGE_CORE_1202` | Use a new key for the new body. |
+| Same key while the first request is still running | `409` `BRIDGE_CORE_1201` | Retry with the same key after a pause. |
+| The first request failed before it stored anything | Bridge frees the key | Fix the cause and retry with the same key. |
+| The first request was cut off after it stored the Message | `409` `BRIDGE_CORE_1201` for up to 24 hours | The Message may exist. The API has no operation to list Messages, so ask a Bridge User to check the Conversation before you send again with a new key. |
+
+### If the request is rejected
+
+| Error | What to do |
+| --- | --- |
+| `BRIDGE_CONVERSATION_0007` | The Conversation was released. Start it again with `POST .../conversations`. |
+| `BRIDGE_CONVERSATION_0011` | An Agent is handling the Conversation. Check it with `GET .../conversations/{conversationId}` and retry when its `status` is `ACTIVE`. |
+| `BRIDGE_CONVERSATION_0004` | The Conversation is not active. Retry only when its `status` is `ACTIVE`. |
+| `BRIDGE_CONVERSATION_0613` | The opening template is still being sent. Retry in a few seconds. |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | A Contact does not accept messages Bridge starts. The [error reference](/error-codes#commercial-consent-error-codes) says when. |
+| `BRIDGE_TEMPLATE_0006`, `0007`, `0009`, `0010` | Fix the template or its values. The [error reference](/error-codes#template-error-codes) lists each one. |
+
+A request rejected with one of these codes sent nothing. Every code, including `BRIDGE_TEMPLATE_0001`, `BRIDGE_CONVERSATION_0001` and `BRIDGE_CONVERSATION_0201`, is in [Error codes](/error-codes).

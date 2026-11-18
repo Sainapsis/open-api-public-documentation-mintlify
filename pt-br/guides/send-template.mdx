@@ -1,7 +1,7 @@
 ---
 title: "Escolha e preencha um template de WhatsApp"
 sidebarTitle: "Guia de templates"
-description: "Descubra um template por ID ou nome, forneça os valores por suas chaves de variável agnósticas e use o ID retornado em uma requisição de conversa."
+description: "Descubra um template por ID ou nome, forneça os valores por suas chaves de variável agnósticas e use-o para abrir uma conversa ou para enviá-lo a uma que já existe."
 ---
 
 Use este guia quando quiser abrir uma conversa com um template específico de WhatsApp. A [referência detalhada de templates](/pt-br/templates-and-parameters) explica as regras de validação e todos os erros de template documentados.
@@ -157,3 +157,84 @@ As verificações locais detectam chaves desconhecidas ou obrigatórias ausentes
 | `BRIDGE_CONVERSATION_0608` | Peça a um administrador do workspace para alterar a sequência inicial configurada. Mudar os valores do seu template não corrige esse erro de configuração. |
 
 Leia a [referência completa de erros de templates](/pt-br/templates-and-parameters#errors) para entender aprovação, titularidade, parâmetros não aceitos e requisições malformadas. Não repita automaticamente uma requisição de conversa que expirou: primeiro verifique o resultado.
+
+<a id="send-a-template-into-an-existing-conversation"></a>
+
+## Envie um template para uma conversa existente
+
+Use `POST .../conversations/{conversationId}/send-template` para enviar um template de provedor a uma conversa que já existe, por exemplo uma atualização de pedido a um Contato com quem você já conversa. O Bridge grava uma mensagem, lida por todos os Contatos de WhatsApp da conversa. O remetente é o sistema, não um Usuário do Bridge.
+
+| O que você quer fazer | O que usar |
+| --- | --- |
+| Iniciar uma conversa, ou recuperar uma liberada, e abri-la com um template | `POST .../conversations` com `onboardingTemplates`, como nos passos 1 a 3 |
+| Enviar um template para uma conversa que já está aberta | `POST .../conversations/{conversationId}/send-template` |
+
+`send-template` nunca inicia nem recupera uma conversa.
+
+### Antes de enviar
+
+- A conversa está aberta. Uma conversa liberada ou bloqueada, uma excluída ou uma atendida por um Agente é recusada. `GET .../conversations/{conversationId}` retorna o `status` dela.
+- A conversa tem pelo menos um Contato de WhatsApp e já enviou o template inicial.
+- O template é um template de provedor do seu workspace, aprovado para a linha da conversa no idioma em que o Bridge o envia a cada Contato. Descubra as variáveis dele como no passo 1.
+- Você tem uma `Idempotency-Key` para este envio.
+
+### Envie
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/send-template
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+Idempotency-Key: erp-order-981-shipped
+```
+
+```json
+{
+  "template": {
+    "id": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+    "parameters": {
+      "order_number": "A-10492",
+      "delivery_date": "October 3"
+    }
+  }
+}
+```
+
+Envie `template.id`, ou `template.name` quando não tiver o id. Quando `id` está presente, é a única busca: um `id` desconhecido falha com `404` mesmo que `name` corresponda a um template. `parameters` segue as regras dos passos 1 e 2. Um template com mídia no cabeçalho envia essa mídia.
+
+Uma requisição bem-sucedida responde `201`:
+
+```json
+{
+  "conversationId": "7d4a1f2e-3b5c-4d6e-8f9a-0b1c2d3e4f5a",
+  "messageId": "b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234",
+  "templateId": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+  "templateName": "order_shipped_promo"
+}
+```
+
+Guarde `messageId`. `201` significa que o Bridge gravou a mensagem para envio; [Respostas e novas tentativas](/pt-br/guides/responses) explica o que ele não informa.
+
+### Tente de novo com a mesma chave
+
+`Idempotency-Key` é obrigatória, de 1 a 255 caracteres, e o Bridge a mantém por 24 horas. Use uma chave nova para cada envio e reutilize-a apenas para repetir esse envio. Duas requisições têm o mesmo corpo quando citam o mesmo template e os mesmos `parameters`: um `parameters` ausente e `{}` são equivalentes, e `name` não influencia quando `id` está presente.
+
+| Situação | Resultado | O que fazer |
+| --- | --- | --- |
+| Mesma chave, mesmo corpo | `201` com a primeira mensagem e `Idempotent-Replayed: true` | Nada foi enviado duas vezes. Guarde `messageId`. |
+| Mesma chave, corpo diferente | `422` `BRIDGE_CORE_1202` | Use uma chave nova para o novo corpo. |
+| Mesma chave enquanto a primeira requisição ainda está em andamento | `409` `BRIDGE_CORE_1201` | Tente de novo com a mesma chave depois de uma pausa. |
+| A primeira requisição falhou antes de gravar qualquer coisa | O Bridge libera a chave | Corrija a causa e tente de novo com a mesma chave. |
+| A primeira requisição foi interrompida depois de gravar a mensagem | `409` `BRIDGE_CORE_1201` por até 24 horas | A mensagem pode existir. A API não tem operação para listar mensagens: peça a um Usuário do Bridge que confira a conversa antes de enviar de novo com uma chave nova. |
+
+### Se a requisição for rejeitada
+
+| Erro | O que fazer |
+| --- | --- |
+| `BRIDGE_CONVERSATION_0007` | A conversa foi liberada. Inicie-a de novo com `POST .../conversations`. |
+| `BRIDGE_CONVERSATION_0011` | Um Agente está atendendo a conversa. Consulte-a com `GET .../conversations/{conversationId}` e tente de novo quando o `status` for `ACTIVE`. |
+| `BRIDGE_CONVERSATION_0004` | A conversa não está ativa. Tente de novo só quando o `status` for `ACTIVE`. |
+| `BRIDGE_CONVERSATION_0613` | O template inicial ainda está sendo enviado. Tente de novo em alguns segundos. |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | Um Contato não aceita mensagens iniciadas pelo Bridge. A [referência de erros](/pt-br/error-codes#commercial-consent-error-codes) explica quando isso acontece. |
+| `BRIDGE_TEMPLATE_0006`, `0007`, `0009`, `0010` | Corrija o template ou seus valores. A [referência de erros](/pt-br/error-codes#template-error-codes) descreve cada um. |
+
+Uma requisição rejeitada com um destes códigos não enviou nada. Todos os códigos, incluindo `BRIDGE_TEMPLATE_0001`, `BRIDGE_CONVERSATION_0001` e `BRIDGE_CONVERSATION_0201`, estão em [Códigos de erro](/pt-br/error-codes).

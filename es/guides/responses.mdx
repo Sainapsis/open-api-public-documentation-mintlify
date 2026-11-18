@@ -14,6 +14,7 @@ El estado HTTP y el cuerpo de respuesta describen la operación solicitada. No t
 | Operación | Éxito publicado | Cómo interpretarlo |
 | --- | --- | --- |
 | Crear un mensaje | `201`, con `messageId` | Conserva el ID del mensaje. La respuesta publicada no incluye una confirmación de entrega del proveedor; no lo marques como entregado basándote solo en ella. |
+| Enviar una plantilla a una conversación | `201`, con `messageId` | Conserva el ID del mensaje. Significa que Bridge guardó el mensaje para enviarlo: la respuesta publicada no incluye una confirmación de entrega del proveedor, así que no lo marques como entregado. Tras un tiempo de espera agotado, reintenta con la misma `Idempotency-Key`: una repetición responde `201` con `Idempotent-Replayed: true`. |
 | Liberar una conversación | `204`, sin cuerpo de respuesta | Trátalo como éxito y no intentes interpretar el cuerpo vacío como JSON. |
 | Solicitar una transferencia de LeadScout | `202`, con `trackingId`, `conversationId`, `status` y `assignees` | Conserva el ID de correlación. La asignación es asíncrona: los destinatarios reflejan la solicitud y no demuestran que haya terminado su resolución o asignación posterior. |
 | Enviar un lead de Custom Connections | `202`, con `requestId` | Conserva el ID de solicitud. Muestra que el lead fue aceptado; otro servicio envía el mensaje inicial de WhatsApp después. |

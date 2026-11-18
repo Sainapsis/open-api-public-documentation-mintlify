@@ -179,6 +179,16 @@ Errores de comprobación de marcas al crear una conversación.
 
 Se devuelve como `400`. Envía `brandId` o `providerChannelId` para cada participante externo; `extra.resources` enumera los participantes que no tenían ninguno de los dos.
 
+<a id="commercial-consent-error-codes"></a>
+
+## Códigos de error de consentimiento comercial
+
+Errores de los contactos que no aceptan mensajes que inicia Bridge.
+
+| Código | Status | Referencia en inglés | Cuándo ocurre y qué hacer |
+| --- | --- | --- | --- |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | 422 | Consent Contact Send Rejected | Lo devuelve `POST .../conversations/{conversationId}/send-template` cuando el workspace exige consentimiento comercial y un contacto de la conversación lo rechazó o lo revocó. Bridge no envía la plantilla a ningún contacto de la conversación, de ninguna categoría. Reintentar falla igual mientras ese estado de consentimiento se mantenga |
+
 <a id="conversation-error-codes"></a>
 
 ## Códigos de error de conversaciones
@@ -193,7 +203,8 @@ Errores de las operaciones de conversaciones.
 | `BRIDGE_CONVERSATION_0004` | Conversation Not Active | La conversación está inactiva y no se pueden hacer operaciones sobre ella |
 | `BRIDGE_CONVERSATION_0005` | Conversation Operation Failed | Ocurrió un error al operar sobre la conversación |
 | `BRIDGE_CONVERSATION_0006` | Conversation With Inconsistent State | La conversación tiene un estado inconsistente; contacta a soporte para resolverlo |
-| `BRIDGE_CONVERSATION_0007` | Conversation Is Released | La conversación está liberada: `409` en `POST .../messages` |
+| `BRIDGE_CONVERSATION_0007` | Conversation Is Released | La conversación está liberada: `409` en `POST .../messages` y en `POST .../conversations/{conversationId}/send-template` |
+| `BRIDGE_CONVERSATION_0011` | Conversation Controlled By Agent | Un Agente está atendiendo esta conversación, por lo que no acepta plantillas de la API de integraciones |
 | `BRIDGE_CONVERSATION_0101` | Internal User Already In Conversation | El usuario interno ya participa en la conversación |
 | `BRIDGE_CONVERSATION_0102` | Internal User Not In Conversation | El usuario interno no participa en la conversación |
 | `BRIDGE_CONVERSATION_0103` | External User Already In Conversation | El usuario externo ya participa en la conversación |
@@ -219,10 +230,18 @@ Errores de las operaciones de conversaciones.
 | `BRIDGE_CONVERSATION_0606` | Onboarding Template Parameters Not Supported | Se enviaron parámetros para una plantilla de inicio que no es una plantilla de proveedor de WhatsApp |
 | `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Los valores de parámetros de una plantilla de inicio infringen una regla de WhatsApp y se rechazarían al enviarse |
 | `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | Una plantilla de la secuencia de inicio del espacio de trabajo necesita valores que solo puede proporcionar quien hace la solicitud; un administrador debe cambiar la secuencia |
+| `BRIDGE_CONVERSATION_0613` | Opening Template In Flight | La plantilla inicial aún se está enviando; reintenta en unos segundos |
 
 Al crear una conversación, `BRIDGE_CONVERSATION_0105` devuelve `409` con `extra.reason` igual a `PARTICIPANTS_MISMATCH`: una conversación liberada ocupa la línea del contacto con otros contactos o líneas. Solicita los mismos contactos y líneas o usa otra línea.
 
 `BRIDGE_CONVERSATION_0601` devuelve `404`, `0602` y `0603` devuelven `400`, y `0604` a `0608` devuelven `422`. Consulta [Parámetros de plantillas de inicio](/es/templates-and-parameters) para saber qué incluye cada uno en `extra` y cómo corregirlo.
+
+`POST .../conversations/{conversationId}/send-template` devuelve estos cuatro como `409`. En ninguno se envió nada.
+
+- `0007`: la conversación fue liberada y esta operación no la recupera. Vuelve a iniciarla con `POST .../conversations`, solicitando los mismos contactos y líneas: Bridge recupera una conversación liberada cuando puede.
+- `0011`: un Agente está atendiendo la conversación. Consúltala con `GET .../conversations/{conversationId}` y reintenta cuando su `status` sea `ACTIVE`.
+- `0004`: la conversación no está activa, por ejemplo porque está bloqueada o eliminada. Revisa su `status` y reintenta solo cuando sea `ACTIVE`.
+- `0613`: la plantilla inicial aún se está enviando. Reintenta en unos segundos.
 
 <a id="external-user-error-codes"></a>
 
@@ -239,6 +258,17 @@ Errores de las operaciones de usuarios externos o contactos.
 | `BRIDGE_EXTERNAL_0007` | Cellphone Owned By Another Contact | El teléfono ya es una identidad activa de otro usuario externo |
 | `BRIDGE_EXTERNAL_0013` | Email Owned By Another Contact | El correo ya es una identidad activa de otro usuario externo |
 | `BRIDGE_EXTERNAL_0101` | External User Operation Failed | Ocurrió un error al operar sobre el usuario externo |
+
+<a id="idempotency-error-codes"></a>
+
+## Códigos de error de idempotencia
+
+Errores del encabezado `Idempotency-Key` de `POST .../conversations/{conversationId}/send-template`. [Envía una plantilla a una conversación existente](/es/guides/send-template#send-a-template-into-an-existing-conversation) enumera cada caso.
+
+| Código | Status | Referencia en inglés | Cuándo ocurre y qué hacer |
+| --- | --- | --- | --- |
+| `BRIDGE_CORE_1201` | 409 | Idempotency Request In Progress | Una solicitud con esta clave sigue en curso o se interrumpió después de guardar el mensaje. Reintenta con la misma clave después de una pausa. Si sigue respondiendo `409` (puede durar hasta 24 horas), el mensaje puede existir: pídele a un Usuario de Bridge que revise la conversación antes de enviar de nuevo con una clave nueva |
+| `BRIDGE_CORE_1202` | 422 | Idempotency Key Reused | La clave ya se usó con una solicitud distinta. Usa una clave nueva para el cuerpo nuevo |
 
 <a id="internal-user-error-codes"></a>
 
@@ -342,7 +372,16 @@ Errores de las operaciones de plantillas.
 | --- | --- | --- |
 | `BRIDGE_TEMPLATE_0001` | Provider Template Not Found | No se encontró una plantilla de proveedor para el espacio de trabajo y nombre indicados |
 
-`GET .../templates/{templateId}` lo devuelve como `404` cuando el ID o nombre no coincide con una plantilla de WhatsApp de tu espacio de trabajo.
+`GET .../templates/{templateId}` lo devuelve como `404` cuando el ID o nombre no coincide con una plantilla de WhatsApp de tu espacio de trabajo, y también `POST .../conversations/{conversationId}/send-template` cuando `template.id` (o `template.name` si no se envía id) no coincide con ninguna plantilla de proveedor de tu espacio de trabajo.
+
+`POST .../conversations/{conversationId}/send-template` también devuelve estos códigos:
+
+| Código | Status | Referencia en inglés | Cuándo ocurre y qué hacer |
+| --- | --- | --- | --- |
+| `BRIDGE_TEMPLATE_0006` | 400 | Provider Template Not Approved | La plantilla no está aprobada para la línea de la conversación en el idioma en que Bridge la envía a un contacto. Usa una plantilla aprobada para esa línea e idioma |
+| `BRIDGE_TEMPLATE_0007` | 422 | Provider Template Missing Variables | Falta una variable obligatoria o está en blanco. Proporciona todas las variables marcadas con `callerMustSupply: true` |
+| `BRIDGE_TEMPLATE_0009` | 422 | Provider Template Invalid Variable Values | Un valor infringe las reglas de WhatsApp para una variable. Corrígelo con las [reglas de valores de WhatsApp](/es/templates-and-parameters#whatsapp-value-rules) |
+| `BRIDGE_TEMPLATE_0010` | 422 | Provider Template Unknown Variables | Una clave no es una variable de la plantilla, o la plantilla no admite parámetros. Usa los valores de `key` que devuelve `GET .../templates/{templateId}` |
 
 <a id="workspace-error-codes"></a>
 

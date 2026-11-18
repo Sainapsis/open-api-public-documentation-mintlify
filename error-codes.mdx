@@ -159,6 +159,14 @@ Error codes for brand checks when creating a conversation.
 
 Returned as `400`. Send a `brandId` or a `providerChannelId` for every external participant; `extra.resources` lists the participants that had neither.
 
+## Commercial Consent Error Codes
+
+Error codes for Contacts that do not accept messages Bridge starts.
+
+| Code | Status | Title | When it happens and what to do |
+| ---- | ------ | ----- | ------------------------------ |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | 422 | Consent Contact Send Rejected | Returned by `POST .../conversations/{conversationId}/send-template` when the workspace enforces commercial consent and a Contact of the Conversation opted out or revoked it. Bridge sends the template to no Contact of the Conversation, in any category. Retrying fails the same way while that consent state stays |
+
 ## Conversation Error Codes
 
 Error codes for conversation operations.
@@ -171,7 +179,8 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0004` | Conversation Not Active | The conversation is inactive; no operations can be performed on it |
 | `BRIDGE_CONVERSATION_0005` | Conversation Operation Failed | An error occurred while operating on the conversation |
 | `BRIDGE_CONVERSATION_0006` | Conversation With Inconsistent State | The conversation is in an inconsistent state; contact support to resolve |
-| `BRIDGE_CONVERSATION_0007` | Conversation Is Released | Conversation is released (`409` from `POST .../messages`) |
+| `BRIDGE_CONVERSATION_0007` | Conversation Is Released | Conversation is released (`409` from `POST .../messages` and from `POST .../conversations/{conversationId}/send-template`) |
+| `BRIDGE_CONVERSATION_0011` | Conversation Controlled By Agent | An Agent is handling this conversation, so it does not accept templates from the integrations API |
 | `BRIDGE_CONVERSATION_0101` | Internal User Already In Conversation | The internal user is already a participant in this conversation |
 | `BRIDGE_CONVERSATION_0102` | Internal User Not In Conversation | The internal user is not a participant in this conversation |
 | `BRIDGE_CONVERSATION_0103` | External User Already In Conversation | The external user is already a participant in this conversation |
@@ -197,10 +206,18 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0606` | Onboarding Template Parameters Not Supported | Parameters were sent for an onboarding template that is not a WhatsApp provider template |
 | `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent |
 | `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | A template in the workspace's onboarding sequence needs values only the caller can provide; a workspace admin must change the onboarding sequence |
+| `BRIDGE_CONVERSATION_0613` | Opening Template In Flight | The opening template is still being sent; try again in a few seconds |
 
 When creating a conversation, `BRIDGE_CONVERSATION_0105` returns `409` with `extra.reason` set to `PARTICIPANTS_MISMATCH`: a released conversation holds the Contact's line with other Contacts or lines. Request the same Contacts and lines, or use another line.
 
 `BRIDGE_CONVERSATION_0601` returns `404`, `0602` and `0603` return `400`, and `0604` to `0608` return `422`. See [Onboarding template parameters](/templates-and-parameters) for what each one carries in `extra` and how to fix it.
+
+`POST .../conversations/{conversationId}/send-template` returns these four as `409`. Nothing was sent in any of them.
+
+- `0007`: the Conversation was released, and this operation does not recover it. Start it again with `POST .../conversations`, requesting the same Contacts and lines: Bridge recovers a released Conversation when it can.
+- `0011`: an Agent is handling the Conversation. Check it with `GET .../conversations/{conversationId}` and retry when its `status` is `ACTIVE`.
+- `0004`: the Conversation is not active, for example blocked or deleted. Check its `status` and retry only when it is `ACTIVE`.
+- `0613`: the opening template is still being sent. Retry in a few seconds.
 
 ## External User Error Codes
 
@@ -215,6 +232,15 @@ Error codes for external user (contact) operations.
 | `BRIDGE_EXTERNAL_0007` | Cellphone Owned By Another Contact | The phone number is already an active identity of a different external user |
 | `BRIDGE_EXTERNAL_0013` | Email Owned By Another Contact | The email address is already an active identity of a different external user |
 | `BRIDGE_EXTERNAL_0101` | External User Operation Failed | An error occurred while operating on the external user |
+
+## Idempotency Error Codes
+
+Error codes for the `Idempotency-Key` header of `POST .../conversations/{conversationId}/send-template`. [Send a template into an existing Conversation](/guides/send-template#send-a-template-into-an-existing-conversation) lists every case.
+
+| Code | Status | Title | When it happens and what to do |
+| ---- | ------ | ----- | ------------------------------ |
+| `BRIDGE_CORE_1201` | 409 | Idempotency Request In Progress | A request with this key is still running, or was cut off after it stored the Message. Retry with the same key after a pause. If it keeps answering `409` (it can for up to 24 hours), the Message may exist: ask a Bridge User to check the Conversation before you send again with a new key |
+| `BRIDGE_CORE_1202` | 422 | Idempotency Key Reused | The key was already used with a different request. Use a new key for the new body |
 
 ## Internal User Error Codes
 
@@ -306,7 +332,16 @@ Error codes for template operations.
 | ---- | -------------- | ------- |
 | `BRIDGE_TEMPLATE_0001` | Provider Template Not Found | No provider template found for the given workspace and name |
 
-Returned as `404` by `GET .../templates/{templateId}` when the id or name does not match a WhatsApp template in your workspace.
+Returned as `404` by `GET .../templates/{templateId}` when the id or name does not match a WhatsApp template in your workspace, and by `POST .../conversations/{conversationId}/send-template` when `template.id` (or `template.name` when no id is sent) matches no provider template of your workspace.
+
+`POST .../conversations/{conversationId}/send-template` also returns these codes:
+
+| Code | Status | Title | When it happens and what to do |
+| ---- | ------ | ----- | ------------------------------ |
+| `BRIDGE_TEMPLATE_0006` | 400 | Provider Template Not Approved | The template is not approved for the Conversation's line in the language Bridge sends to a Contact. Use a template approved for that line and language |
+| `BRIDGE_TEMPLATE_0007` | 422 | Provider Template Missing Variables | A required variable is missing or blank. Supply every variable marked `callerMustSupply: true` |
+| `BRIDGE_TEMPLATE_0009` | 422 | Provider Template Invalid Variable Values | A value breaks WhatsApp's rules for a variable. Correct it using the [WhatsApp value rules](/templates-and-parameters#whatsapp-value-rules) |
+| `BRIDGE_TEMPLATE_0010` | 422 | Provider Template Unknown Variables | A key is not a variable of the template, or the template takes no parameters. Use the `key` values that `GET .../templates/{templateId}` returns |
 
 ## Workspace Error Codes
 
