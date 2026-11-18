@@ -47,7 +47,7 @@ Use identifiers from the intended workspace. Do not reuse an identifier merely b
 
 **Contact lookup** takes query parameters named `type` and `value`. An external participant in a conversation takes `identifier` and `identifierType`, plus the other fields required by that operation. Do not copy a lookup query directly into a participant body.
 
-**Template discovery** accepts an ID or name in the path parameter `{templateId}`. **Conversation onboarding** uses `onboardingTemplates[].templateId`. **Outbound template selection** uses the `template` object's `id` or `name`; read that endpoint's schema rather than renaming every selector to `templateId`.
+**Template discovery** accepts an ID or name in the path parameter `{templateId}`. **Conversation onboarding** uses `onboardingTemplates[].templateId`. **Outbound template selection** uses the `template` object's `id` or `name`, except `POST .../conversations/{conversationId}/send-template`, which takes only `id`; read that endpoint's schema rather than renaming every selector to `templateId`.
 
 Use each returned variable's `key` in template `parameters`. Variable keys are not Meta slot indexes. The [template parameters guide](/templates-and-parameters) explains required values, defaults, and the difference between omitted and blank values.
 

@@ -55,7 +55,7 @@ Use identificadores do workspace desejado. Não reutilize um identificador apena
 
 A **consulta de contatos** recebe parâmetros de query chamados `type` e `value`. Um participante externo de conversa recebe `identifier` e `identifierType`, além dos demais campos exigidos pela operação. Não copie diretamente a query de consulta para o corpo de um participante.
 
-A **descoberta de templates** aceita ID ou nome no parâmetro de caminho `{templateId}`. Os **templates iniciais de conversa** usam `onboardingTemplates[].templateId`. A **seleção de template outbound** usa `id` ou `name` no objeto `template`; leia o esquema do endpoint em vez de renomear todos os seletores para `templateId`.
+A **descoberta de templates** aceita ID ou nome no parâmetro de caminho `{templateId}`. Os **templates iniciais de conversa** usam `onboardingTemplates[].templateId`. A **seleção de template outbound** usa `id` ou `name` no objeto `template`, exceto `POST .../conversations/{conversationId}/send-template`, que aceita apenas `id`; leia o esquema do endpoint em vez de renomear todos os seletores para `templateId`.
 
 Use a `key` retornada para cada variável em `parameters` do template. As chaves das variáveis não são índices de posições da Meta. O [guia de parâmetros de templates](/pt-br/templates-and-parameters) explica valores obrigatórios, padrões e a diferença entre omitir um valor e enviá-lo vazio.
 
