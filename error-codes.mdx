@@ -343,7 +343,7 @@ Returned as `404` by `GET .../templates/{templateId}` when the id or name does n
 | `BRIDGE_TEMPLATE_0009` | 422 | Provider Template Invalid Variable Values | A value breaks WhatsApp's rules for a variable. Correct it using the [WhatsApp value rules](/templates-and-parameters#whatsapp-value-rules) |
 | `BRIDGE_TEMPLATE_0010` | 422 | Provider Template Unknown Variables | A key is not a variable of the template, or the template takes no parameters. Use the `key` values that `GET .../templates/{templateId}` returns |
 | `BRIDGE_TEMPLATE_0011` | 422 | Provider Template Header Media Not Accepted | You sent `template.media` and the template has no image or video header. Remove `media` |
-| `BRIDGE_TEMPLATE_0012` | 422 | Provider Template Header Media Mismatch | The `fileType` of the file is not the type of the template header, in the template's language or in a Contact's. `extra` carries `expectedType` and `providedType`. Upload a file of that type, as in [Send PDFs and other attachments](/guides/send-attachments) |
+| `BRIDGE_TEMPLATE_0012` | 422 | Provider Template Header Media Mismatch | `template.media.type` is not the type of the template's header (the image or video shown at the top of the message), in the template's language or in a Contact's, or the uploaded file is not of that `type`. `extra` carries `expectedType` and `providedType`. Send the right `type` and, with `mediaId`, upload a file of that type, as in [Send PDFs and other attachments](/guides/send-attachments) |
 | `BRIDGE_TEMPLATE_0013` | 422 | Provider Template Header Media Required | The template has an image or video header and no file to send. Send `template.media`, or ask for a file to be configured on the template |
 
 ## Workspace Error Codes

@@ -199,9 +199,9 @@ Idempotency-Key: erp-order-981-shipped
 }
 ```
 
-Envía `template.id`, o `template.name` si no tienes el id. Cuando `id` está presente es la única búsqueda: un `id` desconocido falla con `404` aunque `name` coincida con una plantilla. `parameters` sigue las reglas de los pasos 1 y 2. Una plantilla con multimedia en el encabezado envía esa multimedia.
+Envía `template.id`, o `template.name` si no tienes el id. Cuando `id` está presente es la única búsqueda: un `id` desconocido falla con `404` aunque `name` coincida con una plantilla. `parameters` sigue las reglas de los pasos 1 y 2. Una plantilla cuyo encabezado es una imagen o un video envía ese archivo.
 
-Para enviar tu propia imagen o video como encabezado, súbela primero como en [Enviar PDF y otros adjuntos](/es/guides/send-attachments) y envía en `template.media` el `mediaId` que devuelve:
+Para enviar tu propia imagen o video como encabezado de la plantilla (la imagen o el video que se muestra en la parte superior del mensaje), envía `template.media` con su `type` (`IMAGE`, `VIDEO` o `GIF`, el tipo del encabezado) y una fuente. Envía el `mediaId` de un archivo que subiste con `POST /bridge/api/v1/workspaces/{workspaceId}/files`, como en [Enviar PDF y otros adjuntos](/es/guides/send-attachments):
 
 ```json
 {
@@ -211,13 +211,31 @@ Para enviar tu propia imagen o video como encabezado, súbela primero como en [E
       "order_number": "A-10492"
     },
     "media": {
+      "type": "IMAGE",
       "mediaId": "9b2f6a52-1f3c-4a53-8f58-3c6a2e7d1b10"
     }
   }
 }
 ```
 
-El archivo debe pertenecer a tu workspace, su carga debe haber terminado y su `fileType` debe ser el tipo del encabezado de la plantilla. Una plantilla con encabezado de imagen o de video que no tiene un archivo configurado necesita `media`. Dos solicitudes tienen el mismo cuerpo solo si también envían el mismo `mediaId`. WhatsApp aún puede rechazar, después del `201`, un archivo que supere los límites de encabezado.
+O envía una `url` `https` pública del archivo:
+
+```json
+{
+  "template": {
+    "id": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+    "parameters": {
+      "order_number": "A-10492"
+    },
+    "media": {
+      "type": "IMAGE",
+      "url": "https://cdn.example.com/promo/spring-sale.png"
+    }
+  }
+}
+```
+
+`type` es obligatorio, y envías `mediaId` o `url`, nunca ambos. `type` debe ser el tipo del encabezado de la plantilla; si no, la solicitud falla con `BRIDGE_TEMPLATE_0012`. Con `mediaId`, el archivo subido también debe tener ese tipo, pertenecer a tu workspace y tener su carga terminada. Con `url`, Bridge descarga el archivo después de responder `201`, y una descarga que falla no se informa en esta respuesta. Una plantilla con encabezado de imagen o de video que no tiene un archivo configurado necesita `media`. Dos solicitudes tienen el mismo cuerpo solo si también envían el mismo `type` y el mismo `mediaId` o `url`. WhatsApp aún puede rechazar, después del `201`, un archivo que supere los límites de encabezado.
 
 Una solicitud correcta responde `201`:
 
@@ -254,7 +272,7 @@ Conserva `messageId`. `201` significa que Bridge guardó el mensaje para enviarl
 | `BRIDGE_CONVERSATION_0613` | La plantilla inicial aún se está enviando. Reintenta en unos segundos. |
 | `BRIDGE_COMMERCIAL_CONSENT_0203` | Un contacto no acepta mensajes que inicia Bridge. La [referencia de errores](/es/error-codes#commercial-consent-error-codes) explica cuándo ocurre. |
 | `BRIDGE_TEMPLATE_0006`, `0007`, `0009`, `0010` | Corrige la plantilla o sus valores. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
-| `BRIDGE_TEMPLATE_0011`, `0012`, `0013` | Corrige `template.media`: envíalo solo para una plantilla con encabezado de imagen o de video, con un archivo del tipo del encabezado. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
+| `BRIDGE_TEMPLATE_0011`, `0012`, `0013` | Corrige `template.media`: envíalo solo para una plantilla con encabezado de imagen o de video, con un `type` que coincida. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
 | `BRIDGE_PRELOAD_FILE_0001`, `0002` | El `mediaId` no es un archivo de tu workspace, o su carga no ha terminado. Consulta [Enviar PDF y otros adjuntos](/es/guides/send-attachments). |
 
 Una solicitud rechazada con uno de estos códigos no envió nada. Todos los códigos, incluidos `BRIDGE_TEMPLATE_0001`, `BRIDGE_CONVERSATION_0001` y `BRIDGE_CONVERSATION_0201`, están en [Códigos de error](/es/error-codes).
