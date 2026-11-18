@@ -382,6 +382,9 @@ Errores de las operaciones de plantillas.
 | `BRIDGE_TEMPLATE_0007` | 422 | Provider Template Missing Variables | Falta una variable obligatoria o está en blanco. Proporciona todas las variables marcadas con `callerMustSupply: true` |
 | `BRIDGE_TEMPLATE_0009` | 422 | Provider Template Invalid Variable Values | Un valor infringe las reglas de WhatsApp para una variable. Corrígelo con las [reglas de valores de WhatsApp](/es/templates-and-parameters#whatsapp-value-rules) |
 | `BRIDGE_TEMPLATE_0010` | 422 | Provider Template Unknown Variables | Una clave no es una variable de la plantilla, o la plantilla no admite parámetros. Usa los valores de `key` que devuelve `GET .../templates/{templateId}` |
+| `BRIDGE_TEMPLATE_0011` | 422 | Provider Template Header Media Not Accepted | Enviaste `template.media` y la plantilla no tiene encabezado de imagen ni de video. Quita `media` |
+| `BRIDGE_TEMPLATE_0012` | 422 | Provider Template Header Media Mismatch | El `fileType` del archivo no es el tipo del encabezado de la plantilla, en el idioma de la plantilla o en el de un contacto. `extra` incluye `expectedType` y `providedType`. Sube un archivo de ese tipo, como en [Enviar PDF y otros adjuntos](/es/guides/send-attachments) |
+| `BRIDGE_TEMPLATE_0013` | 422 | Provider Template Header Media Required | La plantilla tiene un encabezado de imagen o de video y no hay archivo que enviar. Envía `template.media` o pide que se configure un archivo en la plantilla |
 
 <a id="workspace-error-codes"></a>
 

@@ -189,6 +189,24 @@ Idempotency-Key: erp-order-981-shipped
 
 Send `template.id`, or `template.name` when you have no id. When `id` is present it is the only lookup: an unknown `id` fails with `404` even if `name` matches a template. `parameters` follows the rules of steps 1 and 2. A template with header media sends that media.
 
+To send your own image or video as the header instead, upload it first as in [Send PDFs and other attachments](/guides/send-attachments) and send the `mediaId` it returns in `template.media`:
+
+```json
+{
+  "template": {
+    "id": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+    "parameters": {
+      "order_number": "A-10492"
+    },
+    "media": {
+      "mediaId": "9b2f6a52-1f3c-4a53-8f58-3c6a2e7d1b10"
+    }
+  }
+}
+```
+
+The file must belong to your workspace, its upload must be finished, and its `fileType` must be the type of the template header. A template with an image or video header and no file configured on it needs `media`. Two requests have the same body only when they also send the same `mediaId`. WhatsApp can still refuse a file larger than its header limits after the `201`.
+
 A successful request answers `201`:
 
 ```json
@@ -224,5 +242,7 @@ Retain `messageId`. `201` means Bridge stored the Message for sending; [Response
 | `BRIDGE_CONVERSATION_0613` | The opening template is still being sent. Retry in a few seconds. |
 | `BRIDGE_COMMERCIAL_CONSENT_0203` | A Contact does not accept messages Bridge starts. The [error reference](/error-codes#commercial-consent-error-codes) says when. |
 | `BRIDGE_TEMPLATE_0006`, `0007`, `0009`, `0010` | Fix the template or its values. The [error reference](/error-codes#template-error-codes) lists each one. |
+| `BRIDGE_TEMPLATE_0011`, `0012`, `0013` | Fix `template.media`: send it only for a template with an image or video header, with a file of the header's type. The [error reference](/error-codes#template-error-codes) lists each one. |
+| `BRIDGE_PRELOAD_FILE_0001`, `0002` | The `mediaId` is not a file of your workspace, or its upload is not finished. See [Send PDFs and other attachments](/guides/send-attachments). |
 
 A request rejected with one of these codes sent nothing. Every code, including `BRIDGE_TEMPLATE_0001`, `BRIDGE_CONVERSATION_0001` and `BRIDGE_CONVERSATION_0201`, is in [Error codes](/error-codes).

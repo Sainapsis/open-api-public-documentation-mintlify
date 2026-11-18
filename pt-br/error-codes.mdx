@@ -382,6 +382,9 @@ Retornado como `404` por `GET .../templates/{templateId}` quando o ID ou nome n�
 | `BRIDGE_TEMPLATE_0007` | 422 | Variáveis ausentes no template de provedor | Falta uma variável obrigatória ou ela está em branco. Forneça todas as variáveis marcadas com `callerMustSupply: true` |
 | `BRIDGE_TEMPLATE_0009` | 422 | Valores de variável inválidos no template de provedor | Um valor descumpre as regras do WhatsApp para uma variável. Corrija-o com as [regras de valores do WhatsApp](/pt-br/templates-and-parameters#whatsapp-value-rules) |
 | `BRIDGE_TEMPLATE_0010` | 422 | Variáveis desconhecidas no template de provedor | Uma chave não é uma variável do template, ou o template não aceita parâmetros. Use os valores de `key` que `GET .../templates/{templateId}` retorna |
+| `BRIDGE_TEMPLATE_0011` | 422 | Mídia de cabeçalho não aceita pelo template de provedor | Você enviou `template.media` e o template não tem cabeçalho de imagem nem de vídeo. Remova `media` |
+| `BRIDGE_TEMPLATE_0012` | 422 | Mídia de cabeçalho incompatível com o template de provedor | O `fileType` do arquivo não é o tipo do cabeçalho do template, no idioma do template ou no de um contato. `extra` inclui `expectedType` e `providedType`. Envie um arquivo desse tipo, como em [Enviar PDF e outros anexos](/pt-br/guides/send-attachments) |
+| `BRIDGE_TEMPLATE_0013` | 422 | Mídia de cabeçalho obrigatória no template de provedor | O template tem um cabeçalho de imagem ou de vídeo e não há arquivo para enviar. Envie `template.media` ou peça que um arquivo seja configurado no template |
 
 <a id="workspace-error-codes"></a>
 
