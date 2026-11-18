@@ -162,7 +162,7 @@ Leia a [referência completa de erros de templates](/pt-br/templates-and-paramet
 
 ## Envie um template para uma conversa existente
 
-Use `POST .../conversations/{conversationId}/send-template` para enviar um template de provedor a uma conversa que já existe, por exemplo uma atualização de pedido a um Contato com quem você já conversa. O Bridge grava uma mensagem, lida por todos os Contatos de WhatsApp da conversa. O remetente é o sistema, não um Usuário do Bridge.
+Use `POST .../conversations/{conversationId}/send-template` para enviar um template de provedor a uma conversa que já existe, por exemplo uma atualização de pedido a um contato com quem você já conversa. O Bridge grava uma mensagem, lida por todos os contatos de WhatsApp da conversa. O remetente é o sistema, não um Usuário do Bridge.
 
 | O que você quer fazer | O que usar |
 | --- | --- |
@@ -174,8 +174,8 @@ Use `POST .../conversations/{conversationId}/send-template` para enviar um templ
 ### Antes de enviar
 
 - A conversa está aberta. Uma conversa liberada ou bloqueada, uma excluída ou uma atendida por um Agente é recusada. `GET .../conversations/{conversationId}` retorna o `status` dela.
-- A conversa tem pelo menos um Contato de WhatsApp e já enviou o template inicial.
-- O template é um template de provedor do seu workspace, aprovado para a linha da conversa no idioma em que o Bridge o envia a cada Contato. Descubra as variáveis dele como no passo 1.
+- A conversa tem pelo menos um contato de WhatsApp e já enviou o template inicial.
+- O template é um template de provedor do seu workspace, aprovado para a linha de cada contato de WhatsApp da conversa, no idioma em que o Bridge o envia a esse contato. Descubra as variáveis dele como no passo 1.
 - Você tem uma `Idempotency-Key` para este envio.
 
 ### Envie
@@ -235,7 +235,7 @@ Ou envie uma `url` `https` pública do arquivo:
 }
 ```
 
-`type` é obrigatório, e você envia `mediaId` ou `url`, nunca os dois. `type` deve ser o tipo do cabeçalho do template; caso contrário, a requisição falha com `BRIDGE_TEMPLATE_0012`. Com `mediaId`, o arquivo enviado também deve ter esse tipo, pertencer ao seu workspace e ter o upload terminado. Com `url`, o Bridge baixa o arquivo depois de responder `201`, e um download que falha não é informado nesta resposta. Um template com cabeçalho de imagem ou de vídeo que não tem arquivo configurado precisa de `media`. Duas requisições têm o mesmo corpo só se também enviarem o mesmo `type` e o mesmo `mediaId` ou `url`. O WhatsApp ainda pode recusar, depois do `201`, um arquivo que ultrapasse os limites de cabeçalho.
+`type` é obrigatório, e você envia `mediaId` ou `url`, nunca os dois. `type` deve ser o tipo do cabeçalho do template; caso contrário, a requisição falha com `BRIDGE_TEMPLATE_0012`. Com `mediaId`, o arquivo enviado também deve ter esse tipo, pertencer ao seu workspace e ter o upload terminado. Com `url`, o Bridge baixa o arquivo de forma assíncrona: o resultado do download não faz parte da resposta `201`, e um download que falha não é informado nela. Um template com cabeçalho de imagem ou de vídeo que não tem arquivo configurado precisa de `media`. Duas requisições têm o mesmo corpo só se também enviarem o mesmo `type` e o mesmo `mediaId` ou `url`. O WhatsApp ainda pode recusar, depois do `201`, um arquivo que ultrapasse os limites de cabeçalho.
 
 Uma requisição bem-sucedida responde `201`:
 
@@ -252,12 +252,13 @@ Guarde `messageId`. `201` significa que o Bridge gravou a mensagem para envio; [
 
 ### Tente de novo com a mesma chave
 
-`Idempotency-Key` é obrigatória, de 1 a 255 caracteres, e o Bridge a mantém por 24 horas. Use uma chave nova para cada envio e reutilize-a apenas para repetir esse envio. Duas requisições têm o mesmo corpo quando citam o mesmo template e os mesmos `parameters`: um `parameters` ausente e `{}` são equivalentes, e `name` não influencia quando `id` está presente.
+`Idempotency-Key` é obrigatória, de 1 a 255 caracteres, e o Bridge a mantém por 24 horas. Use uma chave nova para cada envio e reutilize-a apenas para repetir esse envio. Duas requisições são o mesmo envio quando têm o mesmo `conversationId`, citam o mesmo template e levam os mesmos `parameters` e `media`: um `parameters` ausente e `{}` são equivalentes, e `name` não influencia quando `id` está presente.
 
 | Situação | Resultado | O que fazer |
 | --- | --- | --- |
-| Mesma chave, mesmo corpo | `201` com a primeira mensagem e `Idempotent-Replayed: true` | Nada foi enviado duas vezes. Guarde `messageId`. |
-| Mesma chave, corpo diferente | `422` `BRIDGE_CORE_1202` | Use uma chave nova para o novo corpo. |
+| O header HTTP `Idempotency-Key` está ausente, vazio ou tem mais de 255 caracteres | `422`, com o campo em `errors[]` | Envie uma chave válida. |
+| Mesma chave, mesmo envio | `201` com a primeira mensagem e `Idempotent-Replayed: true` | Nada foi enviado duas vezes. Guarde `messageId`. |
+| Mesma chave, envio diferente, por exemplo outro corpo ou outra conversa | `422` `BRIDGE_CORE_1202` | Use uma chave nova para o novo envio. |
 | Mesma chave enquanto a primeira requisição ainda está em andamento | `409` `BRIDGE_CORE_1201` | Tente de novo com a mesma chave depois de uma pausa. |
 | A primeira requisição falhou antes de gravar qualquer coisa | O Bridge libera a chave | Corrija a causa e tente de novo com a mesma chave. |
 | A primeira requisição foi interrompida depois de gravar a mensagem | `409` `BRIDGE_CORE_1201` por até 24 horas | A mensagem pode existir. A API não tem operação para listar mensagens: peça a um Usuário do Bridge que confira a conversa antes de enviar de novo com uma chave nova. |
@@ -266,13 +267,19 @@ Guarde `messageId`. `201` significa que o Bridge gravou a mensagem para envio; [
 
 | Erro | O que fazer |
 | --- | --- |
-| `BRIDGE_CONVERSATION_0007` | A conversa foi liberada. Inicie-a de novo com `POST .../conversations`. |
+| `BRIDGE_TEMPLATE_0001` | Nenhum template de provedor do seu workspace tem esse `id` ou `name`. Envie o `id` ou o `name` de um template de provedor do seu workspace. |
+| `BRIDGE_CONVERSATION_0001` | A conversa não existe no seu workspace. Envie o `conversationId` de uma das suas conversas. |
+| `BRIDGE_CONVERSATION_0007` | A conversa foi liberada. Inicie-a de novo com `POST .../conversations`, solicitando os mesmos contatos e linhas. |
 | `BRIDGE_CONVERSATION_0011` | Um Agente está atendendo a conversa. Consulte-a com `GET .../conversations/{conversationId}` e tente de novo quando o `status` for `ACTIVE`. |
 | `BRIDGE_CONVERSATION_0004` | A conversa não está ativa. Tente de novo só quando o `status` for `ACTIVE`. |
-| `BRIDGE_CONVERSATION_0613` | O template inicial ainda está sendo enviado. Tente de novo em alguns segundos. |
-| `BRIDGE_COMMERCIAL_CONSENT_0203` | Um Contato não aceita mensagens iniciadas pelo Bridge. A [referência de erros](/pt-br/error-codes#commercial-consent-error-codes) explica quando isso acontece. |
-| `BRIDGE_TEMPLATE_0006`, `0007`, `0009`, `0010` | Corrija o template ou seus valores. A [referência de erros](/pt-br/error-codes#template-error-codes) descreve cada um. |
-| `BRIDGE_TEMPLATE_0011`, `0012`, `0013` | Corrija `template.media`: envie-o só para um template com cabeçalho de imagem ou de vídeo, com um `type` que corresponda. A [referência de erros](/pt-br/error-codes#template-error-codes) descreve cada um. |
-| `BRIDGE_PRELOAD_FILE_0001`, `0002` | O `mediaId` não é um arquivo do seu workspace, ou o upload dele não terminou. Veja [Enviar PDF e outros anexos](/pt-br/guides/send-attachments). |
+| `BRIDGE_CONVERSATION_0613` | O template inicial ainda está sendo enviado. Tente de novo em alguns segundos: o bloqueio dura no máximo 120 segundos depois que o template inicial foi criado. |
+| `BRIDGE_CONVERSATION_0201` | A conversa não tem nenhum contato de WhatsApp. Envie para uma conversa que tenha um: `GET .../conversations/{conversationId}` lista seus participantes. |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | Um contato não aceita mensagens iniciadas pelo Bridge. Não tente de novo: pare de enviar templates para esta conversa até que o contato volte a aceitar mensagens. A [referência de erros](/pt-br/error-codes#commercial-consent-error-codes) explica quando isso acontece. |
+| `BRIDGE_TEMPLATE_0006` | O template não está aprovado para a linha e o idioma de pelo menos um contato de WhatsApp, ou a linha de um contato não tem conta do WhatsApp Business. Use um template aprovado para a linha e o idioma de cada contato da conversa. |
+| `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Corrija os valores do template. A [referência de erros](/pt-br/error-codes#template-error-codes) descreve cada um. |
+| `BRIDGE_TEMPLATE_0011`, `0012` | Corrija `template.media`: envie-o só para um template com cabeçalho de imagem ou de vídeo, com um `type` que corresponda e, com `mediaId`, um arquivo desse tipo. A [referência de erros](/pt-br/error-codes#template-error-codes) descreve cada um. |
+| `BRIDGE_TEMPLATE_0013` | O template tem um cabeçalho de imagem ou de vídeo e não há arquivo para enviar. Envie `template.media` ou peça que um arquivo seja configurado no template. Quando `extra.expectedType` é `DOCUMENT`, o Bridge não pode enviar cabeçalhos de documento, com ou sem `template.media`: use outro template. |
+| `BRIDGE_PRELOAD_FILE_0001` | O `mediaId` não é um arquivo do seu workspace. Faça o upload do arquivo como em [Enviar PDF e outros anexos](/pt-br/guides/send-attachments) e envie o `mediaId` que ele devolve. |
+| `BRIDGE_PRELOAD_FILE_0002` | O arquivo ainda não pode ser usado. Se ainda está sendo enviado, termine o upload e tente de novo com o mesmo `mediaId`. Se o upload foi cancelado, faça o upload de um arquivo novo e envie o novo `mediaId`. |
 
-Uma requisição rejeitada com um destes códigos não enviou nada. Todos os códigos, incluindo `BRIDGE_TEMPLATE_0001`, `BRIDGE_CONVERSATION_0001` e `BRIDGE_CONVERSATION_0201`, estão em [Códigos de erro](/pt-br/error-codes).
+Uma requisição com vários problemas é respondida com o primeiro que o Bridge encontra: corrija esse erro e envie de novo, porque outro pode aparecer. Uma requisição rejeitada com um destes códigos não enviou nada. Todos os códigos estão em [Códigos de erro](/pt-br/error-codes).

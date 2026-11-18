@@ -163,7 +163,7 @@ Use `POST .../conversations/{conversationId}/send-template` to send one provider
 
 - The Conversation is open. A released or blocked Conversation, a deleted one, or one an Agent is handling is refused. `GET .../conversations/{conversationId}` returns its `status`.
 - The Conversation has at least one WhatsApp Contact, and its opening template has been sent.
-- The template is a provider template of your workspace, approved for the Conversation's line in the language Bridge sends to each Contact. Discover its variables as in step 1.
+- The template is a provider template of your workspace, approved for the line of every WhatsApp Contact of the Conversation, in the language Bridge sends to that Contact. Discover its variables as in step 1.
 - You have an `Idempotency-Key` for this send.
 
 ### Send it
@@ -223,7 +223,7 @@ Or send a public `https` `url` of the file:
 }
 ```
 
-`type` is required, and you send `mediaId` or `url`, never both. `type` must be the type of the template's header, or the request fails with `BRIDGE_TEMPLATE_0012`; with `mediaId`, the uploaded file must have that type too, and it must belong to your workspace with its upload finished. With `url`, Bridge downloads the file after it answers `201`, and a download that fails is not reported in this response. A template with an image or video header and no file configured on it needs `media`. Two requests have the same body only when they also send the same `type` and the same `mediaId` or `url`. WhatsApp can still refuse a file larger than its header limits after the `201`.
+`type` is required, and you send `mediaId` or `url`, never both. `type` must be the type of the template's header, or the request fails with `BRIDGE_TEMPLATE_0012`; with `mediaId`, the uploaded file must have that type too, and it must belong to your workspace with its upload finished. With `url`, Bridge downloads the file asynchronously: the result of the download is not part of the `201` response, and a download that fails is not reported in it. A template with an image or video header and no file configured on it needs `media`. Two requests have the same body only when they also send the same `type` and the same `mediaId` or `url`. WhatsApp can still refuse a file larger than its header limits after the `201`.
 
 A successful request answers `201`:
 
@@ -240,12 +240,13 @@ Retain `messageId`. `201` means Bridge stored the Message for sending; [Response
 
 ### Retry with the same key
 
-`Idempotency-Key` is required, 1 to 255 characters, and Bridge keeps it for 24 hours. Use a new key for each send and reuse it only to retry that send. Two requests have the same body when they name the same template and the same `parameters`: an absent `parameters` and `{}` are the same, and `name` plays no part when `id` is present.
+`Idempotency-Key` is required, 1 to 255 characters, and Bridge keeps it for 24 hours. Use a new key for each send and reuse it only to retry that send. Two requests are the same send when they have the same `conversationId`, name the same template and carry the same `parameters` and `media`: an absent `parameters` and `{}` are the same, and `name` plays no part when `id` is present.
 
 | Situation | Result | What to do |
 | --- | --- | --- |
-| Same key, same body | `201` with the first Message and `Idempotent-Replayed: true` | Nothing was sent twice. Keep `messageId`. |
-| Same key, different body | `422` `BRIDGE_CORE_1202` | Use a new key for the new body. |
+| The `Idempotency-Key` HTTP header is missing, empty or longer than 255 characters | `422`, with the field in `errors[]` | Send a valid key. |
+| Same key, same send | `201` with the first Message and `Idempotent-Replayed: true` | Nothing was sent twice. Keep `messageId`. |
+| Same key, different send, such as another body or another Conversation | `422` `BRIDGE_CORE_1202` | Use a new key for the new send. |
 | Same key while the first request is still running | `409` `BRIDGE_CORE_1201` | Retry with the same key after a pause. |
 | The first request failed before it stored anything | Bridge frees the key | Fix the cause and retry with the same key. |
 | The first request was cut off after it stored the Message | `409` `BRIDGE_CORE_1201` for up to 24 hours | The Message may exist. The API has no operation to list Messages, so ask a Bridge User to check the Conversation before you send again with a new key. |
@@ -254,13 +255,19 @@ Retain `messageId`. `201` means Bridge stored the Message for sending; [Response
 
 | Error | What to do |
 | --- | --- |
-| `BRIDGE_CONVERSATION_0007` | The Conversation was released. Start it again with `POST .../conversations`. |
+| `BRIDGE_TEMPLATE_0001` | No provider template of your workspace has that `id` or `name`. Send the `id` or `name` of a provider template of your workspace. |
+| `BRIDGE_CONVERSATION_0001` | The Conversation does not exist in your workspace. Send the `conversationId` of one of your Conversations. |
+| `BRIDGE_CONVERSATION_0007` | The Conversation was released. Start it again with `POST .../conversations`, requesting the same Contacts and lines. |
 | `BRIDGE_CONVERSATION_0011` | An Agent is handling the Conversation. Check it with `GET .../conversations/{conversationId}` and retry when its `status` is `ACTIVE`. |
 | `BRIDGE_CONVERSATION_0004` | The Conversation is not active. Retry only when its `status` is `ACTIVE`. |
-| `BRIDGE_CONVERSATION_0613` | The opening template is still being sent. Retry in a few seconds. |
-| `BRIDGE_COMMERCIAL_CONSENT_0203` | A Contact does not accept messages Bridge starts. The [error reference](/error-codes#commercial-consent-error-codes) says when. |
-| `BRIDGE_TEMPLATE_0006`, `0007`, `0009`, `0010` | Fix the template or its values. The [error reference](/error-codes#template-error-codes) lists each one. |
-| `BRIDGE_TEMPLATE_0011`, `0012`, `0013` | Fix `template.media`: send it only for a template with an image or video header, with a `type` that matches it. The [error reference](/error-codes#template-error-codes) lists each one. |
-| `BRIDGE_PRELOAD_FILE_0001`, `0002` | The `mediaId` is not a file of your workspace, or its upload is not finished. See [Send PDFs and other attachments](/guides/send-attachments). |
+| `BRIDGE_CONVERSATION_0613` | The opening template is still being sent. Retry in a few seconds: the block lasts at most 120 seconds after the opening template was created. |
+| `BRIDGE_CONVERSATION_0201` | The Conversation has no WhatsApp Contact. Send into a Conversation that has one: `GET .../conversations/{conversationId}` lists its participants. |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | A Contact does not accept messages Bridge starts. Do not retry: stop sending templates into this Conversation until the Contact accepts messages again. The [error reference](/error-codes#commercial-consent-error-codes) says when it happens. |
+| `BRIDGE_TEMPLATE_0006` | The template is not approved for the line and language of at least one WhatsApp Contact, or a Contact's line has no WhatsApp Business account. Use a template approved for the line and language of every Contact of the Conversation. |
+| `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Fix the template values. The [error reference](/error-codes#template-error-codes) lists each one. |
+| `BRIDGE_TEMPLATE_0011`, `0012` | Fix `template.media`: send it only for a template with an image or video header, with a `type` that matches it, and with `mediaId` a file of that type. The [error reference](/error-codes#template-error-codes) lists each one. |
+| `BRIDGE_TEMPLATE_0013` | The template has an image or video header and no file to send. Send `template.media`, or ask for a file to be configured on the template. When `extra.expectedType` is `DOCUMENT`, Bridge cannot send document headers, with or without `template.media`: use another template. |
+| `BRIDGE_PRELOAD_FILE_0001` | The `mediaId` is not a file of your workspace. Upload the file as in [Send PDFs and other attachments](/guides/send-attachments) and send the `mediaId` it returns. |
+| `BRIDGE_PRELOAD_FILE_0002` | The file is not usable yet. If it is still uploading, finish the upload and retry with the same `mediaId`. If its upload was cancelled, upload a new file and send the new `mediaId`. |
 
-A request rejected with one of these codes sent nothing. Every code, including `BRIDGE_TEMPLATE_0001`, `BRIDGE_CONVERSATION_0001` and `BRIDGE_CONVERSATION_0201`, is in [Error codes](/error-codes).
+A request with several problems is answered with the first one Bridge finds: fix that error and send again, since another may follow. A request rejected with one of these codes sent nothing. Every code is in [Error codes](/error-codes).

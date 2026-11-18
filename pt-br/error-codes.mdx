@@ -103,6 +103,8 @@ A operação determina quais erros de arquivo se aplicam: `POST .../files` verif
 | `BRIDGE_PRELOAD_FILE_0003 \| PRELOAD_FILE_INVALID_MIME_TYPE` | 400 | Corrija a combinação do tipo MIME e do `fileType` lógico. |
 | `BRIDGE_PRELOAD_FILE_0004 \| PRELOAD_FILE_INVALID_NAME` | 400 | Informe um nome com uma extensão aceita para esse `fileType` lógico. |
 
+Em `POST .../conversations/{conversationId}/send-template`, `0001` e `0002` se referem a `template.media.mediaId`. `0001`: faça o upload do arquivo com `POST .../files` e envie o `mediaId` que ele devolve. `0002` cobre um arquivo que ainda está sendo enviado e um cujo upload foi cancelado, e a resposta não diz qual: se ainda está sendo enviado, termine o upload e tente de novo com o mesmo `mediaId`; se o upload foi cancelado, faça o upload de um arquivo novo e envie o novo `mediaId`.
+
 <a id="agent-error-codes"></a>
 
 ## Códigos de erro de Agentes
@@ -183,11 +185,11 @@ Retornado como `400`. Envie `brandId` ou `providerChannelId` para cada participa
 
 ## Códigos de erro de consentimento comercial
 
-Códigos para Contatos que não aceitam mensagens iniciadas pelo Bridge.
+Códigos para contatos que não aceitam mensagens iniciadas pelo Bridge.
 
 | Código | Status | Título | Quando acontece e o que fazer |
 | ---- | ------ | ------ | ----------------------------- |
-| `BRIDGE_COMMERCIAL_CONSENT_0203` | 422 | Envio rejeitado por consentimento do Contato | Retornado por `POST .../conversations/{conversationId}/send-template` quando o workspace exige consentimento comercial e um Contato da conversa o recusou ou o revogou. O Bridge não envia o template a nenhum Contato da conversa, de nenhuma categoria. Tentar de novo falha da mesma forma enquanto esse estado de consentimento permanecer |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | 422 | Envio rejeitado por consentimento do contato | Retornado por `POST .../conversations/{conversationId}/send-template` quando o workspace exige consentimento comercial e um contato da conversa o recusou ou o revogou. O Bridge não envia o template a nenhum contato da conversa, de nenhuma categoria. Não tente de novo: falha da mesma forma enquanto esse estado de consentimento permanecer. Pare de enviar templates para esta conversa até que o contato volte a aceitar mensagens |
 
 <a id="conversation-error-codes"></a>
 
@@ -230,7 +232,7 @@ Códigos das operações de conversas.
 | `BRIDGE_CONVERSATION_0606` | Parâmetros não aceitos pelo template inicial | Foram enviados parâmetros para um template inicial que não é um template de provedor WhatsApp |
 | `BRIDGE_CONVERSATION_0607` | Valores inválidos no template inicial | Valores do template inicial violam uma regra do WhatsApp e seriam rejeitados no envio |
 | `BRIDGE_CONVERSATION_0608` | Template configurado exige valores do integrador | Um template da sequência inicial do workspace precisa de valores que só o integrador pode fornecer; um administrador deve alterar a sequência |
-| `BRIDGE_CONVERSATION_0613` | Template inicial em envio | O template inicial ainda está sendo enviado; tente de novo em alguns segundos |
+| `BRIDGE_CONVERSATION_0613` | Template inicial em envio | O template inicial ainda está sendo enviado; tente de novo em alguns segundos. O bloqueio dura no máximo 120 segundos depois que o template inicial foi criado |
 
 Ao criar uma conversa, `BRIDGE_CONVERSATION_0105` retorna `409` com `extra.reason` igual a `PARTICIPANTS_MISMATCH`: uma conversa liberada ocupa a linha do Contato com outros Contatos ou linhas. Solicite os mesmos Contatos e linhas ou use outra linha.
 
@@ -238,10 +240,12 @@ Ao criar uma conversa, `BRIDGE_CONVERSATION_0105` retorna `409` com `extra.reaso
 
 `POST .../conversations/{conversationId}/send-template` retorna estes quatro como `409`. Em nenhum deles algo foi enviado.
 
-- `0007`: a conversa foi liberada e esta operação não a recupera. Inicie-a de novo com `POST .../conversations`, solicitando os mesmos Contatos e linhas: o Bridge recupera uma conversa liberada quando consegue.
+- `0007`: a conversa foi liberada e esta operação não a recupera. Inicie-a de novo com `POST .../conversations`, solicitando os mesmos contatos e linhas: o Bridge recupera uma conversa liberada quando consegue.
 - `0011`: um Agente está atendendo a conversa. Consulte-a com `GET .../conversations/{conversationId}` e tente de novo quando o `status` for `ACTIVE`.
 - `0004`: a conversa não está ativa, por exemplo porque está bloqueada ou excluída. Confira o `status` e tente de novo só quando for `ACTIVE`.
-- `0613`: o template inicial ainda está sendo enviado. Tente de novo em alguns segundos.
+- `0613`: o template inicial ainda está sendo enviado. Tente de novo em alguns segundos: o bloqueio dura no máximo 120 segundos depois que o template inicial foi criado.
+
+Também retorna `BRIDGE_CONVERSATION_0001` como `404` quando a conversa não existe no seu workspace (envie o `conversationId` de uma das suas conversas) e `BRIDGE_CONVERSATION_0201` como `422` quando ela não tem nenhum contato de WhatsApp (envie para uma conversa que tenha um: `GET .../conversations/{conversationId}` lista seus participantes).
 
 <a id="external-user-error-codes"></a>
 
@@ -263,7 +267,7 @@ Códigos das operações de usuários externos, ou Contatos.
 
 ## Códigos de erro de idempotência
 
-Códigos do cabeçalho `Idempotency-Key` de `POST .../conversations/{conversationId}/send-template`. [Envie um template para uma conversa existente](/pt-br/guides/send-template#send-a-template-into-an-existing-conversation) lista cada caso.
+Códigos do header HTTP `Idempotency-Key` de `POST .../conversations/{conversationId}/send-template`. [Envie um template para uma conversa existente](/pt-br/guides/send-template#send-a-template-into-an-existing-conversation) lista cada caso.
 
 | Código | Status | Título | Quando acontece e o que fazer |
 | ---- | ------ | ------ | ----------------------------- |
@@ -372,19 +376,19 @@ Códigos das operações de templates.
 | ---- | -------------- | ------- |
 | `BRIDGE_TEMPLATE_0001` | Template de provedor não encontrado | Nenhum template de provedor encontrado para o workspace e nome informados |
 
-Retornado como `404` por `GET .../templates/{templateId}` quando o ID ou nome não corresponde a um template de WhatsApp do workspace, e por `POST .../conversations/{conversationId}/send-template` quando `template.id` (ou `template.name`, se nenhum id for enviado) não corresponde a nenhum template de provedor do workspace.
+Retornado como `404` por `GET .../templates/{templateId}` quando o ID ou nome não corresponde a um template de WhatsApp do workspace, e por `POST .../conversations/{conversationId}/send-template` quando `template.id` (ou `template.name`, se nenhum id for enviado) não corresponde a nenhum template de provedor do workspace. Envie o `id` ou o `name` de um template de provedor do workspace.
 
 `POST .../conversations/{conversationId}/send-template` também retorna estes códigos:
 
 | Código | Status | Título | Quando acontece e o que fazer |
 | ---- | ------ | ------ | ----------------------------- |
-| `BRIDGE_TEMPLATE_0006` | 400 | Template de provedor não aprovado | O template não está aprovado para a linha da conversa no idioma em que o Bridge o envia a um Contato. Use um template aprovado para essa linha e esse idioma |
+| `BRIDGE_TEMPLATE_0006` | 400 | Template de provedor não aprovado | O template não está aprovado para a linha e o idioma de pelo menos um contato de WhatsApp da conversa, ou a linha de um contato não tem conta do WhatsApp Business. Use um template aprovado para a linha e o idioma de cada contato da conversa |
 | `BRIDGE_TEMPLATE_0007` | 422 | Variáveis ausentes no template de provedor | Falta uma variável obrigatória ou ela está em branco. Forneça todas as variáveis marcadas com `callerMustSupply: true` |
 | `BRIDGE_TEMPLATE_0009` | 422 | Valores de variável inválidos no template de provedor | Um valor descumpre as regras do WhatsApp para uma variável. Corrija-o com as [regras de valores do WhatsApp](/pt-br/templates-and-parameters#whatsapp-value-rules) |
 | `BRIDGE_TEMPLATE_0010` | 422 | Variáveis desconhecidas no template de provedor | Uma chave não é uma variável do template, ou o template não aceita parâmetros. Use os valores de `key` que `GET .../templates/{templateId}` retorna |
 | `BRIDGE_TEMPLATE_0011` | 422 | Mídia de cabeçalho não aceita pelo template de provedor | Você enviou `template.media` e o template não tem cabeçalho de imagem nem de vídeo. Remova `media` |
-| `BRIDGE_TEMPLATE_0012` | 422 | Mídia de cabeçalho incompatível com o template de provedor | `template.media.type` não é o tipo do cabeçalho do template (a imagem ou o vídeo exibido no topo da mensagem), no idioma do template ou no de um contato, ou o arquivo enviado não é desse `type`. `extra` inclui `expectedType` e `providedType`. Envie um arquivo desse tipo, como em [Enviar PDF e outros anexos](/pt-br/guides/send-attachments) |
-| `BRIDGE_TEMPLATE_0013` | 422 | Mídia de cabeçalho obrigatória no template de provedor | O template tem um cabeçalho de imagem ou de vídeo e não há arquivo para enviar. Envie `template.media` ou peça que um arquivo seja configurado no template |
+| `BRIDGE_TEMPLATE_0012` | 422 | Mídia de cabeçalho incompatível com o template de provedor | `template.media.type` não é o tipo do cabeçalho do template (a imagem ou o vídeo exibido no topo da mensagem), no idioma do template ou no de um contato, ou o arquivo enviado não é desse `type`. `extra` inclui `expectedType` e `providedType`. Envie o `type` correto e, com `mediaId`, faça o upload de um arquivo desse tipo, como em [Enviar PDF e outros anexos](/pt-br/guides/send-attachments) |
+| `BRIDGE_TEMPLATE_0013` | 422 | Mídia de cabeçalho obrigatória no template de provedor | O template tem um cabeçalho de imagem ou de vídeo e não há arquivo para enviar. Envie `template.media` ou peça que um arquivo seja configurado no template. Quando `extra.expectedType` é `DOCUMENT`, o Bridge não pode enviar cabeçalhos de documento, com ou sem `template.media`: use outro template |
 
 <a id="workspace-error-codes"></a>
 

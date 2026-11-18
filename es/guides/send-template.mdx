@@ -175,7 +175,7 @@ Usa `POST .../conversations/{conversationId}/send-template` para enviar una plan
 
 - La conversación está abierta. Se rechaza una conversación liberada o bloqueada, una eliminada o una que atiende un Agente. `GET .../conversations/{conversationId}` devuelve su `status`.
 - La conversación tiene al menos un contacto de WhatsApp y ya envió su plantilla inicial.
-- La plantilla es una plantilla de proveedor de tu workspace, aprobada para la línea de la conversación en el idioma en que Bridge la envía a cada contacto. Consulta sus variables como en el paso 1.
+- La plantilla es una plantilla de proveedor de tu workspace, aprobada para la línea de cada contacto de WhatsApp de la conversación, en el idioma en que Bridge la envía a ese contacto. Consulta sus variables como en el paso 1.
 - Tienes una `Idempotency-Key` para este envío.
 
 ### Envíala
@@ -235,7 +235,7 @@ O envía una `url` `https` pública del archivo:
 }
 ```
 
-`type` es obligatorio, y envías `mediaId` o `url`, nunca ambos. `type` debe ser el tipo del encabezado de la plantilla; si no, la solicitud falla con `BRIDGE_TEMPLATE_0012`. Con `mediaId`, el archivo subido también debe tener ese tipo, pertenecer a tu workspace y tener su carga terminada. Con `url`, Bridge descarga el archivo después de responder `201`, y una descarga que falla no se informa en esta respuesta. Una plantilla con encabezado de imagen o de video que no tiene un archivo configurado necesita `media`. Dos solicitudes tienen el mismo cuerpo solo si también envían el mismo `type` y el mismo `mediaId` o `url`. WhatsApp aún puede rechazar, después del `201`, un archivo que supere los límites de encabezado.
+`type` es obligatorio, y envías `mediaId` o `url`, nunca ambos. `type` debe ser el tipo del encabezado de la plantilla; si no, la solicitud falla con `BRIDGE_TEMPLATE_0012`. Con `mediaId`, el archivo subido también debe tener ese tipo, pertenecer a tu workspace y tener su carga terminada. Con `url`, Bridge descarga el archivo de forma asíncrona: el resultado de la descarga no forma parte de la respuesta `201`, y una descarga que falla no se informa en ella. Una plantilla con encabezado de imagen o de video que no tiene un archivo configurado necesita `media`. Dos solicitudes tienen el mismo cuerpo solo si también envían el mismo `type` y el mismo `mediaId` o `url`. WhatsApp aún puede rechazar, después del `201`, un archivo que supere los límites de encabezado.
 
 Una solicitud correcta responde `201`:
 
@@ -252,12 +252,13 @@ Conserva `messageId`. `201` significa que Bridge guardó el mensaje para enviarl
 
 ### Reintenta con la misma clave
 
-`Idempotency-Key` es obligatoria, de 1 a 255 caracteres, y Bridge la conserva 24 horas. Usa una clave nueva para cada envío y reutilízala solo para reintentar ese envío. Dos solicitudes tienen el mismo cuerpo cuando nombran la misma plantilla y los mismos `parameters`: un `parameters` ausente y `{}` son lo mismo, y `name` no influye cuando `id` está presente.
+`Idempotency-Key` es obligatoria, de 1 a 255 caracteres, y Bridge la conserva 24 horas. Usa una clave nueva para cada envío y reutilízala solo para reintentar ese envío. Dos solicitudes son el mismo envío cuando tienen el mismo `conversationId`, nombran la misma plantilla y llevan los mismos `parameters` y `media`: un `parameters` ausente y `{}` son lo mismo, y `name` no influye cuando `id` está presente.
 
 | Situación | Resultado | Qué hacer |
 | --- | --- | --- |
-| Misma clave, mismo cuerpo | `201` con el primer mensaje y `Idempotent-Replayed: true` | No se envió nada dos veces. Conserva `messageId`. |
-| Misma clave, cuerpo distinto | `422` `BRIDGE_CORE_1202` | Usa una clave nueva para el cuerpo nuevo. |
+| La cabecera HTTP `Idempotency-Key` falta, está vacía o tiene más de 255 caracteres | `422`, con el campo en `errors[]` | Envía una clave válida. |
+| Misma clave, mismo envío | `201` con el primer mensaje y `Idempotent-Replayed: true` | No se envió nada dos veces. Conserva `messageId`. |
+| Misma clave, envío distinto, por ejemplo otro cuerpo u otra conversación | `422` `BRIDGE_CORE_1202` | Usa una clave nueva para el envío nuevo. |
 | Misma clave mientras la primera solicitud sigue en curso | `409` `BRIDGE_CORE_1201` | Reintenta con la misma clave después de una pausa. |
 | La primera solicitud falló antes de guardar nada | Bridge libera la clave | Corrige la causa y reintenta con la misma clave. |
 | La primera solicitud se interrumpió después de guardar el mensaje | `409` `BRIDGE_CORE_1201` hasta por 24 horas | El mensaje puede existir. La API no tiene una operación para listar mensajes: pídele a un Usuario de Bridge que revise la conversación antes de enviar de nuevo con una clave nueva. |
@@ -266,13 +267,19 @@ Conserva `messageId`. `201` significa que Bridge guardó el mensaje para enviarl
 
 | Error | Qué hacer |
 | --- | --- |
-| `BRIDGE_CONVERSATION_0007` | La conversación fue liberada. Vuelve a iniciarla con `POST .../conversations`. |
+| `BRIDGE_TEMPLATE_0001` | Ninguna plantilla de proveedor de tu workspace tiene ese `id` o `name`. Envía el `id` o el `name` de una plantilla de proveedor de tu workspace. |
+| `BRIDGE_CONVERSATION_0001` | La conversación no existe en tu workspace. Envía el `conversationId` de una de tus conversaciones. |
+| `BRIDGE_CONVERSATION_0007` | La conversación fue liberada. Vuelve a iniciarla con `POST .../conversations`, solicitando los mismos contactos y líneas. |
 | `BRIDGE_CONVERSATION_0011` | Un Agente está atendiendo la conversación. Consúltala con `GET .../conversations/{conversationId}` y reintenta cuando su `status` sea `ACTIVE`. |
 | `BRIDGE_CONVERSATION_0004` | La conversación no está activa. Reintenta solo cuando su `status` sea `ACTIVE`. |
-| `BRIDGE_CONVERSATION_0613` | La plantilla inicial aún se está enviando. Reintenta en unos segundos. |
-| `BRIDGE_COMMERCIAL_CONSENT_0203` | Un contacto no acepta mensajes que inicia Bridge. La [referencia de errores](/es/error-codes#commercial-consent-error-codes) explica cuándo ocurre. |
-| `BRIDGE_TEMPLATE_0006`, `0007`, `0009`, `0010` | Corrige la plantilla o sus valores. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
-| `BRIDGE_TEMPLATE_0011`, `0012`, `0013` | Corrige `template.media`: envíalo solo para una plantilla con encabezado de imagen o de video, con un `type` que coincida. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
-| `BRIDGE_PRELOAD_FILE_0001`, `0002` | El `mediaId` no es un archivo de tu workspace, o su carga no ha terminado. Consulta [Enviar PDF y otros adjuntos](/es/guides/send-attachments). |
+| `BRIDGE_CONVERSATION_0613` | La plantilla inicial aún se está enviando. Reintenta en unos segundos: el bloqueo dura como máximo 120 segundos desde que se creó la plantilla inicial. |
+| `BRIDGE_CONVERSATION_0201` | La conversación no tiene ningún contacto de WhatsApp. Envía a una conversación que tenga uno: `GET .../conversations/{conversationId}` lista sus participantes. |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | Un contacto no acepta mensajes que inicia Bridge. No reintentes: deja de enviar plantillas a esta conversación hasta que el contacto vuelva a aceptar mensajes. La [referencia de errores](/es/error-codes#commercial-consent-error-codes) explica cuándo ocurre. |
+| `BRIDGE_TEMPLATE_0006` | La plantilla no está aprobada para la línea y el idioma de al menos un contacto de WhatsApp, o la línea de un contacto no tiene cuenta de WhatsApp Business. Usa una plantilla aprobada para la línea y el idioma de cada contacto de la conversación. |
+| `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Corrige los valores de la plantilla. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
+| `BRIDGE_TEMPLATE_0011`, `0012` | Corrige `template.media`: envíalo solo para una plantilla con encabezado de imagen o de video, con un `type` que coincida y, con `mediaId`, un archivo de ese tipo. La [referencia de errores](/es/error-codes#template-error-codes) describe cada uno. |
+| `BRIDGE_TEMPLATE_0013` | La plantilla tiene un encabezado de imagen o de video y no hay archivo que enviar. Envía `template.media` o pide que se configure un archivo en la plantilla. Cuando `extra.expectedType` es `DOCUMENT`, Bridge no puede enviar encabezados de documento, con o sin `template.media`: usa otra plantilla. |
+| `BRIDGE_PRELOAD_FILE_0001` | El `mediaId` no es un archivo de tu workspace. Sube el archivo como en [Enviar PDF y otros adjuntos](/es/guides/send-attachments) y envía el `mediaId` que devuelve. |
+| `BRIDGE_PRELOAD_FILE_0002` | El archivo aún no se puede usar. Si todavía se está subiendo, termina la carga y reintenta con el mismo `mediaId`. Si se canceló su carga, sube un archivo nuevo y envía el nuevo `mediaId`. |
 
-Una solicitud rechazada con uno de estos códigos no envió nada. Todos los códigos, incluidos `BRIDGE_TEMPLATE_0001`, `BRIDGE_CONVERSATION_0001` y `BRIDGE_CONVERSATION_0201`, están en [Códigos de error](/es/error-codes).
+Una solicitud con varios problemas se responde con el primero que Bridge encuentra: corrige ese error y envía de nuevo, porque puede aparecer otro. Una solicitud rechazada con uno de estos códigos no envió nada. Todos los códigos están en [Códigos de error](/es/error-codes).
