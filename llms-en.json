@@ -69,7 +69,7 @@
       "title": "Choose and fill a WhatsApp template",
       "source": "https://docs.bridge.new/guides/send-template",
       "markdownUrl": "https://docs.bridge.new/guides/send-template.md",
-      "description": "Discover a template by ID or name, supply its agnostic variable keys, and use its returned ID in a Conversation request.",
+      "description": "Discover a template by ID or name, supply its agnostic variable keys, and use it to open a Conversation or to send it into one that already exists.",
       "kind": "page"
     },
     {
