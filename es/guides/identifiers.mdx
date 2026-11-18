@@ -55,7 +55,7 @@ Usa identificadores del espacio de trabajo correcto. No reutilices un identifica
 
 La **consulta de contactos por identificador** usa parámetros de consulta llamados `type` y `value`. Un participante externo de una conversación usa `identifier` e `identifierType`, además de los otros campos que exija esa operación. No copies los parámetros de una consulta directamente al cuerpo de un participante.
 
-La **consulta de plantillas** acepta un ID o nombre en el parámetro de ruta `{templateId}`. Las **plantillas de inicio de conversación** usan `onboardingTemplates[].templateId`. La **selección de plantilla para conversaciones salientes** usa `id` o `name` dentro del objeto `template`; lee el esquema del endpoint en lugar de renombrar todos los selectores como `templateId`.
+La **consulta de plantillas** acepta un ID o nombre en el parámetro de ruta `{templateId}`. Las **plantillas de inicio de conversación** usan `onboardingTemplates[].templateId`. La **selección de plantilla para conversaciones salientes** usa `id` o `name` dentro del objeto `template`, salvo `POST .../conversations/{conversationId}/send-template`, que solo acepta `id`; lee el esquema del endpoint en lugar de renombrar todos los selectores como `templateId`.
 
 Usa la `key` devuelta de cada variable en los `parameters` de la plantilla. Las claves de variables no son índices de posiciones de Meta. La [guía de parámetros de plantillas](/es/templates-and-parameters) explica los valores obligatorios, los predeterminados y la diferencia entre omitir un valor y enviarlo en blanco.
 

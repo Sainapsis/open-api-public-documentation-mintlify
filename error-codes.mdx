@@ -200,6 +200,7 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0211` | Max Participants Exceeded | The conversation must have a maximum number of participants |
 | `BRIDGE_CONVERSATION_0212` | Max Initial Messages Exceeded | The maximum number of initial messages has been exceeded |
 | `BRIDGE_CONVERSATION_0213` | Messages Not In Conversation | The messages must belong to the same conversation |
+| `BRIDGE_CONVERSATION_0406` | Template Cooldown Active | A promotional template was already sent to a contact inside the workspace's cooldown; retry after the indicated time |
 | `BRIDGE_CONVERSATION_0601` | Onboarding Template Not Found | A template named in the onboarding override does not exist |
 | `BRIDGE_CONVERSATION_0602` | Onboarding Template Not In Workspace | A template named in the onboarding override belongs to another workspace |
 | `BRIDGE_CONVERSATION_0603` | Onboarding Template Not Approved | A template named in the onboarding override is not approved for the line a participant will be reached on |
@@ -208,18 +209,21 @@ Error codes for conversation operations.
 | `BRIDGE_CONVERSATION_0606` | Onboarding Template Parameters Not Supported | Parameters were sent for an onboarding template that is not a WhatsApp provider template |
 | `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Parameter values for an onboarding template break a WhatsApp rule and would be rejected when sent |
 | `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | A template in the workspace's onboarding sequence needs values only the caller can provide; a workspace admin must change the onboarding sequence |
-| `BRIDGE_CONVERSATION_0613` | Opening Template In Flight | The opening template is still being sent; try again in a few seconds. The block lasts at most 120 seconds after the opening template was created |
+| `BRIDGE_CONVERSATION_0609` | Onboarding Required | The conversation was started without its WhatsApp opening template; send a marketing or utility template to open it |
+| `BRIDGE_CONVERSATION_0613` | Opening Template In Flight | The opening template is still being sent, by this or another request; try again in a few seconds. The block lasts at most 120 seconds after the opening template was created |
 
 When creating a conversation, `BRIDGE_CONVERSATION_0105` returns `409` with `extra.reason` set to `PARTICIPANTS_MISMATCH`: a released conversation holds the Contact's line with other Contacts or lines. Request the same Contacts and lines, or use another line.
 
 `BRIDGE_CONVERSATION_0601` returns `404`, `0602` and `0603` return `400`, and `0604` to `0608` return `422`. See [Onboarding template parameters](/templates-and-parameters) for what each one carries in `extra` and how to fix it.
 
-`POST .../conversations/{conversationId}/send-template` returns these four as `409`. Nothing was sent in any of them.
+`POST .../conversations/{conversationId}/send-template` returns these as `409`. Nothing was sent in any of them.
 
 - `0007`: the Conversation was released, and this operation does not recover it. Start it again with `POST .../conversations`, requesting the same Contacts and lines: Bridge recovers a released Conversation when it can.
 - `0011`: an Agent is handling the Conversation. Check it with `GET .../conversations/{conversationId}` and retry when its `status` is `ACTIVE`.
 - `0004`: the Conversation is not active, for example blocked or deleted. Check its `status` and retry only when it is `ACTIVE`.
-- `0613`: the opening template is still being sent. Retry in a few seconds: the block lasts at most 120 seconds after the opening template was created.
+- `0609`: the Conversation has no opening template yet and this template is not a marketing or utility template. Send a marketing or utility template: it becomes the opening template.
+- `0613`: another request is sending the Conversation's opening template, or that template is still being sent. Retry in a few seconds: the block lasts at most 120 seconds after the opening template was created.
+- `0406`: the template is a marketing or utility template and a Contact of the Conversation already received one inside the workspace's promotional cooldown. `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left. Retry after `retryAfterSeconds` seconds.
 
 It also returns `BRIDGE_CONVERSATION_0001` as `404` when the Conversation does not exist in your workspace (send the `conversationId` of one of your Conversations), and `BRIDGE_CONVERSATION_0201` as `422` when it has no WhatsApp Contact (send into a Conversation that has one: `GET .../conversations/{conversationId}` lists its participants).
 
@@ -336,7 +340,7 @@ Error codes for template operations.
 | ---- | -------------- | ------- |
 | `BRIDGE_TEMPLATE_0001` | Provider Template Not Found | No provider template found for the given workspace and name |
 
-Returned as `404` by `GET .../templates/{templateId}` when the id or name does not match a WhatsApp template in your workspace, and by `POST .../conversations/{conversationId}/send-template` when `template.id` (or `template.name` when no id is sent) matches no provider template of your workspace. Send the `id` or `name` of a provider template of your workspace.
+Returned as `404` by `GET .../templates/{templateId}` when the id or name does not match a WhatsApp template in your workspace, and by `POST .../conversations/{conversationId}/send-template` when `template.id` matches no provider template of your workspace. Send the `id` of a provider template of your workspace.
 
 `POST .../conversations/{conversationId}/send-template` also returns these codes:
 

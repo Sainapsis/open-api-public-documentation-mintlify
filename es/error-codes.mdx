@@ -224,6 +224,7 @@ Errores de las operaciones de conversaciones.
 | `BRIDGE_CONVERSATION_0211` | Max Participants Exceeded | La conversación debe respetar una cantidad máxima de participantes |
 | `BRIDGE_CONVERSATION_0212` | Max Initial Messages Exceeded | Se superó el máximo de mensajes iniciales |
 | `BRIDGE_CONVERSATION_0213` | Messages Not In Conversation | Los mensajes deben pertenecer a la misma conversación |
+| `BRIDGE_CONVERSATION_0406` | Template Cooldown Active | Ya se envió una plantilla promocional a un contacto dentro del periodo de espera del workspace; reintenta pasado el tiempo indicado |
 | `BRIDGE_CONVERSATION_0601` | Onboarding Template Not Found | No existe una plantilla indicada en el reemplazo de plantillas de inicio |
 | `BRIDGE_CONVERSATION_0602` | Onboarding Template Not In Workspace | Una plantilla indicada en el reemplazo de inicio pertenece a otro espacio de trabajo |
 | `BRIDGE_CONVERSATION_0603` | Onboarding Template Not Approved | Una plantilla indicada en el reemplazo de inicio no está aprobada para la línea usada para contactar a un participante |
@@ -232,18 +233,21 @@ Errores de las operaciones de conversaciones.
 | `BRIDGE_CONVERSATION_0606` | Onboarding Template Parameters Not Supported | Se enviaron parámetros para una plantilla de inicio que no es una plantilla de proveedor de WhatsApp |
 | `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Los valores de parámetros de una plantilla de inicio infringen una regla de WhatsApp y se rechazarían al enviarse |
 | `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | Una plantilla de la secuencia de inicio del espacio de trabajo necesita valores que solo puede proporcionar quien hace la solicitud; un administrador debe cambiar la secuencia |
-| `BRIDGE_CONVERSATION_0613` | Opening Template In Flight | La plantilla inicial aún se está enviando; reintenta en unos segundos. El bloqueo dura como máximo 120 segundos desde que se creó la plantilla inicial |
+| `BRIDGE_CONVERSATION_0609` | Onboarding Required | La conversación se inició sin su plantilla inicial de WhatsApp; envía una plantilla de marketing o de utilidad para abrirla |
+| `BRIDGE_CONVERSATION_0613` | Opening Template In Flight | La plantilla inicial aún se está enviando, por esta u otra solicitud; reintenta en unos segundos. El bloqueo dura como máximo 120 segundos desde que se creó la plantilla inicial |
 
 Al crear una conversación, `BRIDGE_CONVERSATION_0105` devuelve `409` con `extra.reason` igual a `PARTICIPANTS_MISMATCH`: una conversación liberada ocupa la línea del contacto con otros contactos o líneas. Solicita los mismos contactos y líneas o usa otra línea.
 
 `BRIDGE_CONVERSATION_0601` devuelve `404`, `0602` y `0603` devuelven `400`, y `0604` a `0608` devuelven `422`. Consulta [Parámetros de plantillas de inicio](/es/templates-and-parameters) para saber qué incluye cada uno en `extra` y cómo corregirlo.
 
-`POST .../conversations/{conversationId}/send-template` devuelve estos cuatro como `409`. En ninguno se envió nada.
+`POST .../conversations/{conversationId}/send-template` devuelve estos como `409`. En ninguno se envió nada.
 
 - `0007`: la conversación fue liberada y esta operación no la recupera. Vuelve a iniciarla con `POST .../conversations`, solicitando los mismos contactos y líneas: Bridge recupera una conversación liberada cuando puede.
 - `0011`: un Agente está atendiendo la conversación. Consúltala con `GET .../conversations/{conversationId}` y reintenta cuando su `status` sea `ACTIVE`.
 - `0004`: la conversación no está activa, por ejemplo porque está bloqueada o eliminada. Revisa su `status` y reintenta solo cuando sea `ACTIVE`.
-- `0613`: la plantilla inicial aún se está enviando. Reintenta en unos segundos: el bloqueo dura como máximo 120 segundos desde que se creó la plantilla inicial.
+- `0609`: la conversación aún no tiene plantilla inicial y esta plantilla no es de marketing ni de utilidad. Envía una plantilla de marketing o de utilidad: pasa a ser la plantilla inicial.
+- `0613`: otra solicitud está enviando la plantilla inicial de la conversación, o esa plantilla aún se está enviando. Reintenta en unos segundos: el bloqueo dura como máximo 120 segundos desde que se creó la plantilla inicial.
+- `0406`: la plantilla es de marketing o de utilidad y un contacto de la conversación ya recibió una dentro del periodo de espera promocional del workspace. `extra.contactIds` lista esos contactos y `extra.retryAfterSeconds` es la espera más larga que queda. Reintenta pasados `retryAfterSeconds` segundos.
 
 También devuelve `BRIDGE_CONVERSATION_0001` como `404` cuando la conversación no existe en tu workspace (envía el `conversationId` de una de tus conversaciones) y `BRIDGE_CONVERSATION_0201` como `422` cuando no tiene ningún contacto de WhatsApp (envía a una conversación que tenga uno: `GET .../conversations/{conversationId}` lista sus participantes).
 
@@ -376,7 +380,7 @@ Errores de las operaciones de plantillas.
 | --- | --- | --- |
 | `BRIDGE_TEMPLATE_0001` | Provider Template Not Found | No se encontró una plantilla de proveedor para el espacio de trabajo y nombre indicados |
 
-`GET .../templates/{templateId}` lo devuelve como `404` cuando el ID o nombre no coincide con una plantilla de WhatsApp de tu espacio de trabajo, y también `POST .../conversations/{conversationId}/send-template` cuando `template.id` (o `template.name` si no se envía id) no coincide con ninguna plantilla de proveedor de tu espacio de trabajo. Envía el `id` o el `name` de una plantilla de proveedor de tu espacio de trabajo.
+`GET .../templates/{templateId}` lo devuelve como `404` cuando el ID o nombre no coincide con una plantilla de WhatsApp de tu espacio de trabajo, y también `POST .../conversations/{conversationId}/send-template` cuando `template.id` no coincide con ninguna plantilla de proveedor de tu espacio de trabajo. Envía el `id` de una plantilla de proveedor de tu espacio de trabajo.
 
 `POST .../conversations/{conversationId}/send-template` también devuelve estos códigos:
 

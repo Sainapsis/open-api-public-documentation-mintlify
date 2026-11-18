@@ -140,7 +140,7 @@ console.log({ templateId: template.id, conversationId: conversation.id });
 node send-template.mjs
 ```
 
-O exemplo usa o ID retornado pela descoberta em `onboardingTemplates[].templateId`. As duas operações outbound também aceitam ID ou nome do template, com prioridade para o ID quando ambos são informados. Seus formatos de requisição são diferentes de `onboardingTemplates`; leia o contrato da operação antes de reutilizar esse corpo em outro contexto.
+O exemplo usa o ID retornado pela descoberta em `onboardingTemplates[].templateId`. `POST .../conversations/{conversationId}/send-template` aceita apenas o ID do template. A operação outbound do LeadScout também aceita o nome de um template, com prioridade para o ID quando ambos são informados. Seus formatos de requisição são diferentes de `onboardingTemplates`; leia o contrato da operação antes de reutilizar esse corpo em outro contexto.
 
 As verificações locais detectam chaves desconhecidas ou obrigatórias ausentes. O Bridge ainda realiza sua própria validação, incluindo a aprovação para a linha selecionada e as regras finais de valores do WhatsApp. Não trate a validação local como aprovação ou garantia de entrega.
 
@@ -174,7 +174,7 @@ Use `POST .../conversations/{conversationId}/send-template` para enviar um templ
 ### Antes de enviar
 
 - A conversa está aberta. Uma conversa liberada ou bloqueada, uma excluída ou uma atendida por um Agente é recusada. `GET .../conversations/{conversationId}` retorna o `status` dela.
-- A conversa tem pelo menos um contato de WhatsApp e já enviou o template inicial.
+- A conversa tem pelo menos um contato de WhatsApp. Ela já enviou o template inicial, ou o template que você envia é de marketing ou de utilidade e passa a ser o template inicial (veja abaixo).
 - O template é um template de provedor do seu workspace, aprovado para a linha de cada contato de WhatsApp da conversa, no idioma em que o Bridge o envia a esse contato. Descubra as variáveis dele como no passo 1.
 - Você tem uma `Idempotency-Key` para este envio.
 
@@ -199,7 +199,7 @@ Idempotency-Key: erp-order-981-shipped
 }
 ```
 
-Envie `template.id`, ou `template.name` quando não tiver o id. Quando `id` está presente, é a única busca: um `id` desconhecido falha com `404` mesmo que `name` corresponda a um template. `parameters` segue as regras dos passos 1 e 2. Um template cujo cabeçalho é uma imagem ou um vídeo envia esse arquivo.
+Envie `template.id`, o `id` que o passo 1 retorna: `GET .../templates/{templateId}` aceita o nome do template e responde com o `id` dele. A requisição não aceita `template.name`: um corpo com `name` falha com `422`. Um `id` desconhecido falha com `404`. `parameters` segue as regras dos passos 1 e 2. Um template cujo cabeçalho é uma imagem ou um vídeo envia esse arquivo.
 
 Para enviar sua própria imagem ou vídeo como cabeçalho do template (a imagem ou o vídeo exibido no topo da mensagem), envie `template.media` com seu `type` (`IMAGE`, `VIDEO` ou `GIF`, o tipo do cabeçalho) e uma fonte. Envie o `mediaId` de um arquivo que você enviou com `POST /bridge/api/v1/workspaces/{workspaceId}/files`, como em [Enviar PDF e outros anexos](/pt-br/guides/send-attachments):
 
@@ -250,9 +250,15 @@ Uma requisição bem-sucedida responde `201`:
 
 Guarde `messageId`. `201` significa que o Bridge gravou a mensagem para envio; [Respostas e novas tentativas](/pt-br/guides/responses) explica o que ele não informa.
 
+### O template inicial e o período de espera promocional
+
+Uma conversa pode ainda não ter template inicial, por exemplo uma iniciada por e-mail. Um template de marketing ou de utilidade enviado a ela passa a ser o template inicial, e a partir daí a conversa aceita qualquer template. Até lá, um template de outra categoria é recusado com `BRIDGE_CONVERSATION_0609`. Se duas requisições tentam abrir a mesma conversa ao mesmo tempo, uma delas é recusada com `BRIDGE_CONVERSATION_0613`: tente de novo em alguns segundos.
+
+Um template de marketing ou de utilidade também está sujeito ao período de espera promocional do workspace, a mesma configuração que limita esses envios no Bridge. Se algum contato da conversa recebeu um dentro desse período, a requisição falha com `BRIDGE_CONVERSATION_0406` e não envia nada a nenhum contato: `extra.contactIds` lista esses contatos e `extra.retryAfterSeconds` é a maior espera restante. Cada envio bem-sucedido é registrado para cada contato, então conta para o período de espera como um envio feito pelo app do Bridge.
+
 ### Tente de novo com a mesma chave
 
-`Idempotency-Key` é obrigatória, de 1 a 255 caracteres, e o Bridge a mantém por 24 horas. Use uma chave nova para cada envio e reutilize-a apenas para repetir esse envio. Duas requisições são o mesmo envio quando têm o mesmo `conversationId`, citam o mesmo template e levam os mesmos `parameters` e `media`: um `parameters` ausente e `{}` são equivalentes, e `name` não influencia quando `id` está presente.
+`Idempotency-Key` é obrigatória, de 1 a 255 caracteres, e o Bridge a mantém por 24 horas. Use uma chave nova para cada envio e reutilize-a apenas para repetir esse envio. Duas requisições são o mesmo envio quando têm o mesmo `conversationId`, têm o mesmo `template.id` e levam os mesmos `parameters` e `media`: um `parameters` ausente e `{}` são equivalentes.
 
 | Situação | Resultado | O que fazer |
 | --- | --- | --- |
@@ -267,14 +273,16 @@ Guarde `messageId`. `201` significa que o Bridge gravou a mensagem para envio; [
 
 | Erro | O que fazer |
 | --- | --- |
-| `BRIDGE_TEMPLATE_0001` | Nenhum template de provedor do seu workspace tem esse `id` ou `name`. Envie o `id` ou o `name` de um template de provedor do seu workspace. |
+| `BRIDGE_TEMPLATE_0001` | Nenhum template de provedor do seu workspace tem esse `id`. Envie o `id` de um template de provedor do seu workspace. |
 | `BRIDGE_CONVERSATION_0001` | A conversa não existe no seu workspace. Envie o `conversationId` de uma das suas conversas. |
 | `BRIDGE_CONVERSATION_0007` | A conversa foi liberada. Inicie-a de novo com `POST .../conversations`, solicitando os mesmos contatos e linhas. |
 | `BRIDGE_CONVERSATION_0011` | Um Agente está atendendo a conversa. Consulte-a com `GET .../conversations/{conversationId}` e tente de novo quando o `status` for `ACTIVE`. |
 | `BRIDGE_CONVERSATION_0004` | A conversa não está ativa. Tente de novo só quando o `status` for `ACTIVE`. |
-| `BRIDGE_CONVERSATION_0613` | O template inicial ainda está sendo enviado. Tente de novo em alguns segundos: o bloqueio dura no máximo 120 segundos depois que o template inicial foi criado. |
+| `BRIDGE_CONVERSATION_0609` | A conversa ainda não tem template inicial e este template não é de marketing nem de utilidade. Envie um template de marketing ou de utilidade: ele passa a ser o template inicial. |
+| `BRIDGE_CONVERSATION_0613` | Outra requisição está enviando o template inicial da conversa, ou esse template ainda está sendo enviado. Tente de novo em alguns segundos: o bloqueio dura no máximo 120 segundos depois que o template inicial foi criado. |
 | `BRIDGE_CONVERSATION_0201` | A conversa não tem nenhum contato de WhatsApp. Envie para uma conversa que tenha um: `GET .../conversations/{conversationId}` lista seus participantes. |
 | `BRIDGE_COMMERCIAL_CONSENT_0203` | Um contato não aceita mensagens iniciadas pelo Bridge. Não tente de novo: pare de enviar templates para esta conversa até que o contato volte a aceitar mensagens. A [referência de erros](/pt-br/error-codes#commercial-consent-error-codes) explica quando isso acontece. |
+| `BRIDGE_CONVERSATION_0406` | O template é de marketing ou de utilidade e um contato da conversa já recebeu um dentro do período de espera promocional do workspace. `extra.contactIds` lista esses contatos e `extra.retryAfterSeconds` é a maior espera restante. Nada foi enviado a nenhum contato. Tente de novo depois de `retryAfterSeconds` segundos. |
 | `BRIDGE_TEMPLATE_0006` | O template não está aprovado para a linha e o idioma de pelo menos um contato de WhatsApp, ou a linha de um contato não tem conta do WhatsApp Business. Use um template aprovado para a linha e o idioma de cada contato da conversa. |
 | `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Corrija os valores do template. A [referência de erros](/pt-br/error-codes#template-error-codes) descreve cada um. |
 | `BRIDGE_TEMPLATE_0011`, `0012` | Corrija `template.media`: envie-o só para um template com cabeçalho de imagem ou de vídeo, com um `type` que corresponda e, com `mediaId`, um arquivo desse tipo. A [referência de erros](/pt-br/error-codes#template-error-codes) descreve cada um. |

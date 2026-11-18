@@ -132,7 +132,7 @@ console.log({ templateId: template.id, conversationId: conversation.id });
 node send-template.mjs
 ```
 
-The example uses the ID returned by discovery in `onboardingTemplates[].templateId`. The two outbound operations also accept a template ID or name, with the ID taking precedence when both are supplied. Their request shapes differ from `onboardingTemplates`; read the operation's contract before reusing this body elsewhere.
+The example uses the ID returned by discovery in `onboardingTemplates[].templateId`. `POST .../conversations/{conversationId}/send-template` takes only a template ID. The LeadScout outbound operation also accepts a template name, with the ID taking precedence when both are supplied. Their request shapes differ from `onboardingTemplates`; read the operation's contract before reusing this body elsewhere.
 
 The local checks catch unknown and missing keys. Bridge still performs its own validation, including approval for the selected line and the final WhatsApp value rules. Do not treat local validation as approval or a delivery guarantee.
 
@@ -162,7 +162,7 @@ Use `POST .../conversations/{conversationId}/send-template` to send one provider
 ### Before you send
 
 - The Conversation is open. A released or blocked Conversation, a deleted one, or one an Agent is handling is refused. `GET .../conversations/{conversationId}` returns its `status`.
-- The Conversation has at least one WhatsApp Contact, and its opening template has been sent.
+- The Conversation has at least one WhatsApp Contact. Its opening template has been sent, or the template you send is a marketing or utility template, which becomes the opening template (see below).
 - The template is a provider template of your workspace, approved for the line of every WhatsApp Contact of the Conversation, in the language Bridge sends to that Contact. Discover its variables as in step 1.
 - You have an `Idempotency-Key` for this send.
 
@@ -187,7 +187,7 @@ Idempotency-Key: erp-order-981-shipped
 }
 ```
 
-Send `template.id`, or `template.name` when you have no id. When `id` is present it is the only lookup: an unknown `id` fails with `404` even if `name` matches a template. `parameters` follows the rules of steps 1 and 2. A template whose header is an image or video sends that file.
+Send `template.id`, the `id` that step 1 returns: `GET .../templates/{templateId}` accepts the template's name and answers with its `id`. The request takes no `template.name`: a body with `name` fails with `422`. An unknown `id` fails with `404`. `parameters` follows the rules of steps 1 and 2. A template whose header is an image or video sends that file.
 
 To send your own image or video as the template's header (the image or video shown at the top of the message) instead, send `template.media` with its `type` (`IMAGE`, `VIDEO` or `GIF`, the type of the header) and one source. Send the `mediaId` of a file you uploaded with `POST /bridge/api/v1/workspaces/{workspaceId}/files`, as in [Send PDFs and other attachments](/guides/send-attachments):
 
@@ -238,9 +238,15 @@ A successful request answers `201`:
 
 Retain `messageId`. `201` means Bridge stored the Message for sending; [Responses and retries](/guides/responses) explains what it does not tell you.
 
+### The opening template and the promotional cooldown
+
+A Conversation can have no opening template yet, for example one started by email. A marketing or utility template sent into it becomes its opening template, and the Conversation then accepts any template. Until then, a template of another category is refused with `BRIDGE_CONVERSATION_0609`. If two requests try to open the same Conversation at once, one of them is refused with `BRIDGE_CONVERSATION_0613`: retry it in a few seconds.
+
+A marketing or utility template is also subject to the workspace's promotional cooldown, the same setting that throttles these sends in Bridge. If any Contact of the Conversation received one inside that period, the request fails with `BRIDGE_CONVERSATION_0406` and sends nothing to any Contact: `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left. Each successful send is recorded for every Contact, so it counts toward the cooldown like a send from the Bridge app.
+
 ### Retry with the same key
 
-`Idempotency-Key` is required, 1 to 255 characters, and Bridge keeps it for 24 hours. Use a new key for each send and reuse it only to retry that send. Two requests are the same send when they have the same `conversationId`, name the same template and carry the same `parameters` and `media`: an absent `parameters` and `{}` are the same, and `name` plays no part when `id` is present.
+`Idempotency-Key` is required, 1 to 255 characters, and Bridge keeps it for 24 hours. Use a new key for each send and reuse it only to retry that send. Two requests are the same send when they have the same `conversationId`, have the same `template.id` and carry the same `parameters` and `media`: an absent `parameters` and `{}` are the same.
 
 | Situation | Result | What to do |
 | --- | --- | --- |
@@ -255,14 +261,16 @@ Retain `messageId`. `201` means Bridge stored the Message for sending; [Response
 
 | Error | What to do |
 | --- | --- |
-| `BRIDGE_TEMPLATE_0001` | No provider template of your workspace has that `id` or `name`. Send the `id` or `name` of a provider template of your workspace. |
+| `BRIDGE_TEMPLATE_0001` | No provider template of your workspace has that `id`. Send the `id` of a provider template of your workspace. |
 | `BRIDGE_CONVERSATION_0001` | The Conversation does not exist in your workspace. Send the `conversationId` of one of your Conversations. |
 | `BRIDGE_CONVERSATION_0007` | The Conversation was released. Start it again with `POST .../conversations`, requesting the same Contacts and lines. |
 | `BRIDGE_CONVERSATION_0011` | An Agent is handling the Conversation. Check it with `GET .../conversations/{conversationId}` and retry when its `status` is `ACTIVE`. |
 | `BRIDGE_CONVERSATION_0004` | The Conversation is not active. Retry only when its `status` is `ACTIVE`. |
-| `BRIDGE_CONVERSATION_0613` | The opening template is still being sent. Retry in a few seconds: the block lasts at most 120 seconds after the opening template was created. |
+| `BRIDGE_CONVERSATION_0609` | The Conversation has no opening template yet and this template is not a marketing or utility template. Send a marketing or utility template: it becomes the opening template. |
+| `BRIDGE_CONVERSATION_0613` | Another request is sending the Conversation's opening template, or that template is still being sent. Retry in a few seconds: the block lasts at most 120 seconds after the opening template was created. |
 | `BRIDGE_CONVERSATION_0201` | The Conversation has no WhatsApp Contact. Send into a Conversation that has one: `GET .../conversations/{conversationId}` lists its participants. |
 | `BRIDGE_COMMERCIAL_CONSENT_0203` | A Contact does not accept messages Bridge starts. Do not retry: stop sending templates into this Conversation until the Contact accepts messages again. The [error reference](/error-codes#commercial-consent-error-codes) says when it happens. |
+| `BRIDGE_CONVERSATION_0406` | The template is a marketing or utility template and a Contact of the Conversation already received one inside the workspace's promotional cooldown. `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left. Nothing was sent to any Contact. Retry after `retryAfterSeconds` seconds. |
 | `BRIDGE_TEMPLATE_0006` | The template is not approved for the line and language of at least one WhatsApp Contact, or a Contact's line has no WhatsApp Business account. Use a template approved for the line and language of every Contact of the Conversation. |
 | `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Fix the template values. The [error reference](/error-codes#template-error-codes) lists each one. |
 | `BRIDGE_TEMPLATE_0011`, `0012` | Fix `template.media`: send it only for a template with an image or video header, with a `type` that matches it, and with `mediaId` a file of that type. The [error reference](/error-codes#template-error-codes) lists each one. |

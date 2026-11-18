@@ -224,6 +224,7 @@ Códigos das operações de conversas.
 | `BRIDGE_CONVERSATION_0211` | Quantidade máxima de participantes | A conversa precisa respeitar uma quantidade máxima de participantes |
 | `BRIDGE_CONVERSATION_0212` | Máximo de mensagens iniciais excedido | A quantidade máxima de mensagens iniciais foi excedida |
 | `BRIDGE_CONVERSATION_0213` | Mensagens fora da conversa | As mensagens precisam pertencer à mesma conversa |
+| `BRIDGE_CONVERSATION_0406` | Período de espera do template ativo | Um template promocional já foi enviado a um contato dentro do período de espera do workspace; tente de novo depois do tempo indicado |
 | `BRIDGE_CONVERSATION_0601` | Template inicial não encontrado | Um template informado na substituição da sequência inicial não existe |
 | `BRIDGE_CONVERSATION_0602` | Template inicial fora do workspace | Um template informado na substituição da sequência inicial pertence a outro workspace |
 | `BRIDGE_CONVERSATION_0603` | Template inicial não aprovado | Um template informado na substituição da sequência inicial não foi aprovado para a linha de um participante |
@@ -232,18 +233,21 @@ Códigos das operações de conversas.
 | `BRIDGE_CONVERSATION_0606` | Parâmetros não aceitos pelo template inicial | Foram enviados parâmetros para um template inicial que não é um template de provedor WhatsApp |
 | `BRIDGE_CONVERSATION_0607` | Valores inválidos no template inicial | Valores do template inicial violam uma regra do WhatsApp e seriam rejeitados no envio |
 | `BRIDGE_CONVERSATION_0608` | Template configurado exige valores do integrador | Um template da sequência inicial do workspace precisa de valores que só o integrador pode fornecer; um administrador deve alterar a sequência |
-| `BRIDGE_CONVERSATION_0613` | Template inicial em envio | O template inicial ainda está sendo enviado; tente de novo em alguns segundos. O bloqueio dura no máximo 120 segundos depois que o template inicial foi criado |
+| `BRIDGE_CONVERSATION_0609` | Template inicial obrigatório | A conversa foi iniciada sem o template inicial do WhatsApp; envie um template de marketing ou de utilidade para abri-la |
+| `BRIDGE_CONVERSATION_0613` | Template inicial em envio | O template inicial ainda está sendo enviado, por esta ou outra requisição; tente de novo em alguns segundos. O bloqueio dura no máximo 120 segundos depois que o template inicial foi criado |
 
 Ao criar uma conversa, `BRIDGE_CONVERSATION_0105` retorna `409` com `extra.reason` igual a `PARTICIPANTS_MISMATCH`: uma conversa liberada ocupa a linha do Contato com outros Contatos ou linhas. Solicite os mesmos Contatos e linhas ou use outra linha.
 
 `BRIDGE_CONVERSATION_0601` retorna `404`, `0602` e `0603` retornam `400`, e de `0604` a `0608` retornam `422`. Veja em [parâmetros de templates iniciais](/pt-br/templates-and-parameters) o conteúdo de `extra` de cada erro e como corrigi-lo.
 
-`POST .../conversations/{conversationId}/send-template` retorna estes quatro como `409`. Em nenhum deles algo foi enviado.
+`POST .../conversations/{conversationId}/send-template` retorna estes como `409`. Em nenhum deles algo foi enviado.
 
 - `0007`: a conversa foi liberada e esta operação não a recupera. Inicie-a de novo com `POST .../conversations`, solicitando os mesmos contatos e linhas: o Bridge recupera uma conversa liberada quando consegue.
 - `0011`: um Agente está atendendo a conversa. Consulte-a com `GET .../conversations/{conversationId}` e tente de novo quando o `status` for `ACTIVE`.
 - `0004`: a conversa não está ativa, por exemplo porque está bloqueada ou excluída. Confira o `status` e tente de novo só quando for `ACTIVE`.
-- `0613`: o template inicial ainda está sendo enviado. Tente de novo em alguns segundos: o bloqueio dura no máximo 120 segundos depois que o template inicial foi criado.
+- `0609`: a conversa ainda não tem template inicial e este template não é de marketing nem de utilidade. Envie um template de marketing ou de utilidade: ele passa a ser o template inicial.
+- `0613`: outra requisição está enviando o template inicial da conversa, ou esse template ainda está sendo enviado. Tente de novo em alguns segundos: o bloqueio dura no máximo 120 segundos depois que o template inicial foi criado.
+- `0406`: o template é de marketing ou de utilidade e um contato da conversa já recebeu um dentro do período de espera promocional do workspace. `extra.contactIds` lista esses contatos e `extra.retryAfterSeconds` é a maior espera restante. Tente de novo depois de `retryAfterSeconds` segundos.
 
 Também retorna `BRIDGE_CONVERSATION_0001` como `404` quando a conversa não existe no seu workspace (envie o `conversationId` de uma das suas conversas) e `BRIDGE_CONVERSATION_0201` como `422` quando ela não tem nenhum contato de WhatsApp (envie para uma conversa que tenha um: `GET .../conversations/{conversationId}` lista seus participantes).
 
@@ -376,7 +380,7 @@ Códigos das operações de templates.
 | ---- | -------------- | ------- |
 | `BRIDGE_TEMPLATE_0001` | Template de provedor não encontrado | Nenhum template de provedor encontrado para o workspace e nome informados |
 
-Retornado como `404` por `GET .../templates/{templateId}` quando o ID ou nome não corresponde a um template de WhatsApp do workspace, e por `POST .../conversations/{conversationId}/send-template` quando `template.id` (ou `template.name`, se nenhum id for enviado) não corresponde a nenhum template de provedor do workspace. Envie o `id` ou o `name` de um template de provedor do workspace.
+Retornado como `404` por `GET .../templates/{templateId}` quando o ID ou nome não corresponde a um template de WhatsApp do workspace, e por `POST .../conversations/{conversationId}/send-template` quando `template.id` não corresponde a nenhum template de provedor do workspace. Envie o `id` de um template de provedor do workspace.
 
 `POST .../conversations/{conversationId}/send-template` também retorna estes códigos:
 
