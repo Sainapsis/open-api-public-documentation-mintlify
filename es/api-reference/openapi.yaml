@@ -5796,6 +5796,7 @@ components:
         - IMAGE
         - VIDEO
         - GIF
+        - DOCUMENT
       title: HeaderFileType
     InternalOperationRequest:
       properties:
@@ -6370,9 +6371,9 @@ components:
             - type: "null"
           title: Header Media
           description: >-
-            Medio opcional de encabezado (imagen o video) que se adjuntará al
-            mensaje de plantilla. Acepta un mediaId precargado o una url
-            pública.
+            Medio opcional de encabezado (imagen, video o documento PDF) que se
+            adjuntará al mensaje de plantilla. Acepta un mediaId precargado o
+            una url pública.
       type: object
       title: LeadscoutOutboundTemplateRef
       description: Referencia la plantilla aprobada por Meta que abrirá la conversación.
@@ -6719,11 +6720,14 @@ components:
         type:
           $ref: "#/components/schemas/HeaderFileType"
           title: Media Type
-          description: Tipo de medio del encabezado. Debe coincidir con el configurado
-            para la plantilla en Meta.
+          description: >-
+            Tipo de medio del encabezado. Debe coincidir con el configurado para
+            la plantilla en Meta. Un encabezado `DOCUMENT` lleva un PDF: se
+            rechaza un archivo precargado cuyo nombre no termina en `.pdf`.
           examples:
             - IMAGE
             - VIDEO
+            - DOCUMENT
         mediaId:
           anyOf:
             - type: string
@@ -6747,6 +6751,20 @@ components:
           examples:
             - null
             - https://cdn.example.com/promo.jpg
+        fileName:
+          anyOf:
+            - type: string
+            - type: "null"
+          title: File Name
+          description: >-
+            Nombre que el contacto ve en el PDF de un encabezado `DOCUMENT`.
+            Solo es válido para `DOCUMENT`; no puede estar vacío, admite como
+            máximo 240 caracteres y debe terminar en `.pdf`. Sin él, el contacto
+            ve el nombre del archivo precargado o el último segmento de la ruta
+            de la `url`, con `.pdf` agregado cuando le falta.
+          examples:
+            - null
+            - Catalogo temporada.pdf
       type: object
       required:
         - type
