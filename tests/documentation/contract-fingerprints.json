@@ -3,7 +3,7 @@
   "projection_version": 2,
   "contracts": {
     "api-reference/openapi.yaml": {
-      "whole_contract": "1e2bd444149285a937fddf26b8ce7669a084982cb71ba6bba0d2f4d85b32f627",
+      "whole_contract": "b74dfdd7a2389fd56371852f4a949a4ecd1ae5019337abb35bd28da31f0f77b1",
       "operation:GET /bridge/api/health": "90aa8cdfdb920e56a643bedf7bfa526f59c62b792ca1907c337c5116312f4d62",
       "operation:GET /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}": "bc59b0427a905cd8b6a590f1a1def3a7e4b8485460c41f477441c89151184451",
       "operation:PATCH /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}": "e081ca6d9487e6a1382d92254e47e3203f13c19739234d70153f4dabd922ae46",
@@ -77,7 +77,7 @@
       "schema:HandoffAssignee": "f9b898f0a19ad5123df7b118976374a5c4ece53a110ca0d1b31dfcbde0442223",
       "schema:HandoffRequest": "527a52e420f2ea065e3ecb9c68b934602ce3d6367d7bb53092e46551a78dd54e",
       "schema:HandoffResponse": "d278774dabea08a422c8ba0d42533522f7c77c7b65456bcadc0a31e2a58a6370",
-      "schema:HeaderFileType": "2049bd3a18341a0cde697940504e89c693bc90c9eb974837b1ab06f14cb65604",
+      "schema:HeaderFileType": "367d48f28398fcd0ca24ed5981704320a8fa0eaf1d9dcd9cd9c5801c85cc79ec",
       "schema:InternalOperationRequest": "ce77a94345502108a397dd5df7fa43460803ef07dca4d9a12540fae83e6b8460",
       "schema:InternalParticipant": "5abbdf3100b11d94944a024a678982d9ce482cd49c384fd13c543e5fd1757255",
       "schema:InternalParticipantIdentifierType": "f3b75798bb94b387a7606d248183afa4375adec8585146c524b4db457f6a8d09",
@@ -101,7 +101,7 @@
       "schema:OutboundAgentContextRequest": "72bd3317b0ca1f202fbbfe1f4a966af1ff49c5f5503778923d7953c6876d053e",
       "schema:OutboundConsentRequest": "25aa0dc7e1708049deb35c842cba568dac23878e4a196309748e6137e9acd98c",
       "schema:OutboundFollowUpRequest": "bb65ff22d4cf22507be7596cb2c9b89a738c0dcf87a8dd9e907c7969d9d13ae4",
-      "schema:OutboundTemplateMedia": "ff79d7bf2ee576c9c5a7535b0ea3cc2793872c4d941f1c2c3947a13d3c74dcad",
+      "schema:OutboundTemplateMedia": "c4b6600b1b1332cf1083cbef000d035ff811a85187b1efc9eb31e003b15cb877",
       "schema:ParticipantIdentifierType": "18fc42a9f32db0406f99ab25ef5b198d54cd3ba8e88db81a4d3e20fb74dd9053",
       "schema:ParticipantOperationsRequest": "b5bc317917bc01696e324ba459d1707b4f4b22e04c81b0996e98d31eb0c60c0d",
       "schema:PipelinesResponseList": "76482740cb44a2e6abcf11ed2224a8c73c501afc7b876306d20b3ce8360d72f8",
