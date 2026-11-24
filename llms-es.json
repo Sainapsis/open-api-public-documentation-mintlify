@@ -122,6 +122,13 @@
       "kind": "page"
     },
     {
+      "title": "Sesiones de LeadScout en el feed OData",
+      "source": "https://docs.bridge.new/es/guides/odata-feed",
+      "markdownUrl": "https://docs.bridge.new/es/guides/odata-feed.md",
+      "description": "Consulta de dónde vino cada sesión de LeadScout: los campos de procedencia del conjunto LeadscoutSessions y el campo obsoleto Source.",
+      "kind": "page"
+    },
+    {
       "title": "Registro de cambios",
       "source": "https://docs.bridge.new/es/changelog",
       "markdownUrl": "https://docs.bridge.new/es/changelog.md",

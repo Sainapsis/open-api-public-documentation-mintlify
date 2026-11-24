@@ -5,45 +5,46 @@
   "baseUrl": "https://docs.bridge.new",
   "totals": {
     "locales": 3,
-    "pages": 180,
-    "editorialPages": 78,
+    "pages": 183,
+    "editorialPages": 81,
     "operationPages": 102,
     "specs": 6
   },
   "byLocale": {
     "en": {
-      "pages": 60,
-      "editorialPages": 26,
+      "pages": 61,
+      "editorialPages": 27,
       "operationPages": 34
     },
     "es": {
-      "pages": 60,
-      "editorialPages": 26,
+      "pages": 61,
+      "editorialPages": 27,
       "operationPages": 34
     },
     "pt-br": {
-      "pages": 60,
-      "editorialPages": 26,
+      "pages": 61,
+      "editorialPages": 27,
       "operationPages": 34
     }
   },
   "inputs": {
     "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
-    "api-reference/openapi.yaml": "95286536e015f9ac93078c5c230847748fd3006b53bc464284011b8ab037d180",
-    "changelog.mdx": "e9084e3294b5d4a359eab45b627c4db6dec026c430818960778d75ae2366eab2",
+    "api-reference/openapi.yaml": "a3e72149930e90d920ea90331e2f95817b45fd7dc9a7d65d320b02ee3d2fe09f",
+    "changelog.mdx": "9341926bfa6c7d4e08eeadabba92b5bba87a21fda47ee3a6426c2628f4fc0c9e",
     "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
-    "docs.json": "e2c6a32ea3a9e4f66b05e69692afd6a53235bd70e247473fbda83bdecf6afc5b",
+    "docs.json": "0f47961d328f103f617867b6980a3d5170f3e352212a08bd3c88d0f055d3a01a",
     "error-codes.mdx": "4a9fe957aad34c6378af4674fd6e8418ff34f5146d51b878f6a044dfcde53f3c",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
-    "es/api-reference/openapi.yaml": "0acad348176bb6164203816f466cefbaba1057ebb43526f1ddfbe97488d8c854",
-    "es/changelog.mdx": "b2d420cca846e287101c92623dbac4c485f0e11c4198653a80caa50f19d96f28",
+    "es/api-reference/openapi.yaml": "78c8a0f6140a2e294ae9682f0b696a1bda60623cab7ca6aff44fcd0e02a306f2",
+    "es/changelog.mdx": "23ec7bf06e804079e8f1e32e7dd1a814e31b8e7eb481597a1676885c7bcd55a0",
     "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
     "es/error-codes.mdx": "8745149fb09d855ebb6eec4ba9178f0284c93378297762b5eca6a1f8a27c9a30",
     "es/guides/agent-outbound.mdx": "4602116efdc7585fa63ce2cce355122d3c6583c0c542b644af395e08f0dcc45f",
     "es/guides/first-conversation.mdx": "eb152c9a23454466b70b82cba98fa7755a720db6edbed22ab382aac1130af147",
     "es/guides/identifiers.mdx": "5ecbe5a47e052c83de34391ef8d1fd83c73c561a28fe9777f3ae6ce7b9816442",
+    "es/guides/odata-feed.mdx": "da2122d23edd226a88faa229650259c37a2c3547bd3427cd3b9da29cbb8b34f6",
     "es/guides/pagination.mdx": "836fb8501a011883e58b457b9216e71b4056d4353f111143459784c4cbd7c70f",
     "es/guides/pipeline-records.mdx": "e2a03942ac556f75cb336920a9062d64646040454dcb17e9afeca8f329defc8c",
     "es/guides/responses.mdx": "17afb76df527066668eeca87dc1c2d31770198c33fd842d2098e98e14b140438",
@@ -66,6 +67,7 @@
     "guides/agent-outbound.mdx": "cb60fe30743d96163b1b724b4518dfb0a04fe003fc9b6c3bf14132cd9d86f8fe",
     "guides/first-conversation.mdx": "4682c6cc598460b265e24ca8d0c119863a29736e4fb81bef7cf033ba50ab00a6",
     "guides/identifiers.mdx": "4d087785aa7a1c61c4d0fa56272940dc43a7c32cb97c91996ed7117e06967125",
+    "guides/odata-feed.mdx": "71cc69920493595c06c20a48dc68ed47438acabfc7833f5aaf75fcc6c313a6dd",
     "guides/pagination.mdx": "03f46cf534aeb21d11c5622224049a1095f6cb86a1815d3a97a1fbfb00bb8051",
     "guides/pipeline-records.mdx": "4a5a24659e662d80e9b6e8d37b5fa3c04e4aa215cecbcd4d3bdf047c5356bafc",
     "guides/responses.mdx": "4a2bf60e3c0d4f542e353b1345cb4b73a1cefc1f6bd50c001564bb8e35177a53",
@@ -78,14 +80,15 @@
     "lead-capture/integration.mdx": "e41b09302ab3d26dcb1089158f3ef805e6ab5f1d1574bfa877dfbf9630651d03",
     "lead-capture/templates.mdx": "506d2ef49287c95004fcd43150af114e6ced5f39cc32caaa9e2566fcc101f66f",
     "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
-    "pt-br/api-reference/openapi.yaml": "6e40033c65b4784a8c2a5ce5660a071e7fcb9fbe632e586dd6fb904c18784de2",
-    "pt-br/changelog.mdx": "f5ebecd2c3c7ee00801d64520995d86ae544264cd272db0233d32fab4ad9c455",
+    "pt-br/api-reference/openapi.yaml": "3c694026f5e295e818744d3f68190547dac4886238b8ce6d4b5ba758d5441167",
+    "pt-br/changelog.mdx": "799aaa9401172127433be0dfde131a3225bbf5dbcd7ee4df665366730692b1bc",
     "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
     "pt-br/error-codes.mdx": "634588dac4c0b7bd604548308ea82ac20db4c2dc90bf8342f31e683263de03f9",
     "pt-br/guides/agent-outbound.mdx": "b43380b51224c6d81fb6b0db9e2e0a9528987498badf91b231e6ab567185c157",
     "pt-br/guides/first-conversation.mdx": "d21f83a729a307d4a2d18e2e6c719854da15f222d3d4dc93071d02466340356c",
     "pt-br/guides/identifiers.mdx": "d6d17a99838659f8a3fe08817fcf54b38c12559b730acb2dd84bc42d166b8b90",
+    "pt-br/guides/odata-feed.mdx": "35a96905d19a2f86f682ecb7967cda00a437de10da1830e35911488410839f66",
     "pt-br/guides/pagination.mdx": "394b5c681dd321375e1aacfe0e9ca9b81c5ca3cce900b516324b64372b400992",
     "pt-br/guides/pipeline-records.mdx": "a4371c29dfd3069974da88a34dc50871ecfdfef6256f7349e24071164a3c4d6f",
     "pt-br/guides/responses.mdx": "70ecc36224953405f18af5a78dd75b2cbcfcc6a3f66d4515e5cc34ebe10aacd1",
@@ -213,6 +216,13 @@
       "route": "/error-codes",
       "source": "error-codes.mdx",
       "title": "Error codes"
+    },
+    {
+      "locale": "en",
+      "kind": "page",
+      "route": "/guides/odata-feed",
+      "source": "guides/odata-feed.mdx",
+      "title": "LeadScout sessions in the OData feed"
     },
     {
       "locale": "en",
@@ -705,6 +715,13 @@
     {
       "locale": "es",
       "kind": "page",
+      "route": "/es/guides/odata-feed",
+      "source": "es/guides/odata-feed.mdx",
+      "title": "Sesiones de LeadScout en el feed OData"
+    },
+    {
+      "locale": "es",
+      "kind": "page",
       "route": "/es/changelog",
       "source": "es/changelog.mdx",
       "title": "Registro de cambios"
@@ -1193,6 +1210,13 @@
     {
       "locale": "pt-br",
       "kind": "page",
+      "route": "/pt-br/guides/odata-feed",
+      "source": "pt-br/guides/odata-feed.mdx",
+      "title": "Sessões do LeadScout no feed OData"
+    },
+    {
+      "locale": "pt-br",
+      "kind": "page",
       "route": "/pt-br/changelog",
       "source": "pt-br/changelog.mdx",
       "title": "Histórico de alterações"
@@ -1587,7 +1611,7 @@
       "source": "api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "95286536e015f9ac93078c5c230847748fd3006b53bc464284011b8ab037d180",
+      "sha256": "a3e72149930e90d920ea90331e2f95817b45fd7dc9a7d65d320b02ee3d2fe09f",
       "operationCount": 33
     },
     {
@@ -1603,7 +1627,7 @@
       "source": "es/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/es/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "0acad348176bb6164203816f466cefbaba1057ebb43526f1ddfbe97488d8c854",
+      "sha256": "78c8a0f6140a2e294ae9682f0b696a1bda60623cab7ca6aff44fcd0e02a306f2",
       "operationCount": 33
     },
     {
@@ -1619,7 +1643,7 @@
       "source": "pt-br/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/pt-br/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "6e40033c65b4784a8c2a5ce5660a071e7fcb9fbe632e586dd6fb904c18784de2",
+      "sha256": "3c694026f5e295e818744d3f68190547dac4886238b8ce6d4b5ba758d5441167",
       "operationCount": 33
     },
     {
@@ -1641,47 +1665,47 @@
   ],
   "outputs": {
     "llms-en.json": {
-      "bytes": 40551,
-      "sha256": "c5a574717e072f26ce863b2d8ab260d75c2dc3fbdf9883909d1c782f35bebf28"
+      "bytes": 40930,
+      "sha256": "fa6f217a589c48f5f472386a7c1a7863366f863feea4d099e70b33749e4b3d8f"
     },
     "llms-full-en.json": {
-      "bytes": 322094,
-      "sha256": "dbcd06ed310650b85b8fb67842a2245d320038f239fe77f6abd68483564046ae"
+      "bytes": 325698,
+      "sha256": "457edceda169dcd53119e858cac803b50948e277447070ad7111c668fdac29ce"
     },
     "llms-es.json": {
-      "bytes": 43647,
-      "sha256": "27a05a452cfa843eb7399ec99405f6086c24b6face8959b242b87f8a05fcb1ea"
+      "bytes": 44034,
+      "sha256": "0bf5218a66987bcc454c9c1e37e277a3a65a319d48b7e200d592e6a0fb6a71f2"
     },
     "llms-full-es.json": {
-      "bytes": 345036,
-      "sha256": "dc00fe0f62a48215c0d9205e387565676b4d8e09354f16fa173c2ce5d5180281"
+      "bytes": 348921,
+      "sha256": "3e2faf829746a5f30e58877e58d12f9259cb6959b0d74c532381fff04071706c"
     },
     "llms-pt-br.json": {
-      "bytes": 43598,
-      "sha256": "6418cae73ff4544a1c27de09431cf8766ec847c18ecc643847f9a21fcb5ffd68"
+      "bytes": 43984,
+      "sha256": "e664317e2c0d5cd41d10c4244166dc33e1787e0e5af52f21c303a9f82a41cfaa"
     },
     "llms-full-pt-br.json": {
-      "bytes": 343406,
-      "sha256": "074f5360aacf795619bc1a1ef324bcaa4674723fe4a0b8b6fd329579db80ecc0"
+      "bytes": 347238,
+      "sha256": "8e0b1522a17866391b135b25d75fc09e74797f1c2860193c1eec43a4a560d117"
     },
     "llms.txt": {
-      "bytes": 47545,
-      "sha256": "dce9776fa52dd1d23681a4b81a665fbf25f587cbe7409f02e05d62939122557f"
+      "bytes": 48223,
+      "sha256": "fbe41ca7f81c39a30c345165c55bde2a0261f6fe3d59dacd03fe691b67af857a"
     },
     "llms-full.txt": {
-      "bytes": 888291,
-      "sha256": "e6ddd9b009e4c0ac5d8a80bda8585b52c1821d5a8926a3f26c577138684063f8"
+      "bytes": 898937,
+      "sha256": "b285cb380375a47e7cdfe18f84c968308604a757b445ab70a3669a1b0ccf48fd"
     },
     "sitemap.xml": {
-      "bytes": 113069,
-      "sha256": "8a5ceecda7970a1e508f8a58ec75275508b492f3cd0b6810c6f40b2b5da3e7e5"
+      "bytes": 114533,
+      "sha256": "0df8de39a035bb614050e009570e439d933a0715fa753db647b47cee18220e27"
     }
   },
   "sitemap": {
-    "canonicalCount": 180,
-    "familyCount": 60,
+    "canonicalCount": 183,
+    "familyCount": 61,
     "operationFamilies": 34,
-    "editorialFamilies": 26,
+    "editorialFamilies": 27,
     "languages": [
       "en",
       "es",

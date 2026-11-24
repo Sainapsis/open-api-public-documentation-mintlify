@@ -15,6 +15,18 @@ Aquí se muestran los cambios que afectan las llamadas que ya haces, del más re
   Las entradas anteriores de abajo no registraron fechas de entrada en vigor. No se han verificado sus fechas de despliegue y su orden no establece una fecha de lanzamiento. **Aún no se ha anunciado** la fecha de retirada de los filtros de listado obsoletos. Sigue usando el contrato actual documentado hasta que se publique un cambio efectivo y usa los endpoints de consulta por identificador disponibles para integraciones nuevas.
 </Note>
 
+## Procedencia de las sesiones en el feed OData
+
+El conjunto de entidades `LeadscoutSessions` incorpora cinco campos de procedencia opcionales: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` y `ProvenanceCapturedAt`.
+
+- **Obsoleto:** `Source` sigue presente y conserva su valor actual; prefiere los campos de procedencia.
+- **Cambia:** `CampaignCaptureCapturedAt` ahora se toma de la fecha de captura de la procedencia, y solo cuando `CampaignCaptureStatus` es `MATCHED`.
+- **Nuevo:** las solicitudes outbound aceptan un `campaignName` opcional, solo junto con `campaignId`, de hasta 200 caracteres.
+
+Consulta [el feed OData](/es/guides/odata-feed).
+
+---
+
 <a id="documentation-improvements"></a>
 
 ## Mejoras de documentación

@@ -13,6 +13,18 @@ Changes that affect the calls you already make, newest first. Additive changes â
   The older entries below did not record effective dates. Their deployment dates have not been verified; their order does not establish a release date. The retirement date for deprecated list filters is **not yet announced**. Keep using the documented current contract until an effective change is published, and use the available lookup endpoints for new integrations.
 </Note>
 
+## Session provenance in the OData feed
+
+The `LeadscoutSessions` entity set gains five optional provenance fields: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` and `ProvenanceCapturedAt`.
+
+- **Deprecated:** `Source` is still present and keeps its current value; prefer the provenance fields.
+- **Changed:** `CampaignCaptureCapturedAt` is now taken from the provenance capture time, and only when `CampaignCaptureStatus` is `MATCHED`.
+- **Added:** outbound requests accept an optional `campaignName`, only together with `campaignId`, up to 200 characters.
+
+See [the OData feed](/guides/odata-feed).
+
+---
+
 ## Documentation improvements
 
 This revision clarifies the existing API contract and introduces task-based integration guides. It renames the landing-page feature to **Custom Connections**, explains outbound conversation reuse and recovery, and improves error and webhook guidance. The existing API signatures and `/lead-capture` documentation URLs are preserved. A documentation revision date is not an API deployment or deprecation date.

@@ -1,0 +1,43 @@
+---
+title: "LeadScout sessions in the OData feed"
+sidebarTitle: "OData feed"
+description: "Read where each LeadScout session came from: the provenance fields of the LeadscoutSessions entity set and the deprecated Source field."
+keywords: ["odata", "power bi", "leadscout", "provenance", "source", "campaign"]
+---
+
+The OData feed serves your workspace's conversation data to reporting tools such as Power BI. This page covers the fields of the `LeadscoutSessions` entity set that tell you where a session came from. Request `$metadata` for the complete list of fields and their types.
+
+## Connect
+
+```text
+https://api-connect-us.bridge.new/odata/v1
+```
+
+The feed uses HTTP Basic authentication: the username is your workspace id and the password is the same API key you send in `x-api-key` to the REST API. A request with only the `x-api-key` header is rejected.
+
+## Provenance fields
+
+Provenance describes where a session came from. Every field is optional and is empty when Bridge recorded no provenance for the session.
+
+| Field | Type | Content |
+| --- | --- | --- |
+| `ProvenanceSource` | `Edm.String` | Where the contact came from, such as `facebook`, `instagram`, `google`, `whatsapp` or `newsletter`. Equivalent to `utm_source`. |
+| `ProvenanceMedium` | `Edm.String` | The kind of channel, such as `paid_social`, `organic`, `cpc`, `email`, `referral` or `bridge`. For a landing page it is the `utm_medium` your page sent, in lowercase. |
+| `ProvenanceCampaignId` | `Edm.String` | The campaign id: the ad platform's campaign, the `campaignId` sent to an outbound request, or the Bridge campaign. |
+| `ProvenanceContentId` | `Edm.String` | The ad or content id within the campaign. |
+| `ProvenanceCapturedAt` | `Edm.DateTimeOffset` | When the provenance was captured. |
+
+## Changed fields
+
+<Warning>
+  `Source` is deprecated. It is still present and keeps the value it had before; prefer the provenance fields above.
+</Warning>
+
+| Field | Behavior |
+| --- | --- |
+| `Source` | Deprecated. Carries the campaign id for Meta lead forms, outbound API requests and Bridge bulk campaigns, the landing URL for Click-to-WhatsApp ads and landing pages, and nothing for organic WhatsApp conversations. |
+| `CampaignCaptureCapturedAt` | Taken from the provenance capture time, and only when `CampaignCaptureStatus` is `MATCHED`; otherwise empty. |
+
+## Name a campaign from the outbound API
+
+An outbound request that sends `campaignId` can also send an optional `campaignName`. The name is accepted only together with `campaignId`, surrounding spaces are trimmed, a blank name is treated as absent, and it is limited to 200 characters. When the same campaign arrives with different names, reports show the most recent one. See the [Agents outbound guide](/guides/agent-outbound).

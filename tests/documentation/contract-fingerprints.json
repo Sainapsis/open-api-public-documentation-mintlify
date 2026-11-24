@@ -3,7 +3,7 @@
   "projection_version": 2,
   "contracts": {
     "api-reference/openapi.yaml": {
-      "whole_contract": "b74dfdd7a2389fd56371852f4a949a4ecd1ae5019337abb35bd28da31f0f77b1",
+      "whole_contract": "a7832f162b7960c34fac2ab6e4c4bf30cc2f36e54efc5beb7b75eaf76b2f1eeb",
       "operation:GET /bridge/api/health": "90aa8cdfdb920e56a643bedf7bfa526f59c62b792ca1907c337c5116312f4d62",
       "operation:GET /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}": "bc59b0427a905cd8b6a590f1a1def3a7e4b8485460c41f477441c89151184451",
       "operation:PATCH /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}": "e081ca6d9487e6a1382d92254e47e3203f13c19739234d70153f4dabd922ae46",
@@ -44,7 +44,7 @@
       "schema:AgentOutboundFollowUp": "4b65ddd03dce41f9fd9372162a1f4b691698d62e867e80af6a045e0f2989eeb8",
       "schema:AgentOutboundHandoffOverride": "36a3fc594e71b69e2cb763fb6d3e07b43c898430e72a3f5e5eb482f87271a3af",
       "schema:AgentOutboundPreAssignedUser": "eaff17f9c379b512591de025d6463935b66284189367a805c37c9b4d2a895e0e",
-      "schema:AgentOutboundRequest": "d226c400c255a0d95d8b6ca41fe2b90e02be1c3d3eaa67c6a6a3f443b807335f",
+      "schema:AgentOutboundRequest": "065923af34f3f48797af2aa82ac729d10dc41e3bb3bcbfdc615abad142c16649",
       "schema:AgentOutboundResponse": "aad5e8fb08d0cd63fad2480f7238cc6d7d7651b7463b4e28d75780dacf10277b",
       "schema:AgentResponse": "07cb90a753644e592741a6a31b4c98c6a69a6fbe4047fef5064d24f5014a8e36",
       "schema:AgentTemplateSent": "58b5c77e1fe2ea3836f1071efccdb7d4dfa6affe350100ec79c5491ca596e07c",
@@ -88,7 +88,7 @@
       "schema:LeadscoutOutboundContactRef": "4ee5aaacd91dd06e7e2009a79dfc0751a6ea783103ed31ebdd21064d571637c6",
       "schema:LeadscoutOutboundHandoffOverride": "611ce2b6f71470e7794ed0ab4d6b8167f30d49351115330e296b34ae86c8494e",
       "schema:LeadscoutOutboundPreAssignedUser": "62d58dc4b6aad3a35b44122c59237fe87fb397eb0b791117932d2c8f701d9fef",
-      "schema:LeadscoutOutboundRequest": "baa1e6c13150989c9dbeb8339bfd814c46b4fbb0400173df704457daa4989696",
+      "schema:LeadscoutOutboundRequest": "dd9af7f5ba7a921d592ad1280a2a604649f5283c1989f0a578d870687ba8cd68",
       "schema:LeadscoutOutboundResponse": "d71ba35d3114a805480955c4e1664f5e00bb76ccb7a5fd163d249142a3a487ac",
       "schema:LeadscoutOutboundTemplateRef": "04aec70f87f010378384645e68167118a7b7bc278e055a1d601b41696e026325",
       "schema:LeadscoutTemplateSent": "57a14e6e8221405245344e87e5fec9e060b10b2d5dbcbd4191aa774f1316e230",

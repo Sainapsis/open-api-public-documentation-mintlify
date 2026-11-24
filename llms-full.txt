@@ -2283,6 +2283,51 @@ Error codes for workspace operations.
 
 ---
 
+# LeadScout sessions in the OData feed
+
+Source: https://docs.bridge.new/guides/odata-feed
+
+Read where each LeadScout session came from: the provenance fields of the LeadscoutSessions entity set and the deprecated Source field.
+
+The OData feed serves your workspace's conversation data to reporting tools such as Power BI. This page covers the fields of the `LeadscoutSessions` entity set that tell you where a session came from. Request `$metadata` for the complete list of fields and their types.
+
+## Connect
+
+```text
+https://api-connect-us.bridge.new/odata/v1
+```
+
+The feed uses HTTP Basic authentication: the username is your workspace id and the password is the same API key you send in `x-api-key` to the REST API. A request with only the `x-api-key` header is rejected.
+
+## Provenance fields
+
+Provenance describes where a session came from. Every field is optional and is empty when Bridge recorded no provenance for the session.
+
+| Field | Type | Content |
+| --- | --- | --- |
+| `ProvenanceSource` | `Edm.String` | Where the contact came from, such as `facebook`, `instagram`, `google`, `whatsapp` or `newsletter`. Equivalent to `utm_source`. |
+| `ProvenanceMedium` | `Edm.String` | The kind of channel, such as `paid_social`, `organic`, `cpc`, `email`, `referral` or `bridge`. For a landing page it is the `utm_medium` your page sent, in lowercase. |
+| `ProvenanceCampaignId` | `Edm.String` | The campaign id: the ad platform's campaign, the `campaignId` sent to an outbound request, or the Bridge campaign. |
+| `ProvenanceContentId` | `Edm.String` | The ad or content id within the campaign. |
+| `ProvenanceCapturedAt` | `Edm.DateTimeOffset` | When the provenance was captured. |
+
+## Changed fields
+
+**Warning**
+
+  `Source` is deprecated. It is still present and keeps the value it had before; prefer the provenance fields above.
+
+| Field | Behavior |
+| --- | --- |
+| `Source` | Deprecated. Carries the campaign id for Meta lead forms, outbound API requests and Bridge bulk campaigns, the landing URL for Click-to-WhatsApp ads and landing pages, and nothing for organic WhatsApp conversations. |
+| `CampaignCaptureCapturedAt` | Taken from the provenance capture time, and only when `CampaignCaptureStatus` is `MATCHED`; otherwise empty. |
+
+## Name a campaign from the outbound API
+
+An outbound request that sends `campaignId` can also send an optional `campaignName`. The name is accepted only together with `campaignId`, surrounding spaces are trimmed, a blank name is treated as absent, and it is limited to 200 characters. When the same campaign arrives with different names, reports show the most recent one. See the [Agents outbound guide](https://docs.bridge.new/guides/agent-outbound.md).
+
+---
+
 # Changelog
 
 Source: https://docs.bridge.new/changelog
@@ -2296,6 +2341,18 @@ Changes that affect the calls you already make, newest first. Additive changes �
 **Note**
 
   The older entries below did not record effective dates. Their deployment dates have not been verified; their order does not establish a release date. The retirement date for deprecated list filters is **not yet announced**. Keep using the documented current contract until an effective change is published, and use the available lookup endpoints for new integrations.
+
+## Session provenance in the OData feed
+
+The `LeadscoutSessions` entity set gains five optional provenance fields: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` and `ProvenanceCapturedAt`.
+
+- **Deprecated:** `Source` is still present and keeps its current value; prefer the provenance fields.
+- **Changed:** `CampaignCaptureCapturedAt` is now taken from the provenance capture time, and only when `CampaignCaptureStatus` is `MATCHED`.
+- **Added:** outbound requests accept an optional `campaignName`, only together with `campaignId`, up to 200 characters.
+
+See [the OData feed](https://docs.bridge.new/guides/odata-feed.md).
+
+---
 
 ## Documentation improvements
 
@@ -7947,6 +8004,51 @@ Errores de las operaciones de espacios de trabajo.
 
 ---
 
+# Sesiones de LeadScout en el feed OData
+
+Source: https://docs.bridge.new/es/guides/odata-feed
+
+Consulta de dónde vino cada sesión de LeadScout: los campos de procedencia del conjunto LeadscoutSessions y el campo obsoleto Source.
+
+El feed OData entrega los datos de conversaciones de tu espacio de trabajo a herramientas de reportes como Power BI. Esta página cubre los campos del conjunto de entidades `LeadscoutSessions` que indican de dónde vino una sesión. Pide `$metadata` para ver la lista completa de campos y sus tipos.
+
+## Conexión
+
+```text
+https://api-connect-us.bridge.new/odata/v1
+```
+
+El feed usa autenticación HTTP Basic: el usuario es el id de tu espacio de trabajo y la contraseña es la misma API key que envías en `x-api-key` a la API REST. Una solicitud con solo el encabezado `x-api-key` se rechaza.
+
+## Campos de procedencia
+
+La procedencia describe de dónde vino una sesión. Todos los campos son opcionales y están vacíos cuando Bridge no registró procedencia para la sesión.
+
+| Campo | Tipo | Contenido |
+| --- | --- | --- |
+| `ProvenanceSource` | `Edm.String` | De dónde vino el contacto, por ejemplo `facebook`, `instagram`, `google`, `whatsapp` o `newsletter`. Equivale a `utm_source`. |
+| `ProvenanceMedium` | `Edm.String` | El tipo de canal, por ejemplo `paid_social`, `organic`, `cpc`, `email`, `referral` o `bridge`. En una landing page es el `utm_medium` que envió tu página, en minúsculas. |
+| `ProvenanceCampaignId` | `Edm.String` | El id de la campaña: la campaña de la plataforma de anuncios, el `campaignId` enviado en una solicitud outbound o la campaña de Bridge. |
+| `ProvenanceContentId` | `Edm.String` | El id del anuncio o contenido dentro de la campaña. |
+| `ProvenanceCapturedAt` | `Edm.DateTimeOffset` | Cuándo se capturó la procedencia. |
+
+## Campos que cambian
+
+**Advertencia**
+
+  `Source` está obsoleto. Sigue presente y conserva el valor que tenía; prefiere los campos de procedencia de arriba.
+
+| Campo | Comportamiento |
+| --- | --- |
+| `Source` | Obsoleto. Lleva el id de campaña para formularios de Meta, solicitudes de la API outbound y campañas masivas de Bridge; la URL de la landing para anuncios Click-to-WhatsApp y landing pages; y nada para conversaciones orgánicas de WhatsApp. |
+| `CampaignCaptureCapturedAt` | Se toma de la fecha de captura de la procedencia, y solo cuando `CampaignCaptureStatus` es `MATCHED`; si no, está vacío. |
+
+## Nombra una campaña desde la API outbound
+
+Una solicitud outbound que envía `campaignId` también puede enviar un `campaignName` opcional. El nombre solo se acepta junto con `campaignId`, se eliminan los espacios al inicio y al final un nombre en blanco se trata como ausente y admite como máximo 200 caracteres. Si la misma campaña llega con nombres distintos, los reportes muestran el más reciente. Consulta la [guía de outbound de Agentes](https://docs.bridge.new/es/guides/agent-outbound.md).
+
+---
+
 # Registro de cambios
 
 Source: https://docs.bridge.new/es/changelog
@@ -7960,6 +8062,18 @@ Aquí se muestran los cambios que afectan las llamadas que ya haces, del más re
 **Nota**
 
   Las entradas anteriores de abajo no registraron fechas de entrada en vigor. No se han verificado sus fechas de despliegue y su orden no establece una fecha de lanzamiento. **Aún no se ha anunciado** la fecha de retirada de los filtros de listado obsoletos. Sigue usando el contrato actual documentado hasta que se publique un cambio efectivo y usa los endpoints de consulta por identificador disponibles para integraciones nuevas.
+
+## Procedencia de las sesiones en el feed OData
+
+El conjunto de entidades `LeadscoutSessions` incorpora cinco campos de procedencia opcionales: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` y `ProvenanceCapturedAt`.
+
+- **Obsoleto:** `Source` sigue presente y conserva su valor actual; prefiere los campos de procedencia.
+- **Cambia:** `CampaignCaptureCapturedAt` ahora se toma de la fecha de captura de la procedencia, y solo cuando `CampaignCaptureStatus` es `MATCHED`.
+- **Nuevo:** las solicitudes outbound aceptan un `campaignName` opcional, solo junto con `campaignId`, de hasta 200 caracteres.
+
+Consulta [el feed OData](https://docs.bridge.new/es/guides/odata-feed.md).
+
+---
 
 ## Mejoras de documentación
 
@@ -13512,6 +13626,51 @@ Códigos das operações de workspace.
 
 ---
 
+# Sessões do LeadScout no feed OData
+
+Source: https://docs.bridge.new/pt-br/guides/odata-feed
+
+Consulte de onde veio cada sessão do LeadScout: os campos de procedência do conjunto LeadscoutSessions e o campo obsoleto Source.
+
+O feed OData entrega os dados de conversas do seu workspace para ferramentas de relatórios como o Power BI. Esta página cobre os campos do conjunto de entidades `LeadscoutSessions` que indicam de onde veio uma sessão. Solicite `$metadata` para ver a lista completa de campos e seus tipos.
+
+## Conexão
+
+```text
+https://api-connect-us.bridge.new/odata/v1
+```
+
+O feed usa autenticação HTTP Basic: o usuário é o id do seu workspace e a senha é a mesma API key que você envia em `x-api-key` para a API REST. Uma requisição apenas com o cabeçalho `x-api-key` é rejeitada.
+
+## Campos de procedência
+
+A procedência descreve de onde veio uma sessão. Todos os campos são opcionais e ficam vazios quando o Bridge não registrou procedência para a sessão.
+
+| Campo | Tipo | Conteúdo |
+| --- | --- | --- |
+| `ProvenanceSource` | `Edm.String` | De onde veio o contato, por exemplo `facebook`, `instagram`, `google`, `whatsapp` ou `newsletter`. Equivale a `utm_source`. |
+| `ProvenanceMedium` | `Edm.String` | O tipo de canal, por exemplo `paid_social`, `organic`, `cpc`, `email`, `referral` ou `bridge`. Em uma landing page, é o `utm_medium` que sua página enviou, em minúsculas. |
+| `ProvenanceCampaignId` | `Edm.String` | O id da campanha: a campanha da plataforma de anúncios, o `campaignId` enviado em uma requisição outbound ou a campanha do Bridge. |
+| `ProvenanceContentId` | `Edm.String` | O id do anúncio ou conteúdo dentro da campanha. |
+| `ProvenanceCapturedAt` | `Edm.DateTimeOffset` | Quando a procedência foi capturada. |
+
+## Campos que mudam
+
+**Aviso**
+
+  `Source` está obsoleto. Continua presente e mantém o valor que tinha; prefira os campos de procedência acima.
+
+| Campo | Comportamento |
+| --- | --- |
+| `Source` | Obsoleto. Traz o id da campanha para formulários da Meta, requisições da API outbound e campanhas em massa do Bridge; a URL da landing para anúncios Click-to-WhatsApp e landing pages; e nada para conversas orgânicas do WhatsApp. |
+| `CampaignCaptureCapturedAt` | Vem do horário de captura da procedência, e somente quando `CampaignCaptureStatus` é `MATCHED`; caso contrário, fica vazio. |
+
+## Nomeie uma campanha pela API outbound
+
+Uma requisição outbound que envia `campaignId` também pode enviar um `campaignName` opcional. O nome só é aceito junto com `campaignId`, os espaços no início e no fim são removidos um nome em branco é tratado como ausente e são permitidos no máximo 200 caracteres. Se a mesma campanha chegar com nomes diferentes, os relatórios mostram o mais recente. Consulte o [guia de outbound de Agentes](https://docs.bridge.new/pt-br/guides/agent-outbound.md).
+
+---
+
 # Histórico de alterações
 
 Source: https://docs.bridge.new/pt-br/changelog
@@ -13525,6 +13684,18 @@ Mudanças que afetam as chamadas que você já faz, das mais recentes para as ma
 **Nota**
 
   As entradas antigas abaixo não registraram datas de vigência. As datas de implantação não foram verificadas, e a ordem das entradas não define uma data de lançamento. A data de remoção dos filtros de lista obsoletos **ainda não foi anunciada**. Continue usando o contrato atual documentado até a publicação de uma mudança efetiva e use os endpoints de consulta disponíveis em novas integrações.
+
+## Procedência das sessões no feed OData
+
+O conjunto de entidades `LeadscoutSessions` ganha cinco campos de procedência opcionais: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` e `ProvenanceCapturedAt`.
+
+- **Obsoleto:** `Source` continua presente e mantém seu valor atual; prefira os campos de procedência.
+- **Muda:** `CampaignCaptureCapturedAt` agora vem do horário de captura da procedência, e somente quando `CampaignCaptureStatus` é `MATCHED`.
+- **Novo:** as requisições outbound aceitam um `campaignName` opcional, somente junto com `campaignId`, com até 200 caracteres.
+
+Consulte [o feed OData](https://docs.bridge.new/pt-br/guides/odata-feed.md).
+
+---
 
 ## Melhorias na documentação
 

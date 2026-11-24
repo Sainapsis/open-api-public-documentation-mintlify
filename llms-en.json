@@ -122,6 +122,13 @@
       "kind": "page"
     },
     {
+      "title": "LeadScout sessions in the OData feed",
+      "source": "https://docs.bridge.new/guides/odata-feed",
+      "markdownUrl": "https://docs.bridge.new/guides/odata-feed.md",
+      "description": "Read where each LeadScout session came from: the provenance fields of the LeadscoutSessions entity set and the deprecated Source field.",
+      "kind": "page"
+    },
+    {
       "title": "Changelog",
       "source": "https://docs.bridge.new/changelog",
       "markdownUrl": "https://docs.bridge.new/changelog.md",

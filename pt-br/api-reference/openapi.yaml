@@ -4626,6 +4626,16 @@ components:
           examples:
             - null
             - spring_promo_2026
+        campaignName:
+          anyOf:
+            - type: string
+              maxLength: 200
+            - type: "null"
+          title: Campaign Name
+          description: Nome opcional da campanha, armazenado junto com `campaignId` para relatórios. Aceito somente junto com `campaignId`; os espaços no início e no fim são removidos um nome em branco é tratado como ausente e são permitidos no máximo 200 caracteres. Se a mesma campanha chegar com nomes diferentes, os relatórios mostram o mais recente.
+          examples:
+            - null
+            - Spring promo 2026
         forceSend:
           type: boolean
           title: Force Send
@@ -6193,6 +6203,16 @@ components:
           examples:
             - null
             - spring_promo_2026
+        campaignName:
+          anyOf:
+            - type: string
+              maxLength: 200
+            - type: "null"
+          title: Campaign Name
+          description: Nome opcional da campanha, armazenado junto com `campaignId` para relatórios. Aceito somente junto com `campaignId`; os espaços no início e no fim são removidos um nome em branco é tratado como ausente e são permitidos no máximo 200 caracteres. Se a mesma campanha chegar com nomes diferentes, os relatórios mostram o mais recente.
+          examples:
+            - null
+            - Spring promo 2026
         forceSend:
           type: boolean
           title: Force Send
