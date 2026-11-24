@@ -1461,9 +1461,9 @@ The reference for each operation remains authoritative: [messages](https://docs.
 
   A correlation ID is not a status URL. The published contract does not define a polling endpoint for `trackingId` or `requestId`. Keep it for correlation and support; do not construct a new endpoint from it.
 
-## Trace a request with its correlation ID
+## Trace a request with `X-Correlation-Id`
 
-Every Integrations API response carries an `X-Correlation-Id` header, on success and on error alike. Its value is a UUID that Bridge generates for that request and uses to find it in its own records.
+Every response from the REST Integrations API carries an `X-Correlation-Id` header, on success and on error alike. Its value is a UUID that Bridge generates for that HTTP call and uses to find it in its own records.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -1478,7 +1478,20 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 - Treat it as an opaque string. Every request gets a new value, including a retry of the same request.
 - Bridge always generates it: an `X-Correlation-Id` header sent in your request is not used as the ID.
 
-A request rejected for a missing or invalid API Key does not carry the header. It is also not the `traceId` that some error bodies include; when both are present, send both to support.
+`X-Correlation-Id` identifies one HTTP call. It is not the `trackingId` of a handoff, which identifies the handoff, nor the `traceId` that some error bodies include. When a response carries more than one of them, send them all to support. Custom Connections responses do not carry the header; follow [its error reference](https://docs.bridge.new/lead-capture/errors.md) for support requests.
+
+### Responses without the header
+
+Some responses are returned before the request reaches the API, so they carry no `X-Correlation-Id`:
+
+| Response | Cause |
+| --- | --- |
+| `401` or `403` with a body such as `{"message": "Forbidden"}` | Missing or invalid API Key |
+| `413` | The request is too large |
+| `502` | The API could not complete the request |
+| `504` | The request did not finish within 29 seconds |
+
+For these, send support the time of the request with its time zone, the method and path, the status, and `traceId` if the body includes one.
 
 ## Parse the error shape the endpoint publishes
 
@@ -1984,7 +1997,7 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 1. If `code` is present, use the matching entry on this page to choose the action.
 2. If `errors` is an array, read its `loc`, `msg` and `type` entries as validation details.
 3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
-4. Preserve `traceId`, status and the request URL for support. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
+4. Preserve the `X-Correlation-Id` response header, `traceId`, status and the request URL for support; see [Trace a request with `X-Correlation-Id`](https://docs.bridge.new/guides/responses.md#trace-a-request-with-its-correlation-id) for responses that do not carry the header. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
 
 An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, or when `template.media` supplies both or neither of `mediaId` and `url`. Invalid field types or UUIDs can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
 
@@ -7101,9 +7114,9 @@ La referencia de cada operación sigue siendo la autoridad: [mensajes](https://d
 
   Un ID de correlación no es una URL de estado. El contrato publicado no define un endpoint de consulta periódica para `trackingId` ni `requestId`. Consérvalo para correlación y soporte; no construyas un endpoint nuevo a partir de él.
 
-## Rastrea una solicitud con su ID de correlación
+## Rastrea una solicitud con `X-Correlation-Id`
 
-Toda respuesta de la API de integraciones incluye el encabezado `X-Correlation-Id`, tanto en éxito como en error. Su valor es un UUID que Bridge genera para esa solicitud y con el que la ubica en sus propios registros.
+Toda respuesta de la API REST de integraciones incluye el encabezado `X-Correlation-Id`, tanto en éxito como en error. Su valor es un UUID que Bridge genera para esa llamada HTTP y con el que la ubica en sus propios registros.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -7118,7 +7131,20 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 - Trátalo como una cadena opaca. Cada solicitud recibe un valor nuevo, también el reintento de una misma solicitud.
 - Bridge siempre lo genera: un encabezado `X-Correlation-Id` enviado en tu solicitud no se usa como ID.
 
-Una solicitud rechazada por una API Key ausente o inválida no incluye el encabezado. Tampoco es el `traceId` que traen algunos cuerpos de error; cuando estén los dos, envía ambos a soporte.
+`X-Correlation-Id` identifica una llamada HTTP. No es el `trackingId` de una transferencia, que identifica la transferencia, ni el `traceId` que traen algunos cuerpos de error. Cuando una respuesta traiga más de uno, envíalos todos a soporte. Las respuestas de Custom Connections no incluyen el encabezado; para soporte, sigue [su referencia de errores](https://docs.bridge.new/es/lead-capture/errors.md).
+
+### Respuestas sin el encabezado
+
+Algunas respuestas se devuelven antes de que la solicitud llegue a la API, por eso no traen `X-Correlation-Id`:
+
+| Respuesta | Causa |
+| --- | --- |
+| `401` o `403` con un cuerpo como `{"message": "Forbidden"}` | API Key ausente o inválida |
+| `413` | La solicitud es demasiado grande |
+| `502` | La API no pudo completar la solicitud |
+| `504` | La solicitud no terminó en 29 segundos |
+
+En esos casos, envía a soporte la hora de la solicitud con su zona horaria, el método y la ruta, el estado y el `traceId` si el cuerpo lo incluye.
 
 ## Interpreta el formato de error publicado por el endpoint
 
@@ -7626,7 +7652,7 @@ Acepta cuerpos de error JSON con `application/json` o `application/problem+json`
 1. Si aparece `code`, usa la entrada correspondiente de esta página para decidir qué hacer.
 2. Si `errors` es un array, lee sus entradas `loc`, `msg` y `type` como detalles de validación.
 3. Si `detail` es un array, interprétalo como el formato `HTTPValidationError`. Un `detail` de tipo cadena es una explicación, no una lista de errores de campos.
-4. Conserva `traceId`, el estado y la URL de solicitud para soporte. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
+4. Conserva el encabezado de respuesta `X-Correlation-Id`, `traceId`, el estado y la URL de solicitud para soporte; consulta [Rastrea una solicitud con `X-Correlation-Id`](https://docs.bridge.new/es/guides/responses.md#trace-a-request-with-its-correlation-id) para las respuestas que no traen el encabezado. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
 
 Un campo inválido y una regla que relaciona varios campos no tienen por qué compartir el mismo estado. Las reglas del cuerpo saliente revisadas generan `400` con `BRIDGE_CORE_0103` cuando `consent.status` es `GRANTED` y no se incluye `capturedAt`, o cuando `template.media` proporciona ambos o ninguno de `mediaId` y `url`. Los tipos de campo o UUID inválidos pueden producir, en cambio, detalles de validación de solicitud con `422`. Interpreta juntos el estado y el cuerpo de error; no exijas un array `errors` para toda solicitud inválida.
 
@@ -12644,9 +12670,9 @@ A referência de cada operação continua sendo a fonte do contrato: [mensagens]
 
   Um ID de correlação não é uma URL de consulta de status. O contrato publicado não define um endpoint de consulta periódica para `trackingId` ou `requestId`. Guarde-o para correlação e suporte; não construa um novo endpoint a partir dele.
 
-## Rastreie uma requisição pelo ID de correlação
+## Rastreie uma requisição com `X-Correlation-Id`
 
-Toda resposta da API de integrações traz o cabeçalho `X-Correlation-Id`, tanto em sucesso quanto em erro. O valor é um UUID que o Bridge gera para essa requisição e usa para localizá-la nos próprios registros.
+Toda resposta da API REST de integrações traz o cabeçalho `X-Correlation-Id`, tanto em sucesso quanto em erro. O valor é um UUID que o Bridge gera para essa chamada HTTP e usa para localizá-la nos próprios registros.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -12661,7 +12687,20 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 - Trate-o como uma string opaca. Cada requisição recebe um valor novo, inclusive a nova tentativa de uma mesma requisição.
 - O Bridge sempre o gera: um cabeçalho `X-Correlation-Id` enviado na sua requisição não é usado como ID.
 
-Uma requisição rejeitada por uma API Key ausente ou inválida não traz o cabeçalho. Ele também não é o `traceId` que alguns corpos de erro incluem; quando os dois estiverem presentes, envie ambos ao suporte.
+`X-Correlation-Id` identifica uma chamada HTTP. Ele não é o `trackingId` de uma transferência, que identifica a transferência, nem o `traceId` que alguns corpos de erro incluem. Quando uma resposta trouxer mais de um, envie todos ao suporte. As respostas de Custom Connections não trazem o cabeçalho; para suporte, siga [a referência de erros delas](https://docs.bridge.new/pt-br/lead-capture/errors.md).
+
+### Respostas sem o cabeçalho
+
+Algumas respostas são devolvidas antes de a requisição chegar à API, por isso não trazem `X-Correlation-Id`:
+
+| Resposta | Causa |
+| --- | --- |
+| `401` ou `403` com um corpo como `{"message": "Forbidden"}` | API Key ausente ou inválida |
+| `413` | A requisição é grande demais |
+| `502` | A API não conseguiu concluir a requisição |
+| `504` | A requisição não terminou em 29 segundos |
+
+Nesses casos, envie ao suporte o horário da requisição com o fuso horário, o método e o caminho, o status e o `traceId`, se o corpo o incluir.
 
 ## Leia o formato de erro publicado pelo endpoint
 
@@ -13169,7 +13208,7 @@ Aceite corpos de erro JSON tanto com `application/json` quanto com `application/
 1. Se `code` estiver presente, use a entrada correspondente desta página para escolher a ação.
 2. Se `errors` for um array, leia suas entradas `loc`, `msg` e `type` como detalhes de validação.
 3. Se `detail` for um array, interprete-o no formato `HTTPValidationError`. Um `detail` do tipo string é uma explicação, não uma lista de erros de campo.
-4. Preserve `traceId`, o status e a URL da requisição para suporte. Não exija que `code` ou `extra` existam nem compare mensagens legíveis por pessoas como identificadores.
+4. Preserve o cabeçalho de resposta `X-Correlation-Id`, `traceId`, o status e a URL da requisição para suporte; veja [Rastreie uma requisição com `X-Correlation-Id`](https://docs.bridge.new/pt-br/guides/responses.md#trace-a-request-with-its-correlation-id) para as respostas que não trazem o cabeçalho. Não exija que `code` ou `extra` existam nem compare mensagens legíveis por pessoas como identificadores.
 
 Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, ou quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`. Tipos de campo ou UUIDs inválidos podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
 

@@ -48,7 +48,7 @@ Acepta cuerpos de error JSON con `application/json` o `application/problem+json`
 1. Si aparece `code`, usa la entrada correspondiente de esta página para decidir qué hacer.
 2. Si `errors` es un array, lee sus entradas `loc`, `msg` y `type` como detalles de validación.
 3. Si `detail` es un array, interprétalo como el formato `HTTPValidationError`. Un `detail` de tipo cadena es una explicación, no una lista de errores de campos.
-4. Conserva `traceId`, el estado y la URL de solicitud para soporte. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
+4. Conserva el encabezado de respuesta `X-Correlation-Id`, `traceId`, el estado y la URL de solicitud para soporte; consulta [Rastrea una solicitud con `X-Correlation-Id`](/es/guides/responses#trace-a-request-with-its-correlation-id) para las respuestas que no traen el encabezado. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
 
 Un campo inválido y una regla que relaciona varios campos no tienen por qué compartir el mismo estado. Las reglas del cuerpo saliente revisadas generan `400` con `BRIDGE_CORE_0103` cuando `consent.status` es `GRANTED` y no se incluye `capturedAt`, o cuando `template.media` proporciona ambos o ninguno de `mediaId` y `url`. Los tipos de campo o UUID inválidos pueden producir, en cambio, detalles de validación de solicitud con `422`. Interpreta juntos el estado y el cuerpo de error; no exijas un array `errors` para toda solicitud inválida.
 

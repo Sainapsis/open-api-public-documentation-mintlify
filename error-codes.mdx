@@ -44,7 +44,7 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 1. If `code` is present, use the matching entry on this page to choose the action.
 2. If `errors` is an array, read its `loc`, `msg` and `type` entries as validation details.
 3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
-4. Preserve `traceId`, status and the request URL for support. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
+4. Preserve the `X-Correlation-Id` response header, `traceId`, status and the request URL for support; see [Trace a request with `X-Correlation-Id`](/guides/responses#trace-a-request-with-its-correlation-id) for responses that do not carry the header. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
 
 An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, or when `template.media` supplies both or neither of `mediaId` and `url`. Invalid field types or UUIDs can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
 

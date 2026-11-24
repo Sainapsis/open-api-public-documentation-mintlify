@@ -22,9 +22,11 @@ The reference for each operation remains authoritative: [messages](/api-referenc
   A correlation ID is not a status URL. The published contract does not define a polling endpoint for `trackingId` or `requestId`. Keep it for correlation and support; do not construct a new endpoint from it.
 </Note>
 
-## Trace a request with its correlation ID
+<a id="trace-a-request-with-its-correlation-id"></a>
 
-Every Integrations API response carries an `X-Correlation-Id` header, on success and on error alike. Its value is a UUID that Bridge generates for that request and uses to find it in its own records.
+## Trace a request with `X-Correlation-Id`
+
+Every response from the REST Integrations API carries an `X-Correlation-Id` header, on success and on error alike. Its value is a UUID that Bridge generates for that HTTP call and uses to find it in its own records.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -39,7 +41,20 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 - Treat it as an opaque string. Every request gets a new value, including a retry of the same request.
 - Bridge always generates it: an `X-Correlation-Id` header sent in your request is not used as the ID.
 
-A request rejected for a missing or invalid API Key does not carry the header. It is also not the `traceId` that some error bodies include; when both are present, send both to support.
+`X-Correlation-Id` identifies one HTTP call. It is not the `trackingId` of a handoff, which identifies the handoff, nor the `traceId` that some error bodies include. When a response carries more than one of them, send them all to support. Custom Connections responses do not carry the header; follow [its error reference](/lead-capture/errors) for support requests.
+
+### Responses without the header
+
+Some responses are returned before the request reaches the API, so they carry no `X-Correlation-Id`:
+
+| Response | Cause |
+| --- | --- |
+| `401` or `403` with a body such as `{"message": "Forbidden"}` | Missing or invalid API Key |
+| `413` | The request is too large |
+| `502` | The API could not complete the request |
+| `504` | The request did not finish within 29 seconds |
+
+For these, send support the time of the request with its time zone, the method and path, the status, and `traceId` if the body includes one.
 
 ## Parse the error shape the endpoint publishes
 

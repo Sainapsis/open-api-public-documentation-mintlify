@@ -25,10 +25,11 @@ La referencia de cada operación sigue siendo la autoridad: [mensajes](/es/api-r
 </Note>
 
 <a id="trace-a-request-with-its-correlation-id"></a>
+<a id="trace-a-request-with-x-correlation-id"></a>
 
-## Rastrea una solicitud con su ID de correlación
+## Rastrea una solicitud con `X-Correlation-Id`
 
-Toda respuesta de la API de integraciones incluye el encabezado `X-Correlation-Id`, tanto en éxito como en error. Su valor es un UUID que Bridge genera para esa solicitud y con el que la ubica en sus propios registros.
+Toda respuesta de la API REST de integraciones incluye el encabezado `X-Correlation-Id`, tanto en éxito como en error. Su valor es un UUID que Bridge genera para esa llamada HTTP y con el que la ubica en sus propios registros.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -43,7 +44,22 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 - Trátalo como una cadena opaca. Cada solicitud recibe un valor nuevo, también el reintento de una misma solicitud.
 - Bridge siempre lo genera: un encabezado `X-Correlation-Id` enviado en tu solicitud no se usa como ID.
 
-Una solicitud rechazada por una API Key ausente o inválida no incluye el encabezado. Tampoco es el `traceId` que traen algunos cuerpos de error; cuando estén los dos, envía ambos a soporte.
+`X-Correlation-Id` identifica una llamada HTTP. No es el `trackingId` de una transferencia, que identifica la transferencia, ni el `traceId` que traen algunos cuerpos de error. Cuando una respuesta traiga más de uno, envíalos todos a soporte. Las respuestas de Custom Connections no incluyen el encabezado; para soporte, sigue [su referencia de errores](/es/lead-capture/errors).
+
+<a id="responses-without-the-header"></a>
+
+### Respuestas sin el encabezado
+
+Algunas respuestas se devuelven antes de que la solicitud llegue a la API, por eso no traen `X-Correlation-Id`:
+
+| Respuesta | Causa |
+| --- | --- |
+| `401` o `403` con un cuerpo como `{"message": "Forbidden"}` | API Key ausente o inválida |
+| `413` | La solicitud es demasiado grande |
+| `502` | La API no pudo completar la solicitud |
+| `504` | La solicitud no terminó en 29 segundos |
+
+En esos casos, envía a soporte la hora de la solicitud con su zona horaria, el método y la ruta, el estado y el `traceId` si el cuerpo lo incluye.
 
 <a id="parse-the-error-shape-the-endpoint-publishes"></a>
 
