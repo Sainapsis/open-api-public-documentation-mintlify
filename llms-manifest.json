@@ -29,14 +29,14 @@
   },
   "inputs": {
     "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
-    "api-reference/openapi.yaml": "2d946b66267cc76a710cde40f7f3375d6225de839e354aa8c27ceadeda39c219",
+    "api-reference/openapi.yaml": "95286536e015f9ac93078c5c230847748fd3006b53bc464284011b8ab037d180",
     "changelog.mdx": "e9084e3294b5d4a359eab45b627c4db6dec026c430818960778d75ae2366eab2",
     "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
     "docs.json": "e2c6a32ea3a9e4f66b05e69692afd6a53235bd70e247473fbda83bdecf6afc5b",
     "error-codes.mdx": "009f7d95a0590925a1ee8ceadb21e29c4c3c3b9c742473f02b5c738e3a4b91da",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
-    "es/api-reference/openapi.yaml": "27bb0ed051ff30b5254bbaac8d4f8aa7ee1af9396cf3d9c33aa7910dc88f4499",
+    "es/api-reference/openapi.yaml": "0acad348176bb6164203816f466cefbaba1057ebb43526f1ddfbe97488d8c854",
     "es/changelog.mdx": "b2d420cca846e287101c92623dbac4c485f0e11c4198653a80caa50f19d96f28",
     "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
@@ -78,7 +78,7 @@
     "lead-capture/integration.mdx": "e41b09302ab3d26dcb1089158f3ef805e6ab5f1d1574bfa877dfbf9630651d03",
     "lead-capture/templates.mdx": "506d2ef49287c95004fcd43150af114e6ced5f39cc32caaa9e2566fcc101f66f",
     "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
-    "pt-br/api-reference/openapi.yaml": "391e64990fb97241f1b16b9c67f04f6b234635ad58beff84e2f18bca616a3ddd",
+    "pt-br/api-reference/openapi.yaml": "6e40033c65b4784a8c2a5ce5660a071e7fcb9fbe632e586dd6fb904c18784de2",
     "pt-br/changelog.mdx": "f5ebecd2c3c7ee00801d64520995d86ae544264cd272db0233d32fab4ad9c455",
     "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
@@ -1587,7 +1587,7 @@
       "source": "api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "2d946b66267cc76a710cde40f7f3375d6225de839e354aa8c27ceadeda39c219",
+      "sha256": "95286536e015f9ac93078c5c230847748fd3006b53bc464284011b8ab037d180",
       "operationCount": 33
     },
     {
@@ -1603,7 +1603,7 @@
       "source": "es/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/es/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "27bb0ed051ff30b5254bbaac8d4f8aa7ee1af9396cf3d9c33aa7910dc88f4499",
+      "sha256": "0acad348176bb6164203816f466cefbaba1057ebb43526f1ddfbe97488d8c854",
       "operationCount": 33
     },
     {
@@ -1619,7 +1619,7 @@
       "source": "pt-br/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/pt-br/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "391e64990fb97241f1b16b9c67f04f6b234635ad58beff84e2f18bca616a3ddd",
+      "sha256": "6e40033c65b4784a8c2a5ce5660a071e7fcb9fbe632e586dd6fb904c18784de2",
       "operationCount": 33
     },
     {

@@ -5458,6 +5458,7 @@ components:
       - IMAGE
       - VIDEO
       - GIF
+      - DOCUMENT
       title: HeaderFileType
     InternalOperationRequest:
       properties:
@@ -5973,8 +5974,10 @@ components:
           - $ref: '#/components/schemas/OutboundTemplateMedia'
           - type: 'null'
           title: Header Media
-          description: Optional header media (image/video) to attach to the template
-            message. Accepts either a preloaded mediaId or a public url.
+          description: >-
+            Optional header media (image, video or PDF document) to attach to
+            the template message. Accepts either a preloaded mediaId or a public
+            url.
       type: object
       title: LeadscoutOutboundTemplateRef
       description: References the Meta-approved template that will open the conversation.
@@ -6290,11 +6293,14 @@ components:
         type:
           $ref: '#/components/schemas/HeaderFileType'
           title: Media Type
-          description: Header media kind. Must match the template header type configured
-            in Meta.
+          description: >-
+            Header media kind. Must match the template header type configured in
+            Meta. A `DOCUMENT` header takes a PDF: a preloaded file whose name
+            does not end in `.pdf` is refused.
           examples:
           - IMAGE
           - VIDEO
+          - DOCUMENT
         mediaId:
           anyOf:
           - type: string
@@ -6315,6 +6321,20 @@ components:
           examples:
           - null
           - https://cdn.example.com/promo.jpg
+        fileName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: File Name
+          description: >-
+            Name the Contact sees on the PDF of a `DOCUMENT` header. Only valid
+            for `DOCUMENT`; it cannot be blank, takes at most 240 characters and
+            must end in `.pdf`. Without it the Contact sees the preloaded file's
+            name or the last segment of the `url` path, with `.pdf` added when
+            it is missing.
+          examples:
+          - null
+          - Catalogo temporada.pdf
       type: object
       required:
       - type
