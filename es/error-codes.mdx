@@ -103,6 +103,8 @@ La operación determina qué errores de archivo corresponden: `POST .../files` c
 | `BRIDGE_PRELOAD_FILE_0003 \| PRELOAD_FILE_INVALID_MIME_TYPE` | 400 | Corrige la combinación del tipo MIME y el `fileType` lógico. |
 | `BRIDGE_PRELOAD_FILE_0004 \| PRELOAD_FILE_INVALID_NAME` | 400 | Proporciona un nombre con una extensión admitida para ese `fileType` lógico. |
 
+En `POST .../conversations/{conversationId}/send-template`, `0001` y `0002` se refieren a `template.media.mediaId`. `0001`: sube el archivo con `POST .../files` y envía el `mediaId` que devuelve. `0002` cubre un archivo que aún se está subiendo y uno cuya carga se canceló, y la respuesta no dice cuál: si aún se está subiendo, termina la carga y reintenta con el mismo `mediaId`; si la carga se canceló, sube un archivo nuevo y envía el nuevo `mediaId`.
+
 <a id="agent-error-codes"></a>
 
 ## Códigos de error de agentes
@@ -179,6 +181,16 @@ Errores de comprobación de marcas al crear una conversación.
 
 Se devuelve como `400`. Envía `brandId` o `providerChannelId` para cada participante externo; `extra.resources` enumera los participantes que no tenían ninguno de los dos.
 
+<a id="commercial-consent-error-codes"></a>
+
+## Códigos de error de consentimiento comercial
+
+Errores de los contactos que no aceptan mensajes que inicia Bridge.
+
+| Código | Status | Referencia en inglés | Cuándo ocurre y qué hacer |
+| --- | --- | --- | --- |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | 422 | Consent Contact Send Rejected | Lo devuelve `POST .../conversations/{conversationId}/send-template` cuando el workspace exige consentimiento comercial y un contacto de la conversación lo rechazó o lo revocó. Bridge no envía la plantilla a ningún contacto de la conversación, de ninguna categoría. No reintentes: falla igual mientras ese estado de consentimiento se mantenga. Deja de enviar plantillas a esta conversación hasta que el contacto vuelva a aceptar mensajes |
+
 <a id="conversation-error-codes"></a>
 
 ## Códigos de error de conversaciones
@@ -193,7 +205,8 @@ Errores de las operaciones de conversaciones.
 | `BRIDGE_CONVERSATION_0004` | Conversation Not Active | La conversación está inactiva y no se pueden hacer operaciones sobre ella |
 | `BRIDGE_CONVERSATION_0005` | Conversation Operation Failed | Ocurrió un error al operar sobre la conversación |
 | `BRIDGE_CONVERSATION_0006` | Conversation With Inconsistent State | La conversación tiene un estado inconsistente; contacta a soporte para resolverlo |
-| `BRIDGE_CONVERSATION_0007` | Conversation Is Released | La conversación está liberada: `409` en `POST .../messages` |
+| `BRIDGE_CONVERSATION_0007` | Conversation Is Released | La conversación está liberada: `409` en `POST .../messages` y en `POST .../conversations/{conversationId}/send-template` |
+| `BRIDGE_CONVERSATION_0011` | Conversation Controlled By Agent | Un Agente está atendiendo esta conversación, por lo que no acepta plantillas de la API de integraciones |
 | `BRIDGE_CONVERSATION_0101` | Internal User Already In Conversation | El usuario interno ya participa en la conversación |
 | `BRIDGE_CONVERSATION_0102` | Internal User Not In Conversation | El usuario interno no participa en la conversación |
 | `BRIDGE_CONVERSATION_0103` | External User Already In Conversation | El usuario externo ya participa en la conversación |
@@ -211,6 +224,7 @@ Errores de las operaciones de conversaciones.
 | `BRIDGE_CONVERSATION_0211` | Max Participants Exceeded | La conversación debe respetar una cantidad máxima de participantes |
 | `BRIDGE_CONVERSATION_0212` | Max Initial Messages Exceeded | Se superó el máximo de mensajes iniciales |
 | `BRIDGE_CONVERSATION_0213` | Messages Not In Conversation | Los mensajes deben pertenecer a la misma conversación |
+| `BRIDGE_CONVERSATION_0406` | Template Cooldown Active | A un contacto ya se le envió una plantilla dentro del periodo de espera promocional del workspace; reintenta pasado el tiempo indicado |
 | `BRIDGE_CONVERSATION_0601` | Onboarding Template Not Found | No existe una plantilla indicada en el reemplazo de plantillas de inicio |
 | `BRIDGE_CONVERSATION_0602` | Onboarding Template Not In Workspace | Una plantilla indicada en el reemplazo de inicio pertenece a otro espacio de trabajo |
 | `BRIDGE_CONVERSATION_0603` | Onboarding Template Not Approved | Una plantilla indicada en el reemplazo de inicio no está aprobada para la línea usada para contactar a un participante |
@@ -219,10 +233,23 @@ Errores de las operaciones de conversaciones.
 | `BRIDGE_CONVERSATION_0606` | Onboarding Template Parameters Not Supported | Se enviaron parámetros para una plantilla de inicio que no es una plantilla de proveedor de WhatsApp |
 | `BRIDGE_CONVERSATION_0607` | Onboarding Template Invalid Parameter Values | Los valores de parámetros de una plantilla de inicio infringen una regla de WhatsApp y se rechazarían al enviarse |
 | `BRIDGE_CONVERSATION_0608` | Onboarding Configured Template Requires Caller Input | Una plantilla de la secuencia de inicio del espacio de trabajo necesita valores que solo puede proporcionar quien hace la solicitud; un administrador debe cambiar la secuencia |
+| `BRIDGE_CONVERSATION_0609` | Onboarding Required | La conversación se inició sin su plantilla inicial de WhatsApp; envía primero la plantilla inicial |
+| `BRIDGE_CONVERSATION_0613` | Opening Template In Flight | La plantilla inicial aún se está enviando; reintenta en unos segundos |
 
 Al crear una conversación, `BRIDGE_CONVERSATION_0105` devuelve `409` con `extra.reason` igual a `PARTICIPANTS_MISMATCH`: una conversación liberada ocupa la línea del contacto con otros contactos o líneas. Solicita los mismos contactos y líneas o usa otra línea.
 
 `BRIDGE_CONVERSATION_0601` devuelve `404`, `0602` y `0603` devuelven `400`, y `0604` a `0608` devuelven `422`. Consulta [Parámetros de plantillas de inicio](/es/templates-and-parameters) para saber qué incluye cada uno en `extra` y cómo corregirlo.
+
+`POST .../conversations/{conversationId}/send-template` devuelve estos como `409`. En ninguno se envió nada.
+
+- `0007`: la conversación fue liberada y esta operación no la recupera. Vuelve a iniciarla con `POST .../conversations`, solicitando los mismos contactos y líneas: Bridge recupera una conversación liberada cuando puede.
+- `0011`: un Agente está atendiendo la conversación. Consúltala con `GET .../conversations/{conversationId}` y reintenta cuando su `status` sea `ACTIVE`.
+- `0004`: la conversación no está activa, por ejemplo porque está bloqueada o eliminada. Revisa su `status` y reintenta solo cuando sea `ACTIVE`.
+- `0609`: la conversación aún no tiene plantilla inicial y esta plantilla no es de marketing ni de utilidad. Envía una plantilla de marketing o de utilidad: pasa a ser la plantilla inicial.
+- `0613`: otra solicitud está abriendo la conversación con su plantilla inicial, o esa plantilla aún se está enviando. Reintenta en unos segundos: el bloqueo dura como máximo 120 segundos desde que se creó la plantilla inicial. Dos solicitudes que abren a la vez la misma conversación pendiente no pueden enviar las dos: una recibe este error, o `0406` cuando la otra tiene reservado antes el periodo de espera del contacto en un workspace que lo tiene.
+- `0406`: la plantilla es de marketing o de utilidad y un contacto de la conversación está dentro del periodo de espera promocional del workspace: otro envío ya lo tiene reservado. Bridge cuenta los envíos que registró o está registrando, no si WhatsApp los entregó. `extra.contactIds` lista esos contactos y `extra.retryAfterSeconds` es la espera más larga que queda, también en la cabecera `Retry-After`. Reintenta pasados esos segundos. Dos envíos de marketing o de utilidad que compiten por el mismo contacto no pueden salir los dos: uno recibe este error.
+
+También devuelve `BRIDGE_CONVERSATION_0001` como `404` cuando la conversación no existe en tu workspace (envía el `conversationId` de una de tus conversaciones) y `BRIDGE_CONVERSATION_0201` como `422` cuando no tiene ningún contacto de WhatsApp (envía a una conversación que tenga uno: `GET .../conversations/{conversationId}` lista sus participantes).
 
 <a id="external-user-error-codes"></a>
 
@@ -239,6 +266,17 @@ Errores de las operaciones de usuarios externos o contactos.
 | `BRIDGE_EXTERNAL_0007` | Cellphone Owned By Another Contact | El teléfono ya es una identidad activa de otro usuario externo |
 | `BRIDGE_EXTERNAL_0013` | Email Owned By Another Contact | El correo ya es una identidad activa de otro usuario externo |
 | `BRIDGE_EXTERNAL_0101` | External User Operation Failed | Ocurrió un error al operar sobre el usuario externo |
+
+<a id="idempotency-error-codes"></a>
+
+## Códigos de error de idempotencia
+
+Errores de la cabecera HTTP `Idempotency-Key` de `POST .../conversations/{conversationId}/send-template`. [Envía una plantilla a una conversación existente](/es/guides/send-template#send-a-template-into-an-existing-conversation) enumera cada caso.
+
+| Código | Status | Referencia en inglés | Cuándo ocurre y qué hacer |
+| --- | --- | --- | --- |
+| `BRIDGE_CORE_1201` | 409 | Idempotency Request In Progress | Una solicitud con esta clave sigue en curso o se interrumpió después de guardar el mensaje. Reintenta con la misma clave después de una pausa. Si sigue respondiendo `409` (puede durar hasta 24 horas), el mensaje puede existir: pídele a un Usuario de Bridge que revise la conversación antes de enviar de nuevo con una clave nueva |
+| `BRIDGE_CORE_1202` | 422 | Idempotency Key Reused | La clave ya se usó con una solicitud distinta. Usa una clave nueva para el cuerpo nuevo |
 
 <a id="internal-user-error-codes"></a>
 
@@ -342,7 +380,19 @@ Errores de las operaciones de plantillas.
 | --- | --- | --- |
 | `BRIDGE_TEMPLATE_0001` | Provider Template Not Found | No se encontró una plantilla de proveedor para el espacio de trabajo y nombre indicados |
 
-`GET .../templates/{templateId}` lo devuelve como `404` cuando el ID o nombre no coincide con una plantilla de WhatsApp de tu espacio de trabajo.
+`GET .../templates/{templateId}` lo devuelve como `404` cuando el ID o nombre no coincide con una plantilla de WhatsApp de tu espacio de trabajo, y también `POST .../conversations/{conversationId}/send-template` cuando `template.id` no coincide con ninguna plantilla de proveedor de tu espacio de trabajo. Envía el `id` de una plantilla de proveedor de tu espacio de trabajo.
+
+`POST .../conversations/{conversationId}/send-template` también devuelve estos códigos:
+
+| Código | Status | Referencia en inglés | Cuándo ocurre y qué hacer |
+| --- | --- | --- | --- |
+| `BRIDGE_TEMPLATE_0006` | 400 | Provider Template Not Approved | La plantilla no está aprobada para la línea y el idioma de al menos un contacto de WhatsApp de la conversación, o la línea de un contacto no tiene cuenta de WhatsApp Business. Usa una plantilla aprobada para la línea y el idioma de cada contacto de la conversación |
+| `BRIDGE_TEMPLATE_0007` | 422 | Provider Template Missing Variables | Falta una variable obligatoria o está en blanco. Proporciona todas las variables marcadas con `callerMustSupply: true` |
+| `BRIDGE_TEMPLATE_0009` | 422 | Provider Template Invalid Variable Values | Un valor infringe las reglas de WhatsApp para una variable. Corrígelo con las [reglas de valores de WhatsApp](/es/templates-and-parameters#whatsapp-value-rules) |
+| `BRIDGE_TEMPLATE_0010` | 422 | Provider Template Unknown Variables | Una clave no es una variable de la plantilla, o la plantilla no admite parámetros. Usa los valores de `key` que devuelve `GET .../templates/{templateId}` |
+| `BRIDGE_TEMPLATE_0011` | 422 | Provider Template Header Media Not Accepted | Enviaste `template.media` y la plantilla no tiene encabezado multimedia. Quita `media` |
+| `BRIDGE_TEMPLATE_0012` | 422 | Provider Template Header Media Mismatch | `template.media.type` no es el tipo del encabezado de la plantilla (la imagen, el video, el GIF o el documento PDF que se muestra en la parte superior del mensaje), en el idioma de la plantilla o en el de un contacto, o el archivo subido no es de ese `type`, o es un encabezado de documento y el archivo subido no es un PDF. `extra` incluye `expectedType` y `providedType` (la extensión del archivo, como `DOCX`, para un documento que no es PDF). Envía el `type` correcto y, con `mediaId`, sube un archivo de ese tipo (un PDF para un encabezado `DOCUMENT`), como en [Enviar PDF y otros adjuntos](/es/guides/send-attachments) |
+| `BRIDGE_TEMPLATE_0013` | 422 | Provider Template Header Media Required | La plantilla tiene un encabezado multimedia (imagen, video, GIF o documento) y no hay archivo que enviar. Envía `template.media` o pide que se configure un archivo en la plantilla |
 
 <a id="workspace-error-codes"></a>
 

@@ -1,7 +1,7 @@
 ---
 title: "Choose and fill a WhatsApp template"
 sidebarTitle: "Template recipe"
-description: "Discover a template by ID or name, supply its agnostic variable keys, and use its returned ID in a Conversation request."
+description: "Discover a template by ID or name, supply its agnostic variable keys, and use it to open a Conversation or to send it into one that already exists."
 ---
 
 Use this recipe when you want a Conversation to open with a particular WhatsApp template. The detailed [template reference](/templates-and-parameters) explains validation rules and every documented template error.
@@ -132,7 +132,7 @@ console.log({ templateId: template.id, conversationId: conversation.id });
 node send-template.mjs
 ```
 
-The example uses the ID returned by discovery in `onboardingTemplates[].templateId`. The two outbound operations also accept a template ID or name, with the ID taking precedence when both are supplied. Their request shapes differ from `onboardingTemplates`; read the operation's contract before reusing this body elsewhere.
+The example uses the ID returned by discovery in `onboardingTemplates[].templateId`. `POST .../conversations/{conversationId}/send-template` takes only a template ID. The LeadScout outbound operation also accepts a template name, with the ID taking precedence when both are supplied. Their request shapes differ from `onboardingTemplates`; read the operation's contract before reusing this body elsewhere.
 
 The local checks catch unknown and missing keys. Bridge still performs its own validation, including approval for the selected line and the final WhatsApp value rules. Do not treat local validation as approval or a delivery guarantee.
 
@@ -147,3 +147,139 @@ The local checks catch unknown and missing keys. Bridge still performs its own v
 | `BRIDGE_CONVERSATION_0608` | Ask a workspace administrator to change the configured onboarding sequence. Changing your template values does not fix this configuration error. |
 
 Read the [complete template error reference](/templates-and-parameters#errors) for approval, ownership, unsupported parameters, and malformed requests. Do not retry a timed-out Conversation request automatically: determine its outcome first.
+
+## Send a template into an existing Conversation
+
+Use `POST .../conversations/{conversationId}/send-template` to send one provider template into a Conversation that already exists, such as an order update to a Contact you already talk to. Bridge writes one Message, read by every WhatsApp Contact of the Conversation. The sender is the system, not a Bridge User.
+
+| You want to | Use |
+| --- | --- |
+| Start a Conversation, or recover a released one, and open it with a template | `POST .../conversations` with `onboardingTemplates`, as in steps 1 to 3 |
+| Send a template into a Conversation that is already open | `POST .../conversations/{conversationId}/send-template` |
+
+`send-template` never starts or recovers a Conversation.
+
+### Before you send
+
+- The Conversation is open. A released or blocked Conversation, a deleted one, or one an Agent is handling is refused. `GET .../conversations/{conversationId}` returns its `status`.
+- The Conversation has at least one WhatsApp Contact. Its opening template has been sent, or the template you send is a marketing or utility template, which becomes the opening template (see below).
+- The template is a provider template of your workspace, approved for the line of every WhatsApp Contact of the Conversation, in the language Bridge sends to that Contact. Discover its variables as in step 1.
+- You have an `Idempotency-Key` for this send.
+
+### Send it
+
+```http
+POST /bridge/api/v1/workspaces/{workspaceId}/conversations/{conversationId}/send-template
+x-api-key: YOUR_API_KEY
+Content-Type: application/json
+Idempotency-Key: erp-order-981-shipped
+```
+
+```json
+{
+  "template": {
+    "id": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+    "parameters": {
+      "order_number": "A-10492",
+      "delivery_date": "October 3"
+    }
+  }
+}
+```
+
+Send `template.id`, the `id` that step 1 returns: `GET .../templates/{templateId}` accepts the template's name and answers with its `id`. The request takes no `template.name`: a body with `name` fails with `422`. An unknown `id` fails with `404`. `parameters` follows the rules of steps 1 and 2. A template whose header is an image, video, GIF or PDF document sends that file.
+
+To send your own file as the template's header (the image, video, GIF or PDF document shown at the top of the message) instead, send `template.media` with its `type` (`IMAGE`, `VIDEO`, `GIF` or `DOCUMENT`, the type of the header) and one source. Send the `mediaId` of a file you uploaded with `POST /bridge/api/v1/workspaces/{workspaceId}/files`, as in [Send PDFs and other attachments](/guides/send-attachments):
+
+```json
+{
+  "template": {
+    "id": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+    "parameters": {
+      "order_number": "A-10492"
+    },
+    "media": {
+      "type": "IMAGE",
+      "mediaId": "9b2f6a52-1f3c-4a53-8f58-3c6a2e7d1b10"
+    }
+  }
+}
+```
+
+Or send a public `https` `url` of the file:
+
+```json
+{
+  "template": {
+    "id": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+    "parameters": {
+      "order_number": "A-10492"
+    },
+    "media": {
+      "type": "IMAGE",
+      "url": "https://cdn.example.com/promo/spring-sale.png"
+    }
+  }
+}
+```
+
+`type` is required, and you send `mediaId` or `url`, never both. `type` must be the type of the template's header, or the request fails with `BRIDGE_TEMPLATE_0012`; with `mediaId`, the uploaded file must have that type too, and it must belong to your workspace with its upload finished. With `url`, Bridge downloads the file asynchronously: the result of the download is not part of the `201` response, and a download that fails is not reported in it. A document header must be a PDF: an uploaded file of another document format fails with `BRIDGE_TEMPLATE_0012`, and a `url` is not checked before the download. A template with a media header (image, video, GIF or document) and no file configured on it needs `media`. Two requests have the same body only when they also send the same `type` and the same `mediaId` or `url`. WhatsApp can still refuse a file larger than its header limits after the `201`.
+
+A successful request answers `201`:
+
+```json
+{
+  "conversationId": "7d4a1f2e-3b5c-4d6e-8f9a-0b1c2d3e4f5a",
+  "messageId": "b6cf1c4a-2b1e-4e63-8f3e-0f9d1a2a1234",
+  "templateId": "4061e74e-f6fe-4072-a760-3aec0b64f7a6",
+  "templateName": "order_shipped_promo"
+}
+```
+
+Retain `messageId`. `201` means Bridge stored the Message for sending; [Responses and retries](/guides/responses) explains what it does not tell you.
+
+### The opening template and the promotional cooldown
+
+A Conversation can have no opening template yet, for example one started by a call or an email. A marketing or utility template sent into it becomes its opening template. Until then, a template of another category is refused with `BRIDGE_CONVERSATION_0609`. If two requests try to open the same pending Conversation at once, only one sends. The other is refused with `BRIDGE_CONVERSATION_0613`, or with `BRIDGE_CONVERSATION_0406` when the first one already holds the Contact's cooldown in a workspace that has one. Retry it in a few seconds.
+
+Once the Conversation has its opening template, every template still passes the usual checks: the promotional cooldown (`BRIDGE_CONVERSATION_0406`), an opening template that is still being sent (`BRIDGE_CONVERSATION_0613`), the Contact's consent and WhatsApp approval.
+
+A marketing or utility template is also subject to the workspace's promotional cooldown, the same setting Bridge applies to these sends in the app, with its default when the workspace has not changed it. If another send already holds the cooldown of any Contact of the Conversation, the request fails with `BRIDGE_CONVERSATION_0406` and sends nothing to any Contact: `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left, also in the `Retry-After` header. `BRIDGE_CONVERSATION_0406` means another send holds the Contact's cooldown, not that WhatsApp delivered it: Bridge counts the sends it recorded or is recording. Each successful send is recorded for every Contact, so it counts toward the cooldown like a send from the Bridge app.
+
+Bridge reserves each Contact's cooldown before it stores the message, so two marketing or utility sends that compete for the same Contact cannot both go out: one of them gets `BRIDGE_CONVERSATION_0406`.
+
+### Retry with the same key
+
+`Idempotency-Key` is required, 1 to 255 characters, and Bridge keeps it for 24 hours. Use a new key for each send and reuse it only to retry that send. Two requests are the same send when they have the same `conversationId`, have the same `template.id` and carry the same `parameters` and `media`: an absent `parameters` and `{}` are the same.
+
+| Situation | Result | What to do |
+| --- | --- | --- |
+| The `Idempotency-Key` HTTP header is missing, empty or longer than 255 characters | `422`, with the field in `errors[]` | Send a valid key. |
+| Same key, same send | `201` with the first Message and `Idempotent-Replayed: true` | Nothing was sent twice. Keep `messageId`. |
+| Same key, different send, such as another body or another Conversation | `422` `BRIDGE_CORE_1202` | Use a new key for the new send. |
+| Same key while the first request is still running | `409` `BRIDGE_CORE_1201` | Retry with the same key after a pause. |
+| The first request failed before it stored anything | Bridge frees the key | Fix the cause and retry with the same key. |
+| The first request was cut off after it stored the Message | `409` `BRIDGE_CORE_1201` for up to 24 hours | The Message may exist. The API has no operation to list Messages, so ask a Bridge User to check the Conversation before you send again with a new key. |
+
+### If the request is rejected
+
+| Error | What to do |
+| --- | --- |
+| `BRIDGE_TEMPLATE_0001` | No provider template of your workspace has that `id`. Send the `id` of a provider template of your workspace. |
+| `BRIDGE_CONVERSATION_0001` | The Conversation does not exist in your workspace. Send the `conversationId` of one of your Conversations. |
+| `BRIDGE_CONVERSATION_0007` | The Conversation was released. Start it again with `POST .../conversations`, requesting the same Contacts and lines. |
+| `BRIDGE_CONVERSATION_0011` | An Agent is handling the Conversation. Check it with `GET .../conversations/{conversationId}` and retry when its `status` is `ACTIVE`. |
+| `BRIDGE_CONVERSATION_0004` | The Conversation is not active. Retry only when its `status` is `ACTIVE`. |
+| `BRIDGE_CONVERSATION_0609` | The Conversation has no opening template yet and this template is not a marketing or utility template. Send a marketing or utility template: it becomes the opening template. |
+| `BRIDGE_CONVERSATION_0613` | Another request is opening the Conversation with its opening template, or that template is still being sent. Retry in a few seconds: the block lasts at most 120 seconds after the opening template was created. Two requests that open the same pending Conversation at once cannot both send: one gets this error, or `BRIDGE_CONVERSATION_0406` when the other one holds the Contact's cooldown first in a workspace that has one. |
+| `BRIDGE_CONVERSATION_0201` | The Conversation has no WhatsApp Contact. Send into a Conversation that has one: `GET .../conversations/{conversationId}` lists its participants. |
+| `BRIDGE_COMMERCIAL_CONSENT_0203` | A Contact does not accept messages Bridge starts. Do not retry: stop sending templates into this Conversation until the Contact accepts messages again. The [error reference](/error-codes#commercial-consent-error-codes) says when it happens. |
+| `BRIDGE_CONVERSATION_0406` | The template is a marketing or utility template and a Contact of the Conversation is inside the workspace's promotional cooldown: another send already holds it. Bridge counts the sends it recorded or is recording, not whether WhatsApp delivered them. `extra.contactIds` lists those Contacts and `extra.retryAfterSeconds` is the longest wait left, also in the `Retry-After` header. Nothing was sent to any Contact. Retry after that many seconds. |
+| `BRIDGE_TEMPLATE_0006` | The template is not approved for the line and language of at least one WhatsApp Contact, or a Contact's line has no WhatsApp Business account. Use a template approved for the line and language of every Contact of the Conversation. |
+| `BRIDGE_TEMPLATE_0007`, `0009`, `0010` | Fix the template values. The [error reference](/error-codes#template-error-codes) lists each one. |
+| `BRIDGE_TEMPLATE_0011`, `0012` | Fix `template.media`: send it only for a template with a media header, with a `type` that matches it, and with `mediaId` a file of that type (a PDF for a `DOCUMENT` header). The [error reference](/error-codes#template-error-codes) lists each one. |
+| `BRIDGE_TEMPLATE_0013` | The template has a media header (image, video, GIF or document) and no file to send. Send `template.media`, or ask for a file to be configured on the template. |
+| `BRIDGE_PRELOAD_FILE_0001` | The `mediaId` is not a file of your workspace. Upload the file as in [Send PDFs and other attachments](/guides/send-attachments) and send the `mediaId` it returns. |
+| `BRIDGE_PRELOAD_FILE_0002` | The file is not usable yet. If it is still uploading, finish the upload and retry with the same `mediaId`. If its upload was cancelled, upload a new file and send the new `mediaId`. |
+
+A request with several problems is answered with the first one Bridge finds: fix that error and send again, since another may follow. A request rejected with one of these codes sent nothing. Every code is in [Error codes](/error-codes).

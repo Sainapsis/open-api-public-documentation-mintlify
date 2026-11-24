@@ -69,7 +69,7 @@
       "title": "Elige y completa una plantilla de WhatsApp",
       "source": "https://docs.bridge.new/es/guides/send-template",
       "markdownUrl": "https://docs.bridge.new/es/guides/send-template.md",
-      "description": "Consulta una plantilla por ID o nombre, proporciona sus claves de variables independientes del proveedor y usa el ID devuelto en una solicitud de conversación.",
+      "description": "Consulta una plantilla por ID o nombre, proporciona sus claves de variables independientes del proveedor y úsala para abrir una conversación o para enviarla a una que ya existe.",
       "kind": "page"
     },
     {

@@ -69,7 +69,7 @@
       "title": "Escolha e preencha um template de WhatsApp",
       "source": "https://docs.bridge.new/pt-br/guides/send-template",
       "markdownUrl": "https://docs.bridge.new/pt-br/guides/send-template.md",
-      "description": "Descubra um template por ID ou nome, forneça os valores por suas chaves de variável agnósticas e use o ID retornado em uma requisição de conversa.",
+      "description": "Descubra um template por ID ou nome, forneça os valores por suas chaves de variável agnósticas e use-o para abrir uma conversa ou para enviá-lo a uma que já existe.",
       "kind": "page"
     },
     {
