@@ -2,7 +2,7 @@
 title: "Respuestas, errores y reintentos"
 sidebarTitle: "Respuestas y reintentos"
 description: "Interpreta creación, aceptación, respuestas vacías, validación y señales de reintento sin confundir los contratos REST y de Custom Connections."
-keywords: ["201", "202", "204", "422", "429", "reintento", "requestId", "trackingId", "entrega", "HTTPValidationError", "Problem"]
+keywords: ["201", "202", "204", "422", "429", "reintento", "requestId", "trackingId", "entrega", "HTTPValidationError", "Problem", "X-Correlation-Id", "ID de correlación"]
 ---
 
 <a id="read-the-result-for-this-operation"></a>
@@ -23,6 +23,27 @@ La referencia de cada operación sigue siendo la autoridad: [mensajes](/es/api-r
 <Note>
   Un ID de correlación no es una URL de estado. El contrato publicado no define un endpoint de consulta periódica para `trackingId` ni `requestId`. Consérvalo para correlación y soporte; no construyas un endpoint nuevo a partir de él.
 </Note>
+
+<a id="trace-a-request-with-its-correlation-id"></a>
+
+## Rastrea una solicitud con su ID de correlación
+
+Toda respuesta de la API de integraciones incluye el encabezado `X-Correlation-Id`, tanto en éxito como en error. Su valor es un UUID que Bridge genera para esa solicitud y con el que la ubica en sus propios registros.
+
+```bash
+curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
+  -H "x-api-key: $BRIDGE_API_KEY"
+
+# HTTP/2 200
+# x-correlation-id: 019a9e5c-3f2b-7c41-9d0e-6b2f8a1c4e57
+```
+
+- Guárdalo junto a la solicitud en tus propios logs, para encontrar cada llamada después.
+- Inclúyelo cuando escribas a [soporte de Bridge](mailto:support@sainapsis.com) sobre una solicitud concreta. Identifica la llamada directamente, sin tener que buscarla por un rango de tiempo o por su contenido.
+- Trátalo como una cadena opaca. Cada solicitud recibe un valor nuevo, también el reintento de una misma solicitud.
+- Bridge siempre lo genera: un encabezado `X-Correlation-Id` enviado en tu solicitud no se usa como ID.
+
+Una solicitud rechazada por una API Key ausente o inválida no incluye el encabezado. Tampoco es el `traceId` que traen algunos cuerpos de error; cuando estén los dos, envía ambos a soporte.
 
 <a id="parse-the-error-shape-the-endpoint-publishes"></a>
 

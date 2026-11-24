@@ -2,7 +2,7 @@
 title: "Responses, errors, and retries"
 sidebarTitle: "Responses and retries"
 description: "Interpret creation, acceptance, empty responses, validation errors, and retry signals without confusing the REST and Custom Connections contracts."
-keywords: ["201", "202", "204", "422", "429", "retry", "requestId", "trackingId", "delivery", "HTTPValidationError", "Problem"]
+keywords: ["201", "202", "204", "422", "429", "retry", "requestId", "trackingId", "delivery", "HTTPValidationError", "Problem", "X-Correlation-Id", "correlation ID"]
 ---
 
 ## Read the result for this operation
@@ -21,6 +21,25 @@ The reference for each operation remains authoritative: [messages](/api-referenc
 <Note>
   A correlation ID is not a status URL. The published contract does not define a polling endpoint for `trackingId` or `requestId`. Keep it for correlation and support; do not construct a new endpoint from it.
 </Note>
+
+## Trace a request with its correlation ID
+
+Every Integrations API response carries an `X-Correlation-Id` header, on success and on error alike. Its value is a UUID that Bridge generates for that request and uses to find it in its own records.
+
+```bash
+curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
+  -H "x-api-key: $BRIDGE_API_KEY"
+
+# HTTP/2 200
+# x-correlation-id: 019a9e5c-3f2b-7c41-9d0e-6b2f8a1c4e57
+```
+
+- Store it next to the request in your own logs, so you can find each call later.
+- Include it when you contact [Bridge support](mailto:support@sainapsis.com) about a specific request. It identifies the call directly, without a time window or a payload to search by.
+- Treat it as an opaque string. Every request gets a new value, including a retry of the same request.
+- Bridge always generates it: an `X-Correlation-Id` header sent in your request is not used as the ID.
+
+A request rejected for a missing or invalid API Key does not carry the header. It is also not the `traceId` that some error bodies include; when both are present, send both to support.
 
 ## Parse the error shape the endpoint publishes
 
