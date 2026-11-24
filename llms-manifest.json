@@ -46,7 +46,7 @@
     "es/guides/identifiers.mdx": "5ecbe5a47e052c83de34391ef8d1fd83c73c561a28fe9777f3ae6ce7b9816442",
     "es/guides/pagination.mdx": "836fb8501a011883e58b457b9216e71b4056d4353f111143459784c4cbd7c70f",
     "es/guides/pipeline-records.mdx": "e2a03942ac556f75cb336920a9062d64646040454dcb17e9afeca8f329defc8c",
-    "es/guides/responses.mdx": "8089243ec44678328f3c292ab81228e94c754eda28d52b3e6539208ce38ca263",
+    "es/guides/responses.mdx": "17afb76df527066668eeca87dc1c2d31770198c33fd842d2098e98e14b140438",
     "es/guides/send-attachments.mdx": "276f2588132bb36f8d2af0615e78f7a5e945439c9318c81aac0aa7de6a8e53b1",
     "es/guides/send-template.mdx": "01ae1692e7264584b783e64c2563ba131e084bd42cbff16c0d09272dee4347af",
     "es/index.mdx": "0387419b95c64f9be800811471a0145da1becf631d7a5d828617a07afd94bca6",
@@ -68,7 +68,7 @@
     "guides/identifiers.mdx": "4d087785aa7a1c61c4d0fa56272940dc43a7c32cb97c91996ed7117e06967125",
     "guides/pagination.mdx": "03f46cf534aeb21d11c5622224049a1095f6cb86a1815d3a97a1fbfb00bb8051",
     "guides/pipeline-records.mdx": "4a5a24659e662d80e9b6e8d37b5fa3c04e4aa215cecbcd4d3bdf047c5356bafc",
-    "guides/responses.mdx": "e4b2f40868afa39f90ee5eda73ce35e3ad9c959d552a3838d0a0f47e4d85928b",
+    "guides/responses.mdx": "4a2bf60e3c0d4f542e353b1345cb4b73a1cefc1f6bd50c001564bb8e35177a53",
     "guides/send-attachments.mdx": "e87bffcc0533e84c06a6597ec4178861df02e1020079a7913251af249ca8e350",
     "guides/send-template.mdx": "c1368bcefd1f21d26290090e3acf023f81f2b89e12b3dbf9d6d54babf21e036c",
     "index.mdx": "84473d015c838bd8ed4785fb85c6758ac102bb66d36e2abff04aacbad57f21f5",
@@ -88,7 +88,7 @@
     "pt-br/guides/identifiers.mdx": "d6d17a99838659f8a3fe08817fcf54b38c12559b730acb2dd84bc42d166b8b90",
     "pt-br/guides/pagination.mdx": "394b5c681dd321375e1aacfe0e9ca9b81c5ca3cce900b516324b64372b400992",
     "pt-br/guides/pipeline-records.mdx": "a4371c29dfd3069974da88a34dc50871ecfdfef6256f7349e24071164a3c4d6f",
-    "pt-br/guides/responses.mdx": "3d1cf9412fbece107ef8dc41a0b14a4f6717979cffd07c533a00a8b4b98a75be",
+    "pt-br/guides/responses.mdx": "70ecc36224953405f18af5a78dd75b2cbcfcc6a3f66d4515e5cc34ebe10aacd1",
     "pt-br/guides/send-attachments.mdx": "3e10ccd0c205762541af94297e30ec16b60a2d71ddb0a1e1543d3d77713905ef",
     "pt-br/guides/send-template.mdx": "c80473322f9940863989ce43395b7a82b6caa6ec7b516a76b0c720d1298f7f90",
     "pt-br/index.mdx": "6071ded879949061fee0b73c82cdef28c68165b22b3c4aac296349a86caec7c5",
@@ -1645,32 +1645,32 @@
       "sha256": "c5a574717e072f26ce863b2d8ab260d75c2dc3fbdf9883909d1c782f35bebf28"
     },
     "llms-full-en.json": {
-      "bytes": 321561,
-      "sha256": "d1e5bd1e79aa08ada3aeb2d7310bbc4409d335cfde37d451e089785c2a484de1"
+      "bytes": 322094,
+      "sha256": "dbcd06ed310650b85b8fb67842a2245d320038f239fe77f6abd68483564046ae"
     },
     "llms-es.json": {
       "bytes": 43647,
       "sha256": "27a05a452cfa843eb7399ec99405f6086c24b6face8959b242b87f8a05fcb1ea"
     },
     "llms-full-es.json": {
-      "bytes": 344500,
-      "sha256": "7d97355137cbfe3785a8086e455a0c48dcff43d23726ee8727bdbfd03fa8a988"
+      "bytes": 345036,
+      "sha256": "dc00fe0f62a48215c0d9205e387565676b4d8e09354f16fa173c2ce5d5180281"
     },
     "llms-pt-br.json": {
       "bytes": 43598,
       "sha256": "6418cae73ff4544a1c27de09431cf8766ec847c18ecc643847f9a21fcb5ffd68"
     },
     "llms-full-pt-br.json": {
-      "bytes": 342856,
-      "sha256": "67a2b109338dcac9402444f23538fef26432fc22e261239f4d2bb61076904469"
+      "bytes": 343406,
+      "sha256": "074f5360aacf795619bc1a1ef324bcaa4674723fe4a0b8b6fd329579db80ecc0"
     },
     "llms.txt": {
       "bytes": 47545,
       "sha256": "dce9776fa52dd1d23681a4b81a665fbf25f587cbe7409f02e05d62939122557f"
     },
     "llms-full.txt": {
-      "bytes": 886699,
-      "sha256": "7dd6ba37cac3afb49dc2ed266b08e4af4262fb33e696d69f33c51e2000df69e0"
+      "bytes": 888291,
+      "sha256": "e6ddd9b009e4c0ac5d8a80bda8585b52c1821d5a8926a3f26c577138684063f8"
     },
     "sitemap.xml": {
       "bytes": 113069,

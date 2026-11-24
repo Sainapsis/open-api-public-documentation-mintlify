@@ -15,13 +15,13 @@ El estado HTTP y el cuerpo de respuesta describen la operación solicitada. No t
 | --- | --- | --- |
 | Crear un mensaje | `201`, con `messageId` | Conserva el ID del mensaje. La respuesta publicada no incluye una confirmación de entrega del proveedor; no lo marques como entregado basándote solo en ella. |
 | Liberar una conversación | `204`, sin cuerpo de respuesta | Trátalo como éxito y no intentes interpretar el cuerpo vacío como JSON. |
-| Solicitar una transferencia de LeadScout | `202`, con `trackingId`, `conversationId`, `status` y `assignees` | Conserva el ID de correlación. La asignación es asíncrona: los destinatarios reflejan la solicitud y no demuestran que haya terminado su resolución o asignación posterior. |
+| Solicitar una transferencia de LeadScout | `202`, con `trackingId`, `conversationId`, `status` y `assignees` | Conserva el `trackingId`. La asignación es asíncrona: los destinatarios reflejan la solicitud y no demuestran que haya terminado su resolución o asignación posterior. |
 | Enviar un lead de Custom Connections | `202`, con `requestId` | Conserva el ID de solicitud. Muestra que el lead fue aceptado; otro servicio envía el mensaje inicial de WhatsApp después. |
 
 La referencia de cada operación sigue siendo la autoridad: [mensajes](/es/api-reference/messages-api/crear-mensaje), [liberación](/es/api-reference/conversations-api/liberar-conversaci%C3%B3n), [transferencia](/es/api-reference/leadscout-api/solicitar-transferencia-manual-de-leadscout-a-usuarios-internos) y [Custom Connections](/es/api-reference/campaign-leads/registrar-un-lead-de-campa%C3%B1a).
 
 <Note>
-  Un ID de correlación no es una URL de estado. El contrato publicado no define un endpoint de consulta periódica para `trackingId` ni `requestId`. Consérvalo para correlación y soporte; no construyas un endpoint nuevo a partir de él.
+  Estos IDs no son URLs de estado. El contrato publicado no define un endpoint de consulta periódica para `trackingId` ni `requestId`. Consérvalos para correlación y soporte; no construyas un endpoint nuevo a partir de ellos.
 </Note>
 
 <a id="trace-a-request-with-its-correlation-id"></a>
@@ -29,7 +29,7 @@ La referencia de cada operación sigue siendo la autoridad: [mensajes](/es/api-r
 
 ## Rastrea una solicitud con `X-Correlation-Id`
 
-Toda respuesta de la API REST de integraciones incluye el encabezado `X-Correlation-Id`, tanto en éxito como en error. Su valor es un UUID que Bridge genera para esa llamada HTTP y con el que la ubica en sus propios registros.
+Toda respuesta que devuelve la API REST de integraciones, de éxito o de error, incluye el encabezado `X-Correlation-Id`. Su valor es un UUID que Bridge genera para esa llamada HTTP y con el que la ubica en sus propios registros.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -50,16 +50,25 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 
 ### Respuestas sin el encabezado
 
-Algunas respuestas se devuelven antes de que la solicitud llegue a la API, por eso no traen `X-Correlation-Id`:
+Algunas respuestas no traen `X-Correlation-Id`. Lo que significan para tu solicitud depende del estado.
+
+**Rechazadas antes de llegar a la API.** La solicitud no se procesó.
 
 | Respuesta | Causa |
 | --- | --- |
 | `401` o `403` con un cuerpo como `{"message": "Forbidden"}` | API Key ausente o inválida |
 | `413` | La solicitud es demasiado grande |
-| `502` | La API no pudo completar la solicitud |
-| `504` | La solicitud no terminó en 29 segundos |
 
-En esos casos, envía a soporte la hora de la solicitud con su zona horaria, el método y la ruta, el estado y el `traceId` si el cuerpo lo incluye.
+**Recibidas por la API, pero su respuesta no regresó.** La operación pudo completarse.
+
+| Respuesta | Causa |
+| --- | --- |
+| `502` | La API falló antes de devolver su respuesta |
+| `504` | La API no respondió en 29 segundos; la solicitud puede terminar después |
+
+Antes de repetir una solicitud que recibió `502` o `504` y tiene efectos externos, como crear un mensaje, verifica si ya surtió efecto. Consulta [Decide si reintentar según la operación y la causa](#make-retry-decisions-by-operation-and-cause).
+
+En cualquiera de estos casos, envía a soporte la hora de la solicitud con su zona horaria, el método y la ruta, el estado y el `traceId` si el cuerpo lo incluye.
 
 <a id="parse-the-error-shape-the-endpoint-publishes"></a>
 

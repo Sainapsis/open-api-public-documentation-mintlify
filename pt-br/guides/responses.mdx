@@ -15,13 +15,13 @@ O status HTTP e o corpo da resposta descrevem a operação chamada. Eles nem sem
 | --- | --- | --- |
 | Criar uma mensagem | `201`, com `messageId` | Guarde o ID da mensagem. A resposta publicada não inclui um comprovante de entrega do provedor; não a apresente como entregue com base apenas nessa resposta. |
 | Liberar uma conversa | `204`, sem corpo de resposta | Trate como sucesso e não chame um parser de JSON para o corpo vazio. |
-| Solicitar transferência LeadScout | `202`, com `trackingId`, `conversationId`, `status` e `assignees` | Guarde o ID de correlação. A atribuição é assíncrona; os destinatários repetem o que foi solicitado e não comprovam que a resolução ou atribuição posterior terminou. |
+| Solicitar transferência LeadScout | `202`, com `trackingId`, `conversationId`, `status` e `assignees` | Guarde o `trackingId`. A atribuição é assíncrona; os destinatários repetem o que foi solicitado e não comprovam que a resolução ou atribuição posterior terminou. |
 | Enviar um lead por Custom Connections | `202`, com `requestId` | Guarde o ID da requisição. Informe que o lead foi aceito; a mensagem inicial de WhatsApp é enviada depois por um serviço separado. |
 
 A referência de cada operação continua sendo a fonte do contrato: [mensagens](/pt-br/api-reference/messages-api/criar-mensagem), [liberação](/pt-br/api-reference/conversations-api/liberar-conversa), [transferência](/pt-br/api-reference/leadscout-api/solicitar-transfer%C3%AAncia-manual-do-leadscout-para-usu%C3%A1rios-internos) e [Custom Connections](/pt-br/api-reference/campaign-leads/registrar-um-lead-de-campanha).
 
 <Note>
-  Um ID de correlação não é uma URL de consulta de status. O contrato publicado não define um endpoint de consulta periódica para `trackingId` ou `requestId`. Guarde-o para correlação e suporte; não construa um novo endpoint a partir dele.
+  Esses IDs não são URLs de consulta de status. O contrato publicado não define um endpoint de consulta periódica para `trackingId` ou `requestId`. Guarde-os para correlação e suporte; não construa um novo endpoint a partir deles.
 </Note>
 
 <a id="trace-a-request-with-its-correlation-id"></a>
@@ -29,7 +29,7 @@ A referência de cada operação continua sendo a fonte do contrato: [mensagens]
 
 ## Rastreie uma requisição com `X-Correlation-Id`
 
-Toda resposta da API REST de integrações traz o cabeçalho `X-Correlation-Id`, tanto em sucesso quanto em erro. O valor é um UUID que o Bridge gera para essa chamada HTTP e usa para localizá-la nos próprios registros.
+Toda resposta devolvida pela API REST de integrações, de sucesso ou de erro, traz o cabeçalho `X-Correlation-Id`. O valor é um UUID que o Bridge gera para essa chamada HTTP e usa para localizá-la nos próprios registros.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -50,16 +50,25 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 
 ### Respostas sem o cabeçalho
 
-Algumas respostas são devolvidas antes de a requisição chegar à API, por isso não trazem `X-Correlation-Id`:
+Algumas respostas não trazem `X-Correlation-Id`. O que elas significam para a sua requisição depende do status.
+
+**Rejeitadas antes de chegar à API.** A requisição não foi processada.
 
 | Resposta | Causa |
 | --- | --- |
 | `401` ou `403` com um corpo como `{"message": "Forbidden"}` | API Key ausente ou inválida |
 | `413` | A requisição é grande demais |
-| `502` | A API não conseguiu concluir a requisição |
-| `504` | A requisição não terminou em 29 segundos |
 
-Nesses casos, envie ao suporte o horário da requisição com o fuso horário, o método e o caminho, o status e o `traceId`, se o corpo o incluir.
+**Recebidas pela API, mas a resposta não voltou.** A operação pode ter sido concluída.
+
+| Resposta | Causa |
+| --- | --- |
+| `502` | A API falhou antes de devolver a resposta |
+| `504` | A API não respondeu em 29 segundos; a requisição ainda pode terminar depois |
+
+Antes de repetir uma requisição que recebeu `502` ou `504` e tem efeitos externos, como criar uma mensagem, verifique se ela já teve efeito. Veja [Decida se deve tentar novamente por operação e causa](#make-retry-decisions-by-operation-and-cause).
+
+Em qualquer um desses casos, envie ao suporte o horário da requisição com o fuso horário, o método e o caminho, o status e o `traceId`, se o corpo o incluir.
 
 <a id="parse-the-error-shape-the-endpoint-publishes"></a>
 
