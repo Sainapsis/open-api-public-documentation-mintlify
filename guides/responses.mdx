@@ -13,18 +13,20 @@ The HTTP status and response body describe the operation you called. They do not
 | --- | --- | --- |
 | Create a message | `201`, with `messageId` | Retain the message ID. The published response does not include a provider delivery receipt; do not label it delivered from this response alone. |
 | Release a conversation | `204`, with no response body | Treat it as success and do not call a JSON parser on the empty body. |
-| Request LeadScout handoff | `202`, with `trackingId`, `conversationId`, `status`, and `assignees` | Retain the correlation ID. Assignment is asynchronous; assignees echo the request and do not prove that downstream resolution or assignment completed. |
+| Request LeadScout handoff | `202`, with `trackingId`, `conversationId`, `status`, and `assignees` | Retain the `trackingId`. Assignment is asynchronous; assignees echo the request and do not prove that downstream resolution or assignment completed. |
 | Submit a Custom Connections lead | `202`, with `requestId` | Retain the request ID. Show that the lead was accepted; the opening WhatsApp message is sent later by a separate service. |
 
 The reference for each operation remains authoritative: [messages](/api-reference/messages-api/create-a-new-message), [release](/api-reference/conversations-api/release-conversation), [handoff](/api-reference/leadscout-api/request-a-manual-handoff-of-a-leadscout-conversation-to-internal-users), and [Custom Connections](/api-reference/campaign-leads/register-a-campaign-lead).
 
 <Note>
-  A correlation ID is not a status URL. The published contract does not define a polling endpoint for `trackingId` or `requestId`. Keep it for correlation and support; do not construct a new endpoint from it.
+  These IDs are not status URLs. The published contract does not define a polling endpoint for `trackingId` or `requestId`. Keep them for correlation and support; do not construct a new endpoint from them.
 </Note>
 
-## Trace a request with its correlation ID
+<a id="trace-a-request-with-its-correlation-id"></a>
 
-Every Integrations API response carries an `X-Correlation-Id` header, on success and on error alike. Its value is a UUID that Bridge generates for that request and uses to find it in its own records.
+## Trace a request with `X-Correlation-Id`
+
+Every response returned by the REST Integrations API, on success or on error, carries an `X-Correlation-Id` header. Its value is a UUID that Bridge generates for that HTTP call and uses to find it in its own records.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -39,7 +41,29 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 - Treat it as an opaque string. Every request gets a new value, including a retry of the same request.
 - Bridge always generates it: an `X-Correlation-Id` header sent in your request is not used as the ID.
 
-A request rejected for a missing or invalid API Key does not carry the header. It is also not the `traceId` that some error bodies include; when both are present, send both to support.
+`X-Correlation-Id` identifies one HTTP call. It is not the `trackingId` of a handoff, which identifies the handoff, nor the `traceId` that some error bodies include. When a response carries more than one of them, send them all to support. Custom Connections responses do not carry the header; follow [its error reference](/lead-capture/errors) for support requests.
+
+### Responses without the header
+
+Some responses carry no `X-Correlation-Id`. What they mean for your request depends on the status.
+
+**Rejected before reaching the API.** The request was not processed.
+
+| Response | Cause |
+| --- | --- |
+| `401` or `403` with a body such as `{"message": "Forbidden"}` | Missing or invalid API Key |
+| `413` | The request is too large |
+
+**Received by the API, but its response did not come back.** The operation may have completed.
+
+| Response | Cause |
+| --- | --- |
+| `502` | The API failed before returning its response |
+| `504` | The API did not answer within 29 seconds; the request can still finish after that |
+
+Before repeating a request that got a `502` or `504` and has external effects, such as creating a message, check whether it took effect. See [Make retry decisions by operation and cause](#make-retry-decisions-by-operation-and-cause).
+
+For any of these, send support the time of the request with its time zone, the method and path, the status, and `traceId` if the body includes one.
 
 ## Parse the error shape the endpoint publishes
 

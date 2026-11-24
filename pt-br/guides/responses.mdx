@@ -15,20 +15,21 @@ O status HTTP e o corpo da resposta descrevem a operação chamada. Eles nem sem
 | --- | --- | --- |
 | Criar uma mensagem | `201`, com `messageId` | Guarde o ID da mensagem. A resposta publicada não inclui um comprovante de entrega do provedor; não a apresente como entregue com base apenas nessa resposta. |
 | Liberar uma conversa | `204`, sem corpo de resposta | Trate como sucesso e não chame um parser de JSON para o corpo vazio. |
-| Solicitar transferência LeadScout | `202`, com `trackingId`, `conversationId`, `status` e `assignees` | Guarde o ID de correlação. A atribuição é assíncrona; os destinatários repetem o que foi solicitado e não comprovam que a resolução ou atribuição posterior terminou. |
+| Solicitar transferência LeadScout | `202`, com `trackingId`, `conversationId`, `status` e `assignees` | Guarde o `trackingId`. A atribuição é assíncrona; os destinatários repetem o que foi solicitado e não comprovam que a resolução ou atribuição posterior terminou. |
 | Enviar um lead por Custom Connections | `202`, com `requestId` | Guarde o ID da requisição. Informe que o lead foi aceito; a mensagem inicial de WhatsApp é enviada depois por um serviço separado. |
 
 A referência de cada operação continua sendo a fonte do contrato: [mensagens](/pt-br/api-reference/messages-api/criar-mensagem), [liberação](/pt-br/api-reference/conversations-api/liberar-conversa), [transferência](/pt-br/api-reference/leadscout-api/solicitar-transfer%C3%AAncia-manual-do-leadscout-para-usu%C3%A1rios-internos) e [Custom Connections](/pt-br/api-reference/campaign-leads/registrar-um-lead-de-campanha).
 
 <Note>
-  Um ID de correlação não é uma URL de consulta de status. O contrato publicado não define um endpoint de consulta periódica para `trackingId` ou `requestId`. Guarde-o para correlação e suporte; não construa um novo endpoint a partir dele.
+  Esses IDs não são URLs de consulta de status. O contrato publicado não define um endpoint de consulta periódica para `trackingId` ou `requestId`. Guarde-os para correlação e suporte; não construa um novo endpoint a partir deles.
 </Note>
 
 <a id="trace-a-request-with-its-correlation-id"></a>
+<a id="trace-a-request-with-x-correlation-id"></a>
 
-## Rastreie uma requisição pelo ID de correlação
+## Rastreie uma requisição com `X-Correlation-Id`
 
-Toda resposta da API de integrações traz o cabeçalho `X-Correlation-Id`, tanto em sucesso quanto em erro. O valor é um UUID que o Bridge gera para essa requisição e usa para localizá-la nos próprios registros.
+Toda resposta devolvida pela API REST de integrações, de sucesso ou de erro, traz o cabeçalho `X-Correlation-Id`. O valor é um UUID que o Bridge gera para essa chamada HTTP e usa para localizá-la nos próprios registros.
 
 ```bash
 curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/contacts?limit=1" \
@@ -43,7 +44,31 @@ curl -i "https://api-connect-us.bridge.new/bridge/api/v1/workspaces/$WORKSPACE/c
 - Trate-o como uma string opaca. Cada requisição recebe um valor novo, inclusive a nova tentativa de uma mesma requisição.
 - O Bridge sempre o gera: um cabeçalho `X-Correlation-Id` enviado na sua requisição não é usado como ID.
 
-Uma requisição rejeitada por uma API Key ausente ou inválida não traz o cabeçalho. Ele também não é o `traceId` que alguns corpos de erro incluem; quando os dois estiverem presentes, envie ambos ao suporte.
+`X-Correlation-Id` identifica uma chamada HTTP. Ele não é o `trackingId` de uma transferência, que identifica a transferência, nem o `traceId` que alguns corpos de erro incluem. Quando uma resposta trouxer mais de um, envie todos ao suporte. As respostas de Custom Connections não trazem o cabeçalho; para suporte, siga [a referência de erros delas](/pt-br/lead-capture/errors).
+
+<a id="responses-without-the-header"></a>
+
+### Respostas sem o cabeçalho
+
+Algumas respostas não trazem `X-Correlation-Id`. O que elas significam para a sua requisição depende do status.
+
+**Rejeitadas antes de chegar à API.** A requisição não foi processada.
+
+| Resposta | Causa |
+| --- | --- |
+| `401` ou `403` com um corpo como `{"message": "Forbidden"}` | API Key ausente ou inválida |
+| `413` | A requisição é grande demais |
+
+**Recebidas pela API, mas a resposta não voltou.** A operação pode ter sido concluída.
+
+| Resposta | Causa |
+| --- | --- |
+| `502` | A API falhou antes de devolver a resposta |
+| `504` | A API não respondeu em 29 segundos; a requisição ainda pode terminar depois |
+
+Antes de repetir uma requisição que recebeu `502` ou `504` e tem efeitos externos, como criar uma mensagem, verifique se ela já teve efeito. Veja [Decida se deve tentar novamente por operação e causa](#make-retry-decisions-by-operation-and-cause).
+
+Em qualquer um desses casos, envie ao suporte o horário da requisição com o fuso horário, o método e o caminho, o status e o `traceId`, se o corpo o incluir.
 
 <a id="parse-the-error-shape-the-endpoint-publishes"></a>
 
