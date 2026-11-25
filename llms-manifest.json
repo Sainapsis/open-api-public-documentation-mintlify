@@ -44,7 +44,7 @@
     "es/guides/agent-outbound.mdx": "4602116efdc7585fa63ce2cce355122d3c6583c0c542b644af395e08f0dcc45f",
     "es/guides/first-conversation.mdx": "eb152c9a23454466b70b82cba98fa7755a720db6edbed22ab382aac1130af147",
     "es/guides/identifiers.mdx": "5ecbe5a47e052c83de34391ef8d1fd83c73c561a28fe9777f3ae6ce7b9816442",
-    "es/guides/odata-feed.mdx": "d34a8f5dadbd366e8bee63c4876ac9e3af4af9de1ba5ab048df02a226f2b4e0e",
+    "es/guides/odata-feed.mdx": "6a1fc899c7c6a8edb0a6cde62a2138a9cf3f5a326acaa6836e5a8791b2838c2a",
     "es/guides/pagination.mdx": "836fb8501a011883e58b457b9216e71b4056d4353f111143459784c4cbd7c70f",
     "es/guides/pipeline-records.mdx": "e2a03942ac556f75cb336920a9062d64646040454dcb17e9afeca8f329defc8c",
     "es/guides/responses.mdx": "17afb76df527066668eeca87dc1c2d31770198c33fd842d2098e98e14b140438",
@@ -67,7 +67,7 @@
     "guides/agent-outbound.mdx": "cb60fe30743d96163b1b724b4518dfb0a04fe003fc9b6c3bf14132cd9d86f8fe",
     "guides/first-conversation.mdx": "4682c6cc598460b265e24ca8d0c119863a29736e4fb81bef7cf033ba50ab00a6",
     "guides/identifiers.mdx": "4d087785aa7a1c61c4d0fa56272940dc43a7c32cb97c91996ed7117e06967125",
-    "guides/odata-feed.mdx": "a148a405419b9974c653474f888681ca6a89b9d558a0b11a5f7572f4e8c3a3fa",
+    "guides/odata-feed.mdx": "fb295df09543bcda2f54968207988218a931df87badfc641359ebaa4603c2c79",
     "guides/pagination.mdx": "03f46cf534aeb21d11c5622224049a1095f6cb86a1815d3a97a1fbfb00bb8051",
     "guides/pipeline-records.mdx": "4a5a24659e662d80e9b6e8d37b5fa3c04e4aa215cecbcd4d3bdf047c5356bafc",
     "guides/responses.mdx": "4a2bf60e3c0d4f542e353b1345cb4b73a1cefc1f6bd50c001564bb8e35177a53",
@@ -88,7 +88,7 @@
     "pt-br/guides/agent-outbound.mdx": "b43380b51224c6d81fb6b0db9e2e0a9528987498badf91b231e6ab567185c157",
     "pt-br/guides/first-conversation.mdx": "d21f83a729a307d4a2d18e2e6c719854da15f222d3d4dc93071d02466340356c",
     "pt-br/guides/identifiers.mdx": "d6d17a99838659f8a3fe08817fcf54b38c12559b730acb2dd84bc42d166b8b90",
-    "pt-br/guides/odata-feed.mdx": "f70225121ffb4a38b1c06f0096878831ef80d492265f4a01a6345528f522c246",
+    "pt-br/guides/odata-feed.mdx": "d8e914076b21714dec8b1ea65f153f46e748a0df29ccd0d2ece14b7c4a46bc5a",
     "pt-br/guides/pagination.mdx": "394b5c681dd321375e1aacfe0e9ca9b81c5ca3cce900b516324b64372b400992",
     "pt-br/guides/pipeline-records.mdx": "a4371c29dfd3069974da88a34dc50871ecfdfef6256f7349e24071164a3c4d6f",
     "pt-br/guides/responses.mdx": "70ecc36224953405f18af5a78dd75b2cbcfcc6a3f66d4515e5cc34ebe10aacd1",
@@ -1669,32 +1669,32 @@
       "sha256": "fa6f217a589c48f5f472386a7c1a7863366f863feea4d099e70b33749e4b3d8f"
     },
     "llms-full-en.json": {
-      "bytes": 325751,
-      "sha256": "934d29abeffe6c8d11711226ce26a1c27698585d5d81aad497436c12578834cc"
+      "bytes": 325774,
+      "sha256": "42646fabd41359f72692d987bf93e7cf0b9043d3641b8c66fb0440774b78183a"
     },
     "llms-es.json": {
       "bytes": 44034,
       "sha256": "0bf5218a66987bcc454c9c1e37e277a3a65a319d48b7e200d592e6a0fb6a71f2"
     },
     "llms-full-es.json": {
-      "bytes": 349006,
-      "sha256": "8c13c400b03ecea583b8c14837bc128a44084bd4849223066005d1453fcf6b8c"
+      "bytes": 349036,
+      "sha256": "f0998bf9ee222233b882b613e5b9930dcab1984f179dad4e37c070c63e6dc05d"
     },
     "llms-pt-br.json": {
       "bytes": 43984,
       "sha256": "e664317e2c0d5cd41d10c4244166dc33e1787e0e5af52f21c303a9f82a41cfaa"
     },
     "llms-full-pt-br.json": {
-      "bytes": 347325,
-      "sha256": "4b49b4d5173471aff8dcf393fbcd340698fc49c5e0707788c840c842292819cb"
+      "bytes": 347355,
+      "sha256": "82a915949434e35df8167e072bb5eb41629982a796dc66b319a74b5b24ae5c9a"
     },
     "llms.txt": {
       "bytes": 48223,
       "sha256": "fbe41ca7f81c39a30c345165c55bde2a0261f6fe3d59dacd03fe691b67af857a"
     },
     "llms-full.txt": {
-      "bytes": 899162,
-      "sha256": "2745c49b76159a8afab96d8b49f93d403339f5f0d4eb727d2fdd3d351a793315"
+      "bytes": 899245,
+      "sha256": "a9040396fc2d709ed0bda4a889aa40894ac85d487e9c3c581ee9dac856c50038"
     },
     "sitemap.xml": {
       "bytes": 114533,
