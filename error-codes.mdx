@@ -46,7 +46,7 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
 4. Preserve the `X-Correlation-Id` response header, `traceId`, status and the request URL for support; see [Trace a request with `X-Correlation-Id`](/guides/responses#trace-a-request-with-its-correlation-id) for responses that do not carry the header. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
 
-An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, or when `template.media` supplies both or neither of `mediaId` and `url`. Invalid field types or UUIDs can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
+An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, when `template.media` supplies both or neither of `mediaId` and `url`, or when `campaignName` is sent without `campaignId`. Invalid field types or UUIDs, and a `campaignName` over 200 characters, can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
 
 ### Legacy code strings
 
@@ -116,7 +116,7 @@ Error codes for Agent operations.
 
 | Code | Status | Meaning |
 | ---- | ------ | ------- |
-| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, `template` carries neither `id` nor `name`, or `template.media` does not carry exactly one of `mediaId` or `url` |
+| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, `template` carries neither `id` nor `name`, `template.media` does not carry exactly one of `mediaId` or `url`, or `campaignName` is sent without `campaignId` |
 | `BRIDGE_CORE_0301` | 403 | The workspace in the path differs from the one of the API key |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | The Contact does not exist in the workspace |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | The `handoffOverride` Bridge User does not exist in the workspace |

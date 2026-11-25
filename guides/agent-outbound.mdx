@@ -22,6 +22,7 @@ Both use the REST API host `https://api-connect-us.bridge.new` and a server-side
 2. [List Agents](/api-reference/agents-api/list-the-agents-of-a-workspace). Choose an available Agent and read its `lines[].providerChannelId`. An AI Agent ID differs from a human Bridge User ID.
 3. Choose an approved template. [Discover its variables](/guides/send-template#1-discover-the-variables), supply caller-required values, and check that it is approved for the destination line. Use only the discovery step as this prerequisite; the separate Conversation-creation step in that recipe is not needed for outbound.
 4. Confirm that your business has the required opt-in. If you send `consent.status: "GRANTED"`, include `capturedAt`; this records your assertion of consent.
+5. To attribute the conversation to a campaign, send `campaignId` and, optionally, `campaignName`. The name is accepted only together with `campaignId` (otherwise `400` with `BRIDGE_CORE_0103`) and is limited to 200 characters (otherwise `422`). The [OData feed guide](/guides/odata-feed) shows where it appears in reports.
 
 For Agents outbound, `contact.providerChannelId` must belong to the chosen Agent when supplied. It is a preference: another eligible Agent line can be selected. For LeadScout outbound, an explicit line is respected. [Identifiers and their sources](/guides/identifiers) explains which values to use.
 

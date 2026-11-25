@@ -30,7 +30,7 @@ Read these public sources directly by HTTP; no MCP configuration or Bridge crede
 
 - [Bridge integration guidance for AI agents](https://docs.bridge.new/skill.md)
 
-## English (60 pages)
+## English (61 pages)
 
 - [Integrate with Bridge](https://docs.bridge.new/index.md): Connect your CRM, automation, or landing page with the REST API, webhooks, and Custom Connections.
 - [Connect your AI coding assistant](https://docs.bridge.new/connect-your-agent.md): Connect Codex, Claude Code, Cursor or GitHub Copilot to current Bridge documentation, then build from the exact API contract.
@@ -46,6 +46,7 @@ Read these public sources directly by HTTP; no MCP configuration or Bridge crede
 - [WhatsApp template parameters](https://docs.bridge.new/templates-and-parameters.md): Open a conversation with your own WhatsApp templates, fill their variables, and handle every error the request can return.
 - [Rate limits](https://docs.bridge.new/rate-limits.md): How many requests the Bridge API accepts, the headers that tell you where you stand, and how to handle a 429 correctly.
 - [Error codes](https://docs.bridge.new/error-codes.md): Interpret REST API error codes, validation responses and uncertain write outcomes, and choose the next action.
+- [LeadScout sessions in the OData feed](https://docs.bridge.new/guides/odata-feed.md): Read where each LeadScout session came from: the provenance fields of the LeadscoutSessions entity set and the deprecated Source field.
 - [Changelog](https://docs.bridge.new/changelog.md): Changes to the Bridge API that affect your integration, newest first.
 - [Receive Bridge webhooks](https://docs.bridge.new/webhooks.md): Connect an HTTPS receiver to Bridge events and understand authentication, acknowledgement and asynchronous processing.
 - [Verify webhook requests](https://docs.bridge.new/webhooks/verifying-signatures.md): Verify the webhook API key and the exact HMAC representation used by Bridge, then deduplicate accepted events.
@@ -93,7 +94,7 @@ Read these public sources directly by HTTP; no MCP configuration or Bridge crede
 - [Reopen a closed pipeline record](https://docs.bridge.new/api-reference/pipeline-records-api/reopen-a-closed-pipeline-record.md): Take a closed record back to the open stage it was in before it was closed, and clear its close reason.
 - [Register a campaign lead](https://docs.bridge.new/api-reference/campaign-leads/register-a-campaign-lead.md): Registers a lead captured by a tenant's landing page and queues the first outbound WhatsApp message. A 202 means the lead was accepted, not that a message was sent.
 
-## Español (60 pages)
+## Español (61 pages)
 
 - [Integra tus sistemas con Bridge](https://docs.bridge.new/es/index.md): Conecta tu CRM, automatizaciones o landing page mediante la API REST, los webhooks y Custom Connections.
 - [Conecta tu asistente de programación con IA](https://docs.bridge.new/es/connect-your-agent.md): Conecta Codex, Claude Code, Cursor o GitHub Copilot a la documentación actual de Bridge e implementa a partir del contrato exacto de la API.
@@ -109,6 +110,7 @@ Read these public sources directly by HTTP; no MCP configuration or Bridge crede
 - [Parámetros de plantillas de WhatsApp](https://docs.bridge.new/es/templates-and-parameters.md): Abre una conversación con tus plantillas de WhatsApp, completa sus variables y maneja todos los errores que puede devolver la solicitud.
 - [Límites de solicitudes](https://docs.bridge.new/es/rate-limits.md): Cuántas solicitudes acepta la API de Bridge, qué encabezados indican el presupuesto disponible y cómo manejar correctamente un 429.
 - [Códigos de error](https://docs.bridge.new/es/error-codes.md): Interpreta los códigos de error REST, las respuestas de validación y los resultados de escritura inciertos para decidir qué hacer.
+- [Sesiones de LeadScout en el feed OData](https://docs.bridge.new/es/guides/odata-feed.md): Consulta de dónde vino cada sesión de LeadScout: los campos de procedencia del conjunto LeadscoutSessions y el campo obsoleto Source.
 - [Registro de cambios](https://docs.bridge.new/es/changelog.md): Cambios de la API de Bridge que afectan tu integración, del más reciente al más antiguo.
 - [Recibe webhooks de Bridge](https://docs.bridge.new/es/webhooks.md): Conecta un receptor HTTPS a los eventos de Bridge y entiende la autenticación, la confirmación de recepción y el procesamiento asíncrono.
 - [Verifica las solicitudes de webhook](https://docs.bridge.new/es/webhooks/verifying-signatures.md): Verifica la clave de API del webhook y la representación HMAC exacta que usa Bridge; luego deduplica los eventos aceptados.
@@ -156,7 +158,7 @@ Read these public sources directly by HTTP; no MCP configuration or Bridge crede
 - [Reabrir un registro de pipeline cerrado](https://docs.bridge.new/es/api-reference/pipeline-records-api/reabrir-un-registro-de-pipeline-cerrado.md): Devuelve un registro cerrado a la etapa abierta en la que estaba antes de cerrarse y borra su motivo de cierre.
 - [Registrar un lead de campaña](https://docs.bridge.new/es/api-reference/campaign-leads/registrar-un-lead-de-campa%C3%B1a.md): Registra un lead captado por la página de destino de un tenant y pone en cola el primer mensaje saliente de WhatsApp. Un 202 significa que el lead fue aceptado, no que se haya enviado un mensaje.
 
-## Português do Brasil (60 pages)
+## Português do Brasil (61 pages)
 
 - [Integre seus sistemas ao Bridge](https://docs.bridge.new/pt-br/index.md): Conecte seu CRM, automações ou landing page ao Bridge com a API REST, webhooks e Custom Connections.
 - [Conecte seu assistente de programação com IA](https://docs.bridge.new/pt-br/connect-your-agent.md): Conecte Codex, Claude Code, Cursor ou GitHub Copilot à documentação atual do Bridge e implemente com base no contrato exato da API.
@@ -172,6 +174,7 @@ Read these public sources directly by HTTP; no MCP configuration or Bridge crede
 - [Parâmetros de templates de WhatsApp](https://docs.bridge.new/pt-br/templates-and-parameters.md): Abra uma conversa com seus próprios templates de WhatsApp, preencha as variáveis e trate os erros que a requisição pode retornar.
 - [Limites de requisições](https://docs.bridge.new/pt-br/rate-limits.md): Quantas requisições a API Bridge aceita, quais cabeçalhos mostram a cota disponível e como tratar corretamente uma resposta 429.
 - [Códigos de erro](https://docs.bridge.new/pt-br/error-codes.md): Interprete códigos de erro da API REST, respostas de validação e resultados incertos de gravações para escolher a próxima ação.
+- [Sessões do LeadScout no feed OData](https://docs.bridge.new/pt-br/guides/odata-feed.md): Consulte de onde veio cada sessão do LeadScout: os campos de procedência do conjunto LeadscoutSessions e o campo obsoleto Source.
 - [Histórico de alterações](https://docs.bridge.new/pt-br/changelog.md): Mudanças da API Bridge que afetam sua integração, das mais recentes para as mais antigas.
 - [Receba webhooks do Bridge](https://docs.bridge.new/pt-br/webhooks.md): Conecte um receptor HTTPS aos eventos do Bridge e entenda autenticação, confirmação de recebimento e processamento assíncrono.
 - [Verifique requisições de webhook](https://docs.bridge.new/pt-br/webhooks/verifying-signatures.md): Verifique a chave de API do webhook e a representação HMAC exata usada pelo Bridge e elimine eventos aceitos repetidos.

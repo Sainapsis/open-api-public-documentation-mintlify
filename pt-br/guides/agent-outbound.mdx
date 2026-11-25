@@ -26,6 +26,7 @@ As duas operações usam o host REST `https://api-connect-us.bridge.new` e `x-ap
 2. [Liste os Agentes](/pt-br/api-reference/agents-api/listar-os-agents-de-um-workspace). Escolha um Agente disponível e leia seu `lines[].providerChannelId`. O ID de um Agente de IA é diferente do ID de um usuário humano do Bridge.
 3. Escolha um template aprovado. [Descubra suas variáveis](/pt-br/guides/send-template#1-discover-the-variables), forneça os valores exigidos do integrador e confirme a aprovação para a linha de destino. Use apenas a etapa de descoberta como pré-requisito: a etapa separada de criação de conversa desse guia não é necessária para outbound.
 4. Confirme que sua empresa tem o aceite necessário. Se enviar `consent.status: "GRANTED"`, inclua `capturedAt`; isso registra sua declaração de consentimento.
+5. Para atribuir a conversa a uma campanha, envie `campaignId` e, opcionalmente, `campaignName`. O nome só é aceito junto com `campaignId` (caso contrário, `400` com `BRIDGE_CORE_0103`) e aceita no máximo 200 caracteres (caso contrário, `422`). O [guia do feed OData](/pt-br/guides/odata-feed) mostra onde ele aparece nos relatórios.
 
 No outbound de Agentes, `contact.providerChannelId`, quando informado, deve pertencer ao Agente escolhido. Ele expressa uma preferência: outra linha elegível do Agente pode ser selecionada. No outbound de LeadScout, a linha explícita é respeitada. O guia de [identificadores e suas fontes](/pt-br/guides/identifiers) explica quais valores usar.
 

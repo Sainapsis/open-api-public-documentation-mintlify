@@ -295,6 +295,27 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/error-codes" />
   </url>
   <url>
+    <loc>https://docs.bridge.new/guides/odata-feed</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/guides/odata-feed" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/es/guides/odata-feed</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/guides/odata-feed" />
+  </url>
+  <url>
+    <loc>https://docs.bridge.new/pt-br/guides/odata-feed</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://docs.bridge.new/pt-br/guides/odata-feed" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://docs.bridge.new/guides/odata-feed" />
+  </url>
+  <url>
     <loc>https://docs.bridge.new/changelog</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://docs.bridge.new/changelog" />
     <xhtml:link rel="alternate" hreflang="es" href="https://docs.bridge.new/es/changelog" />

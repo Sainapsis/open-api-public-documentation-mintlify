@@ -1006,6 +1006,7 @@ Both use the REST API host `https://api-connect-us.bridge.new` and a server-side
 2. [List Agents](https://docs.bridge.new/api-reference/agents-api/list-the-agents-of-a-workspace.md). Choose an available Agent and read its `lines[].providerChannelId`. An AI Agent ID differs from a human Bridge User ID.
 3. Choose an approved template. [Discover its variables](https://docs.bridge.new/guides/send-template.md#1-discover-the-variables), supply caller-required values, and check that it is approved for the destination line. Use only the discovery step as this prerequisite; the separate Conversation-creation step in that recipe is not needed for outbound.
 4. Confirm that your business has the required opt-in. If you send `consent.status: "GRANTED"`, include `capturedAt`; this records your assertion of consent.
+5. To attribute the conversation to a campaign, send `campaignId` and, optionally, `campaignName`. The name is accepted only together with `campaignId` (otherwise `400` with `BRIDGE_CORE_0103`) and is limited to 200 characters (otherwise `422`). The [OData feed guide](https://docs.bridge.new/guides/odata-feed.md) shows where it appears in reports.
 
 For Agents outbound, `contact.providerChannelId` must belong to the chosen Agent when supplied. It is a preference: another eligible Agent line can be selected. For LeadScout outbound, an explicit line is respected. [Identifiers and their sources](https://docs.bridge.new/guides/identifiers.md) explains which values to use.
 
@@ -2008,7 +2009,7 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
 4. Preserve the `X-Correlation-Id` response header, `traceId`, status and the request URL for support; see [Trace a request with `X-Correlation-Id`](https://docs.bridge.new/guides/responses.md#trace-a-request-with-its-correlation-id) for responses that do not carry the header. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
 
-An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, or when `template.media` supplies both or neither of `mediaId` and `url`. Invalid field types or UUIDs can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
+An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, when `template.media` supplies both or neither of `mediaId` and `url`, or when `campaignName` is sent without `campaignId`. Invalid field types or UUIDs, and a `campaignName` over 200 characters, can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
 
 ### Legacy code strings
 
@@ -2078,7 +2079,7 @@ Error codes for Agent operations.
 
 | Code | Status | Meaning |
 | ---- | ------ | ------- |
-| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, `template` carries neither `id` nor `name`, or `template.media` does not carry exactly one of `mediaId` or `url` |
+| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, `template` carries neither `id` nor `name`, `template.media` does not carry exactly one of `mediaId` or `url`, or `campaignName` is sent without `campaignId` |
 | `BRIDGE_CORE_0301` | 403 | The workspace in the path differs from the one of the API key |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | The Contact does not exist in the workspace |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | The `handoffOverride` Bridge User does not exist in the workspace |
@@ -2283,6 +2284,51 @@ Error codes for workspace operations.
 
 ---
 
+# LeadScout sessions in the OData feed
+
+Source: https://docs.bridge.new/guides/odata-feed
+
+Read where each LeadScout session came from: the provenance fields of the LeadscoutSessions entity set and the deprecated Source field.
+
+The OData feed serves your workspace's conversation data to reporting tools such as Power BI. This page covers the fields of the `LeadscoutSessions` entity set that tell you where a session came from. Request `$metadata` for the complete list of fields and their types.
+
+## Connect
+
+```text
+https://api-connect-us.bridge.new/odata/v1
+```
+
+The feed uses HTTP Basic authentication: the username is your workspace id and the password is the same API key you send in `x-api-key` to the REST API. A request with only the `x-api-key` header is rejected.
+
+## Provenance fields
+
+Provenance describes where a session came from. Every field is optional and is empty when Bridge recorded no provenance for the session.
+
+| Field | Type | Content |
+| --- | --- | --- |
+| `ProvenanceSource` | `Edm.String` | Where the contact came from: `fb` for Facebook, `ig` for Instagram, `an` for Meta Audience Network, `whatsapp` for WhatsApp. For a landing page it is the `utm_source` your page sent. |
+| `ProvenanceMedium` | `Edm.String` | The kind of channel: `ad` for a Meta ad, `post` for a Meta post, `organic` for an organic lead or WhatsApp message, `bridge` for a Bridge campaign. For a landing page it is the `utm_medium` your page sent, in lowercase. |
+| `ProvenanceCampaignId` | `Edm.String` | The campaign id: the ad platform's campaign, the `campaignId` sent to an outbound request, or the Bridge campaign. |
+| `ProvenanceContentId` | `Edm.String` | The ad or content id within the campaign. |
+| `ProvenanceCapturedAt` | `Edm.DateTimeOffset` | When the provenance was captured. |
+
+## Changed fields
+
+**Warning**
+
+  `Source` is deprecated. It is still present and keeps the value it had before; prefer the provenance fields above.
+
+| Field | Behavior |
+| --- | --- |
+| `Source` | Deprecated. Carries the campaign id for Meta lead forms, outbound API requests and Bridge bulk campaigns, the landing URL for Click-to-WhatsApp ads and landing pages, and nothing for organic WhatsApp conversations. |
+| `CampaignCaptureCapturedAt` | Deprecated; use `ProvenanceCapturedAt`. Keeps the value it had for existing sessions and, for new ones, carries the provenance capture time only for landing page sessions whose `CampaignCaptureStatus` is `MATCHED`; otherwise empty. |
+
+## Name a campaign from the outbound API
+
+An outbound request that sends `campaignId` can also send an optional `campaignName`. The name is accepted only together with `campaignId`, surrounding spaces are trimmed, a blank name is treated as absent, and it is limited to 200 characters. When the same campaign arrives with different names, reports show the most recent one. See the [Agents outbound guide](https://docs.bridge.new/guides/agent-outbound.md).
+
+---
+
 # Changelog
 
 Source: https://docs.bridge.new/changelog
@@ -2296,6 +2342,18 @@ Changes that affect the calls you already make, newest first. Additive changes �
 **Note**
 
   The older entries below did not record effective dates. Their deployment dates have not been verified; their order does not establish a release date. The retirement date for deprecated list filters is **not yet announced**. Keep using the documented current contract until an effective change is published, and use the available lookup endpoints for new integrations.
+
+## Session provenance in the OData feed
+
+The `LeadscoutSessions` entity set gains five optional provenance fields: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` and `ProvenanceCapturedAt`.
+
+- **Deprecated:** `Source` is still present and keeps its current value; prefer the provenance fields.
+- **Deprecated:** `CampaignCaptureCapturedAt`; use `ProvenanceCapturedAt`. Existing sessions keep their value. New sessions carry it only when they come from a landing page and their `CampaignCaptureStatus` is `MATCHED`; for any other origin it stays empty.
+- **Added:** outbound requests accept an optional `campaignName`, only together with `campaignId`, up to 200 characters.
+
+See [the OData feed](https://docs.bridge.new/guides/odata-feed.md).
+
+---
 
 ## Documentation improvements
 
@@ -5460,7 +5518,8 @@ the workspace and be available (see `GET /agents`). The template is referenced b
 `handoffOverride` Bridge User must be valid. If `template.media.mediaId` is unknown, the request fails
 with 400 `BRIDGE_AI_LEADSCOUT_0016` only after the conversation was created or recovered, so a retry after
 that error may answer differently. Body rules (`consent.status=GRANTED` without `capturedAt`, `template.media`
-without exactly one of `mediaId` or `url`) fail with 400 `BRIDGE_CORE_0103`.
+without exactly one of `mediaId` or `url`, `campaignName` without `campaignId`) fail with 400
+`BRIDGE_CORE_0103`; a `campaignName` over 200 characters fails with 422.
 
 The conversation opens on one of the Agent's active WhatsApp lines, controlled by the Agent, with the template
 as its first message. A line is picked in this order:
@@ -6664,6 +6723,7 @@ Ambas usan el host de la API REST `https://api-connect-us.bridge.new` y una `x-a
 2. [Lista los agentes](https://docs.bridge.new/es/api-reference/agents-api/listar-los-agents-de-un-workspace.md). Elige uno disponible y lee su `lines[].providerChannelId`. El ID de un agente de IA no es el de un usuario humano de Bridge.
 3. Elige una plantilla aprobada. [Consulta sus variables](https://docs.bridge.new/es/guides/send-template.md#1-discover-the-variables), proporciona los valores que debe aportar quien hace la solicitud y comprueba que esté aprobada para la línea de destino. Para este requisito solo necesitas el paso de consulta; no ejecutes el paso de creación de conversación de esa guía antes de una operación de conversación saliente.
 4. Confirma que tu negocio tenga la autorización necesaria. Si envías `consent.status: "GRANTED"`, incluye `capturedAt`: así registras tu declaración de consentimiento.
+5. Para atribuir la conversación a una campaña, envía `campaignId` y, opcionalmente, `campaignName`. El nombre solo se acepta junto con `campaignId` (si no, `400` con `BRIDGE_CORE_0103`) y admite como máximo 200 caracteres (si no, `422`). La [guía del feed OData](https://docs.bridge.new/es/guides/odata-feed.md) muestra dónde aparece en los informes.
 
 En la operación de agentes, `contact.providerChannelId` debe pertenecer al agente elegido si lo envías. Es una preferencia: se puede seleccionar otra línea elegible de ese agente. En LeadScout se respeta la línea explícita. [Identificadores y sus fuentes](https://docs.bridge.new/es/guides/identifiers.md) explica qué valores usar.
 
@@ -7672,7 +7732,7 @@ Acepta cuerpos de error JSON con `application/json` o `application/problem+json`
 3. Si `detail` es un array, interprétalo como el formato `HTTPValidationError`. Un `detail` de tipo cadena es una explicación, no una lista de errores de campos.
 4. Conserva el encabezado de respuesta `X-Correlation-Id`, `traceId`, el estado y la URL de solicitud para soporte; consulta [Rastrea una solicitud con `X-Correlation-Id`](https://docs.bridge.new/es/guides/responses.md#trace-a-request-with-its-correlation-id) para las respuestas que no traen el encabezado. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
 
-Un campo inválido y una regla que relaciona varios campos no tienen por qué compartir el mismo estado. Las reglas del cuerpo saliente revisadas generan `400` con `BRIDGE_CORE_0103` cuando `consent.status` es `GRANTED` y no se incluye `capturedAt`, o cuando `template.media` proporciona ambos o ninguno de `mediaId` y `url`. Los tipos de campo o UUID inválidos pueden producir, en cambio, detalles de validación de solicitud con `422`. Interpreta juntos el estado y el cuerpo de error; no exijas un array `errors` para toda solicitud inválida.
+Un campo inválido y una regla que relaciona varios campos no tienen por qué compartir el mismo estado. Las reglas del cuerpo saliente revisadas generan `400` con `BRIDGE_CORE_0103` cuando `consent.status` es `GRANTED` y no se incluye `capturedAt`, cuando `template.media` proporciona ambos o ninguno de `mediaId` y `url`, o cuando se envía `campaignName` sin `campaignId`. Los tipos de campo o UUID inválidos, y un `campaignName` de más de 200 caracteres, pueden producir, en cambio, detalles de validación de solicitud con `422`. Interpreta juntos el estado y el cuerpo de error; no exijas un array `errors` para toda solicitud inválida.
 
 ### Códigos heredados con sufijo
 
@@ -7742,7 +7802,7 @@ Errores de las operaciones de agentes.
 
 | Código | Estado | Significado |
 | --- | --- | --- |
-| `BRIDGE_CORE_0103` | 400 | La solicitud es inválida: `consent.status` es `GRANTED` sin `capturedAt`, `template` no incluye `id` ni `name`, o `template.media` no incluye exactamente uno de `mediaId` o `url` |
+| `BRIDGE_CORE_0103` | 400 | La solicitud es inválida: `consent.status` es `GRANTED` sin `capturedAt`, `template` no incluye `id` ni `name`, `template.media` no incluye exactamente uno de `mediaId` o `url`, o se envía `campaignName` sin `campaignId` |
 | `BRIDGE_CORE_0301` | 403 | El espacio de trabajo de la ruta no coincide con el de la clave de API |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | El contacto no existe en el espacio de trabajo |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | El usuario de Bridge de `handoffOverride` no existe en el espacio de trabajo |
@@ -7947,6 +8007,51 @@ Errores de las operaciones de espacios de trabajo.
 
 ---
 
+# Sesiones de LeadScout en el feed OData
+
+Source: https://docs.bridge.new/es/guides/odata-feed
+
+Consulta de dónde vino cada sesión de LeadScout: los campos de procedencia del conjunto LeadscoutSessions y el campo obsoleto Source.
+
+El feed OData entrega los datos de conversaciones de tu espacio de trabajo a herramientas de reportes como Power BI. Esta página cubre los campos del conjunto de entidades `LeadscoutSessions` que indican de dónde vino una sesión. Pide `$metadata` para ver la lista completa de campos y sus tipos.
+
+## Conexión
+
+```text
+https://api-connect-us.bridge.new/odata/v1
+```
+
+El feed usa autenticación HTTP Basic: el usuario es el id de tu espacio de trabajo y la contraseña es la misma API key que envías en `x-api-key` a la API REST. Una solicitud con solo el encabezado `x-api-key` se rechaza.
+
+## Campos de procedencia
+
+La procedencia describe de dónde vino una sesión. Todos los campos son opcionales y están vacíos cuando Bridge no registró procedencia para la sesión.
+
+| Campo | Tipo | Contenido |
+| --- | --- | --- |
+| `ProvenanceSource` | `Edm.String` | De dónde vino el contacto: `fb` para Facebook, `ig` para Instagram, `an` para Audience Network de Meta, `whatsapp` para WhatsApp. En una landing page es el `utm_source` que envió tu página. |
+| `ProvenanceMedium` | `Edm.String` | El tipo de canal: `ad` para un anuncio de Meta, `post` para una publicación de Meta, `organic` para un lead o mensaje de WhatsApp orgánico, `bridge` para una campaña de Bridge. En una landing page es el `utm_medium` que envió tu página, en minúsculas. |
+| `ProvenanceCampaignId` | `Edm.String` | El id de la campaña: la campaña de la plataforma de anuncios, el `campaignId` enviado en una solicitud outbound o la campaña de Bridge. |
+| `ProvenanceContentId` | `Edm.String` | El id del anuncio o contenido dentro de la campaña. |
+| `ProvenanceCapturedAt` | `Edm.DateTimeOffset` | Cuándo se capturó la procedencia. |
+
+## Campos que cambian
+
+**Advertencia**
+
+  `Source` está obsoleto. Sigue presente y conserva el valor que tenía; prefiere los campos de procedencia de arriba.
+
+| Campo | Comportamiento |
+| --- | --- |
+| `Source` | Obsoleto. Lleva el id de campaña para formularios de Meta, solicitudes de la API outbound y campañas masivas de Bridge; la URL de la landing para anuncios Click-to-WhatsApp y landing pages; y nada para conversaciones orgánicas de WhatsApp. |
+| `CampaignCaptureCapturedAt` | Obsoleto; usa `ProvenanceCapturedAt`. Conserva el valor que tenía en las sesiones existentes y, en las nuevas, lleva la fecha de captura de la procedencia solo para sesiones de landing page cuyo `CampaignCaptureStatus` es `MATCHED`; si no, está vacío. |
+
+## Nombra una campaña desde la API outbound
+
+Una solicitud outbound que envía `campaignId` también puede enviar un `campaignName` opcional. El nombre solo se acepta junto con `campaignId`, se eliminan los espacios al inicio y al final, un nombre en blanco se trata como ausente y admite como máximo 200 caracteres. Si la misma campaña llega con nombres distintos, los reportes muestran el más reciente. Consulta la [guía de outbound de Agentes](https://docs.bridge.new/es/guides/agent-outbound.md).
+
+---
+
 # Registro de cambios
 
 Source: https://docs.bridge.new/es/changelog
@@ -7960,6 +8065,18 @@ Aquí se muestran los cambios que afectan las llamadas que ya haces, del más re
 **Nota**
 
   Las entradas anteriores de abajo no registraron fechas de entrada en vigor. No se han verificado sus fechas de despliegue y su orden no establece una fecha de lanzamiento. **Aún no se ha anunciado** la fecha de retirada de los filtros de listado obsoletos. Sigue usando el contrato actual documentado hasta que se publique un cambio efectivo y usa los endpoints de consulta por identificador disponibles para integraciones nuevas.
+
+## Procedencia de las sesiones en el feed OData
+
+El conjunto de entidades `LeadscoutSessions` incorpora cinco campos de procedencia opcionales: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` y `ProvenanceCapturedAt`.
+
+- **Obsoleto:** `Source` sigue presente y conserva su valor actual; prefiere los campos de procedencia.
+- **Obsoleto:** `CampaignCaptureCapturedAt`; usa `ProvenanceCapturedAt`. Las sesiones existentes conservan su valor. Las nuevas solo lo llevan cuando vienen de una landing page y su `CampaignCaptureStatus` es `MATCHED`; en cualquier otro origen queda vacío.
+- **Nuevo:** las solicitudes outbound aceptan un `campaignName` opcional, solo junto con `campaignId`, de hasta 200 caracteres.
+
+Consulta [el feed OData](https://docs.bridge.new/es/guides/odata-feed.md).
+
+---
 
 ## Mejoras de documentación
 
@@ -11038,7 +11155,7 @@ Source: https://docs.bridge.new/es/api-reference/agents-api/iniciar-conversaci%C
 
 Inicia una conversación saliente con un Contact conocido, atendida por el Agent indicado.
 
-Funciona con Agents LeadScout y Service. Primero se resuelve el Contact y después el Agent, que debe existir en el workspace y estar disponible (consulta `GET /agents`). La plantilla se referencia mediante `template.id` o `template.name` (id tiene prioridad si se envían ambos), debe existir y estar APPROVED, y cualquier Bridge User de `handoffOverride` debe ser válido. Si `template.media.mediaId` es desconocido, la solicitud falla con 400 `BRIDGE_AI_LEADSCOUT_0016` solo después de crear o recuperar la conversación, por lo que un reintento tras ese error puede responder de otra manera. Las reglas del cuerpo (`consent.status=GRANTED` sin `capturedAt`, o `template.media` sin exactamente uno de `mediaId` o `url`) fallan con 400 `BRIDGE_CORE_0103`.
+Funciona con Agents LeadScout y Service. Primero se resuelve el Contact y después el Agent, que debe existir en el workspace y estar disponible (consulta `GET /agents`). La plantilla se referencia mediante `template.id` o `template.name` (id tiene prioridad si se envían ambos), debe existir y estar APPROVED, y cualquier Bridge User de `handoffOverride` debe ser válido. Si `template.media.mediaId` es desconocido, la solicitud falla con 400 `BRIDGE_AI_LEADSCOUT_0016` solo después de crear o recuperar la conversación, por lo que un reintento tras ese error puede responder de otra manera. Las reglas del cuerpo (`consent.status=GRANTED` sin `capturedAt`, `template.media` sin exactamente uno de `mediaId` o `url`, o `campaignName` sin `campaignId`) fallan con 400 `BRIDGE_CORE_0103`; un `campaignName` de más de 200 caracteres falla con 422.
 
 La conversación se abre en una de las líneas activas de WhatsApp del Agent, bajo su control, con la plantilla como primer mensaje. Se elige una línea en este orden:
 - Una línea libre.
@@ -12229,6 +12346,7 @@ As duas operações usam o host REST `https://api-connect-us.bridge.new` e `x-ap
 2. [Liste os Agentes](https://docs.bridge.new/pt-br/api-reference/agents-api/listar-os-agents-de-um-workspace.md). Escolha um Agente disponível e leia seu `lines[].providerChannelId`. O ID de um Agente de IA é diferente do ID de um usuário humano do Bridge.
 3. Escolha um template aprovado. [Descubra suas variáveis](https://docs.bridge.new/pt-br/guides/send-template.md#1-discover-the-variables), forneça os valores exigidos do integrador e confirme a aprovação para a linha de destino. Use apenas a etapa de descoberta como pré-requisito: a etapa separada de criação de conversa desse guia não é necessária para outbound.
 4. Confirme que sua empresa tem o aceite necessário. Se enviar `consent.status: "GRANTED"`, inclua `capturedAt`; isso registra sua declaração de consentimento.
+5. Para atribuir a conversa a uma campanha, envie `campaignId` e, opcionalmente, `campaignName`. O nome só é aceito junto com `campaignId` (caso contrário, `400` com `BRIDGE_CORE_0103`) e aceita no máximo 200 caracteres (caso contrário, `422`). O [guia do feed OData](https://docs.bridge.new/pt-br/guides/odata-feed.md) mostra onde ele aparece nos relatórios.
 
 No outbound de Agentes, `contact.providerChannelId`, quando informado, deve pertencer ao Agente escolhido. Ele expressa uma preferência: outra linha elegível do Agente pode ser selecionada. No outbound de LeadScout, a linha explícita é respeitada. O guia de [identificadores e suas fontes](https://docs.bridge.new/pt-br/guides/identifiers.md) explica quais valores usar.
 
@@ -13237,7 +13355,7 @@ Aceite corpos de erro JSON tanto com `application/json` quanto com `application/
 3. Se `detail` for um array, interprete-o no formato `HTTPValidationError`. Um `detail` do tipo string é uma explicação, não uma lista de erros de campo.
 4. Preserve o cabeçalho de resposta `X-Correlation-Id`, `traceId`, o status e a URL da requisição para suporte; veja [Rastreie uma requisição com `X-Correlation-Id`](https://docs.bridge.new/pt-br/guides/responses.md#trace-a-request-with-its-correlation-id) para as respostas que não trazem o cabeçalho. Não exija que `code` ou `extra` existam nem compare mensagens legíveis por pessoas como identificadores.
 
-Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, ou quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`. Tipos de campo ou UUIDs inválidos podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
+Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`, ou quando `campaignName` é enviado sem `campaignId`. Tipos de campo ou UUIDs inválidos, e um `campaignName` com mais de 200 caracteres, podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
 
 ### Códigos legados com sufixo
 
@@ -13307,7 +13425,7 @@ Códigos de erro de operações de Agentes.
 
 | Código | Status | Significado |
 | ---- | ------ | ------- |
-| `BRIDGE_CORE_0103` | 400 | A requisição é inválida: `consent.status` é `GRANTED` sem `capturedAt`, `template` não contém `id` nem `name`, ou `template.media` não contém exatamente um entre `mediaId` e `url` |
+| `BRIDGE_CORE_0103` | 400 | A requisição é inválida: `consent.status` é `GRANTED` sem `capturedAt`, `template` não contém `id` nem `name`, `template.media` não contém exatamente um entre `mediaId` e `url`, ou `campaignName` é enviado sem `campaignId` |
 | `BRIDGE_CORE_0301` | 403 | O workspace do caminho difere do workspace da chave de API |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | O Contato não existe no workspace |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | O usuário do Bridge de `handoffOverride` não existe no workspace |
@@ -13512,6 +13630,51 @@ Códigos das operações de workspace.
 
 ---
 
+# Sessões do LeadScout no feed OData
+
+Source: https://docs.bridge.new/pt-br/guides/odata-feed
+
+Consulte de onde veio cada sessão do LeadScout: os campos de procedência do conjunto LeadscoutSessions e o campo obsoleto Source.
+
+O feed OData entrega os dados de conversas do seu workspace para ferramentas de relatórios como o Power BI. Esta página cobre os campos do conjunto de entidades `LeadscoutSessions` que indicam de onde veio uma sessão. Solicite `$metadata` para ver a lista completa de campos e seus tipos.
+
+## Conexão
+
+```text
+https://api-connect-us.bridge.new/odata/v1
+```
+
+O feed usa autenticação HTTP Basic: o usuário é o id do seu workspace e a senha é a mesma API key que você envia em `x-api-key` para a API REST. Uma requisição apenas com o cabeçalho `x-api-key` é rejeitada.
+
+## Campos de procedência
+
+A procedência descreve de onde veio uma sessão. Todos os campos são opcionais e ficam vazios quando o Bridge não registrou procedência para a sessão.
+
+| Campo | Tipo | Conteúdo |
+| --- | --- | --- |
+| `ProvenanceSource` | `Edm.String` | De onde veio o contato: `fb` para Facebook, `ig` para Instagram, `an` para Audience Network da Meta, `whatsapp` para WhatsApp. Em uma landing page, é o `utm_source` que sua página enviou. |
+| `ProvenanceMedium` | `Edm.String` | O tipo de canal: `ad` para um anúncio da Meta, `post` para uma publicação da Meta, `organic` para um lead ou mensagem de WhatsApp orgânico, `bridge` para uma campanha da Bridge. Em uma landing page, é o `utm_medium` que sua página enviou, em minúsculas. |
+| `ProvenanceCampaignId` | `Edm.String` | O id da campanha: a campanha da plataforma de anúncios, o `campaignId` enviado em uma requisição outbound ou a campanha do Bridge. |
+| `ProvenanceContentId` | `Edm.String` | O id do anúncio ou conteúdo dentro da campanha. |
+| `ProvenanceCapturedAt` | `Edm.DateTimeOffset` | Quando a procedência foi capturada. |
+
+## Campos que mudam
+
+**Aviso**
+
+  `Source` está obsoleto. Continua presente e mantém o valor que tinha; prefira os campos de procedência acima.
+
+| Campo | Comportamento |
+| --- | --- |
+| `Source` | Obsoleto. Traz o id da campanha para formulários da Meta, requisições da API outbound e campanhas em massa do Bridge; a URL da landing para anúncios Click-to-WhatsApp e landing pages; e nada para conversas orgânicas do WhatsApp. |
+| `CampaignCaptureCapturedAt` | Obsoleto; use `ProvenanceCapturedAt`. Mantém o valor que tinha nas sessões existentes e, nas novas, traz o horário de captura da procedência somente para sessões de landing page cujo `CampaignCaptureStatus` é `MATCHED`; caso contrário, fica vazio. |
+
+## Nomeie uma campanha pela API outbound
+
+Uma requisição outbound que envia `campaignId` também pode enviar um `campaignName` opcional. O nome só é aceito junto com `campaignId`, os espaços no início e no fim são removidos, um nome em branco é tratado como ausente e são permitidos no máximo 200 caracteres. Se a mesma campanha chegar com nomes diferentes, os relatórios mostram o mais recente. Consulte o [guia de outbound de Agentes](https://docs.bridge.new/pt-br/guides/agent-outbound.md).
+
+---
+
 # Histórico de alterações
 
 Source: https://docs.bridge.new/pt-br/changelog
@@ -13525,6 +13688,18 @@ Mudanças que afetam as chamadas que você já faz, das mais recentes para as ma
 **Nota**
 
   As entradas antigas abaixo não registraram datas de vigência. As datas de implantação não foram verificadas, e a ordem das entradas não define uma data de lançamento. A data de remoção dos filtros de lista obsoletos **ainda não foi anunciada**. Continue usando o contrato atual documentado até a publicação de uma mudança efetiva e use os endpoints de consulta disponíveis em novas integrações.
+
+## Procedência das sessões no feed OData
+
+O conjunto de entidades `LeadscoutSessions` ganha cinco campos de procedência opcionais: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` e `ProvenanceCapturedAt`.
+
+- **Obsoleto:** `Source` continua presente e mantém seu valor atual; prefira os campos de procedência.
+- **Obsoleto:** `CampaignCaptureCapturedAt`; use `ProvenanceCapturedAt`. As sessões existentes mantêm seu valor. As novas só o trazem quando vêm de uma landing page e seu `CampaignCaptureStatus` é `MATCHED`; em qualquer outra origem fica vazio.
+- **Novo:** as requisições outbound aceitam um `campaignName` opcional, somente junto com `campaignId`, com até 200 caracteres.
+
+Consulte [o feed OData](https://docs.bridge.new/pt-br/guides/odata-feed.md).
+
+---
 
 ## Melhorias na documentação
 
@@ -16603,7 +16778,7 @@ Source: https://docs.bridge.new/pt-br/api-reference/agents-api/iniciar-conversa-
 
 Inicia uma conversa de saída com um Contact conhecido, atendida pelo Agent indicado.
 
-Funciona com Agents LeadScout e Service. Primeiro é resolvido o Contact e depois o Agent, que deve existir no workspace e estar disponível (consulte `GET /agents`). O template é referenciado por `template.id` ou `template.name` (id tem precedência quando ambos são enviados), deve existir e estar APPROVED, e qualquer Bridge User de `handoffOverride` deve ser válido. Se `template.media.mediaId` for desconhecido, a solicitação falha com 400 `BRIDGE_AI_LEADSCOUT_0016` somente depois de a conversa ser criada ou recuperada, portanto uma nova tentativa após esse erro pode responder de forma diferente. As regras do corpo (`consent.status=GRANTED` sem `capturedAt`, ou `template.media` sem exatamente um de `mediaId` ou `url`) falham com 400 `BRIDGE_CORE_0103`.
+Funciona com Agents LeadScout e Service. Primeiro é resolvido o Contact e depois o Agent, que deve existir no workspace e estar disponível (consulte `GET /agents`). O template é referenciado por `template.id` ou `template.name` (id tem precedência quando ambos são enviados), deve existir e estar APPROVED, e qualquer Bridge User de `handoffOverride` deve ser válido. Se `template.media.mediaId` for desconhecido, a solicitação falha com 400 `BRIDGE_AI_LEADSCOUT_0016` somente depois de a conversa ser criada ou recuperada, portanto uma nova tentativa após esse erro pode responder de forma diferente. As regras do corpo (`consent.status=GRANTED` sem `capturedAt`, `template.media` sem exatamente um de `mediaId` ou `url`, ou `campaignName` sem `campaignId`) falham com 400 `BRIDGE_CORE_0103`; um `campaignName` com mais de 200 caracteres falha com 422.
 
 A conversa é aberta em uma das linhas ativas de WhatsApp do Agent, sob seu controle, com o template como primeira mensagem. A linha é escolhida nesta ordem:
 - Uma linha livre.

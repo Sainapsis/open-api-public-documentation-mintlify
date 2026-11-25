@@ -67,6 +67,7 @@
                   "templates-and-parameters",
                   "rate-limits",
                   "error-codes",
+                  "guides/odata-feed",
                   "changelog"
                 ]
               }
@@ -175,6 +176,7 @@
                   "es/templates-and-parameters",
                   "es/rate-limits",
                   "es/error-codes",
+                  "es/guides/odata-feed",
                   "es/changelog"
                 ]
               }
@@ -288,6 +290,7 @@
                   "pt-br/templates-and-parameters",
                   "pt-br/rate-limits",
                   "pt-br/error-codes",
+                  "pt-br/guides/odata-feed",
                   "pt-br/changelog"
                 ]
               }
