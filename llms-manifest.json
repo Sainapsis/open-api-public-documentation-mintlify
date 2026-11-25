@@ -30,14 +30,14 @@
   "inputs": {
     "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
     "api-reference/openapi.yaml": "9d5cae8d4404690ba127366b0f8979d0556dd29d0ede8ebaf9bbf82f5d64e23b",
-    "changelog.mdx": "9341926bfa6c7d4e08eeadabba92b5bba87a21fda47ee3a6426c2628f4fc0c9e",
+    "changelog.mdx": "f9b8f9da852822ec8bd69c30f21d40bc11953d7a8073f55ec823299cb6a07f90",
     "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
     "docs.json": "0f47961d328f103f617867b6980a3d5170f3e352212a08bd3c88d0f055d3a01a",
     "error-codes.mdx": "b0dacc2d7e33fb4ba3b4630e79ad9b44df287b219d9dd701be42f38a9f0c1ca6",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
     "es/api-reference/openapi.yaml": "29339aa56039c48011ea16af354c2d4ee81404da295490342d5172ee55ef0280",
-    "es/changelog.mdx": "23ec7bf06e804079e8f1e32e7dd1a814e31b8e7eb481597a1676885c7bcd55a0",
+    "es/changelog.mdx": "34fc1e99260d861a51ffcdd00a84815a1c39eb966926e920501e1da8e9e5f7d3",
     "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
     "es/error-codes.mdx": "65254103f05b312983965130b281d19d6cc99ded265ffd4ca5a5758031193992",
@@ -81,7 +81,7 @@
     "lead-capture/templates.mdx": "506d2ef49287c95004fcd43150af114e6ced5f39cc32caaa9e2566fcc101f66f",
     "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
     "pt-br/api-reference/openapi.yaml": "2e81fdeeb7e558c0ff027aa8ef99ce0b87962ea38007dccc9e3af79b8a9e5300",
-    "pt-br/changelog.mdx": "799aaa9401172127433be0dfde131a3225bbf5dbcd7ee4df665366730692b1bc",
+    "pt-br/changelog.mdx": "6bac067abfbd23ba83275726c1f8ef3df0b11a6df02097df509807b133c0117b",
     "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
     "pt-br/error-codes.mdx": "51acb2105a05469382f95c4a6e422f11f31453c779e565950d44dc8c65eb91f4",
@@ -1669,32 +1669,32 @@
       "sha256": "863124b2d144e4f53ac1b3b9b99a62d2813a5cc605ef0d0f833dd7d52c3d8cbb"
     },
     "llms-full-en.json": {
-      "bytes": 326600,
-      "sha256": "bfa64649447839facc8f952e3e8b86543f319ab66250a73137bbb9cf4b166338"
+      "bytes": 326716,
+      "sha256": "f8be0cee49031e40d382ad815a4662d9e53e6b510c04e145e4d10452ca349329"
     },
     "llms-es.json": {
       "bytes": 44126,
       "sha256": "8036054532f25bc23feefdbf13194709e54cdeddbfa4a7dfeecd280425a84909"
     },
     "llms-full-es.json": {
-      "bytes": 349889,
-      "sha256": "5168d6098b20d96b495d0d9c189dbe9612ee98b800ec73c88fe237bdc2e1aae1"
+      "bytes": 349998,
+      "sha256": "e01b3ea9b9b019b998d510e72c0d492d2c33c0b0a58cf4e882be996dd1cb9f91"
     },
     "llms-pt-br.json": {
       "bytes": 44077,
       "sha256": "f8b27d2ae234dbcf1ed4a7fcf631af644386aad2cd05bd1f9c254aea59fea1e9"
     },
     "llms-full-pt-br.json": {
-      "bytes": 348216,
-      "sha256": "7097accf447464142af1f3fe267daa8a8328402db60e1080793c1b6fb1ef8490"
+      "bytes": 348321,
+      "sha256": "840469007799c9beac264c4836a5c8ff2e99a462929b9ba43496c3885ba07133"
     },
     "llms.txt": {
       "bytes": 48223,
       "sha256": "fbe41ca7f81c39a30c345165c55bde2a0261f6fe3d59dacd03fe691b67af857a"
     },
     "llms-full.txt": {
-      "bytes": 901505,
-      "sha256": "baddc574f74c3ef3ed749c84109c37394a44801a33a98b88570121e638a4a39a"
+      "bytes": 901835,
+      "sha256": "8c3ec6f5745fa11b9aa8fed9e154a37e3121e7e3fc7660c86b12ab318690195c"
     },
     "sitemap.xml": {
       "bytes": 114533,

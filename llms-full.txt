@@ -2348,7 +2348,7 @@ Changes that affect the calls you already make, newest first. Additive changes �
 The `LeadscoutSessions` entity set gains five optional provenance fields: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` and `ProvenanceCapturedAt`.
 
 - **Deprecated:** `Source` is still present and keeps its current value; prefer the provenance fields.
-- **Changed:** `CampaignCaptureCapturedAt` is now taken from the provenance capture time, and only when `CampaignCaptureStatus` is `MATCHED`.
+- **Deprecated:** `CampaignCaptureCapturedAt`; use `ProvenanceCapturedAt`. Existing sessions keep their value. New sessions carry it only when they come from a landing page and their `CampaignCaptureStatus` is `MATCHED`; for any other origin it stays empty.
 - **Added:** outbound requests accept an optional `campaignName`, only together with `campaignId`, up to 200 characters.
 
 See [the OData feed](https://docs.bridge.new/guides/odata-feed.md).
@@ -8071,7 +8071,7 @@ Aquí se muestran los cambios que afectan las llamadas que ya haces, del más re
 El conjunto de entidades `LeadscoutSessions` incorpora cinco campos de procedencia opcionales: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` y `ProvenanceCapturedAt`.
 
 - **Obsoleto:** `Source` sigue presente y conserva su valor actual; prefiere los campos de procedencia.
-- **Cambia:** `CampaignCaptureCapturedAt` ahora se toma de la fecha de captura de la procedencia, y solo cuando `CampaignCaptureStatus` es `MATCHED`.
+- **Obsoleto:** `CampaignCaptureCapturedAt`; usa `ProvenanceCapturedAt`. Las sesiones existentes conservan su valor. Las nuevas solo lo llevan cuando vienen de una landing page y su `CampaignCaptureStatus` es `MATCHED`; en cualquier otro origen queda vacío.
 - **Nuevo:** las solicitudes outbound aceptan un `campaignName` opcional, solo junto con `campaignId`, de hasta 200 caracteres.
 
 Consulta [el feed OData](https://docs.bridge.new/es/guides/odata-feed.md).
@@ -13694,7 +13694,7 @@ Mudanças que afetam as chamadas que você já faz, das mais recentes para as ma
 O conjunto de entidades `LeadscoutSessions` ganha cinco campos de procedência opcionais: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` e `ProvenanceCapturedAt`.
 
 - **Obsoleto:** `Source` continua presente e mantém seu valor atual; prefira os campos de procedência.
-- **Muda:** `CampaignCaptureCapturedAt` agora vem do horário de captura da procedência, e somente quando `CampaignCaptureStatus` é `MATCHED`.
+- **Obsoleto:** `CampaignCaptureCapturedAt`; use `ProvenanceCapturedAt`. As sessões existentes mantêm seu valor. As novas só o trazem quando vêm de uma landing page e seu `CampaignCaptureStatus` é `MATCHED`; em qualquer outra origem fica vazio.
 - **Novo:** as requisições outbound aceitam um `campaignName` opcional, somente junto com `campaignId`, com até 200 caracteres.
 
 Consulte [o feed OData](https://docs.bridge.new/pt-br/guides/odata-feed.md).

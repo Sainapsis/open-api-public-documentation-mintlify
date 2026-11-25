@@ -20,7 +20,7 @@ Mudanças que afetam as chamadas que você já faz, das mais recentes para as ma
 O conjunto de entidades `LeadscoutSessions` ganha cinco campos de procedência opcionais: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` e `ProvenanceCapturedAt`.
 
 - **Obsoleto:** `Source` continua presente e mantém seu valor atual; prefira os campos de procedência.
-- **Muda:** `CampaignCaptureCapturedAt` agora vem do horário de captura da procedência, e somente quando `CampaignCaptureStatus` é `MATCHED`.
+- **Obsoleto:** `CampaignCaptureCapturedAt`; use `ProvenanceCapturedAt`. As sessões existentes mantêm seu valor. As novas só o trazem quando vêm de uma landing page e seu `CampaignCaptureStatus` é `MATCHED`; em qualquer outra origem fica vazio.
 - **Novo:** as requisições outbound aceitam um `campaignName` opcional, somente junto com `campaignId`, com até 200 caracteres.
 
 Consulte [o feed OData](/pt-br/guides/odata-feed).

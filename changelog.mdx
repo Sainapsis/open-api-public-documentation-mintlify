@@ -18,7 +18,7 @@ Changes that affect the calls you already make, newest first. Additive changes â
 The `LeadscoutSessions` entity set gains five optional provenance fields: `ProvenanceSource`, `ProvenanceMedium`, `ProvenanceCampaignId`, `ProvenanceContentId` and `ProvenanceCapturedAt`.
 
 - **Deprecated:** `Source` is still present and keeps its current value; prefer the provenance fields.
-- **Changed:** `CampaignCaptureCapturedAt` is now taken from the provenance capture time, and only when `CampaignCaptureStatus` is `MATCHED`.
+- **Deprecated:** `CampaignCaptureCapturedAt`; use `ProvenanceCapturedAt`. Existing sessions keep their value. New sessions carry it only when they come from a landing page and their `CampaignCaptureStatus` is `MATCHED`; for any other origin it stays empty.
 - **Added:** outbound requests accept an optional `campaignName`, only together with `campaignId`, up to 200 characters.
 
 See [the OData feed](/guides/odata-feed).
