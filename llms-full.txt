@@ -1006,6 +1006,7 @@ Both use the REST API host `https://api-connect-us.bridge.new` and a server-side
 2. [List Agents](https://docs.bridge.new/api-reference/agents-api/list-the-agents-of-a-workspace.md). Choose an available Agent and read its `lines[].providerChannelId`. An AI Agent ID differs from a human Bridge User ID.
 3. Choose an approved template. [Discover its variables](https://docs.bridge.new/guides/send-template.md#1-discover-the-variables), supply caller-required values, and check that it is approved for the destination line. Use only the discovery step as this prerequisite; the separate Conversation-creation step in that recipe is not needed for outbound.
 4. Confirm that your business has the required opt-in. If you send `consent.status: "GRANTED"`, include `capturedAt`; this records your assertion of consent.
+5. To attribute the conversation to a campaign, send `campaignId` and, optionally, `campaignName`. The name is accepted only together with `campaignId` (otherwise `400` with `BRIDGE_CORE_0103`) and is limited to 200 characters (otherwise `422`). The [OData feed guide](https://docs.bridge.new/guides/odata-feed.md) shows where it appears in reports.
 
 For Agents outbound, `contact.providerChannelId` must belong to the chosen Agent when supplied. It is a preference: another eligible Agent line can be selected. For LeadScout outbound, an explicit line is respected. [Identifiers and their sources](https://docs.bridge.new/guides/identifiers.md) explains which values to use.
 
@@ -2008,7 +2009,7 @@ Accept JSON error bodies with either `application/json` or `application/problem+
 3. If `detail` is an array, read it as the `HTTPValidationError` form. A string `detail` is an explanation, not a list of field errors.
 4. Preserve the `X-Correlation-Id` response header, `traceId`, status and the request URL for support; see [Trace a request with `X-Correlation-Id`](https://docs.bridge.new/guides/responses.md#trace-a-request-with-its-correlation-id) for responses that do not carry the header. Do not require `code` or `extra` to exist, and do not match human-readable messages as identifiers.
 
-An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, or when `template.media` supplies both or neither of `mediaId` and `url`. Invalid field types or UUIDs can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
+An invalid field and a rule involving several fields need not share a status. The reviewed outbound body rules raise `400` with `BRIDGE_CORE_0103` when `consent.status` is `GRANTED` without `capturedAt`, when `template.media` supplies both or neither of `mediaId` and `url`, or when `campaignName` is sent without `campaignId`. Invalid field types or UUIDs, and a `campaignName` over 200 characters, can instead produce `422` request-validation details. Handle the status and error body together; do not require an `errors` array for every invalid request.
 
 ### Legacy code strings
 
@@ -2078,7 +2079,7 @@ Error codes for Agent operations.
 
 | Code | Status | Meaning |
 | ---- | ------ | ------- |
-| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, `template` carries neither `id` nor `name`, or `template.media` does not carry exactly one of `mediaId` or `url` |
+| `BRIDGE_CORE_0103` | 400 | The request is invalid: `consent.status` is `GRANTED` without `capturedAt`, `template` carries neither `id` nor `name`, `template.media` does not carry exactly one of `mediaId` or `url`, or `campaignName` is sent without `campaignId` |
 | `BRIDGE_CORE_0301` | 403 | The workspace in the path differs from the one of the API key |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | The Contact does not exist in the workspace |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | The `handoffOverride` Bridge User does not exist in the workspace |
@@ -5517,7 +5518,8 @@ the workspace and be available (see `GET /agents`). The template is referenced b
 `handoffOverride` Bridge User must be valid. If `template.media.mediaId` is unknown, the request fails
 with 400 `BRIDGE_AI_LEADSCOUT_0016` only after the conversation was created or recovered, so a retry after
 that error may answer differently. Body rules (`consent.status=GRANTED` without `capturedAt`, `template.media`
-without exactly one of `mediaId` or `url`) fail with 400 `BRIDGE_CORE_0103`.
+without exactly one of `mediaId` or `url`, `campaignName` without `campaignId`) fail with 400
+`BRIDGE_CORE_0103`; a `campaignName` over 200 characters fails with 422.
 
 The conversation opens on one of the Agent's active WhatsApp lines, controlled by the Agent, with the template
 as its first message. A line is picked in this order:
@@ -6721,6 +6723,7 @@ Ambas usan el host de la API REST `https://api-connect-us.bridge.new` y una `x-a
 2. [Lista los agentes](https://docs.bridge.new/es/api-reference/agents-api/listar-los-agents-de-un-workspace.md). Elige uno disponible y lee su `lines[].providerChannelId`. El ID de un agente de IA no es el de un usuario humano de Bridge.
 3. Elige una plantilla aprobada. [Consulta sus variables](https://docs.bridge.new/es/guides/send-template.md#1-discover-the-variables), proporciona los valores que debe aportar quien hace la solicitud y comprueba que esté aprobada para la línea de destino. Para este requisito solo necesitas el paso de consulta; no ejecutes el paso de creación de conversación de esa guía antes de una operación de conversación saliente.
 4. Confirma que tu negocio tenga la autorización necesaria. Si envías `consent.status: "GRANTED"`, incluye `capturedAt`: así registras tu declaración de consentimiento.
+5. Para atribuir la conversación a una campaña, envía `campaignId` y, opcionalmente, `campaignName`. El nombre solo se acepta junto con `campaignId` (si no, `400` con `BRIDGE_CORE_0103`) y admite como máximo 200 caracteres (si no, `422`). La [guía del feed OData](https://docs.bridge.new/es/guides/odata-feed.md) muestra dónde aparece en los informes.
 
 En la operación de agentes, `contact.providerChannelId` debe pertenecer al agente elegido si lo envías. Es una preferencia: se puede seleccionar otra línea elegible de ese agente. En LeadScout se respeta la línea explícita. [Identificadores y sus fuentes](https://docs.bridge.new/es/guides/identifiers.md) explica qué valores usar.
 
@@ -7729,7 +7732,7 @@ Acepta cuerpos de error JSON con `application/json` o `application/problem+json`
 3. Si `detail` es un array, interprétalo como el formato `HTTPValidationError`. Un `detail` de tipo cadena es una explicación, no una lista de errores de campos.
 4. Conserva el encabezado de respuesta `X-Correlation-Id`, `traceId`, el estado y la URL de solicitud para soporte; consulta [Rastrea una solicitud con `X-Correlation-Id`](https://docs.bridge.new/es/guides/responses.md#trace-a-request-with-its-correlation-id) para las respuestas que no traen el encabezado. No exijas la presencia de `code` o `extra` ni uses mensajes legibles como identificadores.
 
-Un campo inválido y una regla que relaciona varios campos no tienen por qué compartir el mismo estado. Las reglas del cuerpo saliente revisadas generan `400` con `BRIDGE_CORE_0103` cuando `consent.status` es `GRANTED` y no se incluye `capturedAt`, o cuando `template.media` proporciona ambos o ninguno de `mediaId` y `url`. Los tipos de campo o UUID inválidos pueden producir, en cambio, detalles de validación de solicitud con `422`. Interpreta juntos el estado y el cuerpo de error; no exijas un array `errors` para toda solicitud inválida.
+Un campo inválido y una regla que relaciona varios campos no tienen por qué compartir el mismo estado. Las reglas del cuerpo saliente revisadas generan `400` con `BRIDGE_CORE_0103` cuando `consent.status` es `GRANTED` y no se incluye `capturedAt`, cuando `template.media` proporciona ambos o ninguno de `mediaId` y `url`, o cuando se envía `campaignName` sin `campaignId`. Los tipos de campo o UUID inválidos, y un `campaignName` de más de 200 caracteres, pueden producir, en cambio, detalles de validación de solicitud con `422`. Interpreta juntos el estado y el cuerpo de error; no exijas un array `errors` para toda solicitud inválida.
 
 ### Códigos heredados con sufijo
 
@@ -7799,7 +7802,7 @@ Errores de las operaciones de agentes.
 
 | Código | Estado | Significado |
 | --- | --- | --- |
-| `BRIDGE_CORE_0103` | 400 | La solicitud es inválida: `consent.status` es `GRANTED` sin `capturedAt`, `template` no incluye `id` ni `name`, o `template.media` no incluye exactamente uno de `mediaId` o `url` |
+| `BRIDGE_CORE_0103` | 400 | La solicitud es inválida: `consent.status` es `GRANTED` sin `capturedAt`, `template` no incluye `id` ni `name`, `template.media` no incluye exactamente uno de `mediaId` o `url`, o se envía `campaignName` sin `campaignId` |
 | `BRIDGE_CORE_0301` | 403 | El espacio de trabajo de la ruta no coincide con el de la clave de API |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | El contacto no existe en el espacio de trabajo |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | El usuario de Bridge de `handoffOverride` no existe en el espacio de trabajo |
@@ -8045,7 +8048,7 @@ La procedencia describe de dónde vino una sesión. Todos los campos son opciona
 
 ## Nombra una campaña desde la API outbound
 
-Una solicitud outbound que envía `campaignId` también puede enviar un `campaignName` opcional. El nombre solo se acepta junto con `campaignId`, se eliminan los espacios al inicio y al final un nombre en blanco se trata como ausente y admite como máximo 200 caracteres. Si la misma campaña llega con nombres distintos, los reportes muestran el más reciente. Consulta la [guía de outbound de Agentes](https://docs.bridge.new/es/guides/agent-outbound.md).
+Una solicitud outbound que envía `campaignId` también puede enviar un `campaignName` opcional. El nombre solo se acepta junto con `campaignId`, se eliminan los espacios al inicio y al final, un nombre en blanco se trata como ausente y admite como máximo 200 caracteres. Si la misma campaña llega con nombres distintos, los reportes muestran el más reciente. Consulta la [guía de outbound de Agentes](https://docs.bridge.new/es/guides/agent-outbound.md).
 
 ---
 
@@ -11152,7 +11155,7 @@ Source: https://docs.bridge.new/es/api-reference/agents-api/iniciar-conversaci%C
 
 Inicia una conversación saliente con un Contact conocido, atendida por el Agent indicado.
 
-Funciona con Agents LeadScout y Service. Primero se resuelve el Contact y después el Agent, que debe existir en el workspace y estar disponible (consulta `GET /agents`). La plantilla se referencia mediante `template.id` o `template.name` (id tiene prioridad si se envían ambos), debe existir y estar APPROVED, y cualquier Bridge User de `handoffOverride` debe ser válido. Si `template.media.mediaId` es desconocido, la solicitud falla con 400 `BRIDGE_AI_LEADSCOUT_0016` solo después de crear o recuperar la conversación, por lo que un reintento tras ese error puede responder de otra manera. Las reglas del cuerpo (`consent.status=GRANTED` sin `capturedAt`, o `template.media` sin exactamente uno de `mediaId` o `url`) fallan con 400 `BRIDGE_CORE_0103`.
+Funciona con Agents LeadScout y Service. Primero se resuelve el Contact y después el Agent, que debe existir en el workspace y estar disponible (consulta `GET /agents`). La plantilla se referencia mediante `template.id` o `template.name` (id tiene prioridad si se envían ambos), debe existir y estar APPROVED, y cualquier Bridge User de `handoffOverride` debe ser válido. Si `template.media.mediaId` es desconocido, la solicitud falla con 400 `BRIDGE_AI_LEADSCOUT_0016` solo después de crear o recuperar la conversación, por lo que un reintento tras ese error puede responder de otra manera. Las reglas del cuerpo (`consent.status=GRANTED` sin `capturedAt`, `template.media` sin exactamente uno de `mediaId` o `url`, o `campaignName` sin `campaignId`) fallan con 400 `BRIDGE_CORE_0103`; un `campaignName` de más de 200 caracteres falla con 422.
 
 La conversación se abre en una de las líneas activas de WhatsApp del Agent, bajo su control, con la plantilla como primer mensaje. Se elige una línea en este orden:
 - Una línea libre.
@@ -12343,6 +12346,7 @@ As duas operações usam o host REST `https://api-connect-us.bridge.new` e `x-ap
 2. [Liste os Agentes](https://docs.bridge.new/pt-br/api-reference/agents-api/listar-os-agents-de-um-workspace.md). Escolha um Agente disponível e leia seu `lines[].providerChannelId`. O ID de um Agente de IA é diferente do ID de um usuário humano do Bridge.
 3. Escolha um template aprovado. [Descubra suas variáveis](https://docs.bridge.new/pt-br/guides/send-template.md#1-discover-the-variables), forneça os valores exigidos do integrador e confirme a aprovação para a linha de destino. Use apenas a etapa de descoberta como pré-requisito: a etapa separada de criação de conversa desse guia não é necessária para outbound.
 4. Confirme que sua empresa tem o aceite necessário. Se enviar `consent.status: "GRANTED"`, inclua `capturedAt`; isso registra sua declaração de consentimento.
+5. Para atribuir a conversa a uma campanha, envie `campaignId` e, opcionalmente, `campaignName`. O nome só é aceito junto com `campaignId` (caso contrário, `400` com `BRIDGE_CORE_0103`) e aceita no máximo 200 caracteres (caso contrário, `422`). O [guia do feed OData](https://docs.bridge.new/pt-br/guides/odata-feed.md) mostra onde ele aparece nos relatórios.
 
 No outbound de Agentes, `contact.providerChannelId`, quando informado, deve pertencer ao Agente escolhido. Ele expressa uma preferência: outra linha elegível do Agente pode ser selecionada. No outbound de LeadScout, a linha explícita é respeitada. O guia de [identificadores e suas fontes](https://docs.bridge.new/pt-br/guides/identifiers.md) explica quais valores usar.
 
@@ -13351,7 +13355,7 @@ Aceite corpos de erro JSON tanto com `application/json` quanto com `application/
 3. Se `detail` for um array, interprete-o no formato `HTTPValidationError`. Um `detail` do tipo string é uma explicação, não uma lista de erros de campo.
 4. Preserve o cabeçalho de resposta `X-Correlation-Id`, `traceId`, o status e a URL da requisição para suporte; veja [Rastreie uma requisição com `X-Correlation-Id`](https://docs.bridge.new/pt-br/guides/responses.md#trace-a-request-with-its-correlation-id) para as respostas que não trazem o cabeçalho. Não exija que `code` ou `extra` existam nem compare mensagens legíveis por pessoas como identificadores.
 
-Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, ou quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`. Tipos de campo ou UUIDs inválidos podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
+Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`, ou quando `campaignName` é enviado sem `campaignId`. Tipos de campo ou UUIDs inválidos, e um `campaignName` com mais de 200 caracteres, podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
 
 ### Códigos legados com sufixo
 
@@ -13421,7 +13425,7 @@ Códigos de erro de operações de Agentes.
 
 | Código | Status | Significado |
 | ---- | ------ | ------- |
-| `BRIDGE_CORE_0103` | 400 | A requisição é inválida: `consent.status` é `GRANTED` sem `capturedAt`, `template` não contém `id` nem `name`, ou `template.media` não contém exatamente um entre `mediaId` e `url` |
+| `BRIDGE_CORE_0103` | 400 | A requisição é inválida: `consent.status` é `GRANTED` sem `capturedAt`, `template` não contém `id` nem `name`, `template.media` não contém exatamente um entre `mediaId` e `url`, ou `campaignName` é enviado sem `campaignId` |
 | `BRIDGE_CORE_0301` | 403 | O workspace do caminho difere do workspace da chave de API |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | O Contato não existe no workspace |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | O usuário do Bridge de `handoffOverride` não existe no workspace |
@@ -13667,7 +13671,7 @@ A procedência descreve de onde veio uma sessão. Todos os campos são opcionais
 
 ## Nomeie uma campanha pela API outbound
 
-Uma requisição outbound que envia `campaignId` também pode enviar um `campaignName` opcional. O nome só é aceito junto com `campaignId`, os espaços no início e no fim são removidos um nome em branco é tratado como ausente e são permitidos no máximo 200 caracteres. Se a mesma campanha chegar com nomes diferentes, os relatórios mostram o mais recente. Consulte o [guia de outbound de Agentes](https://docs.bridge.new/pt-br/guides/agent-outbound.md).
+Uma requisição outbound que envia `campaignId` também pode enviar um `campaignName` opcional. O nome só é aceito junto com `campaignId`, os espaços no início e no fim são removidos, um nome em branco é tratado como ausente e são permitidos no máximo 200 caracteres. Se a mesma campanha chegar com nomes diferentes, os relatórios mostram o mais recente. Consulte o [guia de outbound de Agentes](https://docs.bridge.new/pt-br/guides/agent-outbound.md).
 
 ---
 
@@ -16774,7 +16778,7 @@ Source: https://docs.bridge.new/pt-br/api-reference/agents-api/iniciar-conversa-
 
 Inicia uma conversa de saída com um Contact conhecido, atendida pelo Agent indicado.
 
-Funciona com Agents LeadScout e Service. Primeiro é resolvido o Contact e depois o Agent, que deve existir no workspace e estar disponível (consulte `GET /agents`). O template é referenciado por `template.id` ou `template.name` (id tem precedência quando ambos são enviados), deve existir e estar APPROVED, e qualquer Bridge User de `handoffOverride` deve ser válido. Se `template.media.mediaId` for desconhecido, a solicitação falha com 400 `BRIDGE_AI_LEADSCOUT_0016` somente depois de a conversa ser criada ou recuperada, portanto uma nova tentativa após esse erro pode responder de forma diferente. As regras do corpo (`consent.status=GRANTED` sem `capturedAt`, ou `template.media` sem exatamente um de `mediaId` ou `url`) falham com 400 `BRIDGE_CORE_0103`.
+Funciona com Agents LeadScout e Service. Primeiro é resolvido o Contact e depois o Agent, que deve existir no workspace e estar disponível (consulte `GET /agents`). O template é referenciado por `template.id` ou `template.name` (id tem precedência quando ambos são enviados), deve existir e estar APPROVED, e qualquer Bridge User de `handoffOverride` deve ser válido. Se `template.media.mediaId` for desconhecido, a solicitação falha com 400 `BRIDGE_AI_LEADSCOUT_0016` somente depois de a conversa ser criada ou recuperada, portanto uma nova tentativa após esse erro pode responder de forma diferente. As regras do corpo (`consent.status=GRANTED` sem `capturedAt`, `template.media` sem exatamente um de `mediaId` ou `url`, ou `campaignName` sem `campaignId`) falham com 400 `BRIDGE_CORE_0103`; um `campaignName` com mais de 200 caracteres falha com 422.
 
 A conversa é aberta em uma das linhas ativas de WhatsApp do Agent, sob seu controle, com o template como primeira mensagem. A linha é escolhida nesta ordem:
 - Uma linha livre.

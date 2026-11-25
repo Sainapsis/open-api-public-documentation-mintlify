@@ -29,22 +29,22 @@
   },
   "inputs": {
     "api-reference/campaign-leads.openapi.yaml": "35cc6e7b7bf5d21e3302de5004264f86a123bbd99056a5e019a37082bb1fbb23",
-    "api-reference/openapi.yaml": "a3e72149930e90d920ea90331e2f95817b45fd7dc9a7d65d320b02ee3d2fe09f",
+    "api-reference/openapi.yaml": "9d5cae8d4404690ba127366b0f8979d0556dd29d0ede8ebaf9bbf82f5d64e23b",
     "changelog.mdx": "9341926bfa6c7d4e08eeadabba92b5bba87a21fda47ee3a6426c2628f4fc0c9e",
     "connect-your-agent.mdx": "b6890e6a3dba6e3b7a392c5ba36de172b55fbeb885bf64f89afcff46b587563e",
     "credentials.mdx": "93fb281661ac3ade418fd0282107ac3164ebf608ff8ed1fa72a671450b23d24c",
     "docs.json": "0f47961d328f103f617867b6980a3d5170f3e352212a08bd3c88d0f055d3a01a",
-    "error-codes.mdx": "4a9fe957aad34c6378af4674fd6e8418ff34f5146d51b878f6a044dfcde53f3c",
+    "error-codes.mdx": "b0dacc2d7e33fb4ba3b4630e79ad9b44df287b219d9dd701be42f38a9f0c1ca6",
     "es/api-reference/campaign-leads.openapi.yaml": "c61aff8fb930f63919dfbfcd6a790dcee3e6071e88369ef367f0ddd5c79b1831",
-    "es/api-reference/openapi.yaml": "78c8a0f6140a2e294ae9682f0b696a1bda60623cab7ca6aff44fcd0e02a306f2",
+    "es/api-reference/openapi.yaml": "29339aa56039c48011ea16af354c2d4ee81404da295490342d5172ee55ef0280",
     "es/changelog.mdx": "23ec7bf06e804079e8f1e32e7dd1a814e31b8e7eb481597a1676885c7bcd55a0",
     "es/connect-your-agent.mdx": "5567cd04e04cab74fa9ba896b5a9d0230c724ea5f7537e5e3ad0beb32bedb3cf",
     "es/credentials.mdx": "0ba9a38cf594d3d5c4a6f5a5e4651abed6c607ae6c92504b86bdb515400ed686",
-    "es/error-codes.mdx": "8745149fb09d855ebb6eec4ba9178f0284c93378297762b5eca6a1f8a27c9a30",
-    "es/guides/agent-outbound.mdx": "4602116efdc7585fa63ce2cce355122d3c6583c0c542b644af395e08f0dcc45f",
+    "es/error-codes.mdx": "65254103f05b312983965130b281d19d6cc99ded265ffd4ca5a5758031193992",
+    "es/guides/agent-outbound.mdx": "68ef33f00c336082d71913afbeab9d52ef562d6f018572aef6b5b5fdb25a64c9",
     "es/guides/first-conversation.mdx": "eb152c9a23454466b70b82cba98fa7755a720db6edbed22ab382aac1130af147",
     "es/guides/identifiers.mdx": "5ecbe5a47e052c83de34391ef8d1fd83c73c561a28fe9777f3ae6ce7b9816442",
-    "es/guides/odata-feed.mdx": "f3cd014612bfeb4725f24752a1dd3e8cefa129a092a32c837f4a072f5ad1cebe",
+    "es/guides/odata-feed.mdx": "95b15935b26af55d1ec46169c4d45b68eaff08ff00be12ebe791cffe2ec1bb74",
     "es/guides/pagination.mdx": "836fb8501a011883e58b457b9216e71b4056d4353f111143459784c4cbd7c70f",
     "es/guides/pipeline-records.mdx": "e2a03942ac556f75cb336920a9062d64646040454dcb17e9afeca8f329defc8c",
     "es/guides/responses.mdx": "17afb76df527066668eeca87dc1c2d31770198c33fd842d2098e98e14b140438",
@@ -64,7 +64,7 @@
     "es/webhooks/pipeline-records.mdx": "df2013033b284165f1b7ecd69711b5f5d784e9b9e58c6508409cd52549101ac0",
     "es/webhooks/receive-events.mdx": "b5a296ca26ede4ecad0a9eef3db07d38c3c0e0f3758cd69e7b452af2acd40e0f",
     "es/webhooks/verifying-signatures.mdx": "d25a001254bb25140355c8b742ff6f154a1ba1b6b0e23359f23327bf043600e8",
-    "guides/agent-outbound.mdx": "cb60fe30743d96163b1b724b4518dfb0a04fe003fc9b6c3bf14132cd9d86f8fe",
+    "guides/agent-outbound.mdx": "fa8948520fb972cb5f8ecc9f1c99fa4faaabf856c200be41b4bcbb7e0b72d148",
     "guides/first-conversation.mdx": "4682c6cc598460b265e24ca8d0c119863a29736e4fb81bef7cf033ba50ab00a6",
     "guides/identifiers.mdx": "4d087785aa7a1c61c4d0fa56272940dc43a7c32cb97c91996ed7117e06967125",
     "guides/odata-feed.mdx": "e6325afad73c1b8df378925740ad6cbd8240ed8d42ffed02555c91371c59eba7",
@@ -80,15 +80,15 @@
     "lead-capture/integration.mdx": "e41b09302ab3d26dcb1089158f3ef805e6ab5f1d1574bfa877dfbf9630651d03",
     "lead-capture/templates.mdx": "506d2ef49287c95004fcd43150af114e6ced5f39cc32caaa9e2566fcc101f66f",
     "pt-br/api-reference/campaign-leads.openapi.yaml": "e14bf143e575442f46977e908619a75d1904ba6b4defa7481e281d916edca52f",
-    "pt-br/api-reference/openapi.yaml": "3c694026f5e295e818744d3f68190547dac4886238b8ce6d4b5ba758d5441167",
+    "pt-br/api-reference/openapi.yaml": "2e81fdeeb7e558c0ff027aa8ef99ce0b87962ea38007dccc9e3af79b8a9e5300",
     "pt-br/changelog.mdx": "799aaa9401172127433be0dfde131a3225bbf5dbcd7ee4df665366730692b1bc",
     "pt-br/connect-your-agent.mdx": "9ae15d36219589d7aa2de202fe6874fda36aa20242ef9bdebbfa941703b68de6",
     "pt-br/credentials.mdx": "35dc44985ab97f0dde71a64b180d18a764f3557f6366401862c0fcf4c8993f5b",
-    "pt-br/error-codes.mdx": "634588dac4c0b7bd604548308ea82ac20db4c2dc90bf8342f31e683263de03f9",
-    "pt-br/guides/agent-outbound.mdx": "b43380b51224c6d81fb6b0db9e2e0a9528987498badf91b231e6ab567185c157",
+    "pt-br/error-codes.mdx": "51acb2105a05469382f95c4a6e422f11f31453c779e565950d44dc8c65eb91f4",
+    "pt-br/guides/agent-outbound.mdx": "390a6fcb5ec8cae4ea606d1bcd426ea4a99d8faa021912f0a1525154ccd90fe4",
     "pt-br/guides/first-conversation.mdx": "d21f83a729a307d4a2d18e2e6c719854da15f222d3d4dc93071d02466340356c",
     "pt-br/guides/identifiers.mdx": "d6d17a99838659f8a3fe08817fcf54b38c12559b730acb2dd84bc42d166b8b90",
-    "pt-br/guides/odata-feed.mdx": "59caae595975525a557487ef04a1b1420a8f59df9329533ce8d80183cbc5764d",
+    "pt-br/guides/odata-feed.mdx": "6be415b534647ad32e5fd4ff6fd298f6efb7f5c4e6b35343ca759e3f17a36ce1",
     "pt-br/guides/pagination.mdx": "394b5c681dd321375e1aacfe0e9ca9b81c5ca3cce900b516324b64372b400992",
     "pt-br/guides/pipeline-records.mdx": "a4371c29dfd3069974da88a34dc50871ecfdfef6256f7349e24071164a3c4d6f",
     "pt-br/guides/responses.mdx": "70ecc36224953405f18af5a78dd75b2cbcfcc6a3f66d4515e5cc34ebe10aacd1",
@@ -1611,7 +1611,7 @@
       "source": "api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "a3e72149930e90d920ea90331e2f95817b45fd7dc9a7d65d320b02ee3d2fe09f",
+      "sha256": "9d5cae8d4404690ba127366b0f8979d0556dd29d0ede8ebaf9bbf82f5d64e23b",
       "operationCount": 33
     },
     {
@@ -1627,7 +1627,7 @@
       "source": "es/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/es/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "78c8a0f6140a2e294ae9682f0b696a1bda60623cab7ca6aff44fcd0e02a306f2",
+      "sha256": "29339aa56039c48011ea16af354c2d4ee81404da295490342d5172ee55ef0280",
       "operationCount": 33
     },
     {
@@ -1643,7 +1643,7 @@
       "source": "pt-br/api-reference/openapi.yaml",
       "url": "https://docs.bridge.new/pt-br/api-reference/openapi.yaml",
       "title": "Bridge API",
-      "sha256": "3c694026f5e295e818744d3f68190547dac4886238b8ce6d4b5ba758d5441167",
+      "sha256": "2e81fdeeb7e558c0ff027aa8ef99ce0b87962ea38007dccc9e3af79b8a9e5300",
       "operationCount": 33
     },
     {
@@ -1665,36 +1665,36 @@
   ],
   "outputs": {
     "llms-en.json": {
-      "bytes": 40930,
-      "sha256": "fa6f217a589c48f5f472386a7c1a7863366f863feea4d099e70b33749e4b3d8f"
+      "bytes": 41021,
+      "sha256": "863124b2d144e4f53ac1b3b9b99a62d2813a5cc605ef0d0f833dd7d52c3d8cbb"
     },
     "llms-full-en.json": {
-      "bytes": 325806,
-      "sha256": "e2a8428644b752d6880443f37356e8e5749e92671638d73b3b58635024839a81"
+      "bytes": 326477,
+      "sha256": "2230beefe64c1a8c2ca7c23716e17e5b63c66de6102b410a9e7f40bc5aeee71c"
     },
     "llms-es.json": {
-      "bytes": 44034,
-      "sha256": "0bf5218a66987bcc454c9c1e37e277a3a65a319d48b7e200d592e6a0fb6a71f2"
+      "bytes": 44126,
+      "sha256": "8036054532f25bc23feefdbf13194709e54cdeddbfa4a7dfeecd280425a84909"
     },
     "llms-full-es.json": {
-      "bytes": 349072,
-      "sha256": "f609fabe4effc023957489157f1dea0c86193f94e020ad12c1e274c3c5a53826"
+      "bytes": 349757,
+      "sha256": "9143849db74aca541abbc65ada3d1d7c82464ae64dfb796bbf0ce035e7ae5f5f"
     },
     "llms-pt-br.json": {
-      "bytes": 43984,
-      "sha256": "e664317e2c0d5cd41d10c4244166dc33e1787e0e5af52f21c303a9f82a41cfaa"
+      "bytes": 44077,
+      "sha256": "f8b27d2ae234dbcf1ed4a7fcf631af644386aad2cd05bd1f9c254aea59fea1e9"
     },
     "llms-full-pt-br.json": {
-      "bytes": 347391,
-      "sha256": "16aa23602911a5dc6ff3c0e2f7587ef0ceba213141d7b3d0e91950a0e7472a1f"
+      "bytes": 348089,
+      "sha256": "3157aef32a5ba2729501b96b22180ac9ce268365107ab067f6951324361c9dd0"
     },
     "llms.txt": {
       "bytes": 48223,
       "sha256": "fbe41ca7f81c39a30c345165c55bde2a0261f6fe3d59dacd03fe691b67af857a"
     },
     "llms-full.txt": {
-      "bytes": 899349,
-      "sha256": "45837dbf8523787378b7cfe417f96423a4465ca7210e269312ef4a4c1a19f61d"
+      "bytes": 901123,
+      "sha256": "2fa60f05ed62289f44722597acad11f9bd224da5ef4e4a513d2a7ebab2c796da"
     },
     "sitemap.xml": {
       "bytes": 114533,

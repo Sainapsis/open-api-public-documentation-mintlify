@@ -50,7 +50,7 @@ Aceite corpos de erro JSON tanto com `application/json` quanto com `application/
 3. Se `detail` for um array, interprete-o no formato `HTTPValidationError`. Um `detail` do tipo string é uma explicação, não uma lista de erros de campo.
 4. Preserve o cabeçalho de resposta `X-Correlation-Id`, `traceId`, o status e a URL da requisição para suporte; veja [Rastreie uma requisição com `X-Correlation-Id`](/pt-br/guides/responses#trace-a-request-with-its-correlation-id) para as respostas que não trazem o cabeçalho. Não exija que `code` ou `extra` existam nem compare mensagens legíveis por pessoas como identificadores.
 
-Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, ou quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`. Tipos de campo ou UUIDs inválidos podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
+Um campo inválido e uma regra que relaciona vários campos não precisam ter o mesmo status. As regras do corpo outbound revisadas geram `400` com `BRIDGE_CORE_0103` quando `consent.status` é `GRANTED` sem `capturedAt`, quando `template.media` fornece ambos ou nenhum de `mediaId` e `url`, ou quando `campaignName` é enviado sem `campaignId`. Tipos de campo ou UUIDs inválidos, e um `campaignName` com mais de 200 caracteres, podem gerar, por sua vez, detalhes de validação de requisição com `422`. Interprete o status e o corpo do erro juntos; não exija um array `errors` para toda requisição inválida.
 
 <a id="legacy-code-strings"></a>
 
@@ -132,7 +132,7 @@ Códigos de erro de operações de Agentes.
 
 | Código | Status | Significado |
 | ---- | ------ | ------- |
-| `BRIDGE_CORE_0103` | 400 | A requisição é inválida: `consent.status` é `GRANTED` sem `capturedAt`, `template` não contém `id` nem `name`, ou `template.media` não contém exatamente um entre `mediaId` e `url` |
+| `BRIDGE_CORE_0103` | 400 | A requisição é inválida: `consent.status` é `GRANTED` sem `capturedAt`, `template` não contém `id` nem `name`, `template.media` não contém exatamente um entre `mediaId` e `url`, ou `campaignName` é enviado sem `campaignId` |
 | `BRIDGE_CORE_0301` | 403 | O workspace do caminho difere do workspace da chave de API |
 | `BRIDGE_AI_LEADSCOUT_0001` | 404 | O Contato não existe no workspace |
 | `BRIDGE_AI_LEADSCOUT_0002` | 404 | O usuário do Bridge de `handoffOverride` não existe no workspace |
