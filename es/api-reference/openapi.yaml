@@ -2921,8 +2921,10 @@ paths:
         desconocido, la solicitud falla con 400 `BRIDGE_AI_LEADSCOUT_0016` solo
         después de crear o recuperar la conversación, por lo que un reintento
         tras ese error puede responder de otra manera. Las reglas del cuerpo
-        (`consent.status=GRANTED` sin `capturedAt`, o `template.media` sin
-        exactamente uno de `mediaId` o `url`) fallan con 400 `BRIDGE_CORE_0103`.
+        (`consent.status=GRANTED` sin `capturedAt`, `template.media` sin
+        exactamente uno de `mediaId` o `url`, o `campaignName` sin `campaignId`)
+        fallan con 400 `BRIDGE_CORE_0103`; un `campaignName` de más de 200
+        caracteres falla con 422.
 
 
         La conversación se abre en una de las líneas activas de WhatsApp del
@@ -4650,7 +4652,7 @@ components:
               maxLength: 200
             - type: "null"
           title: Campaign Name
-          description: Nombre opcional de la campaña, guardado junto con `campaignId` para informes. Solo se acepta junto con `campaignId`; se eliminan los espacios al inicio y al final un nombre en blanco se trata como ausente y se admiten como máximo 200 caracteres. Si la misma campaña llega con nombres distintos, los informes muestran el más reciente.
+          description: Nombre opcional de la campaña, guardado junto con `campaignId` para informes. Solo se acepta junto con `campaignId`; se eliminan los espacios al inicio y al final, un nombre en blanco se trata como ausente y se admiten como máximo 200 caracteres. Si la misma campaña llega con nombres distintos, los informes muestran el más reciente.
           examples:
             - null
             - Spring promo 2026
@@ -6242,7 +6244,7 @@ components:
               maxLength: 200
             - type: "null"
           title: Campaign Name
-          description: Nombre opcional de la campaña, guardado junto con `campaignId` para informes. Solo se acepta junto con `campaignId`; se eliminan los espacios al inicio y al final un nombre en blanco se trata como ausente y se admiten como máximo 200 caracteres. Si la misma campaña llega con nombres distintos, los informes muestran el más reciente.
+          description: Nombre opcional de la campaña, guardado junto con `campaignId` para informes. Solo se acepta junto con `campaignId`; se eliminan los espacios al inicio y al final, un nombre en blanco se trata como ausente y se admiten como máximo 200 caracteres. Si la misma campaña llega con nombres distintos, los informes muestran el más reciente.
           examples:
             - null
             - Spring promo 2026
