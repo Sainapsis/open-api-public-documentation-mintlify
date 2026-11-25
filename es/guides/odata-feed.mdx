@@ -36,7 +36,7 @@ La procedencia describe de dónde vino una sesión. Todos los campos son opciona
 | Campo | Comportamiento |
 | --- | --- |
 | `Source` | Obsoleto. Lleva el id de campaña para formularios de Meta, solicitudes de la API outbound y campañas masivas de Bridge; la URL de la landing para anuncios Click-to-WhatsApp y landing pages; y nada para conversaciones orgánicas de WhatsApp. |
-| `CampaignCaptureCapturedAt` | Se toma de la fecha de captura de la procedencia, y solo cuando `CampaignCaptureStatus` es `MATCHED`; si no, está vacío. |
+| `CampaignCaptureCapturedAt` | Obsoleto; usa `ProvenanceCapturedAt`. Conserva el valor que tenía en las sesiones existentes y, en las nuevas, lleva la fecha de captura de la procedencia solo para sesiones de landing page cuyo `CampaignCaptureStatus` es `MATCHED`; si no, está vacío. |
 
 ## Nombra una campaña desde la API outbound
 

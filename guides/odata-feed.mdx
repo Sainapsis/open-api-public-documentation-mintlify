@@ -36,7 +36,7 @@ Provenance describes where a session came from. Every field is optional and is e
 | Field | Behavior |
 | --- | --- |
 | `Source` | Deprecated. Carries the campaign id for Meta lead forms, outbound API requests and Bridge bulk campaigns, the landing URL for Click-to-WhatsApp ads and landing pages, and nothing for organic WhatsApp conversations. |
-| `CampaignCaptureCapturedAt` | Taken from the provenance capture time, and only when `CampaignCaptureStatus` is `MATCHED`; otherwise empty. |
+| `CampaignCaptureCapturedAt` | Deprecated; use `ProvenanceCapturedAt`. Keeps the value it had for existing sessions and, for new ones, carries the provenance capture time only for landing page sessions whose `CampaignCaptureStatus` is `MATCHED`; otherwise empty. |
 
 ## Name a campaign from the outbound API
 

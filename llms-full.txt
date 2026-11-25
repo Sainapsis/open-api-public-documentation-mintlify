@@ -2321,7 +2321,7 @@ Provenance describes where a session came from. Every field is optional and is e
 | Field | Behavior |
 | --- | --- |
 | `Source` | Deprecated. Carries the campaign id for Meta lead forms, outbound API requests and Bridge bulk campaigns, the landing URL for Click-to-WhatsApp ads and landing pages, and nothing for organic WhatsApp conversations. |
-| `CampaignCaptureCapturedAt` | Taken from the provenance capture time, and only when `CampaignCaptureStatus` is `MATCHED`; otherwise empty. |
+| `CampaignCaptureCapturedAt` | Deprecated; use `ProvenanceCapturedAt`. Keeps the value it had for existing sessions and, for new ones, carries the provenance capture time only for landing page sessions whose `CampaignCaptureStatus` is `MATCHED`; otherwise empty. |
 
 ## Name a campaign from the outbound API
 
@@ -8044,7 +8044,7 @@ La procedencia describe de dónde vino una sesión. Todos los campos son opciona
 | Campo | Comportamiento |
 | --- | --- |
 | `Source` | Obsoleto. Lleva el id de campaña para formularios de Meta, solicitudes de la API outbound y campañas masivas de Bridge; la URL de la landing para anuncios Click-to-WhatsApp y landing pages; y nada para conversaciones orgánicas de WhatsApp. |
-| `CampaignCaptureCapturedAt` | Se toma de la fecha de captura de la procedencia, y solo cuando `CampaignCaptureStatus` es `MATCHED`; si no, está vacío. |
+| `CampaignCaptureCapturedAt` | Obsoleto; usa `ProvenanceCapturedAt`. Conserva el valor que tenía en las sesiones existentes y, en las nuevas, lleva la fecha de captura de la procedencia solo para sesiones de landing page cuyo `CampaignCaptureStatus` es `MATCHED`; si no, está vacío. |
 
 ## Nombra una campaña desde la API outbound
 
@@ -13667,7 +13667,7 @@ A procedência descreve de onde veio uma sessão. Todos os campos são opcionais
 | Campo | Comportamento |
 | --- | --- |
 | `Source` | Obsoleto. Traz o id da campanha para formulários da Meta, requisições da API outbound e campanhas em massa do Bridge; a URL da landing para anúncios Click-to-WhatsApp e landing pages; e nada para conversas orgânicas do WhatsApp. |
-| `CampaignCaptureCapturedAt` | Vem do horário de captura da procedência, e somente quando `CampaignCaptureStatus` é `MATCHED`; caso contrário, fica vazio. |
+| `CampaignCaptureCapturedAt` | Obsoleto; use `ProvenanceCapturedAt`. Mantém o valor que tinha nas sessões existentes e, nas novas, traz o horário de captura da procedência somente para sessões de landing page cujo `CampaignCaptureStatus` é `MATCHED`; caso contrário, fica vazio. |
 
 ## Nomeie uma campanha pela API outbound
 
