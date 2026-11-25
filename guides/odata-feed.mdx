@@ -22,7 +22,7 @@ Provenance describes where a session came from. Every field is optional and is e
 | Field | Type | Content |
 | --- | --- | --- |
 | `ProvenanceSource` | `Edm.String` | Where the contact came from, such as `facebook`, `instagram`, `google`, `whatsapp` or `newsletter`. Equivalent to `utm_source`. |
-| `ProvenanceMedium` | `Edm.String` | The kind of channel, such as `paid_social`, `organic`, `cpc`, `email`, `referral` or `bridge`. For a landing page it is the `utm_medium` your page sent, in lowercase. |
+| `ProvenanceMedium` | `Edm.String` | The kind of channel: `ad` for a Meta ad, `post` for a Meta post, `organic` for an organic lead or WhatsApp message, `bridge` for a Bridge campaign. For a landing page it is the `utm_medium` your page sent, in lowercase. |
 | `ProvenanceCampaignId` | `Edm.String` | The campaign id: the ad platform's campaign, the `campaignId` sent to an outbound request, or the Bridge campaign. |
 | `ProvenanceContentId` | `Edm.String` | The ad or content id within the campaign. |
 | `ProvenanceCapturedAt` | `Edm.DateTimeOffset` | When the provenance was captured. |
