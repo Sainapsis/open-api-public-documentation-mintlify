@@ -21,7 +21,7 @@ La procedencia describe de dónde vino una sesión. Todos los campos son opciona
 
 | Campo | Tipo | Contenido |
 | --- | --- | --- |
-| `ProvenanceSource` | `Edm.String` | De dónde vino el contacto: `fb` para Facebook, `ig` para Instagram, `whatsapp` para WhatsApp. En una landing page es el `utm_source` que envió tu página. |
+| `ProvenanceSource` | `Edm.String` | De dónde vino el contacto: `fb` para Facebook, `ig` para Instagram, `an` para Audience Network de Meta, `whatsapp` para WhatsApp. En una landing page es el `utm_source` que envió tu página. |
 | `ProvenanceMedium` | `Edm.String` | El tipo de canal: `ad` para un anuncio de Meta, `post` para una publicación de Meta, `organic` para un lead o mensaje de WhatsApp orgánico, `bridge` para una campaña de Bridge. En una landing page es el `utm_medium` que envió tu página, en minúsculas. |
 | `ProvenanceCampaignId` | `Edm.String` | El id de la campaña: la campaña de la plataforma de anuncios, el `campaignId` enviado en una solicitud outbound o la campaña de Bridge. |
 | `ProvenanceContentId` | `Edm.String` | El id del anuncio o contenido dentro de la campaña. |
